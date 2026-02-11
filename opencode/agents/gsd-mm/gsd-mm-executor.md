@@ -814,6 +814,12 @@ if (stateResult.matches.length === 0) throw new Error("State concept not found")
 const stateId = stateResult.matches[0].id;
 const currentData = extractJson(stateResult.matches[0].summary);
 
+// Query roadmap to get phases array for progress calculation
+const roadmapResult = await megamemory:understand({ query: "roadmap", top_k: 1 });
+if (roadmapResult.matches.length === 0) throw new Error("Roadmap concept not found");
+const roadmapData = extractJson(roadmapResult.matches[0].summary);
+const phases = roadmapData.phases || [];
+
 // Update state
 const updatedState = {
   ...currentData,
@@ -821,7 +827,7 @@ const updatedState = {
   current_plan: null,
   status: "phase_complete",
   last_activity: `Phase ${phaseNumber} completed`,
-  progress: calculateProgress(nextPhaseNumber)
+  progress: calculateProgress(phases)
 };
 
 await megamemory:update_concept({

@@ -2,6 +2,7 @@
 name: gsd-mm-git-message
 description: Generate a commit message using GSD rules without committing, or regenerate for an existing commit or commit range
 argument-hint: "<commit-hash | commit-range | phase-X-plan-Y>"
+agent: gsd-mm-git-message
 tools:
   - read
   - bash
@@ -67,13 +68,7 @@ for (const arg of args) {
   }
 }
 
-if (!commitHash && !commitRange && !phasePlan) {
-  → Error: "Usage: /gsd-mm-git-message <commit-hash | commit-range> [phase-X-plan-Y]"
-  → "       /gsd-mm-git-message phase-X-plan-Y"
-  → "       Examples: HEAD~5..HEAD, abc123..def456, HEAD~3"
-  → Stop
-}
-```
+const isDefaultMode = !commitHash && !commitRange && !phasePlan
 
 ## Load Config
 
@@ -364,6 +359,20 @@ If `phasePlan` is not known:
 
 ---
 
+## Step 3.5: Print usage header (if default mode)
+
+If `isDefaultMode` is true:
+
+```
+## /gsd-mm-git-message Usage:
+- No args: Generate commit message for current changes (unstaged + staged)
+- <commit-hash>: Replay existing commit and regenerate message
+- <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)
+- [phase-X-plan-Y]: Override auto-detect phase-plan context
+```
+
+---
+
 ## Step 4: Generate commit message
 
 Apply the `<commit_message_rules>` and `<commit_formats>` from git-integration.md:
@@ -452,16 +461,24 @@ git checkout {ORIGINAL_BRANCH}
 git stash pop  # only if stash was created
 ```
 
-**If working tree mode only:**
+**If working tree mode:**
 
 ```
-## Generated commit message:
+${isDefaultMode ? `
+## /gsd-mm-git-message Usage:
+- No args: Generate commit message for current changes (unstaged + staged)
+- <commit-hash>: Replay existing commit and regenerate message
+- <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)
+- [phase-X-plan-Y]: Override auto-detect phase-plan context
 
-{generatedMessage}
+` : ''}
+${isDefaultMode ? '## Generated commit message for current changes:' : '## Generated commit message:'}
+
+${generatedMessage}
 
 ## To commit with this message:
 
-git add <files> && git commit -m "{generatedMessage}"
+git add <files> && git commit -m "${generatedMessage}"
 ```
 
 **IMPORTANT:**
@@ -492,5 +509,10 @@ git add <files> && git commit -m "{generatedMessage}"
 - [ ] Subject line: max 72 chars, imperative mood, `{type}({scope}): {description}`
 - [ ] Body: max 2-4 bullets, high-level only, no implementation details
 - [ ] Message is printed, nothing is committed
+- [ ] No arguments defaults to working tree mode (unstaged + staged)
+- [ ] Usage header printed when no arguments provided
+- [ ] Usage header NOT printed when explicit arguments given
+- [ ] Header contains valid usage information
+- [ ] Suggested commit message always generated
 
 </success_criteria>

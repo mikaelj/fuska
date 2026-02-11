@@ -5,6 +5,7 @@ import { Command } from 'commander';
 import { migrateCommand } from './commands/migrate';
 import { exportCommand } from './commands/export';
 import { installCommand } from './commands/install';
+import { gitMessageCommand } from './commands/git-message';
 
 const program = new Command();
 
@@ -16,5 +17,6 @@ program
 migrateCommand(program);
 exportCommand(program);
 installCommand(program);
+gitMessageCommand(program);
 
 program.parse(process.argv);

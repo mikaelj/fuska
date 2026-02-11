@@ -221,7 +221,7 @@ First, map the codebase so GSD-MM understands your architecture, then create the
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/gsd-mm-quick` | *"The recipe scraper crashes when the URL contains query parameters like `?ref=share`. The URL validator rejects anything after `?`. Need to strip or preserve query params before validation."* | Spawns planner + executor directly. Plans 2 tasks: fix URL validator regex to allow query strings, add test cases for URLs with `?`, `#`, and `&`. Executes immediately. 1 atomic commit. Quick task logged separately from the roadmap. |
+| 1 | `/gsd-mm-do quick "The recipe scraper crashes when the URL contains query parameters like ?ref=share. The URL validator rejects anything after ?. Need to strip or preserve query params before validation."` | — | Spawns planner + executor directly. Plans 2 tasks: fix URL validator regex to allow query strings, add test cases for URLs with `?`, `#`, and `&`. Executes immediately. 1 atomic commit. Quick task logged separately from the roadmap. |
 | 2 | `/gsd-mm-check-todos` | — | Shows 1 open todo: "Investigate Instacart API for shopping list export" (from Scenario 2). No new todos from the quick fix. |
 
 ---
@@ -381,16 +381,24 @@ Use these commands **only when you discover unplanned work** during execution (e
 For small, ad-hoc tasks that don't need full phase planning:
 
 ```bash
-/gsd-mm-quick
+/gsd-mm-do [mode] [description]
 ```
 
-- Spawns planner + executor only (skips researcher, plan-checker, verifier)
+- Mode-aware agent chain: direct | quick | fast | balanced | thorough | standard
+- Auto-executes for quick/fast/standard; asks before executing for direct/balanced/thorough
 - Creates separate "quick task" concepts (not tied to the roadmap)
-- ~30% context usage (fast, focused)
+- Uses project's configured workflow mode by default, or specify one explicitly
 
-**When to use:** bug fixes with known solutions, small refactorings, one-off tasks.
+**Examples:**
+```bash
+/gsd-mm-do fix the login redirect bug          # Uses project's default mode
+/gsd-mm-do quick fix typo in README            # Quick mode: plan + auto-execute
+/gsd-mm-do thorough add payment integration    # Thorough: research + plan + check + ask
+```
 
-**Note:** `/gsd-mm-quick` creates standalone task concepts separate from your project's phase structure. For speed-focused work within a phase, use `/gsd-mm-plan-phase <N> --mode quick` instead.
+**When to use:** bug fixes, small refactorings, one-off tasks, unplanned work outside phase structure.
+
+**Note:** `/gsd-mm-do` creates standalone task concepts separate from your project's phase structure. For speed-focused work within a phase, use `/gsd-mm-plan-phase <N> --mode quick` instead. `/gsd-mm-quick` is deprecated in favor of `/gsd-mm-do`.
 
 ### Milestones
 
@@ -764,7 +772,8 @@ For an LLM agent, each tool call carries context-switching overhead (~50–100 m
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `/gsd-mm-quick` | Quick project status overview | — |
+| `/gsd-mm-do` | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` — mode: direct/quick/fast/balanced/thorough/standard |
+| `/gsd-mm-quick` | *(Deprecated, use `/gsd-mm-do`)* Quick task execution | — |
 | `/gsd-mm-progress` | Detailed progress with phase status | — |
 | `/gsd-mm-settings` | Manage GSD settings interactively (profiles, workflow modes, git strategy) | — |
 | `/gsd-mm-set-profile` | Switch model profile | `<quality \| balanced \| budget>` |

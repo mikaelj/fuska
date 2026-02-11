@@ -635,18 +635,72 @@ megamemory_understand(query="state", top_k=5)
 const stateId = response.matches[0].id
 const stateData = JSON.parse(response.matches[0].summary)
 
-// Calculate next phase
+// Query roadmap to get phases and milestones arrays
+const roadmapResponse = megamemory_understand(query="roadmap", top_k=5)
+const roadmapData = JSON.parse(roadmapResponse.matches[0].summary)
+const phases = roadmapData.phases || []
+const milestones = roadmapData.milestones || []
+
+// Get current phase number
 const currentPhaseNum = parseInt(stateData.current_phase?.replace('phase-', '') || phaseNumber)
+
+// VALIDATE: Check if next phase exists
 const nextPhaseNum = currentPhaseNum + 1
 const nextPhaseSlug = `phase-${nextPhaseNum.toString().padStart(2, '0')}`
 
-const updatedStateData = {
-  ...stateData,
-  current_phase: nextPhaseSlug,
-  current_plan: null,
-  status: "phase_complete",
-  last_activity: `Phase ${phaseNumber} completed and verified`,
-  progress: calculateProgress(nextPhaseNum)  // Replace with actual progress calculation
+// Check if next phase exists in phases array
+const phaseExists = phases.some(p => p.slug === nextPhaseSlug)
+
+// Check milestone status
+const currentMilestone = milestones.find(m => m.status === "in_progress")
+const maxPhaseInMilestone = currentMilestone
+  ? Math.max(...(currentMilestone.phases || [currentPhaseNum]))
+  : Math.max(...phases.map(p => p.number))
+
+const isLastPhaseInMilestone = currentPhaseNum >= maxPhaseInMilestone
+const isLastPhaseInProject = !phaseExists && !isLastPhaseInMilestone
+
+// DETERMINE NEXT STATE
+let updatedStateData
+
+if (isLastPhaseInProject) {
+  // All phases complete
+  updatedStateData = {
+    ...stateData,
+    current_phase: null,
+    current_plan: null,
+    status: "milestone_complete",
+    last_activity: `All phases complete - milestone ready for completion`,
+    progress: 100
+  }
+} else if (phaseExists) {
+  // More phases available
+  updatedStateData = {
+    ...stateData,
+    current_phase: nextPhaseSlug,
+    current_plan: null,
+    status: "phase_complete",
+    last_activity: `Phase ${phaseNumber} completed and verified`,
+    progress: calculateProgress(phases)
+  }
+} else if (isLastPhaseInMilestone) {
+  // Milestone complete but more phases in next milestone
+  updatedStateData = {
+    ...stateData,
+    current_phase: null,
+    current_plan: null,
+    status: "milestone_complete",
+    last_activity: `Milestone complete - ${currentMilestone.version}`,
+    progress: calculateProgress(phases)
+  }
+} else {
+  // Fallback: keep current state, just mark as phase_complete
+  updatedStateData = {
+    ...stateData,
+    status: "phase_complete",
+    last_activity: `Phase ${phaseNumber} completed and verified`,
+    progress: calculateProgress(phases)
+  }
 }
 
 megamemory_update_concept(
@@ -669,9 +723,11 @@ Route to next action (see `<offer_next>`)
 
 Output this markdown directly (not as a code block). Route based on status:
 
-| Status | Route |
-|--------|-------|
-| `gaps_found` | Route C (gap closure) |
+| State Status | Route |
+|--------------|--------|
+| All phases complete (current_phase=null, status=milestone_complete) | Route C (all complete) |
+| Milestone complete (status=milestone_complete) | Route B (milestone complete) |
+| `gaps_found` | Route D (gap closure) |
 | `human_needed` | Present checklist, then re-route based on approval |
 | `passed` + more phases | Route A (next phase) |
 | `passed` + last phase | Route B (milestone complete) |
@@ -740,7 +796,38 @@ All phase goals verified ✓
 
 ---
 
-**Route C: Gaps found — need additional planning**
+**Route C: All Phases Complete**
+
+```
+══════════════════════════════════════════════════════
+ GSD ► ALL PHASES COMPLETE 🎉
+══════════════════════════════════════════════════════
+
+**{ProjectName}**
+
+All {totalPhases} phases finished!
+All phase goals verified ✓
+
+──────────────────────────────────────────────────────────────
+
+## ▶ Next Up
+
+**Complete Milestone** — verify all requirements, cross-phase integration
+
+/gsd-mm-complete-milestone
+
+*/new first → fresh context window*
+
+──────────────────────────────────────────────────────────────
+
+**Also available:**
+- /gsd-mm-verify-work — manual acceptance testing before completing milestone
+──────────────────────────────────────────────────────────────
+```
+
+---
+
+**Route D: Gaps found — need additional planning**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

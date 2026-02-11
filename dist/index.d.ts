@@ -9,4 +9,5 @@ export * from './scripts/state-ops';
 export { migrateCommand } from './commands/migrate';
 export { exportCommand } from './commands/export';
 export { installCommand } from './commands/install';
+export { gitMessageCommand } from './commands/git-message';
 //# sourceMappingURL=index.d.ts.map

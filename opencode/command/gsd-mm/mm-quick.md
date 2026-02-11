@@ -18,6 +18,9 @@ tools:
 ---
 
 <objective>
+
+**DEPRECATED:** Use `/gsd-mm-do` instead. `/gsd-mm-do quick <description>` provides the same workflow with mode selection flexibility.
+
 Execute small, ad-hoc tasks with GSD-MM guarantees (atomic commits, state tracking) while skipping optional agents (research, plan-checker, verifier).
 
 Quick mode is the same system with a shorter path:
