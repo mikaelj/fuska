@@ -419,7 +419,7 @@ If gaps found, include in draft for user decision.
 
 **create concepts in MegaMemory, then return.** All data persists in knowledge graph.
 
-1. **Create roadmap concept:**
+1. **Update or create roadmap concept:**
 ```typescript
 const roadmapData = {
   name: projectSlug,
@@ -429,13 +429,24 @@ const roadmapData = {
   depth: config.depth
 };
 
-await megamemory:create_concept({
-  name: "roadmap",
-  kind: "module",
-  summary: generateSummary(roadmapData) + '\n\n' + generateRoadmapMarkdown(roadmapData),
-  parent_id: projectSlug,
-  edges: [{ to: projectSlug, relation: "part_of" }]
-});
+const existingRoadmap = await megamemory:understand({ query: "roadmap", top_k: 1 });
+const roadmapSummary = generateSummary(roadmapData) + '\n\n' + generateRoadmapMarkdown(roadmapData);
+
+if (existingRoadmap.matches.length > 0) {
+  const roadmapId = existingRoadmap.matches[0].id;
+  await megamemory:update_concept({
+    id: roadmapId,
+    changes: { summary: roadmapSummary }
+  });
+} else {
+  await megamemory:create_concept({
+    name: "roadmap",
+    kind: "module",
+    summary: roadmapSummary,
+    parent_id: projectSlug,
+    edges: [{ to: projectSlug, relation: "part_of" }]
+  });
+}
 ```
 
 2. **Create phase concepts:**

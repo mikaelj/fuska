@@ -22,6 +22,7 @@ The backend replacement was implemented by Claude Opus 4.6 and GLM-4.7.
   - [Quick Fixes](#quick-fixes)
   - [Milestones](#milestones)
   - [Todos](#todos)
+  - [Merging Worktrees](#merging-worktrees)
   - [Settings & Configuration](#settings--configuration)
     - [Model Profiles](#model-profiles)
     - [Stages](#stages)
@@ -254,6 +255,35 @@ First, map the codebase so GSD-MM understands your architecture, then create the
 
 ---
 
+### Scenario 8: Merging Knowledge from Git Worktrees
+
+*You're building Meal Planner v1.1 using git worktrees. Two developers (you + AI) work in parallel on separate branches, each with its own knowledge database. After merging code, you need to merge the knowledge graphs.*
+
+**Setup:**
+```
+recipevault/                          # Main worktree (main branch)
+  .megamemory/knowledge.db           ← 85 concepts (base project)
+
+recipevault/feature-sharing/          # Worktree for sharing feature
+  .megamemory/knowledge.db           ← 52 concepts (sharing plans, research, summaries)
+
+recipevault/feature-dietary/          # Worktree for dietary presets
+  .megamemory/knowledge.db           ← 41 concepts (dietary plans, research, summaries)
+```
+
+*After `git merge feature-sharing` and `git merge feature-dietary` complete, you merge the knowledge:*
+
+| # | Command | You Say | What Happens |
+|---|---------|---------|--------------|
+| 1 | `/gsd-mm-merge-worktrees feature-sharing feature-dietary` | — | Verifies all three databases exist. Creates backup: `knowledge.db.backup-20250211-143022`. Starts merge session. |
+| 2 | *(merge 1/2: feature-sharing)* | — | Runs `megamemory merge` with main + feature-sharing. 48 clean merges, 2 conflicts detected. |
+| 3 | *(conflict: phase-01 context)* | *Selects "AI verify"* | AI reads referenced files. `src/lib/sharing/permissions.ts` exists, `src/lib/auth/sharing-middleware.ts` was renamed to `src/middleware/sharing.ts`. Resolves with updated file refs. |
+| 4 | *(conflict: req-SOCIAL-01)* | *Selects "Keep right"* | Keeps the feature-sharing version of the social requirement (more detailed after implementation). |
+| 5 | *(merge 2/2: feature-dietary)* | — | Merges feature-dietary into the already-merged database. 39 clean merges, 0 conflicts. |
+| 6 | *(post-merge validation)* | — | Final conflict check: 0 remaining. Database readable. Displays summary: 2 branches merged, 2 conflicts detected, 2 resolved. Backup preserved. |
+
+---
+
 ## Core Workflow: Phases
 
 ### What is a Phase?
@@ -390,6 +420,30 @@ Capture ideas, issues, and tasks for future work:
 **When to use:** mid-work ideas, issues found during testing, future feature requests.
 
 **Note:** Don't create todos for work in the current plan — that's handled by the deviation rules.
+
+### Merging Worktrees
+
+When using `git worktree` with GSD-MM, each worktree gets its own independent `.megamemory/knowledge.db`. After merging feature branch code back into main with git, the knowledge graphs need merging too.
+
+```bash
+/gsd-mm-merge-worktrees <branch1> [branch2] [branch3...]
+```
+
+Run this from your **main worktree** directory. Arguments are the subdirectory names of your feature worktrees.
+
+**How it works:**
+
+1. Creates a timestamped backup of the main database
+2. Merges each worktree database sequentially (MegaMemory supports two-way merges only)
+3. Detects conflicts and offers resolution options: AI-assisted (reads actual codebase files to verify), keep left/right/both, or skip
+4. Tracks progress in a JSON session file that survives context resets
+5. On failure, restores the backup automatically
+
+**AI-assisted resolution** reads the files referenced by each conflict version and determines which version matches the actual codebase. It checks for edge cases like deleted files, renames, and complementary changes, then writes a merged resolution using MegaMemory's `resolve_conflict` tool.
+
+**Session resume:** If a merge is interrupted (e.g., context reset), re-running the command detects the existing session file and offers to resume where it left off.
+
+**When to use:** after `git merge` completes and you want to unify knowledge graphs from feature worktrees back into main.
 
 ---
 
@@ -703,6 +757,7 @@ For an LLM agent, each tool call carries context-switching overhead (~50–100 m
 | `/gsd-mm-resume-work` | Resume from last checkpoint | — |
 | `/gsd-mm-add-todo` | Add todo item | `[description]` — auto-extracts from conversation if omitted |
 | `/gsd-mm-check-todos` | View all todos | — |
+| `/gsd-mm-merge-worktrees` | Merge knowledge databases from git worktrees | `<branch1> [branch2...]` — worktree subdirectory names |
 
 #### Status & Settings
 
@@ -749,6 +804,7 @@ For an LLM agent, each tool call carries context-switching overhead (~50–100 m
 | **Verifier** | An agent that performs goal-backward verification after phase execution |
 | **Workflow mode** | A preconfigured combination of agents (Direct, Quick, Fast, Balanced, Thorough, Standard) that balances speed vs. quality for different development contexts |
 | **Wave** | A group of tasks within a plan that can be executed in parallel (tasks in the same wave have no dependencies on each other) |
+| **Worktree merge** | The process of merging independent `.megamemory/knowledge.db` files from git worktree feature branches back into the main worktree's database using `/gsd-mm-merge-worktrees` |
 
 ---
 

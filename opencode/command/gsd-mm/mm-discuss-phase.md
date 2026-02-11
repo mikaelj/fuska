@@ -114,8 +114,27 @@ If response.matches.length === 0:
 If response.matches.length > 0:
 ```
 const roadmapSummaryString = response.matches[0].summary
-const roadmapData = JSON.parse(roadmapSummaryString)
-const phases = roadmapData.phases || []
+let phases = []
+
+try {
+  const roadmapData = JSON.parse(roadmapSummaryString)
+  phases = roadmapData.phases || []
+} catch (e) {
+  const roadmapId = response.matches[0].id
+  const phaseConcepts = await megamemory:understand({ query: `parent:${roadmapId} phase`, top_k: 20 })
+  phases = phaseConcepts.matches
+    .filter(m => m.kind === 'feature' && m.name.startsWith('phase-'))
+    .map(m => {
+      const phaseData = JSON.parse(m.summary)
+      return {
+        number: phaseData.number,
+        slug: phaseData.slug,
+        name: phaseData.name,
+        goal: phaseData.goal
+      }
+    })
+    .sort((a, b) => a.number - b.number)
+}
 ```
 
 **Step 1.5: Find matching phase**
