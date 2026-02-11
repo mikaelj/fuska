@@ -1,7 +1,7 @@
 ---
 name: gsd-mm-git-message
-description: Generate a commit message using GSD rules without committing, or regenerate for an existing commit
-argument-hint: "<commit-hash | phase-X-plan-Y>"
+description: Generate a commit message using GSD rules without committing, or regenerate for an existing commit or commit range
+argument-hint: "<commit-hash | commit-range | phase-X-plan-Y>"
 tools:
   - read
   - bash
@@ -10,12 +10,13 @@ tools:
 
 <objective>
 
-Test and preview commit messages using the GSD commit message rules. Two modes:
+Test and preview commit messages using the GSD commit message rules. Three modes:
 
-1. **Commit hash mode:** Replay an existing commit's diff and generate what the message *should* look like under current rules
-2. **Working tree mode:** Generate a commit message for uncommitted changes using plan context
+1. **Commit range mode:** Generate a unified commit message for multiple commits (e.g., `HEAD~5..HEAD`)
+2. **Commit hash mode:** Replay an existing commit's diff and generate what the message *should* look like under current rules
+3. **Working tree mode:** Generate a commit message for uncommitted changes using plan context
 
-Both modes can be combined: use a commit's diff with a different phase-plan context.
+All modes can be combined with explicit phase-plan context (overrides auto-detection).
 
 </objective>
 
@@ -48,23 +49,28 @@ Arguments: `$ARGUMENTS`
 
 ```
 const args = $ARGUMENTS.trim().split(/\s+/)
+let commitRange = null
 let commitHash = null
 let phasePlan = null
 
 for (const arg of args) {
-  if (arg.match(/^phase-\d+-plan-\d+$/)) {
+  // Check for range first (contains "..")
+  if (arg.includes('..')) {
+    commitRange = arg
+  } else if (arg.match(/^phase-\d+-plan-\d+$/)) {
     phasePlan = arg
   } else {
-    // Try to resolve as a git commit
+    // Try to resolve as a single git commit
     // bash: git rev-parse --verify <arg>^{commit} 2>/dev/null
     // If exit code 0 → it's a valid commit hash
     commitHash = arg
   }
 }
 
-if (!commitHash && !phasePlan) {
-  → Error: "Usage: /gsd-mm-git-message <commit-hash> [phase-X-plan-Y]"
+if (!commitHash && !commitRange && !phasePlan) {
+  → Error: "Usage: /gsd-mm-git-message <commit-hash | commit-range> [phase-X-plan-Y]"
   → "       /gsd-mm-git-message phase-X-plan-Y"
+  → "       Examples: HEAD~5..HEAD, abc123..def456, HEAD~3"
   → Stop
 }
 ```
@@ -85,7 +91,57 @@ The commit message rules and formats from git-integration.md are already loaded 
 
 <process>
 
-## Step 1: Validate commit hash (if provided)
+## Step 1: Validate commit range (if provided)
+
+If `commitRange` is set:
+
+**Step 1.1: Parse range**
+
+```javascript
+// Split on ".." to get start and end
+const [start, end] = commitRange.split('..')
+const rangeStart = start.trim()
+const rangeEnd = end.trim()
+```
+
+**Step 1.2: Validate both endpoints**
+
+```bash
+git rev-parse --verify ${rangeStart}^{commit} 2>/dev/null
+git rev-parse --verify ${rangeEnd}^{commit} 2>/dev/null
+```
+
+If either fails:
+→ Display: `"${rangeStart}" or "${rangeEnd}" is not a valid commit reference`
+→ Stop
+
+**Step 1.3: Check range is valid (has commits)**
+
+```bash
+COMMIT_COUNT=$(git rev-list --count ${rangeStart}..${rangeEnd})
+```
+
+If `COMMIT_COUNT` is "0":
+→ Display: "No commits found in range ${rangeStart}..${rangeEnd}"
+→ Stop
+
+If `COMMIT_COUNT` > 50:
+→ Display: "Warning: Range contains $COMMIT_COUNT commits. Output will be large."
+
+Store as `commitCount`.
+
+**Step 1.4: Check for merge commits (optional)**
+
+```bash
+MERGE_COUNT=$(git rev-list --count --merges ${rangeStart}..${rangeEnd})
+```
+
+If `MERGE_COUNT` > 0:
+→ Display: "Note: Range contains $MERGE_COUNT merge commit(s). Use --no-merges flag to exclude."
+
+---
+
+## Step 1a: Validate commit hash (if provided)
 
 If `commitHash` is set:
 
@@ -168,6 +224,106 @@ git diff
 ```
 
 Store as `diffContent`.
+
+---
+
+## Step 2c: Set up from commit range (COMMIT RANGE MODE)
+
+If `commitRange` is provided:
+
+**Step 2c.1: Record current state** (for display only, not restore)
+
+```bash
+ORIGINAL_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEAD)
+```
+
+**Step 2c.2: Get combined diff**
+
+```bash
+git diff ${rangeStart}..${rangeEnd}
+```
+
+Store as `diffContent`.
+
+**Step 2c.3: Get all original commit messages**
+
+```bash
+git log ${rangeStart}..${rangeEnd} --format="HASH: %H%nBODY_START%n%B%nBODY_END%n"
+```
+
+Parse this into an array of objects:
+```javascript
+const originalMessages = []
+let currentHash = null
+let currentBody = []
+let inBody = false
+
+for (const line of output.split('\n')) {
+  if (line.startsWith('HASH: ')) {
+    // Save previous message if exists
+    if (currentHash) {
+      originalMessages.push({ hash: currentHash, body: currentBody.join('\n') })
+    }
+    // Start new commit
+    currentHash = line.substring(6)
+    currentBody = []
+    inBody = false
+  } else if (line === 'BODY_START') {
+    inBody = true
+  } else if (line === 'BODY_END') {
+    inBody = false
+  } else if (inBody) {
+    currentBody.push(line)
+  }
+}
+
+// Save last commit
+if (currentHash) {
+  originalMessages.push({ hash: currentHash, body: currentBody.join('\n') })
+}
+```
+
+**Step 2c.4: Extract phase-plan from most recent commit (if no explicit arg)**
+
+If `phasePlan` is not set:
+
+```bash
+git log -1 --format="%B" ${rangeEnd}
+```
+
+Parse scope from subject line with flexible regex:
+```
+// Match patterns with or without whitespace, handle missing scope
+const scopeMatch = latestMessage.match(/^\w+\s*\(([^)]+)\):/)
+
+if (scopeMatch) {
+  const scope = scopeMatch[1].trim()
+  // Full format: phase-02-plan-01
+  if (scope.match(/^phase-\d+-plan-\d+$/)) {
+    phasePlan = scope
+  }
+  // Short format: 02-01 → phase-02-plan-01
+  else if (scope.match(/^\d{2}-\d{2}$/)) {
+    const [phaseNum, planNum] = scope.split('-')
+    phasePlan = `phase-${phaseNum}-plan-${planNum}`
+  }
+  // Phase-only format: phase-02
+  else if (scope.match(/^phase-\d+$/)) {
+    phasePlan = scope
+  }
+}
+
+// If still no phasePlan found, note it
+if (!phasePlan) {
+  → Note: "No phase-plan context available — generating message from diff only"
+}
+```
+
+**Step 2c.5: Note about mode**
+
+Store flag `isRangeMode = true`. The working tree is NOT modified (we only read the diff), so no cherry-pick or checkout needed.
+
+**Priority note:** If user explicitly provides `phasePlan` argument, it overrides any auto-detected value from commits.
 
 ---
 
@@ -254,6 +410,29 @@ Use the format matching `commitStrategy` from git-integration.md:
 
 ## Step 5: Print output
 
+**If commit range was provided:**
+
+```
+## Commit range: ${rangeStart}..${rangeEnd} (${commitCount} commits)
+
+### Original commit messages:
+
+${originalMessages.map((msg, i) => `
+--- Commit ${i+1}: ${msg.hash.substring(0, 8)} -- ${msg.body.split('\n')[0]} ---
+
+${msg.body}
+
+`).join('')}
+
+### Generated message (using current GSD rules):
+
+${generatedMessage}
+
+## Note:
+- Working tree NOT modified (diff only, no cherry-pick or checkout)
+- Safe to run anytime
+```
+
 **If commit hash was provided (comparison mode):**
 
 ```
@@ -285,18 +464,33 @@ git stash pop  # only if stash was created
 git add <files> && git commit -m "{generatedMessage}"
 ```
 
-**IMPORTANT:** In commit hash mode, do NOT automatically restore the working tree. Print the restore instructions and let the user decide. The user may want to inspect the state further.
+**IMPORTANT:**
+- In range mode, do NOT automatically restore working tree (no changes were made)
+- In single commit mode, do NOT automatically restore working tree - print instructions instead
+- In working tree mode, print commit instructions
 
 </process>
 
 <success_criteria>
 
-- [ ] Mode correctly detected from arguments (commit hash, phase-plan pattern, or both)
-- [ ] In commit mode: working tree shows the commit's changes, original state is restorable
-- [ ] Generated message follows all rules from git-integration.md
+- [ ] Range mode correctly detected when argument contains `..`
+- [ ] Range validation checks both endpoints exist
+- [ ] Range validation confirms commits exist between endpoints
+- [ ] Combined diff correctly extracted for entire range
+- [ ] All original commit messages captured and displayed with parseable format
+- [ ] Phase-plan auto-detected from most recent commit in range with flexible regex
+- [ ] Phase-plan can be overridden with explicit argument (takes precedence)
+- [ ] Generated message follows all GSD commit message rules
+- [ ] Original messages displayed in full for all commits
+- [ ] No working tree modifications in range mode (no stash, no checkout, no cherry-pick)
+- [ ] Restore instructions printed correctly for single commit mode
+- [ ] Error messages are clear and actionable
+- [ ] All existing modes (single commit, working tree) remain functional
+- [ ] Large range warning displayed when commit count > 50
+- [ ] Merge commit note displayed when merges detected in range
+- [ ] Git log parsing handles empty commit bodies correctly
 - [ ] Subject line: max 72 chars, imperative mood, `{type}({scope}): {description}`
 - [ ] Body: max 2-4 bullets, high-level only, no implementation details
 - [ ] Message is printed, nothing is committed
-- [ ] Restore instructions printed in commit mode
 
 </success_criteria>
