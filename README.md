@@ -33,6 +33,7 @@ The backend replacement was implemented by Claude Opus 4.6 and GLM-4.7.
 - [Migration from .planning/](#migration-from-planning)
 - [Why MegaMemory? (Benchmarks)](#why-megamemory-benchmarks)
 - [Command Reference](#command-reference)
+  - [Git Integration](#git-integration)
 - [Glossary](#glossary)
 - [Acknowledgments & License](#acknowledgments--license)
 
@@ -769,6 +770,34 @@ For an LLM agent, each tool call carries context-switching overhead (~50–100 m
 | `/gsd-mm-set-profile` | Switch model profile | `<quality \| balanced \| budget>` |
 | `/gsd-mm-set-model` | Override model for a stage | `<stage> <model>` |
 | `/gsd-mm-help` | Show all available commands | — |
+
+#### Git Integration
+
+| Command | Description | Arguments |
+|---------|-------------|-----------|
+| `/gsd-mm-git-message` | Generate GSD commit messages or regenerate for existing commits/ranges | `<commit-hash \| commit-range \| phase-X-plan-Y>` — commit, range (e.g., `HEAD~5..HEAD`), or phase-plan context |
+
+**Modes:**
+
+1. **Commit range mode:** Generate unified commit message for multiple commits (e.g., `HEAD~5..HEAD`, `abc123..def456`)
+2. **Commit hash mode:** Replay existing commit's diff and regenerate message under current rules
+3. **Working tree mode:** Generate commit message for uncommitted changes
+
+**Examples:**
+```bash
+/gsd-mm-git-message HEAD~5..HEAD                    # Range mode - all commits in range
+/gsd-mm-git-message abc123..def456 phase-02-plan-03  # Range with explicit phase-plan override
+/gsd-mm-git-message abc123                          # Single commit replay
+/gsd-mm-git-message abc123 phase-02-plan-01          # Single commit with phase-plan override
+/gsd-mm-git-message phase-02-plan-01                # Working tree mode
+```
+
+**Features:**
+- Auto-detects phase-plan from most recent commit (full format: `phase-02-plan-01`, short: `02-01`, phase-only: `phase-02`)
+- Shows all original commit messages in range mode
+- Validates commit range endpoints and checks for merges
+- Phase-plan argument overrides auto-detection
+- Safe in range mode (no working tree modifications)
 
 #### Debug
 
