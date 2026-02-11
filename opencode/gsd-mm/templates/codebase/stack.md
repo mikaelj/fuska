@@ -9,7 +9,7 @@ Template for codebase STACK documentation - captures the technology foundation.
 ## MegaMemory Schema
 
 ```typescript
-// Concept: technology-stack
+// Concept: codebase-tech (stack section)
 interface TechnologyStackConcept {
   name: string;
   kind: "component";

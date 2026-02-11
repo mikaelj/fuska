@@ -21,7 +21,7 @@ Analyze existing codebase using parallel gsd-mm-codebase-mapper agents to produc
 
 Each mapper agent explores a focus area and **creates concepts directly** in MegaMemory. The orchestrator only receives confirmations, keeping context usage minimal.
 
-Output: MegaMemory concepts for codebase state (stack, architecture, structure, conventions, testing, integrations, concerns).
+Output: MegaMemory concepts for codebase state (tech, arch, quality, concerns).
 </objective>
 
  <execution_context>
@@ -88,17 +88,24 @@ Follow the MegaMemory Connectivity Preflight Check from @preflight-check-connect
 megamemory_list_roots()
 ```
 
-**Step 1.2: Check for roots**
+**Step 1.2: Check for project**
 
-If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /gsd-mm-new-project to start a new project"
-→ Stop
+If a root with `kind="feature"` exists:
+→ Set `HAS_PROJECT = true`
+→ Extract `PROJECT_ROOT_ID` from that root concept's ID
+
+If no root with `kind="feature"` exists:
+→ Set `HAS_PROJECT = false`
+→ Display: "No project found — mapping codebase standalone"
 
 **Step 1.3: Query state concept**
+
+If `HAS_PROJECT`:
 ```
 megamemory_understand(query="state", top_k=5)
 ```
+
+If not `HAS_PROJECT`: skip (state doesn't exist yet).
 
 **Step 1.4: Check if codebase concepts exist**
 ```
@@ -129,24 +136,31 @@ If user chooses "View existing":
 If user chooses "Skip":
 → Stop
 
-## 2. Spawn Parallel Mapper Agents
+## 2. Determine Project Root
+
+**Step 2.0: Get the user's working directory**
+
+```bash
+pwd
+```
+
+Store result as `$PROJECT_ROOT`. This is the directory the agents must explore — NOT the opencode config directory.
+
+## 3. Spawn Parallel Mapper Agents
 
 Spawn 4 parallel gsd-mm-codebase-mapper agents:
 
 **Agent 1: Tech focus**
-Creates concepts:
-- codebase-stack (tech stack, languages, frameworks)
-- codebase-integrations (external services, APIs)
+Creates concept:
+- codebase-tech (tech stack, languages, frameworks, external integrations)
 
 **Agent 2: Architecture focus**
-Creates concepts:
-- codebase-architecture (patterns, design decisions)
-- codebase-structure (directory layout, module organization)
+Creates concept:
+- codebase-arch (architecture patterns, directory layout, module organization)
 
 **Agent 3: Quality focus**
-Creates concepts:
-- codebase-conventions (style, naming, patterns)
-- codebase-testing (test setup, coverage, framework)
+Creates concept:
+- codebase-quality (coding conventions, testing patterns)
 
 **Agent 4: Concerns focus**
 Creates concept:
@@ -154,20 +168,23 @@ Creates concept:
 
 ### Spawn Agent 1: Tech Focus
 
-**Step 2.1: Build tech focus prompt**
+**Step 3.1: Build tech focus prompt**
 ```
+<project_root>${PROJECT_ROOT}</project_root>
+
 <focus_area>
 ${ARGUMENTS || 'entire codebase'}
 </focus_area>
 
 <objective>
-Map tech stack and integrations in the codebase.
+Map tech stack and integrations in the project at ${PROJECT_ROOT}.
 
-Create these MegaMemory concepts:
-1. codebase-stack — technologies, languages, frameworks, versions
-2. codebase-integrations — external services, APIs, third-party libs
+IMPORTANT: All exploration (ls, find, grep, glob, read) must target ${PROJECT_ROOT}, not the current directory. Use absolute paths.
 
-Use megamemory:create_concept() for each concept.
+Create this MegaMemory concept:
+1. codebase-tech — technologies, languages, frameworks, versions, external services, APIs, third-party libs
+
+Use megamemory:create_concept() for the concept.
 </objective>
 
 <output>
@@ -175,15 +192,14 @@ Return confirmation when complete:
 ## TECH MAPPING COMPLETE
 
 Created concepts:
-- codebase-stack
-- codebase-integrations
+- codebase-tech
 
 Stack summary:
 [Brief description of tech stack]
 </output>
 ```
 
-**Step 2.2: Spawn agent**
+**Step 3.2: Spawn agent**
 ```
 Task(
   prompt=techPrompt,
@@ -195,20 +211,23 @@ Task(
 
 ### Spawn Agent 2: Architecture Focus
 
-**Step 2.3: Build architecture focus prompt**
+**Step 3.3: Build architecture focus prompt**
 ```
+<project_root>${PROJECT_ROOT}</project_root>
+
 <focus_area>
 ${ARGUMENTS || 'entire codebase'}
 </focus_area>
 
 <objective>
-Map architecture and structure in the codebase.
+Map architecture and structure in the project at ${PROJECT_ROOT}.
 
-Create these MegaMemory concepts:
-1. codebase-architecture — patterns, design decisions, layers
-2. codebase-structure — directory layout, module organization
+IMPORTANT: All exploration (ls, find, grep, glob, read) must target ${PROJECT_ROOT}, not the current directory. Use absolute paths.
 
-Use megamemory:create_concept() for each concept.
+Create this MegaMemory concept:
+1. codebase-arch — architecture patterns, design decisions, layers, directory layout, module organization
+
+Use megamemory:create_concept() for the concept.
 </objective>
 
 <output>
@@ -216,15 +235,14 @@ Return confirmation when complete:
 ## ARCHITECTURE MAPPING COMPLETE
 
 Created concepts:
-- codebase-architecture
-- codebase-structure
+- codebase-arch
 
 Architecture summary:
 [Brief description of architecture]
 </output>
 ```
 
-**Step 2.4: Spawn agent**
+**Step 3.4: Spawn agent**
 ```
 Task(
   prompt=architecturePrompt,
@@ -236,20 +254,23 @@ Task(
 
 ### Spawn Agent 3: Quality Focus
 
-**Step 2.5: Build quality focus prompt**
+**Step 3.5: Build quality focus prompt**
 ```
+<project_root>${PROJECT_ROOT}</project_root>
+
 <focus_area>
 ${ARGUMENTS || 'entire codebase'}
 </focus_area>
 
 <objective>
-Map conventions and testing in the codebase.
+Map conventions and testing in the project at ${PROJECT_ROOT}.
 
-Create these MegaMemory concepts:
-1. codebase-conventions — style guides, naming patterns, coding standards
-2. codebase-testing — test framework, coverage, test structure
+IMPORTANT: All exploration (ls, find, grep, glob, read) must target ${PROJECT_ROOT}, not the current directory. Use absolute paths.
 
-Use megamemory:create_concept() for each concept.
+Create this MegaMemory concept:
+1. codebase-quality — coding conventions, style guides, naming patterns, test framework, coverage, test structure
+
+Use megamemory:create_concept() for the concept.
 </objective>
 
 <output>
@@ -257,15 +278,14 @@ Return confirmation when complete:
 ## QUALITY MAPPING COMPLETE
 
 Created concepts:
-- codebase-conventions
-- codebase-testing
+- codebase-quality
 
 Quality summary:
 [Brief description of conventions and testing]
 </output>
 ```
 
-**Step 2.6: Spawn agent**
+**Step 3.6: Spawn agent**
 ```
 Task(
   prompt=qualityPrompt,
@@ -277,14 +297,18 @@ Task(
 
 ### Spawn Agent 4: Concerns Focus
 
-**Step 2.7: Build concerns focus prompt**
+**Step 3.7: Build concerns focus prompt**
 ```
+<project_root>${PROJECT_ROOT}</project_root>
+
 <focus_area>
 ${ARGUMENTS || 'entire codebase'}
 </focus_area>
 
 <objective>
-Map concerns and technical debt in the codebase.
+Map concerns and technical debt in the project at ${PROJECT_ROOT}.
+
+IMPORTANT: All exploration (ls, find, grep, glob, read) must target ${PROJECT_ROOT}, not the current directory. Use absolute paths.
 
 Create MegaMemory concept:
 1. codebase-concerns — technical debt, known issues, security considerations, performance concerns
@@ -304,7 +328,7 @@ Concerns summary:
 </output>
 ```
 
-**Step 2.8: Spawn agent**
+**Step 3.8: Spawn agent**
 ```
 Task(
   prompt=concernsPrompt,
@@ -314,46 +338,66 @@ Task(
 )
 ```
 
-## 3. Wait for Agents to Complete
+## 4. Wait for Agents to Complete
 
 Wait for all 4 mapper agents to complete. Collect confirmations (NOT concept contents).
 
 Display progress as agents return.
 
-## 4. Verify Codebase Concepts
+## 5. Verify Codebase Concepts
 
-**Step 4.1: Query all codebase concepts**
+**Step 5.1: Query all codebase concepts**
 ```
 megamemory_understand(query="codebase", top_k=20)
 ```
 
-**Step 4.2: Check for expected concepts**
+**Step 5.2: Check for expected concepts**
 
-Verify all 7 concepts were created:
-- [ ] codebase-stack
-- [ ] codebase-integrations
-- [ ] codebase-architecture
-- [ ] codebase-structure
-- [ ] codebase-conventions
-- [ ] codebase-testing
+Verify all 4 concepts were created:
+- [ ] codebase-tech
+- [ ] codebase-arch
+- [ ] codebase-quality
 - [ ] codebase-concerns
 
-**Step 4.3: Display verification results**
+**Step 5.3: Display verification results**
 
 If any concept missing:
 → Display: "Warning: Some concepts were not created: {missing concepts}"
 
 If all concepts present:
-→ Display: "All 7 codebase concepts created successfully"
+→ Display: "All 4 codebase concepts created successfully"
 
-## 5. Update State Concept
+**Step 5.4: Create codebase root concept**
 
-**Step 5.1: Extract state ID**
+Create a `codebase` module concept that groups the 4 sub-concepts into one discoverable entry:
+
+```
+megamemory_create_concept({
+  name: "codebase",
+  kind: "module",
+  summary: "Codebase analysis: tech stack, architecture, quality conventions, and concerns.",
+  parent_id: HAS_PROJECT ? PROJECT_ROOT_ID : null,
+  edges: [
+    { to: "codebase-tech", relation: "connects_to" },
+    { to: "codebase-arch", relation: "connects_to" },
+    { to: "codebase-quality", relation: "connects_to" },
+    { to: "codebase-concerns", relation: "connects_to" }
+  ]
+})
+```
+
+If this concept already exists (refresh scenario), use `megamemory_update_concept` instead.
+
+## 6. Update State Concept
+
+**Skip this step if `HAS_PROJECT` is false** (no state concept to update).
+
+**Step 6.1: Extract state ID**
 ```
 const stateId = stateResponse.matches[0].id
 ```
 
-**Step 5.2: Build updated state data**
+**Step 6.2: Build updated state data**
 ```
 const updatedStateData = {
   ...stateData,
@@ -363,7 +407,7 @@ const updatedStateData = {
 }
 ```
 
-**Step 5.3: Update state concept**
+**Step 6.3: Update state concept**
 ```
 megamemory_update_concept(
   id=stateId,
@@ -373,7 +417,7 @@ megamemory_update_concept(
 )
 ```
 
-## 6. Present Completion Summary
+## 7. Present Completion Summary
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -387,7 +431,7 @@ Architecture: [summary from agent 2]
 Conventions: [summary from agent 3]
 Concerns: [summary from agent 4]
 
-7 concepts created in MegaMemory
+5 concepts created in MegaMemory (codebase + 4 sub-concepts)
 
 ────────────────────────────────────────────────────────────
 
@@ -412,11 +456,12 @@ ${!stateData.current_phase
 </process>
 
 <success_criteria>
-- [ ] MegaMemory validated (roots exist)
+- [ ] MegaMemory validated (connectivity OK)
 - [ ] All 4 parallel mapper agents spawned
 - [ ] Agents completed without errors
-- [ ] All 7 codebase concepts created in MegaMemory
+- [ ] All 4 codebase concepts created in MegaMemory (codebase-tech, codebase-arch, codebase-quality, codebase-concerns)
 - [ ] Codebase concepts verified
-- [ ] State concept updated with mapping status
+- [ ] `codebase` root concept created grouping the 4 sub-concepts
+- [ ] State concept updated with mapping status (if project exists)
 - [ ] User knows next steps
 </success_criteria>

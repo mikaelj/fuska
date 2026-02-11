@@ -1297,93 +1297,84 @@ See `~/.config/opencode/get-shit-done/references/tdd.md` for TDD plan structure.
 <task_commit>
 ## Task Commit Protocol
 
-After each task completes (verification passed, done criteria met), commit immediately:
+**Commit behavior depends on `git.commit_strategy` from the config concept.** Default: `per-phase`.
 
-**1. Identify modified files:**
+### After each task completes (verification passed, done criteria met):
 
-Track files changed during this specific task (not the entire plan):
+**Step 1. Stage task-related files (ALL strategies):**
 
 ```bash
 git status --short
 ```
 
-**2. Stage only task-related files:**
-
 Stage each file individually (NEVER use `git add .` or `git add -A`):
 
 ```bash
-# Example - adjust to actual files modified by this task
 git add src/api/auth.ts
 git add src/types/user.ts
 ```
 
-**3. Determine commit type:**
+**Step 2. Commit or defer (strategy-dependent):**
 
-| Type | When to Use | Example |
-|------|-------------|---------|
-| `feat` | New feature, endpoint, component, functionality | feat(08-02): create user registration endpoint |
-| `fix` | Bug fix, error correction | fix(08-02): correct email validation regex |
-| `test` | Test-only changes (TDD RED phase) | test(08-02): add failing test for password hashing |
-| `refactor` | Code cleanup, no behavior change (TDD REFACTOR phase) | refactor(08-02): extract validation to helper |
-| `perf` | Performance improvement | perf(08-02): add database index for user lookups |
-| `docs` | Documentation changes | docs(08-02): add API endpoint documentation |
-| `style` | Formatting, linting fixes | style(08-02): format auth module |
-| `chore` | Config, tooling, dependencies | chore(08-02): add bcrypt dependency |
-
-**4. Craft commit message:**
-
-Format: `{type}({phase}-{plan}): {task-name-or-description}`
+**If `per-task`:** Commit immediately.
 
 ```bash
 git commit -m "{type}({phase}-{plan}): {concise task description}
 
-- {key change 1}
-- {key change 2}
-- {key change 3}
+- {high-level change 1}
+- {high-level change 2}
 "
 ```
 
-**Examples:**
+**If `per-plan`:** Do NOT commit. Files stay staged. Commit once after ALL tasks in this plan complete:
 
 ```bash
-# Standard plan task
-git commit -m "feat(08-02): create user registration endpoint
+git commit -m "{type}({phase}-{plan}): {plan objective summary}
 
-- POST /auth/register validates email and password
-- Checks for duplicate users
-- Returns JWT token on success
-"
-
-# Another standard task
-git commit -m "fix(08-02): correct email validation regex
-
-- Fixed regex to accept plus-addressing
-- Added tests for edge cases
+- {task 1}: {one-line summary}
+- {task 2}: {one-line summary}
 "
 ```
 
-**Note:** TDD plans have their own commit pattern (test/feat/refactor for RED/GREEN/REFACTOR phases). See `<tdd_plan_execution>` section above.
+**If `per-phase`:** Do NOT commit. Files stay staged. The execute-phase orchestrator commits when the entire phase completes.
 
-**5. Record commit hash:**
-
-After committing, capture hash for Summary concept:
+**Step 3. Record commit hash (per-task and per-plan only):**
 
 ```bash
 TASK_COMMIT=$(git rev-parse --short HEAD)
-echo "Task ${TASK_NUM} committed: ${TASK_COMMIT}"
 ```
 
-Store in array or list for Summary concept generation:
-```bash
-TASK_COMMITS+=("Task ${TASK_NUM}: ${TASK_COMMIT}")
+### Commit message rules (CRITICAL)
+
+**LLMs default to extremely verbose commit messages. You MUST resist this.**
+
+- Subject line: max 72 chars, imperative mood
+- Body: **maximum 2-4 bullet points.** Never more.
+- Each bullet is ONE high-level sentence
+- **NEVER** list: imports, field names, parameter details, null checks, constructor changes
+- **NEVER** restate what the diff shows — explain *what* and *why*, not *how*
+
+**BAD** (10 bullets restating the diff — do NOT do this):
+```
+feat(02-02): parse discounts from API response
+
+- Added import api_price_calc.dart to data_parser.dart
+- Created _parseDiscounts() helper method
+- Extracts common fields: id, name, description, type
+- Uses pattern matching on type field
+- Maps snake_case to camelCase fields
+...
 ```
 
-**Atomic commit benefits:**
-- Each task independently revertable
-- Git bisect finds exact failing task
-- Git blame traces line to specific task context
-- Clear history for OpenCode in future sessions
-- Better observability for AI-automated workflow
+**GOOD** (2 bullets, high-level):
+```
+feat(02-02): parse discounts from API response
+
+- Map discount JSON to typed Discount subclasses via pattern matching
+- Assign parsed discounts to User after construction
+```
+
+**Note:** TDD plans have their own commit pattern (test/feat/refactor for RED/GREEN/REFACTOR phases). See `<tdd_plan_execution>` section above.
 
 </task_commit>
 
@@ -1993,22 +1984,26 @@ megamemory:update_concept({
 - Add completion date
 </step>
 
-<step name="git_commit_metadata">
-**Note: This step only commits code changes. All planning state is in MegaMemory.**
+<step name="git_commit_plan">
+**Commit staged files if `git.commit_strategy` is `per-plan`.**
 
-All state including agent tracking is in MegaMemory — no local planning files to commit. Only commit code changes (already done per task). No metadata commit needed for planning docs.
+All planning state is in MegaMemory — no metadata commits needed.
 
-**Git log after plan execution:**
+**If `per-plan`:** All tasks staged their files without committing. Now commit everything:
 
+```bash
+git commit -m "{type}({phase}-{plan}): {plan objective summary}
+
+- {task 1}: {one-line summary}
+- {task 2}: {one-line summary}
+"
 ```
-abc123f feat(08-02): add email confirmation flow
-def456g feat(08-02): implement password hashing with bcrypt
-hij789k feat(08-02): create user registration endpoint
-```
 
-Each task has its own commit. Planning state is tracked in MegaMemory concepts.
+**If `per-task`:** All tasks already committed individually. Nothing to do here.
 
-See `git-integration.md` (loaded via required_reading) for commit message conventions.
+**If `per-phase`:** Do NOT commit. Files stay staged for the execute-phase orchestrator.
+
+**Commit message rules:** Max 2-4 bullets. Never list implementation details. See `git-integration.md` commit_message_rules.
 </step>
 
 <step name="update_codebase_map">

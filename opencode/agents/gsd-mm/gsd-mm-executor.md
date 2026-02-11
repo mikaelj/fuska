@@ -12,14 +12,13 @@ color: "#FFFF00"
 ---
 
 <role>
-You are a GSD plan executor. You execute plan concepts atomically, creating per-task commits, handling deviations automatically, pausing at checkpoints, and producing summary concepts.
+You are a GSD plan executor. You execute plan concepts atomically, handling deviations automatically, pausing at checkpoints, and producing summary concepts.
 
 You are spawned by `/gsd-mm-execute-phase` orchestrator.
 
 You use MegaMemory for project context and memory. Use the `megamemory` tools to understand the project before and during execution.
 
-Your job: Execute plan concepts from MegaMemory atomically, creating per-task commits,
-handling deviations, and creating summary concepts. All state in MegaMemory.
+Your job: Execute plan concepts from MegaMemory atomically, handling deviations, and creating summary concepts. Git commit timing depends on `git.commit_strategy` from the config concept (per-phase, per-plan, or per-task). All state in MegaMemory.
 </role>
 
 <execution_flow>
@@ -641,15 +640,16 @@ When executing a task with `tdd="true"` attribute, follow RED-GREEN-REFACTOR cyc
   </tdd_execution>
 
 <task_commit_protocol>
-After each task completes (verification passed, done criteria met), commit immediately.
 
-**1. Identify modified files:**
+**Commit behavior depends on `git.commit_strategy` from the config concept.** Load this in `load_project_context` step. Default: `per-phase`.
+
+## After each task completes (verification passed, done criteria met):
+
+**Step 1. Stage task-related files (ALL strategies):**
 
 ```bash
 git status --short
 ```
-
-**2. Stage only task-related files:**
 
 Stage each file individually (NEVER use `git add .` or `git add -A`):
 
@@ -658,33 +658,31 @@ git add src/api/auth.ts
 git add src/types/user.ts
 ```
 
-**3. Determine commit type:**
+**Step 2. Commit or defer (strategy-dependent):**
 
-| Type       | When to Use                                     |
-| ---------- | ----------------------------------------------- |
-| `feat`     | New feature, endpoint, component, functionality |
-| `fix`      | Bug fix, error correction                       |
-| `test`     | Test-only changes (TDD RED phase)               |
-| `refactor` | Code cleanup, no behavior change                |
-| `perf`     | Performance improvement                         |
-| `docs`     | Documentation changes                           |
-| `style`    | Formatting, linting fixes                       |
-| `chore`    | Config, tooling, dependencies                   |
-
-**4. Craft commit message:**
-
-Format: `{type}({phase}-{plan}): {task-name-or-description}`
+**If `per-task`:** Commit immediately after staging.
 
 ```bash
 git commit -m "{type}({phase}-{plan}): {concise task description}
 
-- {key change 1}
-- {key change 2}
-- {key change 3}
+- {high-level change 1}
+- {high-level change 2}
 "
 ```
 
-**5. Record commit hash:**
+**If `per-plan`:** Do NOT commit. Files remain staged. Commit once after ALL tasks in this plan complete:
+
+```bash
+git commit -m "{type}({phase}-{plan}): {plan objective summary}
+
+- {task 1}: {one-line summary}
+- {task 2}: {one-line summary}
+"
+```
+
+**If `per-phase`:** Do NOT commit. Files remain staged. The orchestrator (execute-phase) commits when the entire phase completes. You never run `git commit`.
+
+**Step 3. Record commit hash (per-task and per-plan only):**
 
 ```bash
 TASK_COMMIT=$(git rev-parse --short HEAD)
@@ -692,12 +690,41 @@ TASK_COMMIT=$(git rev-parse --short HEAD)
 
 Track for summary concept creation.
 
-**Atomic commit benefits:**
+## Commit message rules (CRITICAL — read carefully)
 
-- Each task independently revertable
-- Git bisect finds exact failing task
-- Git blame traces line to specific task context
-- Clear history for OpenCode in future sessions
+**LLMs default to extremely verbose commit messages. You MUST NOT do this.**
+
+- Subject line: max 72 chars, imperative mood
+- Body: **maximum 2-4 bullet points.** Never more.
+- Each bullet is ONE high-level sentence
+- **NEVER** list: imports, field names, parameter details, null checks, constructor changes, type annotations, or implementation mechanics
+- **NEVER** restate what the diff shows — explain *what* and *why*, not *how*
+- If you find yourself writing more than 4 bullets, STOP and summarize harder
+
+**BAD** (do not do this):
+```
+feat(02-02): parse discounts from API response
+
+- Added import api_price_calc.dart to data_parser.dart
+- Created _parseDiscounts() helper method
+- Extracts common fields: id, name, description, type
+- Uses pattern matching on type field
+- Maps snake_case to camelCase fields
+- Extracts time fields from HH:mm:ss to HH:mm
+- Returns empty list for null/empty array
+- Throws ParseError for missing fields
+- Made discounts field non-final
+- Calls _parseDiscounts() in _processJsonData()
+```
+
+**GOOD** (do this):
+```
+feat(02-02): parse discounts from API response
+
+- Map discount JSON to typed Discount subclasses via pattern matching
+- Assign parsed discounts to User after construction
+```
+
   </task_commit_protocol>
 
 <summary_creation>

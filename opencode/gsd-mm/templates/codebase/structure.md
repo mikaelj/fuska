@@ -9,7 +9,7 @@ Template for codebase STRUCTURE documentation - captures physical file organizat
 ## MegaMemory Schema
 
 ```typescript
-// Concept: codebase-structure
+// Concept: codebase-arch (structure section)
 interface StructureConcept {
   name: string;
   kind: "component";

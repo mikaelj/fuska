@@ -684,15 +684,20 @@ console.log("Commits per plan:", commitCounts);
 
 <commit_points>
 
-| Event                   | Commit? | Why                                              |
-| ----------------------- | ------- | ------------------------------------------------ |
-| BRIEF + ROADMAP created | YES     | Project initialization                           |
-| PLAN concept created    | NO      | Intermediate - commit with plan completion       |
-| RESEARCH concept created | NO      | Intermediate                                     |
-| DISCOVERY concept created | NO      | Intermediate                                     |
-| **Task completed**      | YES     | Atomic unit of work (1 commit per task)         |
-| **Plan completed**      | YES     | Metadata commit (SUMMARY + STATE + ROADMAP)     |
-| Handoff created         | YES     | WIP state preserved                              |
+Commit timing depends on the `git.commit_strategy` setting in the config concept. Default: `per-phase`.
+
+| Event                    | per-phase | per-plan | per-task | Why                                    |
+| ------------------------ | --------- | -------- | -------- | -------------------------------------- |
+| BRIEF + ROADMAP created  | YES       | YES      | YES      | Project initialization                 |
+| PLAN concept created     | NO        | NO       | NO       | Intermediate — MegaMemory tracks this  |
+| RESEARCH concept created | NO        | NO       | NO       | Intermediate                           |
+| DISCOVERY concept created| NO        | NO       | NO       | Intermediate                           |
+| **Task completed**       | stage     | stage    | COMMIT   | Stage files; commit only if per-task   |
+| **Plan completed**       | stage     | COMMIT   | —        | Commit if per-plan; already done if per-task |
+| **Phase completed**      | COMMIT    | —        | —        | Commit if per-phase                    |
+| Handoff created          | YES       | YES      | YES      | WIP state preserved                    |
+
+**"stage" means:** `git add` the files but do NOT commit yet. The commit happens at the boundary defined by the strategy.
 
 </commit_points>
 
@@ -707,107 +712,154 @@ If NO_GIT: Run `git init` silently. GSD projects always get their own repo.
 
 <commit_formats>
 
+<commit_message_rules>
+
+## Commit Message Rules
+
+**CRITICAL: LLMs tend to write extremely verbose commit messages by default. Fight this tendency.**
+
+These rules apply to ALL commit strategies. Every commit message MUST follow them.
+
+### Subject line
+- Max 72 characters
+- Imperative mood ("add X", "fix Y", not "added X", "fixes Y")
+- Format: `{type}({scope}): {description}`
+
+### Body
+- **Maximum 2-4 bullet points.** Never more.
+- Each bullet is ONE high-level sentence describing *what* changed and *why*
+- **NEVER** list: imports added, field names, parameter details, null checks, constructor changes, variable renamings, or any implementation mechanics
+- **NEVER** restate what the diff already shows — the diff is the source of truth for *how*
+- If you can't summarize a change in 2-4 bullets, your commit is too large — but still limit to 4 bullets
+
+### Commit types
+- `feat` — New feature/functionality
+- `fix` — Bug fix
+- `test` — Test-only (TDD RED phase)
+- `refactor` — Code cleanup, no behavior change
+- `perf` — Performance improvement
+- `chore` — Dependencies, config, tooling
+
+### What a BAD commit message looks like (DO NOT DO THIS)
+```
+feat(phase-02-plan-02): Parse discounts array from API response and map to Discount subclasses
+
+- Added import 'package:goride/util/api_price_calc.dart' to data_parser.dart
+- Created _parseDiscounts() helper method that parses discounts array from API JSON
+- Extracts common fields: id, name, description, type
+- Uses pattern matching on type field to create Discount subclass instances:
+  * PercentWindowDiscount (percent_discount, start_day_of_week, ...)
+  * PercentLengthDiscount (percent_discount, length_minutes)
+  * FeeWindowDiscount (fixed_fee, start_day_of_week, ...)
+  * FeeLengthDiscount (fixed_fee, max_minutes)
+- Maps snake_case API fields to camelCase Discount fields
+- Extracts time fields from HH:mm:ss to HH:mm format
+- Returns empty list for null/empty discounts array
+- Throws ParseError for missing required fields
+- Made discounts field non-final in User class
+- Calls _parseDiscounts() in _processJsonData() after currentUser assignment
+```
+This is 11 bullet points restating the diff. Completely useless.
+
+### What a GOOD commit message looks like (DO THIS)
+```
+feat(02-02): parse discounts from API response
+
+- Map discount JSON to typed Discount subclasses via pattern matching
+- Assign parsed discounts to User after construction
+```
+Two bullets. High-level. The diff shows the rest.
+
+</commit_message_rules>
+
 <format name="initialization">
-## Project Initialization (brief + roadmap together)
+## Project Initialization
 
 ```
 docs: initialize [project-name] ([N] phases)
 
-[One-liner from PROJECT.md]
-
-Phases:
-1. [phase-name]: [goal]
-2. [phase-name]: [goal]
-3. [phase-name]: [goal]
+[One-liner project description]
 ```
 
-What to commit:
-
 ```bash
-# Note: MegaMemory concepts are not committed to git
-# MM data persists outside git - no planning artifact git operations needed
 git commit
 ```
 
 </format>
 
-<format name="task-completion">
-## Task Completion (During Plan Execution)
+<format name="per-task">
+## Per-Task Commit (when `git.commit_strategy` = `per-task`)
 
 Each task gets its own commit immediately after completion.
 
 ```
-{type}({phase}-{plan}): {task-name}
+{type}({phase}-{plan}): {concise task description}
 
-- [Key change 1]
-- [Key change 2]
-- [Key change 3]
+- {high-level change 1}
+- {high-level change 2}
 ```
 
-**Commit types:**
-- `feat` - New feature/functionality
-- `fix` - Bug fix
-- `test` - Test-only (TDD RED phase)
-- `refactor` - Code cleanup (TDD REFACTOR phase)
-- `perf` - Performance improvement
-- `chore` - Dependencies, config, tooling
-
-**Examples:**
+**Max 2-4 bullets. See commit message rules above.**
 
 ```bash
-# Standard task
-git add src/api/auth.ts src/types/user.ts
-git commit -m "feat(08-02): create user registration endpoint
+git add src/specific/file.ts tests/specific.test.ts
+git commit -m "feat(02-01): add user registration endpoint
 
-- POST /auth/register validates email and password
-- Checks for duplicate users
-- Returns JWT token on success
-"
-
-# TDD task - RED phase
-git add src/__tests__/jwt.test.ts
-git commit -m "test(07-02): add failing test for JWT generation
-
-- Tests token contains user ID claim
-- Tests token expires in 1 hour
-- Tests signature verification
-"
-
-# TDD task - GREEN phase
-git add src/utils/jwt.ts
-git commit -m "feat(07-02): implement JWT generation
-
-- Uses jose library for signing
-- Includes user ID and expiry claims
-- Signs with HS256 algorithm
+- Validate email/password and check for duplicates
+- Return JWT token on success
 "
 ```
 
 </format>
 
-<format name="plan-completion">
-## Plan Completion (After All Tasks Done)
+<format name="per-plan">
+## Per-Plan Commit (when `git.commit_strategy` = `per-plan`)
 
-After all tasks committed, one final metadata commit captures plan completion.
+All tasks in a plan are staged as they complete. One commit when the plan finishes.
 
 ```
-docs({phase}-{plan}): complete [plan-name] plan
+{type}({phase}-{plan}): {plan objective summary}
 
-Tasks completed: [N]/[N]
-- [Task 1 name]
-- [Task 2 name]
-- [Task 3 name]
+- {task 1}: {one-line summary}
+- {task 2}: {one-line summary}
+- {task 3}: {one-line summary}
 ```
 
-What to commit:
+One bullet per task. Each bullet is one sentence max.
 
 ```bash
-# Note: MegaMemory concepts are not committed to git
-# MM data persists outside git - only commit source code changes
-git commit
+git commit -m "feat(02-01): JWT auth with refresh token rotation
+
+- Set up jose library and token generation
+- Add refresh token rotation with secure storage
+- Protect routes with auth middleware
+"
 ```
 
-**Note:** Code files NOT included - already committed per-task.
+</format>
+
+<format name="per-phase">
+## Per-Phase Commit (when `git.commit_strategy` = `per-phase`)
+
+All tasks across all plans are staged as they complete. One commit when the phase finishes.
+
+```
+{type}(phase-{NN}): {phase goal summary}
+
+- Plan {NN}-01: {one-line summary}
+- Plan {NN}-02: {one-line summary}
+```
+
+One bullet per plan. Each bullet is one sentence max.
+
+```bash
+git commit -m "feat(phase-02): user authentication system
+
+- Plan 02-01: JWT generation and validation with jose
+- Plan 02-02: refresh token rotation and secure storage
+- Plan 02-03: protected route middleware
+"
+```
 
 </format>
 
@@ -818,15 +870,13 @@ git commit
 wip: [phase-name] paused at task [X]/[Y]
 
 Current: [task name]
-[If blocked:] Blocked: [reason]
 ```
 
-What to commit:
-
 ```bash
-# Note: MegaMemory concepts are not committed to git
-# MM data persists outside git - only commit source code changes
-git commit
+git add -u && git commit -m "wip: auth paused at task 2/5
+
+Current: refresh token rotation
+"
 ```
 
 </format>
@@ -852,93 +902,72 @@ git commit
 
 <example_log>
 
-**Old approach (per-plan commits):**
+## Example Git Logs by Strategy
+
+**per-phase (recommended — cleanest history):**
 ```
-a7f2d1 feat(checkout): Stripe payments with webhook verification
-3e9c4b feat(products): catalog with search, filters, and pagination
-8a1b2c feat(auth): JWT with refresh rotation using jose
-5c3d7e feat(foundation): Next.js 15 + Prisma + Tailwind scaffold
+a7f2d1 feat(phase-04): checkout with Stripe payments
+3e9c4b feat(phase-03): product catalog with search and filters
+8a1b2c feat(phase-02): JWT auth with refresh token rotation
+5c3d7e feat(phase-01): Next.js 15 + Prisma + Tailwind scaffold
 2f4a8d docs: initialize ecommerce-app (5 phases)
 ```
 
-**New approach (per-task commits):**
+**per-plan (moderate granularity):**
 ```
-# Phase 04 - Checkout
-1a2b3c docs(04-01): complete checkout flow plan
+4d5e6f feat(04-01): checkout flow with Stripe sessions
+7g8h9i feat(03-02): product listing with pagination
+9s0t1u feat(03-01): product catalog schema
+8b9c0d feat(02-02): refresh token rotation
+7k8l9m feat(02-01): JWT generation and validation
+6t7u8v feat(01-01): project scaffold
+2f4a8d docs: initialize ecommerce-app (5 phases)
+```
+
+**per-task (most granular):**
+```
 4d5e6f feat(04-01): add webhook signature verification
 7g8h9i feat(04-01): implement payment session creation
 0j1k2l feat(04-01): create checkout page component
-
-# Phase 03 - Products
-3m4n5o docs(03-02): complete product listing plan
-6p7q8r feat(03-02): add pagination controls
-9s0t1u feat(03-02): implement search and filters
-2v3w4x feat(03-01): create product catalog schema
-
-# Phase 02 - Auth
-5y6z7a docs(02-02): complete token refresh plan
 8b9c0d feat(02-02): implement refresh token rotation
 1e2f3g test(02-02): add failing test for token refresh
-4h5i6j docs(02-01): complete JWT setup plan
 7k8l9m feat(02-01): add JWT generation and validation
 0n1o2p chore(02-01): install jose library
-
-# Phase 01 - Foundation
-3q4r5s docs(01-01): complete scaffold plan
 6t7u8v feat(01-01): configure Tailwind and globals
 9w0x1y feat(01-01): set up Prisma with database
 2z3a4b feat(01-01): create Next.js 15 project
-
-# Initialization
-5c6d7e docs: initialize ecommerce-app (5 phases)
+2f4a8d docs: initialize ecommerce-app (5 phases)
 ```
-
-Each plan produces 2-4 commits (tasks + metadata). Clear, granular, bisectable.
 
 </example_log>
 
 <anti_patterns>
 
-**Still don't commit (intermediate artifacts):**
+**Never commit (intermediate artifacts):**
 - Planning artifacts (MegaMemory persists them)
 - PLAN concept creation (MegaMemory stores it)
 - RESEARCH concept (intermediate, stored in MegaMemory)
 - DISCOVERY concept (intermediate, stored in MegaMemory)
-- Minor planning tweaks (MegaMemory tracking)
-- "Fixed typo in roadmap" (MegaMemory handles this)
+- Plan-completion metadata (`docs({phase}-{plan}): complete X plan` — MegaMemory tracks completion, not git)
 
 **Do commit (outcomes):**
-- Each task completion (feat/fix/test/refactor) - source code and tests
-- Project initialization (docs) - initial setup
-- Code changes only - never planning artifacts or MegaMemory data
-
-**Key principle:** Commit working code and shipped outcomes. MegaMemory handles all planning and context persistence.
+- Source code and tests — at the boundary defined by `git.commit_strategy`
+- Project initialization — always
+- Handoff (WIP) — always
+- Code changes only — never planning artifacts or MegaMemory data
 
 </anti_patterns>
 
 <commit_strategy_rationale>
 
-## Why Per-Task Commits?
+## Choosing a Commit Strategy
 
-**Context engineering for AI:**
-- Git history becomes primary context source for future OpenCode sessions
-- `git log --grep="{phase}-{plan}"` shows all work for a plan
-- `git diff <hash>^..<hash>` shows exact changes per task
-- Less reliance on parsing SUMMARY concepts = more context for actual work
+**per-phase (default):** Cleanest git history. One commit per phase. Best for solo dev + AI workflows where MegaMemory already tracks granular progress. You rarely need to bisect individual tasks when MegaMemory knows exactly what each task did.
 
-**Failure recovery:**
-- Task 1 committed ✅, Task 2 failed ❌
-- OpenCode in next session: sees task 1 complete, can retry task 2
-- Can `git reset --hard` to last successful task
+**per-plan:** Middle ground. Useful when phases are large and you want some ability to revert individual plans without losing a whole phase.
 
-**Debugging:**
-- `git bisect` finds exact failing task, not just failing plan
-- `git blame` traces line to specific task context
-- Each commit is independently revertable
+**per-task:** Most granular. Each task is independently revertable and bisectable. Use when you need fine-grained git history (e.g., working with other developers who read git log, or when MegaMemory is not available for context).
 
-**Observability:**
-- Solo developer + OpenCode workflow benefits from granular attribution
-- Atomic commits are git best practice
-- "Commit noise" irrelevant when consumer is OpenCode, not humans
+**Failure recovery across all strategies:** MegaMemory tracks task completion regardless of commit strategy. If an agent crashes mid-phase, it resumes from the last completed task (not the last commit). Uncommitted work on disk is typically still present and can be staged by the resuming agent.
 
 </commit_strategy_rationale>

@@ -9,7 +9,7 @@ Template for codebase CONVENTIONS documentation - captures coding style and patt
 ## MegaMemory Schema
 
 ```typescript
-// Concept: coding-conventions
+// Concept: codebase-quality (conventions section)
 interface ConventionsConcept {
   name: string;
   kind: "pattern";

@@ -147,6 +147,10 @@ const hasSkipResearchFlag = $ARGUMENTS.includes("--skip-research")
 const hasGapsFlag = $ARGUMENTS.includes("--gaps")
 const hasSkipVerifyFlag = $ARGUMENTS.includes("--skip-verify")
 
+// Extract --mode flag for one-off override
+const modeMatch = $ARGUMENTS.match(/--mode\s+(\S+)/)
+const modeOverride = modeMatch ? modeMatch[1] : null
+
 // Extract phase number
 const phaseMatch = $ARGUMENTS.match(/\d+/)
 let phaseNumber = phaseMatch ? parseInt(phaseMatch[0]) : null
@@ -255,16 +259,30 @@ If hasGapsFlag === true:
 If hasSkipResearchFlag === true:
 → Skip to step 5
 
-**Step 4.3: Extract workflow.research from config**
+**Step 4.3: Extract workflow mode and derive research**
 
 Re-use configData from step 1.5:
 ```
-const researchEnabled = configData.workflow?.research !== false
+// Extract mode (with --mode flag override for one-off changes)
+const mode = modeOverride || configData.workflow?.mode || "standard"
+
+const modeConfig = {
+  direct: { research: false, planCheck: false },
+  quick: { research: false, planCheck: false },
+  fast: { research: false, planCheck: true },
+  balanced: { research: true, planCheck: false },
+  thorough: { research: true, planCheck: true },
+  standard: { research: true, planCheck: true }
+}[mode] || { research: true, planCheck: true };  // Default to standard
+
+// Allow per-phase flags to augment (never reduce)
+const shouldResearch = modeConfig.research || hasResearchFlag
+const shouldPlanCheck = modeConfig.planCheck && !hasSkipVerifyFlag
 ```
 
 **Step 4.4: Skip if research disabled**
 
-If researchEnabled === false AND hasResearchFlag === false:
+If shouldResearch === false:
 → Skip to step 5
 
 **Step 4.5: Check for existing research**
@@ -275,7 +293,7 @@ If researchExists === true AND hasResearchFlag === false:
 
 **Step 4.6: Spawning researcher (if needed)**
 
-If (researchExists === false OR hasResearchFlag === true) AND hasGapsFlag === false AND researchEnabled === true:
+If (researchExists === false OR hasResearchFlag === true) AND hasGapsFlag === false AND shouldResearch === true:
 
 Display:
 ```
@@ -573,8 +591,7 @@ Parse planner output:
 **`## PLANNING COMPLETE`:**
 - Display: `Planner created {N} plan(s). Concepts created in MegaMemory.`
 - If `--skip-verify`: Skip to step 13
-- Check config for plan_check setting (from step 1)
-- If `workflow.plan_check` is `false`: Skip to step 13
+- If `shouldPlanCheck` is `false`: Skip to step 13
 - Otherwise: Proceed to step 10
 
 **`## CHECKPOINT REACHED`:**

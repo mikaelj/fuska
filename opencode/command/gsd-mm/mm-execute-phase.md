@@ -60,6 +60,7 @@ Phase: `$ARGUMENTS`
 
 **Flags:**
 - `--gaps-only` — Execute only gap closure plans (plans with specific gap_closure marker in summary). Use after verify-work creates fix plans.
+- `--mode MODE` — Override workflow mode for this phase only (one-off, doesn't persist). Use to temporarily change mode.
 
 ## Context Loading (Single Pass)
 
@@ -69,6 +70,10 @@ Load all needed MegaMemory concepts upfront. All subsequent steps use these cach
 // Parse arguments first
 const phaseNumber = $ARGUMENTS.match(/\d+/)?.[0]
 const phaseSlug = `phase-${phaseNumber.padStart(2, '0')}`
+
+// Extract --mode flag for one-off override
+const modeMatch = $ARGUMENTS.match(/--mode\s+(\S+)/)
+const modeOverride = modeMatch ? modeMatch[1] : null
 
 // Load all context in sequence
 const configResponse = megamemory_understand(query="config", top_k=5)
@@ -91,6 +96,7 @@ const planConcepts = plansResponse.matches.map(m => ({
 const modelProfile = configData?.model_profile || "balanced"
 const parallelization = configData?.parallelization !== false // default: true
 const hasPlans = planConcepts.length > 0
+const commitStrategy = configData?.git?.commit_strategy || 'per-phase' // default: per-phase
 const branchingStrategy = configData?.git?.branching_strategy || 'none'
 const phaseBranchTemplate = configData?.git?.phase_branch_template || 'phase-${phaseNumber}'
 const milestoneBranchTemplate = configData?.git?.milestone_branch_template || 'milestone-v${phaseNumber}'
@@ -378,6 +384,7 @@ Task(
 
 Phase: ${phaseSlug}
 Plan: ${plan.name}
+Commit Strategy: ${commitStrategy}
 
 Plan Details:
 ${JSON.stringify(planFullData, null, 2)}
@@ -385,7 +392,9 @@ ${JSON.stringify(planFullData, null, 2)}
 Project State:
 ${JSON.stringify(stateData, null, 2)}
 
-Use plan's objective, tasks, and must_haves to guide implementation. When complete, create a summary concept named "${plan.name}-summary" using megamemory:create_concept with execution results.`
+Use plan's objective, tasks, and must_haves to guide implementation.
+Git commit strategy is "${commitStrategy}". If "per-phase", stage files but do NOT commit — the orchestrator commits when the phase completes. If "per-plan", stage files and commit once after all tasks complete. If "per-task", commit after each task.
+When complete, create a summary concept named "${plan.name}-summary" using megamemory:create_concept with execution results.`
 )
 ```
 
@@ -443,25 +452,45 @@ Status: All summaries created ✓
 
 ---
 
-8. **Check for orchestrator corrections**
+8. **Commit phase (if per-phase strategy) and handle orchestrator corrections**
 
-**Step 6.1: Run git status**
+**Step 6.1: Stage any orchestrator corrections**
 
 ```bash
 git status --porcelain
 ```
 
-**Step 6.2: Handle changes**
+If git status shows unstaged modified files (not already staged by executors):
+→ Stage them: `git add -u`
 
-If git status shows modified or staged files:
-→ Display: "Orchestrator corrections detected"
-→ Commit:
+**Step 6.2: Commit based on strategy**
+
+**If `commitStrategy === "per-phase"`:**
+
+All plan executors staged their files without committing. Now create the single phase commit:
+
 ```bash
-git add -u && git commit -m "fix(phase-${phaseNumber}): orchestrator corrections"
+git commit -m "feat(phase-${phaseNumber}): ${phaseGoal}
+
+- Plan ${phaseSlug}-01: ${plan1Summary}
+- Plan ${phaseSlug}-02: ${plan2Summary}
+"
 ```
 
-If git status is clean:
-→ Continue to step 7
+Populate plan summaries from the summary concepts collected in step 7 (aggregate results).
+
+**Commit message rules:** Max 2-4 bullets (one per plan). Never list implementation details. See `git-integration.md` commit_message_rules.
+
+**If `commitStrategy === "per-plan"` or `"per-task"`:**
+
+Plans/tasks already committed by executors. Only commit if orchestrator made its own corrections:
+
+```bash
+# Only if there are staged changes from orchestrator corrections
+git diff --cached --quiet || git commit -m "fix(phase-${phaseNumber}): orchestrator corrections"
+```
+
+**If git status is clean:** Continue to step 7.
 
 ---
 
@@ -474,22 +503,27 @@ Call:
 megamemory_understand(query="config", top_k=5)
 ```
 
-**Step 7.2: Extract workflow.verifier**
+**Step 7.2: Extract workflow mode and derive verifier**
 
 ```
 const configData = JSON.parse(response.matches[0].summary)
-const verifierEnabled = configData.workflow?.verifier !== false
+
+// Extract mode (with --mode flag override for one-off changes)
+const mode = modeOverride || configData.workflow?.mode || "standard"
+
+// Verifier only runs in standard mode, or if explicitly requested
+const shouldVerify = mode === "standard" || $ARGUMENTS.includes("--verify")
 ```
 
 **Step 7.3: Skip if verifier disabled**
 
-If verifierEnabled === false:
+If shouldVerify === false:
 → Display: "Verifier disabled — treating phase as passed"
 → Continue to step 8
 
 **Step 7.4: Spawn verifier**
 
-If verifierEnabled === true:
+If shouldVerify === true:
 ```
 Task(
   description=`Verify phase ${phaseNumber}`,

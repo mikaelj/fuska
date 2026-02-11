@@ -61,9 +61,13 @@ Do NOT modify agent .md files. This command updates the MegaMemory config concep
     }
   },
   workflow: {
+    mode: "standard" | "thorough" | "balanced" | "fast" | "quick" | "direct",
     research: boolean,
     plan_check: boolean,
     verifier: boolean
+  },
+  git: {
+    commit_strategy: "per-phase" | "per-plan" | "per-task"
   }
 }
 ```
@@ -111,7 +115,7 @@ Handle config state:
 - **Legacy (no `profiles` key):** Run **Preset Setup Wizard**, preserve other existing keys
 - **Current:** Use as-is
 
-Ensure `workflow` section exists (defaults: `research: true`, `plan_check: true`, `verifier: true`).
+Ensure `workflow` section exists (defaults: `mode: "standard"`, `research: true`, `plan_check: true`, `verifier: true`).
 
 ### Preset Setup Wizard
 
@@ -152,7 +156,7 @@ Create config with user selections:
     },
     "custom_overrides": { "quality": {}, "balanced": {}, "budget": {} }
   },
-  "workflow": { "research": true, "plan_check": true, "verifier": true }
+  "workflow": { "mode": "standard", "research": true, "plan_check": true, "verifier: true" }
 }
 ```
 
@@ -199,11 +203,21 @@ Active profile: {activeProfile}
 {if any overridden: "* = overridden" else: "No overrides"}
 
 Workflow:
-| Toggle     | Value                  |
-|------------|------------------------|
-| research   | {workflow.research}    |
-| plan_check | {workflow.plan_check}  |
-| verifier   | {workflow.verifier}    |
+| Mode        | Description                              |
+|-------------|------------------------------------------|
+| {mode} ({%})| {Brief description from mode table}     |
+
+Derived settings (read-only):
+| Toggle     | Value           |
+|------------|-----------------|
+| Research    | {On/Off}       |
+| Plan Check  | {On/Off}       |
+| Verifier    | {On/Off}       |
+
+Git:
+| Setting          | Value                                        |
+|------------------|----------------------------------------------|
+| commit_strategy  | {config.git?.commit_strategy || "per-phase"} |
 ```
 
 ## Step 4: Show Menu
@@ -216,6 +230,8 @@ question: "Choose an action"
 options:
   - label: "Quick settings"
     description: "Update profile and workflow toggles"
+  - label: "Git commit strategy"
+    description: "Change how often GSD commits during execution"
   - label: "Set stage override"
     description: "Set a per-stage model override for the active profile"
   - label: "Clear stage override"
@@ -230,21 +246,50 @@ options:
 
 ### Quick settings
 
-Use multi-question call with pre-selected current values:
+1. Query all config concepts: `megamemory:understand({ query: "config", top_k: 20 })`. For each match, extract `project_name`, `profiles.active_profile`, and `workflow.mode`.
+
+2. **Pick project** — If multiple projects exist, ask:
+
+```json
+{
+  "header": "Project",
+  "question": "Which project's settings do you want to change?",
+  "options": [
+    { "label": "{project_name_1}", "description": "Profile: {profile}, Mode: {mode_1}" },
+    { "label": "{project_name_2}", "description": "Profile: {profile}, Mode: {mode_2}" }
+  ]
+}
+```
+
+If only one project exists, skip this question and use it directly.
+
+3. **Pick settings** — Use multi-question call with pre-selected current values:
 
 ```json
 [
   { "header": "Model", "question": "Which model profile?", "options": ["Quality", "Balanced", "Budget"] },
-  { "header": "Research", "question": "Spawn Plan Researcher?", "options": ["Yes", "No"] },
-  { "header": "Plan Check", "question": "Spawn Plan Checker?", "options": ["Yes", "No"] },
-  { "header": "Verifier", "question": "Spawn Execution Verifier?", "options": ["Yes", "No"] }
+  { "header": "Workflow Mode", "question": "Which workflow mode?", "options": [
+    { "label": "Standard (90%)", "description": "Full workflow with all agents. Critical architecture, production systems." },
+    { "label": "Thorough (70%)", "description": "Research + plan check, no verifier. New domains, unfamiliar tech." },
+    { "label": "Balanced (50%)", "description": "Research + executor, no plan check/verifier. Moderate tech uncertainty." },
+    { "label": "Fast (30%)", "description": "Plan check + executor, no research. Familiar stacks, CRUD operations." },
+    { "label": "Quick (15%)", "description": "Planner → Executor only. Small tasks with known solutions." },
+    { "label": "Direct (0%)", "description": "Planner only. Todo list generation. You know exactly what to do." }
+  ]}
 ]
 ```
 
 On selection:
 
 - Map: Quality→`quality`, Balanced→`balanced`, Budget→`budget`
-- Set `profiles.active_profile`, `model_profile`, and `workflow.*` accordingly
+- Extract mode from selection (parse from label: "Standard (90%)" → "standard")
+- Set `profiles.active_profile`, `model_profile`, and `workflow.mode`
+- Store derived toggles based on mode mapping:
+  - Direct/Quick: `research: false, plan_check: false, verifier: false`
+  - Fast: `research: false, plan_check: true, verifier: false`
+  - Balanced: `research: true, plan_check: false, verifier: false`
+  - Thorough: `research: true, plan_check: true, verifier: false`
+  - Standard: `research: true, plan_check: true, verifier: true`
 - Quick settings does NOT modify `presets` or `custom_overrides`
 - If nothing changed, print `No changes.` and return to menu
 - Otherwise save and print confirmation banner:
@@ -257,6 +302,9 @@ On selection:
 | Setting            | Value                     |
 |--------------------|---------------------------|
 | Model Profile      | {quality|balanced|budget} |
+| Workflow Mode      | {standard|thorough|balanced|fast|quick|direct} |
+
+Derived settings (read-only):
 | Plan Researcher    | {On/Off}                  |
 | Plan Checker       | {On/Off}                  |
 | Execution Verifier | {On/Off}                  |
@@ -265,8 +313,59 @@ Note: Quit and relaunch OpenCode to apply model changes.
 
 Quick commands:
 - /gsd-mm-set-profile <profile>
-- /gsd-mm-plan-phase --research | --skip-research | --skip-verify
+- /gsd-mm-plan-phase --research | --skip-research | --skip-verify | --mode <MODE>
 ```
+
+### Git commit strategy
+
+1. Query all config concepts: `megamemory:understand({ query: "config", top_k: 20 })`. For each match, extract `project_name` and `git.commit_strategy`.
+
+2. **Pick project** — If multiple projects exist, ask:
+
+```json
+{
+  "header": "Project",
+  "question": "Which project's commit strategy do you want to change?",
+  "options": [
+    { "label": "{project_name_1}", "description": "Currently: {strategy_1}" },
+    { "label": "{project_name_2}", "description": "Currently: {strategy_2}" }
+  ]
+}
+```
+
+If only one project exists, skip this question and use it directly.
+
+3. **Pick strategy:**
+
+```json
+{
+  "header": "Strategy",
+  "question": "Which commit strategy?",
+  "options": [
+    { "label": "per-phase", "description": "One commit per phase (cleanest history)" },
+    { "label": "per-plan", "description": "One commit per plan (moderate granularity)" },
+    { "label": "per-task", "description": "One commit per task (most granular, best for bisect)" }
+  ]
+}
+```
+
+4. **Update config:** Set `config.git.commit_strategy` to the chosen value (create `git` object if missing). Use the selected config's `configId` for the `update_concept` call.
+
+5. Print confirmation banner:
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► GIT COMMIT STRATEGY UPDATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Setting          | Value          |
+|------------------|----------------|
+| Project          | {project_name} |
+| Old Strategy     | {old_strategy} |
+| New Strategy     | {new_strategy} |
+```
+
+Return to menu.
 
 ### Set stage override
 

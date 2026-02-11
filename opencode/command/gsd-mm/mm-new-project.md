@@ -79,7 +79,13 @@ Instead, only verify MegaMemory connectivity: call `megamemory:list_roots()`. If
 
    Check if a project already exists by calling `megamemory:list_roots`. This returns an array of root concepts, each with `{id, name, kind, summary}`. If any root with `kind="feature"` has a name matching the project, the project is already initialized — abort with "ERROR: Project already initialized. Use /gsd-mm-progress"
 
-2. **Initialize git repo in THIS directory** (required even if inside a parent repo):
+2. **Check if codebase is already mapped in MegaMemory:**
+   ```
+   megamemory:understand({ query: "codebase", top_k: 5 })
+   ```
+   If matches include a concept named `codebase` or any `codebase-*` concepts, set `HAS_CODEBASE_MAP="yes"`, otherwise `HAS_CODEBASE_MAP=""`.
+
+3. **Initialize git repo in THIS directory** (required even if inside a parent repo):
    ```bash
    if [ -d .git ] || [ -f .git ]; then
        echo "Git repo exists in current directory"
@@ -89,19 +95,13 @@ Instead, only verify MegaMemory connectivity: call `megamemory:list_roots()`. If
    fi
    ```
 
-3. **Detect existing code (brownfield detection):**
+4. **Detect existing code (brownfield detection):**
    ```bash
    CODE_FILES=$(find . -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.swift" -o -name "*.java" 2>/dev/null | grep -v node_modules | grep -v .git | head -20)
    HAS_PACKAGE=$([ -f package.json ] || [ -f requirements.txt ] || [ -f Cargo.toml ] || [ -f go.mod ] || [ -f Package.swift ] && echo "yes")
    ```
 
-   **Check if codebase is already mapped in MegaMemory:**
-   ```
-   megamemory:understand({ query: "codebase", top_k: 1 })
-   ```
-   If matches are returned, set `HAS_CODEBASE_MAP="yes"`, otherwise `HAS_CODEBASE_MAP=""`.
-
-   **You MUST run all bash commands above and the MegaMemory query before proceeding.**
+   **You MUST run all checks above before proceeding.**
 
 ## Phase 2: Brownfield Offer
 
@@ -115,12 +115,12 @@ Use question:
 - header: "Existing Code"
 - question: "I detected existing code in this directory. Would you like to map codebase first?"
 - options:
-  - "Map codebase first" — Run /gsd-map-codebase to understand existing architecture (Recommended)
+  - "Map codebase first" — Run /gsd-mm-map-codebase to understand existing architecture (Recommended)
   - "Skip mapping" — Proceed with project initialization
 
 **If "Map codebase first":**
 ```
-Run `/gsd-map-codebase` first, then return to `/gsd-mm-new-project`
+Run `/gsd-mm-map-codebase` first, then return to `/gsd-mm-new-project`
 ```
 Exit command.
 
@@ -343,6 +343,16 @@ questions: [
       { label: "Sequential", description: "One plan at a time" }
     ]
   },
+  {
+    header: "Commits",
+    question: "How should git commits be structured?",
+    multiSelect: false,
+    options: [
+      { label: "Per phase (Recommended)", description: "One commit when all plans in a phase complete" },
+      { label: "Per plan", description: "One commit per plan (groups all tasks in a plan)" },
+      { label: "Per task", description: "One commit per task (most granular)" }
+    ]
+  },
 ]
 ```
 
@@ -396,6 +406,9 @@ questions: [
       research: true|false,
       plan_check: true|false,
       verifier: true|false
+    },
+    git: {
+      commit_strategy: "per-phase|per-plan|per-task"  // default: "per-phase"
     }
   }),
   parent_id: projectSlug,

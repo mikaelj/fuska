@@ -9,7 +9,7 @@ Template for codebase ARCHITECTURE documentation - captures conceptual code orga
 ## MegaMemory Schema
 
 ```typescript
-// Concept: architecture
+// Concept: codebase-arch (architecture section)
 interface ArchitectureConcept {
   name: string;
   kind: "pattern";

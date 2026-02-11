@@ -9,7 +9,7 @@ Template for codebase TESTING documentation - captures test framework and patter
 ## MegaMemory Schema
 
 ```typescript
-// Concept: testing-patterns
+// Concept: codebase-quality (testing section)
 interface TestingConcept {
   name: string;
   kind: "pattern";

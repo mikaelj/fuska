@@ -9,7 +9,7 @@ Template for codebase INTEGRATIONS documentation - captures external service dep
 ## MegaMemory Schema
 
 ```typescript
-// Concept: external-integrations
+// Concept: codebase-tech (integrations section)
 interface IntegrationsConcept {
   name: string;
   kind: "config";
