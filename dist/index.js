@@ -14,7 +14,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.gitMessageCommand = exports.installCommand = exports.exportCommand = exports.migrateCommand = void 0;
+exports.configCommand = exports.gitMessageCommand = exports.installCommand = exports.exportCommand = exports.migrateCommand = void 0;
 __exportStar(require("./scripts/types"), exports);
 __exportStar(require("./scripts/helpers"), exports);
 __exportStar(require("./scripts/project-templates"), exports);
@@ -31,4 +31,6 @@ var install_1 = require("./commands/install");
 Object.defineProperty(exports, "installCommand", { enumerable: true, get: function () { return install_1.installCommand; } });
 var git_message_1 = require("./commands/git-message");
 Object.defineProperty(exports, "gitMessageCommand", { enumerable: true, get: function () { return git_message_1.gitMessageCommand; } });
+var config_1 = require("./commands/config");
+Object.defineProperty(exports, "configCommand", { enumerable: true, get: function () { return config_1.configCommand; } });
 //# sourceMappingURL=index.js.map

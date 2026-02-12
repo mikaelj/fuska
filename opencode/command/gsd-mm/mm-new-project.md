@@ -32,14 +32,14 @@ This is most leveraged moment in any project. Deep questioning here means better
 
  <execution_context>
  
- @~/.config/opencode/gsd-mm/references/preflight-check-connectivity.md
- @~/.config/opencode/gsd-mm/references/questioning.md
- @~/.config/opencode/gsd-mm/references/ui-brand.md
+ @./opencode/gsd-mm/references/preflight-check-connectivity.md
+ @./opencode/gsd-mm/references/questioning.md
+ @./opencode/gsd-mm/references/ui-brand.md
  
- @~/.config/opencode/gsd-mm/scripts/types.ts
- @~/.config/opencode/gsd-mm/scripts/project-templates.ts
- @~/.config/opencode/gsd-mm/scripts/phase-templates.ts
- @~/.config/opencode/gsd-mm/scripts/helpers.ts
+ @./opencode/gsd-mm/scripts/types.ts
+ @./opencode/gsd-mm/scripts/project-templates.ts
+ @./opencode/gsd-mm/scripts/phase-templates.ts
+ @./opencode/gsd-mm/scripts/helpers.ts
  
  </execution_context>
 

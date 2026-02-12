@@ -398,7 +398,7 @@ For small, ad-hoc tasks that don't need full phase planning:
 
 **When to use:** bug fixes, small refactorings, one-off tasks, unplanned work outside phase structure.
 
-**Note:** `/gsd-mm-do` creates standalone task concepts separate from your project's phase structure. For speed-focused work within a phase, use `/gsd-mm-plan-phase <N> --mode quick` instead. `/gsd-mm-quick` is deprecated in favor of `/gsd-mm-do`.
+**Note:** `/gsd-mm-do` creates standalone task concepts separate from your project's phase structure. For speed-focused work within a phase, use `/gsd-mm-plan-phase <N> --mode quick` instead.
 
 ### Milestones
 
@@ -504,7 +504,7 @@ A **stage** is a category of work in the GSD workflow. Each stage uses different
 | Mode | Workflow | What You Lose | What You Keep | Time Saved | Use When |
 |------|-----------|----------------|----------------|-------------|-----------|
 | **Direct** (0%) | Planner → Executor | Tech research, plan validation, code verification | Task breakdown, atomic commits, MegaMemory state | ~80% | You already know exactly what to do and need quick execution. This is essentially "give me a todo list and I'll do it." |
-| **Quick** (15%) | Planner → Executor | Tech research, plan validation, code verification | Task breakdown, atomic commits, deviation handling, state tracking | ~70% | Small tasks within a phase with known solutions. For unplanned ad-hoc tasks, use `/gsd-mm-quick` instead. |
+| **Quick** (15%) | Planner → Executor | Tech research, plan validation, code verification | Task breakdown, atomic commits, deviation handling, state tracking | ~70% | Small tasks with known solutions. For unplanned ad-hoc tasks, use `/gsd-mm-do` instead. |
 | **Fast** (30%) | Planner → Plan Checker → Executor | Tech research, code verification | Requirement coverage, task completeness, dependency validation, wiring checks, atomic commits | ~50% | You know the tech stack but want validated plans. Good for features in familiar stacks, CRUD operations, UI components |
 | **Balanced** (50%) | Researcher → Planner → Executor | Plan validation, code verification | Ecosystem research, standard patterns, pitfall avoidance, task breakdown, atomic commits | ~35% | Moderate tech uncertainty, want to avoid wrong library choices. Good for adding new library, exploring unfamiliar framework area, integration work |
 | **Thorough** (70%) | Researcher → Planner → Plan Checker → Executor | Code verification | Full plan validation, tech research, ecosystem patterns, atomic commits | ~20% | New domains, unfamiliar tech, need verified plans but will manually verify. Good for new feature areas, greenfield projects, learning new tech |
@@ -516,20 +516,20 @@ A **stage** is a category of work in the GSD workflow. Each stage uses different
 - Use `/gsd-mm-settings` to change workflow mode
 - Per-phase flags (`--research`, `--skip-verify`) augment your selected mode but never reduce it
 
-### Quick Mode vs /gsd-mm-quick
+### Quick Mode vs /gsd-mm-do
 
-| Aspect | Quick mode (`--mode quick`) | `/gsd-mm-quick` command |
+| Aspect | Quick mode (`--mode quick`) | `/gsd-mm-do` command |
 |---------|-----------------------------|---------------------------|
 | **Purpose** | Speed-focused planning within a phase | Unplanned ad-hoc tasks |
 | **Agent flow** | Planner → Executor only | Planner → Executor only |
-| **Concept storage** | Phase-based: `phase-01-plan-001` | Standalone: `quick-001-fix-typo` |
+| **Concept storage** | Phase-based: `phase-01-plan-001` | Standalone: `task-001-fix-typo` |
 | **Roadmap ties** | ✅ Tied to phase structure | ❌ Separate from roadmap |
-| **State updates** | Updates roadmap and phase status | Updates `state.quick_tasks_completed` |
-| **User input** | Must specify phase: `/gsd-mm-plan-phase 2 --mode quick` | Just run command, prompted: `/gsd-mm-quick` |
+| **State updates** | Updates roadmap and phase status | Updates `state.tasks_completed` |
+| **User input** | Must specify phase: `/gsd-mm-plan-phase 2 --mode quick` | Just run command, prompted: `/gsd-mm-do` |
 
 **Quick mode** (`--mode quick`) is for small tasks within a phase where you want GSD-MM guarantees (atomic commits, state tracking) but faster execution.
 
-**`/gsd-mm-quick`** is for unplanned work—bug fixes, small refactorings, one-off tasks—that you don't want to tie to any phase.
+**`/gsd-mm-do`** is for unplanned work—bug fixes, small refactorings, one-off tasks—that you don't want to tie to any phase.
 
 ### Git Commit Strategy
 
@@ -773,7 +773,6 @@ For an LLM agent, each tool call carries context-switching overhead (~50–100 m
 | Command | Description | Arguments |
 |---------|-------------|-----------|
 | `/gsd-mm-do` | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` — mode: direct/quick/fast/balanced/thorough/standard |
-| `/gsd-mm-quick` | *(Deprecated, use `/gsd-mm-do`)* Quick task execution | — |
 | `/gsd-mm-progress` | Detailed progress with phase status | — |
 | `/gsd-mm-settings` | Manage GSD settings interactively (profiles, workflow modes, git strategy) | — |
 | `/gsd-mm-set-profile` | Switch model profile | `<quality \| balanced \| budget>` |

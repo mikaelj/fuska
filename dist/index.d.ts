@@ -10,4 +10,5 @@ export { migrateCommand } from './commands/migrate';
 export { exportCommand } from './commands/export';
 export { installCommand } from './commands/install';
 export { gitMessageCommand } from './commands/git-message';
+export { configCommand } from './commands/config';
 //# sourceMappingURL=index.d.ts.map

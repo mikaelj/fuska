@@ -24,9 +24,9 @@ Enables reviewing captured ideas and deciding what to work on next.
 </objective>
 
  <execution_context>
- @~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
- @~/.config/opencode/gsd-mm/scripts/types.ts
- @~/.config/opencode/gsd-mm/scripts/helpers.ts
+ @./opencode/gsd-mm/references/preflight-check-project-exists.md
+ @./opencode/gsd-mm/scripts/types.ts
+ @./opencode/gsd-mm/scripts/helpers.ts
 
  </execution_context>
 
@@ -288,31 +288,31 @@ Store the match result for use in step 8.
 **If matchingPhase exists or hasFileOverlap === true:**
 
 ```
-question(
-  header="Action",
-  question=`This todo relates to Phase ${matchingPhase.number}: ${matchingPhase.name}. What would you like to do?`,
-  options=[
+const actionResponse = question(questions=[{
+  header: "Action",
+  question: "This todo relates to Phase ${matchingPhase.number}: ${matchingPhase.name}. What would you like to do?",
+  options: [
     {label: "Work on it now", description: "Mark as done, start working"},
-    {label: "Add to phase plan", description: `Include when planning Phase ${matchingPhase.number}`},
+    {label: "Add to phase plan", description: "Include when planning Phase ${matchingPhase.number}"},
     {label: "Brainstorm approach", description: "Think through before deciding"},
     {label: "Put it back", description: "Return to list"}
   ]
-)
+}])
 ```
 
 **If no roadmap match:**
 
 ```
-question(
-  header="Action",
-  question="What would you like to do with this todo?",
-  options=[
+const actionResponse = question(questions=[{
+  header: "Action",
+  question: "What would you like to do with this todo?",
+  options: [
     {label: "Work on it now", description: "Mark as done, start working"},
     {label: "Create a phase", description: "Create phase with this scope"},
     {label: "Brainstorm approach", description: "Think through before deciding"},
     {label: "Put it back", description: "Return to list"}
   ]
-)
+}])
 ```
 
 **Step 8.2: Handle user selection**

@@ -7,7 +7,7 @@ tools:
   edit: true
   bash: true
   grep: true
-color: "#FFA500"
+  task: true
 ---
 
 <role>
@@ -1041,14 +1041,33 @@ await megamemory:update_concept({
 });
 ```
 
-**Commit** fix (if applicable):
+**Commit** fix (if applicable) using gsd-mm-git-message:
+
+```
+Task(
+  description="Generate debug fix commit message",
+  subagent_type="gsd-mm-git-message",
+  prompt=`<commit_context>
+**Mode:** debug-fix
+**Debug Session:** debug-session-${slug}
+**Commit Strategy:** per-task
+
+**Root Cause:** ${root_cause}
+
+**Fix Summary:**
+${fix_summary}
+
+**Files Changed:**
+${files_changed.join('\n')}
+</commit_context>`
+)
+```
+
+The agent returns the commit message. Then execute:
 
 ```bash
 git add <specific-fixed-files>
-git commit -m "fix: {brief description}
-
-Root cause: {root_cause}
-Debug session: debug-session-{slug} concept"
+git commit -m "${generatedMessage}"
 ```
 
 Report completion and offer next steps.

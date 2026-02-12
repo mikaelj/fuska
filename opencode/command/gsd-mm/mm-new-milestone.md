@@ -31,9 +31,9 @@ This is the brownfield equivalent of new-project. The project exists, project co
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>
@@ -122,6 +122,34 @@ const stateData = JSON.parse(stateSummaryString)
 
 const pendingTodos = stateData.pending_todos || []
 const blockers = stateData.blockers || []
+```
+
+**Step 2.5: Load config and resolve models**
+
+Call:
+```
+megamemory_understand(query="config", top_k=5)
+```
+
+If response.matches.length > 0:
+```
+const configSummaryString = response.matches[0].summary
+const configData = JSON.parse(configSummaryString)
+
+const modelProfile = configData.model_profile || "balanced"
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+
+const modelLookup = {
+  quality: { researcher: aliases.quality_model, planner: aliases.quality_model },
+  balanced: { researcher: aliases.balanced_model, planner: aliases.quality_model },
+  budget: { researcher: aliases.budget_model, planner: aliases.balanced_model }
+}
+
+const models = modelLookup[modelProfile]
 ```
 
 ---
@@ -318,7 +346,7 @@ Include specific libraries with versions for NEW capabilities
 Include integration points with existing stack
 Include what NOT to add and why
 </output>
-", subagent_type="gsd-mm-phase-researcher", model="opus", description="Stack research")
+", subagent_type="gsd-mm-phase-researcher", model="${models.researcher}", description="Stack research")
 
 Task(prompt="
 <objective>
@@ -339,7 +367,7 @@ Create/update research concept: ${nextVersion}-features-research
 Categorize clearly: table stakes, differentiators, anti-features
 Note complexity and dependencies
 </output>
-", subagent_type="gsd-mm-phase-researcher", model="opus", description="Features research")
+", subagent_type="gsd-mm-phase-researcher", model="${models.researcher}", description="Features research")
 
 Task(prompt="
 <objective>
@@ -360,7 +388,7 @@ Include integration points with existing components
 Include new components needed
 Include data flow changes and suggested build order
 </output>
-", subagent_type="gsd-mm-phase-researcher", model="opus", description="Architecture research")
+", subagent_type="gsd-mm-phase-researcher", model="${models.researcher}", description="Architecture research")
 
 Task(prompt="
 <objective>
@@ -377,7 +405,7 @@ Focus on common mistakes when ADDING these features to an existing system.
 Create/update research concept: ${nextVersion}-pitfalls-research
 For each pitfall: warning signs, prevention strategy, which phase should address
 </output>
-", subagent_type="gsd-mm-phase-researcher", model="opus", description="Pitfalls research")
+", subagent_type="gsd-mm-phase-researcher", model="${models.researcher}", description="Pitfalls research")
 ```
 
 After all 4 agents complete, spawn synthesizer to create summary concept:
@@ -400,7 +428,7 @@ Query these concepts:
 Create/update research concept: ${nextVersion}-research-summary
 Include key findings, stack additions, feature table stakes, watch-outs
 </output>
-", subagent_type="gsd-mm-phase-researcher", model="sonnet", description="Synthesize research")
+", subagent_type="gsd-mm-phase-researcher", model="${models.researcher}", description="Synthesize research")
 ```
 
 Display research complete banner and key findings:
@@ -604,7 +632,7 @@ Start new phases from: ${startPhaseNumber}
 7. Update roadmap concept with new phases
 8. Return ROADMAP CREATED with summary
 </instructions>
-", subagent_type="gsd-mm-planner", model="opus", description="Create roadmap")
+", subagent_type="gsd-mm-planner", model="${models.planner}", description="Create roadmap")
 ```
 
 **Handle planner return:**
@@ -669,7 +697,7 @@ If "Adjust phases":
   Query roadmap concept and update based on feedback.
   Return ROADMAP REVISED with changes made.
   </revision>
-  ", subagent_type="gsd-mm-planner", model="opus", description="Revise roadmap")
+  ", subagent_type="gsd-mm-planner", model="${models.planner}", description="Revise roadmap")
   ```
 - Present revised roadmap
 - Loop until user approves

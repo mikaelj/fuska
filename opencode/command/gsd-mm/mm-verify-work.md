@@ -5,7 +5,7 @@ argument-hint: "[phase number, e.g., '4']"
 tools:
   - read
   - bash
-
+  - task
   - edit
   - megamemory:understand
   - megamemory:create_concept
@@ -23,11 +23,11 @@ Output: {phase}-uat concept — tracking all test results. If issues found: diag
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 
 </execution_context>
 
@@ -129,14 +129,14 @@ const uatData = null
 If uatExists === true:
 → Use question tool:
 ```
-question(
-  header="Existing UAT Session",
-  question="UAT concept already exists for this phase. What would you like to do?",
-  options=[
+const uatResponse = question(questions=[{
+  header: "Existing UAT Session",
+  question: "UAT concept already exists for this phase. What would you like to do?",
+  options: [
     {label: "Resume UAT", description: "Continue existing verification tests"},
     {label: "Start fresh", description: "Create new UAT concept"}
   ]
-)
+}])
 ```
 
 If user chooses "Resume UAT":
@@ -333,11 +333,31 @@ megamemory_update_concept(
 const allPassed = uatData.verification_results.every(r => r.status === 'passed')
 ```
 
-**Step 6.2: Commit UAT concept to git**
+**Step 6.2: Commit UAT concept to git using gsd-mm-git-message**
+
+```
+Task(
+  description="Generate UAT commit message",
+  subagent_type="gsd-mm-git-message",
+  prompt=`<commit_context>
+**Mode:** uat-commit
+**Phase:** ${phaseSlug}
+**Commit Strategy:** per-phase
+
+**UAT Summary:**
+${allPassed ? 'All tests passed' : `${passedCount}/${testList.length} tests passed`}
+
+**Staged files:**
+${modifiedFiles.join('\n')}
+</commit_context>`
+)
+```
+
+The agent returns the commit message. Then execute:
 
 ```bash
 git add -u
-git commit -m "docs(phase-${phaseNumber}): UAT complete"
+git commit -m "${generatedMessage}"
 ```
 
 **Step 6.3: Display completion summary**

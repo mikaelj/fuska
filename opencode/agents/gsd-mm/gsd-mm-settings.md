@@ -47,6 +47,11 @@ Do NOT modify agent .md files. This command updates the MegaMemory config concep
 ```typescript
 {
   project_name: string,
+  model_aliases: {
+    quality_model: string,   // e.g., "opencode/claude-opus-4"
+    balanced_model: string,  // e.g., "opencode/claude-sonnet-4"
+    budget_model: string     // e.g., "opencode/claude-haiku-4"
+  },
   profiles: {
     active_profile: "quality" | "balanced" | "budget",
     presets: {
@@ -71,6 +76,10 @@ Do NOT modify agent .md files. This command updates the MegaMemory config concep
   }
 }
 ```
+
+**Model Alias Resolution:**
+
+Orchestrators use aliases in lookup tables (quality_model, balanced_model, budget_model) which resolve to actual model IDs from `model_aliases`. This allows changing the underlying models without modifying lookup tables.
 </config_context>
 </context>
 
@@ -119,7 +128,7 @@ Ensure `workflow` section exists (defaults: `mode: "standard"`, `research: true`
 
 ### Preset Setup Wizard
 
-This wizard runs on first use or when "Reset presets" is selected. It queries available models and lets the user configure all three profiles.
+This wizard runs on first use or when "Reset presets" is selected. It queries available models and lets the user configure model aliases and profiles.
 
 **Step W1: Discover models**
 
@@ -129,7 +138,19 @@ opencode models 2>/dev/null
 
 Parse the output to extract model IDs. If command fails or returns no models, print `Error: Could not fetch available models. Check your OpenCode installation.` and stop.
 
-**Step W2: Configure each profile**
+**Step W2: Configure model aliases**
+
+First, configure the three model aliases that lookup tables use:
+
+```json
+[
+  { "header": "Quality Model", "question": "Which model for quality_model (strongest)?", "options": ["{model1}", "{model2}", ...] },
+  { "header": "Balanced Model", "question": "Which model for balanced_model (mid-tier)?", "options": ["{model1}", "{model2}", ...] },
+  { "header": "Budget Model", "question": "Which model for budget_model (lightweight)?", "options": ["{model1}", "{model2}", ...] }
+]
+```
+
+**Step W3: Configure each profile**
 
 For each profile (quality, balanced, budget), use a multi-question call:
 
@@ -141,12 +162,17 @@ For each profile (quality, balanced, budget), use a multi-question call:
 ]
 ```
 
-**Step W3: Save config**
+**Step W4: Save config**
 
 Create config with user selections:
 
 ```json
 {
+  "model_aliases": {
+    "quality_model": "{user_selection}",
+    "balanced_model": "{user_selection}",
+    "budget_model": "{user_selection}"
+  },
   "profiles": {
     "active_profile": "balanced",
     "presets": {
@@ -192,6 +218,13 @@ A stage is "overridden" if `overrides[stage]` exists and differs from `preset[st
 **Print this as text output (do NOT use Question tool here):**
 
 ```text
+Model Aliases:
+| Alias          | Model                                    |
+|----------------|------------------------------------------|
+| quality_model  | {config.model_aliases?.quality_model || "not set"} |
+| balanced_model | {config.model_aliases?.balanced_model || "not set"} |
+| budget_model   | {config.model_aliases?.budget_model || "not set"} |
+
 Active profile: {activeProfile}
 
 | Stage        | Model                                    |
@@ -230,6 +263,8 @@ question: "Choose an action"
 options:
   - label: "Quick settings"
     description: "Update profile and workflow toggles"
+  - label: "Configure model aliases"
+    description: "Set which models quality_model, balanced_model, budget_model resolve to"
   - label: "Git commit strategy"
     description: "Change how often GSD commits during execution"
   - label: "Set stage override"
@@ -315,6 +350,79 @@ Quick commands:
 - /gsd-mm-set-profile <profile>
 - /gsd-mm-plan-phase --research | --skip-research | --skip-verify | --mode <MODE>
 ```
+
+### Configure model aliases
+
+This action sets the underlying models that `quality_model`, `balanced_model`, and `budget_model` resolve to. Uses smart model discovery: type a model name, then pick a provider if ambiguous.
+
+1. **Display current aliases:**
+
+```text
+Current model aliases:
+| Alias          | Model              |
+|----------------|--------------------|
+| quality_model  | {config.model_aliases?.quality_model || "not set"} |
+| balanced_model | {config.model_aliases?.balanced_model || "not set"} |
+| budget_model   | {config.model_aliases?.budget_model || "not set"} |
+```
+
+2. **For each alias, one at a time:**
+
+   **a. Prompt for model name (freeform):**
+   ```
+   header: "{Alias} Model"
+   question: "Enter model name for {alias} (e.g., glm-5, claude-sonnet-4, gpt-4o)"
+   ```
+
+   **b. Search for matching models:**
+   ```bash
+   opencode models 2>/dev/null | grep -i "{user_input}"
+   ```
+   
+   If command fails, print error and return to menu.
+
+   **c. Handle search results:**
+
+   - **No matches found:**
+     ```
+     No models found matching '{user_input}'. Please try another name.
+     ```
+     Re-prompt for this alias.
+
+   - **Exactly one match:** Use the full model ID directly (e.g., `zai-coding-plan/glm-5`).
+
+   - **Multiple matches:** Show provider picker:
+     ```
+     header: "Provider"
+     question: "Multiple providers have '{model_name}'. Which provider?"
+     options:
+       - label: "{provider1}/{model}"
+         description: "e.g., 'ZAI Coding Plan' or 'OpenRouter / Z-AI'"
+       - label: "{provider2}/{model}"
+         description: "..."
+     ```
+     Use selected FQDN (fully qualified domain name).
+
+3. **Save config:** Update `config.model_aliases` with the three FQDNs.
+
+4. **Print confirmation:**
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► MODEL ALIASES UPDATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Alias          | Model                        |
+|----------------|------------------------------|
+| quality_model  | {new_quality}                |
+| balanced_model | {new_balanced}               |
+| budget_model   | {new_budget}                 |
+
+These aliases are used by orchestrator lookup tables.
+Note: Quit and relaunch OpenCode to apply model changes.
+```
+
+Return to menu.
 
 ### Git commit strategy
 
@@ -451,6 +559,7 @@ Preserve existing non-agent keys in `opencode.json`.
 
 - Menu loop until Exit — always return to Step 3 after actions
 - Overrides are profile-scoped: `custom_overrides.{profile}.{stage}`
+- Model aliases (quality_model, balanced_model, budget_model) are used by orchestrator lookup tables
 - Source of truth: MegaMemory `config` concept; `opencode.json` is derived
 - OpenCode does not hot-reload model assignments; user must quit and relaunch to apply changes
 - Always use `configId` from initial query when calling `update_concept` — never hardcode the ID

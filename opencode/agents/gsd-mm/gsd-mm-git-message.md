@@ -1,14 +1,15 @@
 ---
 name: gsd-mm-git-message
-description: Generate commit messages using GSD rules without verbose output
+description: Generate commit messages using GSD rules with verification loop
 tools:
   read: true
   bash: true
+  task: true
   megamemory:understand: true
 ---
 
 <role>
-You are the `/gsd-mm-git-message` command. Generate commit messages using GSD rules.
+You are the `/gsd-mm-git-message` command. Generate commit messages using GSD rules with automatic verification.
 
 **CRITICAL: Be absolutely silent about internal operations.**
 - Do NOT say "I'll help you..." or "Let me start by..."
@@ -22,6 +23,9 @@ The user should see ONLY:
 3. Instructions for how to commit
 
 Nothing else.
+
+**Verification Loop:**
+After generating a message, spawn `gsd-mm-commit-checker` via Task tool. If ISSUES FOUND and attempts < 3, regenerate with checker feedback and retry. Return final message (PASSED or max attempts).
 </role>
 
 <execution_context>
@@ -159,6 +163,55 @@ Apply commit message rules from git-integration.md:
 3. **Format subject:** Max 72 chars, imperative mood, `{type}({scope}): {description}`
 4. **Format body:** 2-4 bullets, high-level only
 
+## Step 5a: Verification Loop
+
+After generating the message, verify it passes all rules:
+
+```
+let attempts = 0
+let verificationResult = null
+let messageToVerify = generatedMessage
+
+while (attempts < 3) {
+  attempts++
+  
+  // Spawn checker via Task tool
+  const checkerResult = Task(
+    description="Verify commit message",
+    subagent_type="gsd-mm-commit-checker",
+    prompt=`<commit_message>
+${messageToVerify}
+</commit_message>
+
+<commit_strategy>${commitStrategy}</commit_strategy>
+${phasePlan ? `<phase_plan>${phasePlan}</phase_plan>` : ''}`
+  )
+  
+  // Parse result
+  if (checkerResult.includes("VERIFICATION PASSED")) {
+    verificationResult = "passed"
+    break
+  }
+  
+  if (checkerResult.includes("ISSUES FOUND")) {
+    // Extract suggested fix if available
+    const suggestedFixMatch = checkerResult.match(/### Suggested fix:\n([\s\S]*?)(?=\n##|$)/)
+    if (suggestedFixMatch) {
+      messageToVerify = suggestedFixMatch[1].trim()
+    } else {
+      // Regenerate with feedback
+      const issues = checkerResult.match(/- \[[^\]]+\][^\n]+/g) || []
+      // Incorporate issues into regeneration context
+      messageToVerify = regenerateMessage(issues, messageToVerify, diffContent, phasePlan, commitStrategy)
+    }
+  }
+}
+
+generatedMessage = messageToVerify
+```
+
+**Verification is silent.** Do not output verification attempts or results to user.
+
 ## Step 6: Print output (QUIET - no announcements)
 
 **If commit range mode:**
@@ -228,6 +281,8 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Only final commit message displayed
 - [ ] Usage header shown when no args
 - [ ] Commit message follows GSD rules
+- [ ] Verification loop runs (max 3 attempts)
+- [ ] gsd-mm-commit-checker spawned via Task tool
 - [ ] All modes working correctly
 
 </success_criteria>

@@ -27,10 +27,10 @@ Extract implementation decisions that downstream agents need — researcher and 
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 
 </execution_context>
 
@@ -183,16 +183,16 @@ const contextExists = true
 If contextExists === true:
 → Use question tool:
 ```
-question(
-  header="Existing Context",
-  question="Phase context already exists. What would you like to do?",
-  options=[
+const contextResponse = question(questions=[{
+  header: "Existing Context",
+  question: "Phase context already exists. What would you like to do?",
+  options: [
     {label: "Update existing", description: "Modify current context with new decisions"},
     {label: "View existing", description: "Show current context decisions"},
     {label: "Replace", description: "Start fresh, overwrite existing"},
     {label: "Skip discussion", description: "Context is good, proceed to planning"}
   ]
-)
+}])
 ```
 
 **Step 2.4: Handle user response**
@@ -293,17 +293,17 @@ Generate 3-4 phase-specific areas (not generic categories).
 
 Use question tool with multiSelect:
 ```
-question(
-  header="Discussion Areas",
-  question="Which areas would you like to discuss for Phase ${phaseNumber}?",
-  options=[
+const areasResponse = question(questions=[{
+  header: "Discussion Areas",
+  question: "Which areas would you like to discuss for Phase ${phaseNumber}?",
+  options: [
     {label: "Gray area 1", description: "[brief description]"},
     {label: "Gray area 2", description: "[brief description]"},
     {label: "Gray area 3", description: "[brief description]"},
     {label: "Gray area 4", description: "[brief description]"}
   ],
-  multiple=true
-)
+  multiple: true
+}])
 ```
 
 **Step 4.2: Track selected areas**
@@ -332,14 +332,14 @@ Questioning technique:
 
 Use question tool:
 ```
-question(
-  header="[Area Name]",
-  question="More questions about [area name], or move to next area?",
-  options=[
+const areaResponse = question(questions=[{
+  header: "[Area Name]",
+  question: "More questions about [area name], or move to next area?",
+  options: [
     {label: "More questions", description: "Continue deep-dive"},
     {label: "Move to next", description: "Done with this area"}
   ]
-)
+}])
 ```
 
 **Step 5.3: Handle question response**

@@ -1,6 +1,6 @@
 ---
 name: gsd-mm-do
-description: Execute unplanned tasks with mode-aware agent chain using MegaMemory (replaces /gsd-mm-quick)
+description: Execute unplanned tasks with mode-aware agent chain using MegaMemory
 argument-hint: "[mode] [description]"
 tools:
   - read
@@ -21,8 +21,7 @@ tools:
 
 Execute unplanned, ad-hoc tasks with GSD-MM guarantees (atomic commits, state tracking) using a mode-aware agent chain.
 
-- Replaces `/gsd-mm-quick` with flexible mode selection
-- Respects workflow modes: direct | quick | fast | balanced | thorough | standard
+- Flexible mode selection: direct | quick | fast | balanced | thorough | standard
 - Auto-executes for quick/fast/standard; asks before executing for direct/balanced/thorough
 - Suggests project creation if no project exists
 
@@ -30,7 +29,7 @@ Execute unplanned, ad-hoc tasks with GSD-MM guarantees (atomic commits, state tr
 
 <execution_context>
 
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 
 Orchestration is inline. Mode determines which agents spawn.
 
@@ -44,7 +43,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\",\"quick_tasks_completed\":[...]}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\",\"tasks_completed\":[...]}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -109,10 +108,10 @@ const stateId = response.matches[0].id
 const stateData = JSON.parse(response.matches[0].summary)
 ```
 
-**Step 1.3: Query existing quick tasks**
+**Step 1.3: Query existing tasks**
 
 ```
-megamemory_understand(query="quick task", top_k=50)
+megamemory_understand(query="task", top_k=50)
 ```
 
 Extract existing task numbers for incrementing.
@@ -143,9 +142,23 @@ if (validModes.includes(words[0]?.toLowerCase())) {
 
 **Step 2.2: Resolve mode**
 
+If MODE is not set, ALWAYS ask the user to select one:
+
 ```
 if (!MODE) {
-  MODE = configData.workflow?.mode || "quick"
+  const modeResponse = question(questions=[{
+    header: "Mode",
+    question: "Select workflow mode:",
+    options: [
+      { label: "Direct", description: "Planner → Executor only. ~80% faster. Best when you know exactly what to do." },
+      { label: "Quick", description: "Planner → Executor with deviation handling. ~70% faster. Small tasks with known solutions." },
+      { label: "Fast", description: "+Plan Checker. ~50% faster. Validated plans for familiar tech stacks." },
+      { label: "Balanced", description: "+Researcher. ~35% faster. Moderate tech uncertainty, avoid wrong library choices." },
+      { label: "Thorough", description: "Research + Plan Check. ~20% faster. New domains, need verified plans but will manually verify." },
+      { label: "Standard", description: "Full chain with Verifier. 0% saved. Critical systems, high stakes, production code." }
+    ]
+  }])
+  MODE = modeResponse[0].toLowerCase()
 }
 ```
 
@@ -153,11 +166,12 @@ if (!MODE) {
 
 If DESCRIPTION is null or empty:
 ```
-question(
+const taskResponse = question(questions=[{
   header: "Task",
-  question: "What do you want to do?"
-)
-DESCRIPTION = response
+  question: "What do you want to do?",
+  options: []
+}])
+DESCRIPTION = taskResponse[0]
 ```
 
 **Step 2.4: Derive mode config**
@@ -175,17 +189,51 @@ const modeConfig = {
 
 **Step 2.5: Resolve models from lookup table**
 
-**Model lookup table:**
+First, extract model aliases from config (with defaults):
+
+```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
+
+**Model lookup table (uses aliases):**
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-mm-phase-researcher | opus | sonnet | haiku |
-| gsd-mm-planner | opus | opus | sonnet |
-| gsd-mm-plan-checker | sonnet | sonnet | haiku |
-| gsd-mm-executor | opus | sonnet | sonnet |
-| gsd-mm-verifier | sonnet | sonnet | haiku |
+| gsd-mm-phase-researcher | quality_model | balanced_model | budget_model |
+| gsd-mm-planner | quality_model | quality_model | balanced_model |
+| gsd-mm-plan-checker | balanced_model | balanced_model | budget_model |
+| gsd-mm-executor | quality_model | balanced_model | balanced_model |
+| gsd-mm-verifier | balanced_model | balanced_model | budget_model |
 
 ```
+const modelLookup = {
+  quality: {
+    researcher: aliases.quality_model,
+    planner: aliases.quality_model,
+    checker: aliases.balanced_model,
+    executor: aliases.quality_model,
+    verifier: aliases.balanced_model
+  },
+  balanced: {
+    researcher: aliases.balanced_model,
+    planner: aliases.quality_model,
+    checker: aliases.balanced_model,
+    executor: aliases.balanced_model,
+    verifier: aliases.balanced_model
+  },
+  budget: {
+    researcher: aliases.budget_model,
+    planner: aliases.balanced_model,
+    checker: aliases.budget_model,
+    executor: aliases.balanced_model,
+    verifier: aliases.budget_model
+  }
+}
+
 const models = modelLookup[modelProfile]  // { researcher, planner, checker, executor, verifier }
 ```
 
@@ -205,9 +253,9 @@ slug = DESCRIPTION lowercase, replace non-alphanumeric with hyphens, collapse do
 
 ```
 const existingNumbers = existingQuickTasks
-  .filter(match => match.name.match(/^quick-\d+-/))
+  .filter(match => match.name.match(/^task-\d+-/))
   .map(match => {
-    const matchResult = match.name.match(/^quick-(\d+)-/)
+    const matchResult = match.name.match(/^task-(\d+)-/)
     return matchResult ? parseInt(matchResult[1]) : 0
   })
   .sort((a, b) => b - a)
@@ -216,7 +264,7 @@ const lastNumber = existingNumbers[0] || 0
 const nextNum = (lastNumber + 1).toString().padStart(3, '0')
 ```
 
-If no existing quick tasks: `nextNum = "001"`
+If no existing tasks: `nextNum = "001"`
 
 ---
 
@@ -248,13 +296,21 @@ const planData = {
 
 ```
 const planResult = megamemory_create_concept(
-  name=`quick-${nextNum}-${slug}`,
+  name=`task-${nextNum}-${slug}`,
   kind="feature",
   summary=JSON.stringify(planData),
-  why="Quick task plan",
+  why="Task plan",
   parent_id=null
 )
 const planConceptId = planResult.id
+
+**Step 4.3: Display**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD > TASK ${nextNum}: ${DESCRIPTION}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ Mode: ${MODE} | Plan: task-${nextNum}-${slug}
 ```
 
 **Step 4.3: Display**
@@ -263,7 +319,7 @@ const planConceptId = planResult.id
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  GSD > TASK ${nextNum}: ${DESCRIPTION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Mode: ${MODE} | Plan: quick-${nextNum}-${slug}
+ Mode: ${MODE} | Plan: task-${nextNum}-${slug}
 ```
 
 ---
@@ -281,7 +337,7 @@ const researcherPrompt = `<objective>
 Research how to implement: ${DESCRIPTION}
 
 Answer: "What do I need to know to PLAN this task well?"
-This is a quick task, not a full phase. Focus on:
+This is a standalone task, not a full phase. Focus on:
 - Relevant patterns in the existing codebase
 - Key libraries or APIs needed
 - Common pitfalls for this type of task
@@ -296,10 +352,10 @@ Keep research focused and concise.
 <output>
 Create research concept:
 megamemory_create_concept(
-  name="quick-${nextNum}-${slug}-research",
+  name="task-${nextNum}-${slug}-research",
   kind="pattern",
   summary=JSON.stringify(researchFindings),
-  why="Research for quick task ${nextNum}",
+  why="Research for task ${nextNum}",
   parent_id=null
 )
 Return: ## RESEARCH COMPLETE with key findings
@@ -322,7 +378,7 @@ Task(
 If `## RESEARCH COMPLETE`:
 -> Query research concept:
 ```
-megamemory_understand(query=`quick-${nextNum}-${slug}-research`, top_k=1)
+megamemory_understand(query=`task-${nextNum}-${slug}-research`, top_k=1)
 const researchData = JSON.parse(response.matches[0].summary)
 ```
 -> Continue to Step 6
@@ -386,7 +442,7 @@ Task(
 **Step 6.3: Handle planner return**
 
 If `## PLANNING COMPLETE`:
--> Display: "Plan created: quick-${nextNum}-${slug}"
+-> Display: "Plan created: task-${nextNum}-${slug}"
 -> Continue to Step 7
 
 If error:
@@ -404,11 +460,11 @@ Display: `Validating plan...`
 **Step 7.1: Query updated plan concept**
 
 ```
-megamemory_understand(query=`quick-${nextNum}-${slug}`, top_k=5)
+megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
 const planData = JSON.parse(response.matches[0].summary)
 ```
 
-**Step 7.2: Build checker prompt (simplified for quick tasks)**
+**Step 7.2: Build checker prompt (simplified for standalone tasks)**
 
 ```
 const checkerPrompt = `<verification_context>
@@ -416,11 +472,11 @@ const checkerPrompt = `<verification_context>
 **Task:** ${DESCRIPTION}
 **Plan Data:** ${JSON.stringify(planData, null, 2)}
 
-Verify this quick task plan. Focus on:
+Verify this task plan. Focus on:
 1. Task completeness: Does every task have files, action, verify, done?
 2. Scope sanity: Are there 1-3 tasks? Would they complete in ~30% context?
 
-Skip phase-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a quick task, not a phase plan.
+Skip phase-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a standalone task, not a phase plan.
 
 </verification_context>
 
@@ -487,7 +543,7 @@ If iterationCount >= 3 and still issues:
 Display: "Max iterations reached. Issues remain:"
 List remaining issues
 
-question(
+const proceedResponse = question(questions=[{
   header: "Plan Issues",
   question: "How to proceed?",
   options: [
@@ -495,32 +551,91 @@ question(
     { label: "Provide guidance", description: "I'll give direction for another attempt" },
     { label: "Abort", description: "Cancel this task" }
   ]
-)
+}])
 ```
 
 ---
 
 ## 8. Determine Execution
 
-**Step 8.1: Branch by mode**
+**Step 8.1: Query plan for display**
+
+```
+megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
+const planData = JSON.parse(response.matches[0].summary)
+```
+
+**Step 8.2: Display plan**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ TASK ${nextNum}: ${DESCRIPTION}
+ Mode: ${MODE}
+───────────────────────────────────────────────────
+ Tasks (${planData.tasks.length}):
+${planData.tasks.map((t, i) => `  ${i+1}. ${t.action || t.description || t}`).join('\n')}
+───────────────────────────────────────────────────
+ Files: ${planData.files_modified?.join(', ') || 'TBD'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Step 8.3: Branch by mode**
 
 If `modeConfig.autoExecute` (quick, fast, standard):
 -> Continue to Step 9
 
 If `!modeConfig.autoExecute` (direct, balanced, thorough):
 ```
-question(
-  header: "Plan Ready",
-  question: "Plan created. Execute now?",
+const actionResponse = question(questions=[{
+  header: "Next",
+  question: "What would you like to do?",
   options: [
-    { label: "Yes", description: "Execute the plan now" },
-    { label: "No", description: "I'll review first" }
+    { label: "Execute now", description: "Run the plan immediately" },
+    { label: "Change plan", description: "Provide feedback to revise the plan" },
+    { label: "Save and exit", description: "Save the plan for later execution" }
   ]
-)
-```
+}])
 
-If "Yes" -> Continue to Step 9
-If "No" -> Display: "Plan saved as quick-${nextNum}-${slug}. Run `/gsd-mm-execute-phase quick-${nextNum}` to execute later." -> Skip to Step 12 (display only, no state update)
+if (actionResponse[0] === "Execute now") {
+  // Continue to Step 9
+} else if (actionResponse[0] === "Change plan") {
+  // Get feedback, re-spawn planner, loop back
+  const feedbackResponse = question(questions=[{
+    header: "Feedback",
+    question: "What changes do you want to make to the plan?",
+    options: []
+  }])
+  const feedback = feedbackResponse[0]
+  
+  // Build revision prompt
+  const revisionPrompt = `<revision_context>
+  **Mode:** revision
+  **Task:** ${DESCRIPTION}
+  **Plan Concept ID:** ${planConceptId}
+  **Current plan:** ${JSON.stringify(planData, null, 2)}
+  **User feedback:** ${feedback}
+  </revision_context>
+
+  <instructions>
+  Update the plan to address user feedback.
+  Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlan)})
+  Return: ## REVISION COMPLETE
+  </instructions>`
+
+  Task(
+    prompt=revisionPrompt,
+    subagent_type="gsd-mm-planner",
+    model=models.planner,
+    description="Revise: ${DESCRIPTION}"
+  )
+  
+  // Loop back to Step 8.1 to display updated plan
+} else {
+  // Save and exit
+  Display: "Plan saved as task-${nextNum}-${slug}. Run `/gsd-mm-execute-phase task-${nextNum}` to execute later."
+  -> Skip to Step 12 (display only, no state update)
+}
+```
 
 ---
 
@@ -531,33 +646,33 @@ Display: `Executing...`
 **Step 9.1: Query plan concept (get planner's updates)**
 
 ```
-megamemory_understand(query=`quick-${nextNum}-${slug}`, top_k=5)
+megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
 const planData = JSON.parse(response.matches[0].summary)
 ```
 
 **Step 9.2: Build executor prompt**
 
 ```
-const executorPrompt = `Execute quick task ${nextNum}: ${DESCRIPTION}
+const executorPrompt = `Execute task ${nextNum}: ${DESCRIPTION}
 
-Plan concept: quick-${nextNum}-${slug}
+Plan concept: task-${nextNum}-${slug}
 Plan data: ${JSON.stringify(planData, null, 2)}
 Project state: ${JSON.stringify(stateData, null, 2)}
 
 <constraints>
 - Execute all tasks in the plan
 - Commit each task atomically
-- Create summary concept named exactly: quick-${nextNum}-${slug}-summary (kind: "config")
-- Do NOT update roadmap concept (quick tasks are separate from phases)
+- Create summary concept named exactly: task-${nextNum}-${slug}-summary (kind: "config")
+- Do NOT update roadmap concept (standalone tasks are separate from phases)
 </constraints>
 
 <output>
 Create summary concept:
 megamemory_create_concept(
-  name="quick-${nextNum}-${slug}-summary",
+  name="task-${nextNum}-${slug}-summary",
   kind="config",
   summary=JSON.stringify(summaryData),
-  why="Quick task ${nextNum} execution summary"
+  why="Task ${nextNum} execution summary"
 )
 Return: ## EXECUTION COMPLETE
 Include: Commit: <hash>
@@ -600,10 +715,10 @@ Display: `Verifying...`
 
 ```
 const verifierPrompt = `<verification_context>
-Verify quick task ${nextNum}: ${DESCRIPTION}
+Verify task ${nextNum}: ${DESCRIPTION}
 
-**Plan concept:** quick-${nextNum}-${slug}
-**Summary concept:** quick-${nextNum}-${slug}-summary
+**Plan concept:** task-${nextNum}-${slug}
+**Summary concept:** task-${nextNum}-${slug}-summary
 
 Verify the task achieved its goal:
 1. Check that committed files exist and are substantive (not stubs)
@@ -612,10 +727,10 @@ Verify the task achieved its goal:
 
 Create concept:
 megamemory_create_concept(
-  name="quick-${nextNum}-${slug}-verification",
+  name="task-${nextNum}-${slug}-verification",
   kind="component",
   summary=JSON.stringify(verificationData),
-  why="Verification for quick task ${nextNum}"
+  why="Verification for task ${nextNum}"
 )
 
 Return: ## Verification Complete with status: passed | gaps_found
@@ -642,19 +757,19 @@ If "gaps_found" -> display gaps, continue to Step 11 (don't block completion for
 
 ## 11. Update State Concept
 
-Skip if user chose "No" at Step 8 and no execution happened.
+Skip if user chose "Save and exit" at Step 8 and no execution happened.
 
 ```
-stateData.quick_tasks_completed = stateData.quick_tasks_completed || []
-stateData.quick_tasks_completed.push({
+stateData.tasks_completed = stateData.tasks_completed || []
+stateData.tasks_completed.push({
   number: nextNum,
   description: DESCRIPTION,
   date: new Date().toISOString().split('T')[0],
   commit: commitHash,
-  plan_concept: `quick-${nextNum}-${slug}`,
+  plan_concept: `task-${nextNum}-${slug}`,
   mode: MODE
 })
-stateData.last_activity = `Quick task ${nextNum} completed: ${DESCRIPTION}`
+stateData.last_activity = `Task ${nextNum} completed: ${DESCRIPTION}`
 
 megamemory_update_concept(
   id=stateId,
@@ -671,9 +786,23 @@ megamemory_update_concept(
  GSD > TASK COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+ Task ${nextNum}: ${DESCRIPTION}
+ Mode: ${MODE}
+ Plan: task-${nextNum}-${slug}
+ Commit: ${commitHash}
+ ${verification ? `Verification: ${verificationStatus}` : ''}
+
+───────────────────────────────────────────────────
+ Ready for next task: /gsd-mm-do
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD > TASK COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
  Quick Task ${nextNum}: ${DESCRIPTION}
  Mode: ${MODE}
- Plan: quick-${nextNum}-${slug}
+ Plan: task-${nextNum}-${slug}
  Commit: ${commitHash}
  ${verification ? `Verification: ${verificationStatus}` : ''}
 
@@ -699,10 +828,13 @@ megamemory_update_concept(
 - [ ] Revision loop works (max 3 iterations)
 - [ ] Auto-execute for quick/fast/standard modes
 - [ ] Ask-before-execute for direct/balanced/thorough modes
+- [ ] Plan displayed before asking for execution decision
+- [ ] Change plan option: feedback collected, planner re-spawned, plan re-displayed
+- [ ] Save and exit option: plan saved with execution command shown
 - [ ] Executor spawns and creates summary concept
 - [ ] Commit hash captured from executor output
 - [ ] Verifier spawned for standard mode
-- [ ] State concept updated with quick task entry
+- [ ] State concept updated with task entry
 - [ ] Completion banner displayed with all details
 
 </success_criteria>

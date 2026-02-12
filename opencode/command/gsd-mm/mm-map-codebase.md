@@ -25,9 +25,9 @@ Output: MegaMemory concepts for codebase state (tech, arch, quality, concerns).
 </objective>
 
  <execution_context>
- @~/.config/opencode/gsd-mm/references/preflight-check-connectivity.md
- @~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
- </execution_context>
+  @./opencode/gsd-mm/references/preflight-check-connectivity.md
+  @./opencode/gsd-mm/references/preflight-check-project-exists.md
+  </execution_context>
 
 <megamemory_guide>
 
@@ -79,9 +79,13 @@ Check for state concept in MegaMemory - loads context if project already initial
 
 ## 0. Preflight Check
 
+Display: "Checking MegaMemory connectivity..."
+
 Follow the MegaMemory Connectivity Preflight Check from @preflight-check-connectivity.md.
 
 ## 1. Validate MegaMemory
+
+Display: "Validating MegaMemory state..."
 
 **Step 1.1: Call list_roots**
 ```
@@ -118,15 +122,15 @@ If codebase concepts exist:
 → Display: "Codebase concepts already exist in MegaMemory"
 → Use question tool:
 ```
-question(
-  header="Codebase Exists",
-  question="Codebase concepts already exist. What would you like to do?",
-  options=[
+const codebaseResponse = question(questions=[{
+  header: "Codebase Exists",
+  question: "Codebase concepts already exist. What would you like to do?",
+  options: [
     {label: "Refresh all", description: "Update all codebase concepts"},
     {label: "View existing", description: "Show current codebase concepts"},
     {label: "Skip", description: "Keep existing concepts"}
   ]
-)
+}])
 ```
 
 If user chooses "View existing":
@@ -146,7 +150,11 @@ pwd
 
 Store result as `$PROJECT_ROOT`. This is the directory the agents must explore — NOT the opencode config directory.
 
+Display: "Project root: ${PROJECT_ROOT}"
+
 ## 3. Spawn Parallel Mapper Agents
+
+Display: "Spawning 4 parallel mapper agents..."
 
 Spawn 4 parallel gsd-mm-codebase-mapper agents:
 
@@ -340,11 +348,19 @@ Task(
 
 ## 4. Wait for Agents to Complete
 
+Display: "Waiting for agents to complete..."
+
 Wait for all 4 mapper agents to complete. Collect confirmations (NOT concept contents).
 
-Display progress as agents return.
+Display progress as each agent returns:
+- "✓ Tech mapping complete"
+- "✓ Architecture mapping complete"  
+- "✓ Quality mapping complete"
+- "✓ Concerns mapping complete"
 
 ## 5. Verify Codebase Concepts
+
+Display: "Verifying created concepts..."
 
 **Step 5.1: Query all codebase concepts**
 ```
@@ -369,6 +385,8 @@ If all concepts present:
 
 **Step 5.4: Create codebase root concept**
 
+Display: "Creating codebase root concept..."
+
 Create a `codebase` module concept that groups the 4 sub-concepts into one discoverable entry:
 
 ```
@@ -388,9 +406,13 @@ megamemory_create_concept({
 
 If this concept already exists (refresh scenario), use `megamemory_update_concept` instead.
 
+Display: "Created codebase root concept"
+
 ## 6. Update State Concept
 
 **Skip this step if `HAS_PROJECT` is false** (no state concept to update).
+
+Display: "Updating project state..."
 
 **Step 6.1: Extract state ID**
 ```

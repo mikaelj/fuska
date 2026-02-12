@@ -144,19 +144,34 @@ megamemory list_roots
 ```bash
 # Query config concept for model profile
 CONFIG_RESULTS=$(megamemory understand "config" top_k=5)
-# Extract model_profile from JSON summary
+# Extract model_profile and model_aliases from JSON summary
 MODEL_PROFILE=$(echo $CONFIG_RESULTS | ... extract model_profile ...)
+ALIASES=$(echo $CONFIG_RESULTS | ... extract model_aliases or use defaults ...)
 ```
 
-Default to "balanced" if not set.
+Default to "balanced" if not set. Default aliases if not set:
+```
+quality_model: "opencode/claude-opus-4"
+balanced_model: "opencode/claude-sonnet-4"
+budget_model: "opencode/claude-haiku-4"
+```
 
-**Model lookup table:**
+**Model lookup table (uses aliases):**
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-phase-researcher | opus | sonnet | haiku |
-| gsd-planner | opus | opus | sonnet |
-| gsd-plan-checker | sonnet | sonnet | haiku |
+| gsd-phase-researcher | quality_model | balanced_model | budget_model |
+| gsd-planner | quality_model | quality_model | balanced_model |
+| gsd-plan-checker | balanced_model | balanced_model | budget_model |
+
+```
+const modelLookup = {
+  quality: { researcher: aliases.quality_model, planner: aliases.quality_model, checker: aliases.balanced_model },
+  balanced: { researcher: aliases.balanced_model, planner: aliases.quality_model, checker: aliases.balanced_model },
+  budget: { researcher: aliases.budget_model, planner: aliases.balanced_model, checker: aliases.budget_model }
+}
+const models = modelLookup[modelProfile]
+```
 
 Store resolved models for use in Task calls below.
 

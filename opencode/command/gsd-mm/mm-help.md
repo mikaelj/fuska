@@ -115,21 +115,6 @@ Execute all plans in a phase.
 
 Usage: `/gsd-mm-execute-phase 5`
 
-### Quick Mode
-
-**`/gsd-mm-quick`**
-Execute small, ad-hoc tasks with GSD-MM guarantees but skip optional agents.
-
-Quick mode uses the same system with a shorter path:
-- Spawns planner + executor (skips researcher, checker, verifier)
-- Quick tasks live as separate concepts from planned phases
-- Updates state concept tracking (not roadmap concept)
-
-Use when you know exactly what to do and the task is small enough to not need research or verification.
-
-Usage: `/gsd-mm-quick`
-Result: Creates quick task concepts and summary concepts
-
 ### Roadmap Management
 
 **`/gsd-mm-add-phase <description>`**

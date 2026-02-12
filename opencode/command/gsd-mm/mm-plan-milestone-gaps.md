@@ -25,7 +25,7 @@ One command creates all fix phases — no manual `/gsd-mm-add-phase` per gap.
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 <!-- Spawns gsd-mm-planner agent which has all planning expertise baked in -->
 </execution_context>
 
@@ -284,15 +284,15 @@ Create these ${phaseProposals.length} phases? (yes / adjust)
 
 Use question tool to get user confirmation:
 ```
-question(
-  header="Gap Closure Plan",
-  question="How would you like to proceed?",
-  options=[
+const gapResponse = question(questions=[{
+  header: "Gap Closure Plan",
+  question: "How would you like to proceed?",
+  options: [
     {label: "Create phases", description: "Create all proposed phases in MegaMemory"},
     {label: "Adjust plan", description: "Modify phase groupings or priorities"},
     {label: "Defer nice-to-have", description: "Skip nice-to-have gaps for now"}
   ]
-)
+}])
 ```
 
 ## 7. Update Roadmap in MegaMemory

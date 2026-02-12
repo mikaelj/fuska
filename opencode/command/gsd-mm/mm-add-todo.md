@@ -21,8 +21,8 @@ Enables "thought → capture → continue" flow without losing context or derail
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
 </execution_context>
 
 <megamemory_guide>

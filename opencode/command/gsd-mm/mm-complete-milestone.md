@@ -6,7 +6,7 @@ tools:
   - read
   - write
   - bash
-
+  - task
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
@@ -24,9 +24,9 @@ Output: Milestone archived in MegaMemory, requirements archived, state concept u
 </objective>
 
  <execution_context>
- @~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
- @~/.config/opencode/gsd-mm/scripts/types.ts
- @~/.config/opencode/gsd-mm/scripts/helpers.ts
+ @./opencode/gsd-mm/references/preflight-check-project-exists.md
+ @./opencode/gsd-mm/scripts/types.ts
+ @./opencode/gsd-mm/scripts/helpers.ts
  
  </execution_context>
 
@@ -580,8 +580,22 @@ Wait for user selection.
 If option 1 (squash merge):
 ```
 for (const branch of featureBranches) {
+  // Generate commit message for squash merge
+  Task(
+    description="Generate merge commit message",
+    subagent_type="gsd-mm-git-message",
+    prompt=`<commit_context>
+**Mode:** branch-merge
+**Milestone:** v${{version}}
+**Branch:** ${branch}
+**Commit Strategy:** per-phase
+
+**Merge Type:** Squash merge
+</commit_context>`
+  )
+  
   bash(`git merge --squash ${branch}`)
-  bash(`git commit -m "Merge ${branch} into milestone v${{version}}"`)
+  bash(`git commit -m "${generatedMessage}"`)
   bash(`git branch -d ${branch}`)
 }
 ```
@@ -589,7 +603,21 @@ for (const branch of featureBranches) {
 If option 2 (merge with history):
 ```
 for (const branch of featureBranches) {
-  bash(`git merge --no-ff ${branch}`)
+  // Generate commit message for merge
+  Task(
+    description="Generate merge commit message",
+    subagent_type="gsd-mm-git-message",
+    prompt=`<commit_context>
+**Mode:** branch-merge
+**Milestone:** v${{version}}
+**Branch:** ${branch}
+**Commit Strategy:** per-phase
+
+**Merge Type:** Merge with history
+</commit_context>`
+  )
+  
+  bash(`git merge --no-ff ${branch} -m "${generatedMessage}"`)
   bash(`git branch -d ${branch}`)
 }
 ```

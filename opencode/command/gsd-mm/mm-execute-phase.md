@@ -6,7 +6,7 @@ tools:
   - read
   - edit
   - bash
-
+  - task
   - todowrite
   - question
   - megamemory:understand
@@ -26,10 +26,10 @@ Context budget: ~15% orchestrator, 100% fresh per subagent.
 
 <execution_context>
 
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 
 </execution_context>
 
@@ -189,12 +189,30 @@ if (!modelProfile || modelProfile === "") {
 }
 ```
 
-**Model lookup table:**
+**Model lookup table (uses aliases):**
+
+First, extract model aliases from config (with defaults):
+```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-mm-executor | opus | sonnet | sonnet |
-| gsd-mm-verifier | sonnet | sonnet | haiku |
+| gsd-mm-executor | quality_model | balanced_model | balanced_model |
+| gsd-mm-verifier | balanced_model | balanced_model | budget_model |
+
+```
+const modelLookup = {
+  quality: { executor: aliases.quality_model, verifier: aliases.balanced_model },
+  balanced: { executor: aliases.balanced_model, verifier: aliases.balanced_model },
+  budget: { executor: aliases.balanced_model, verifier: aliases.budget_model }
+}
+const models = modelLookup[modelProfile]
+```
 
 Store the resolved models (e.g., `executorModel` and `verifierModel`) for use in Task calls below.
 
@@ -467,27 +485,53 @@ If git status shows unstaged modified files (not already staged by executors):
 
 **If `commitStrategy === "per-phase"`:**
 
-All plan executors staged their files without committing. Now create the single phase commit:
+All plan executors staged their files without committing. Now create the single phase commit using `gsd-mm-git-message`:
 
-```bash
-git commit -m "feat(phase-${phaseNumber}): ${phaseGoal}
+```
+Task(
+  description="Generate phase commit message",
+  subagent_type="gsd-mm-git-message",
+  prompt=`<commit_context>
+**Mode:** phase-commit
+**Phase:** ${phaseSlug}
+**Phase Goal:** ${phaseGoal}
+**Commit Strategy:** ${commitStrategy}
 
-- Plan ${phaseSlug}-01: ${plan1Summary}
-- Plan ${phaseSlug}-02: ${plan2Summary}
-"
+**Plans completed:**
+${planSummaries.map(s => `- ${s.name}: ${s.summary}`).join('\n')}
+
+**Staged files:**
+${stagedFiles.join('\n')}
+</commit_context>`
+)
 ```
 
-Populate plan summaries from the summary concepts collected in step 7 (aggregate results).
+The agent returns the commit message. Then execute:
 
-**Commit message rules:** Max 2-4 bullets (one per plan). Never list implementation details. See `git-integration.md` commit_message_rules.
+```bash
+git commit -m "${generatedMessage}"
+```
 
 **If `commitStrategy === "per-plan"` or `"per-task"`:**
 
-Plans/tasks already committed by executors. Only commit if orchestrator made its own corrections:
+Plans/tasks already committed by executors. Only commit if orchestrator made its own corrections using the same Task tool pattern:
 
-```bash
-# Only if there are staged changes from orchestrator corrections
-git diff --cached --quiet || git commit -m "fix(phase-${phaseNumber}): orchestrator corrections"
+```
+Task(
+  description="Generate orchestrator corrections commit",
+  subagent_type="gsd-mm-git-message",
+  prompt=`<commit_context>
+**Mode:** orchestrator-corrections
+**Phase:** ${phaseSlug}
+**Commit Strategy:** ${commitStrategy}
+
+**Changes:**
+Orchestrator corrections and metadata updates
+
+**Staged files:**
+${stagedFiles.join('\n')}
+</commit_context>`
+)
 ```
 
 **If git status is clean:** Continue to step 7.

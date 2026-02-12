@@ -23,9 +23,9 @@ Purpose: Add planned work discovered during execution that belongs at the end of
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>

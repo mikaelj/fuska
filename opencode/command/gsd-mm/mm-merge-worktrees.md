@@ -29,7 +29,7 @@ Merge MegaMemory knowledge databases from git-worktree feature branches into the
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 </execution_context>
 
 <megamemory_guide>
@@ -148,14 +148,14 @@ If exists:
 --> Read `.megamemory/merge-session.json` and parse JSON
 --> Use question:
 ```
-question(
-  header="Resume?",
-  question="Found an in-progress merge session. Resume where it left off?",
-  options=[
+const resumeResponse = question(questions=[{
+  header: "Resume?",
+  question: "Found an in-progress merge session. Resume where it left off?",
+  options: [
     {label: "Resume", description: "Continue from branch ${session.current_index + 1}/${session.branches.length}"},
     {label: "Start fresh", description: "Discard previous session and start over"}
   ]
-)
+}])
 ```
 
 If "Resume": Load session state and skip to the appropriate phase/branch.
@@ -285,17 +285,17 @@ ${rightLabel}:
 
 Use question:
 ```
-question(
-  header="Resolve",
-  question="How should this conflict be resolved?",
-  options=[
+const resolveResponse = question(questions=[{
+  header: "Resolve",
+  question: "How should this conflict be resolved?",
+  options: [
     {label: "AI verify", description: "Read referenced files and determine correct resolution (Recommended)"},
     {label: "Keep left", description: "Keep version from ${leftLabel}"},
     {label: "Keep right", description: "Keep version from ${rightLabel}"},
     {label: "Keep both", description: "Keep both as separate concepts"},
     {label: "Skip", description: "Leave unresolved for now"}
   ]
-)
+}])
 ```
 
 **Step 3.3: Execute resolution based on choice**
@@ -374,16 +374,16 @@ Reason: ${reasonText}
 
 Use question:
 ```
-question(
-  header="Apply?",
-  question="Apply this resolution?",
-  options=[
+const applyResponse = question(questions=[{
+  header: "Apply?",
+  question: "Apply this resolution?",
+  options: [
     {label: "Apply", description: "Accept AI resolution"},
     {label: "Keep left", description: "Override: keep ${leftLabel} version"},
     {label: "Keep right", description: "Override: keep ${rightLabel} version"},
     {label: "Keep both", description: "Override: keep both versions"}
   ]
-)
+}])
 ```
 
 **Step 4.5: Apply resolution**
@@ -424,15 +424,15 @@ If conflicts remain:
 --> Display: "${count} unresolved conflicts remain."
 --> Use question:
 ```
-question(
-  header="Unresolved",
-  question="There are still unresolved conflicts. What would you like to do?",
-  options=[
+const unresolvedResponse = question(questions=[{
+  header: "Unresolved",
+  question: "There are still unresolved conflicts. What would you like to do?",
+  options: [
     {label: "Resolve now", description: "Go through remaining conflicts"},
     {label: "Leave as-is", description: "Accept current state with unresolved conflicts"},
     {label: "Rollback", description: "Restore backup and abort merge"}
   ]
-)
+}])
 ```
 
 If "Resolve now": Loop back to Phase 3 for remaining conflicts.

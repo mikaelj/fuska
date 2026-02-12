@@ -4,7 +4,7 @@ description: Create context handoff when pausing work mid-phase using MegaMemory
 tools:
   - read
   - bash
-
+  - task
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
@@ -18,7 +18,7 @@ Enables seamless resumption in fresh session with full context restoration.
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 </execution_context>
 
 <megamemory_guide>
@@ -205,14 +205,14 @@ const blockers = stateData.blockers || []
 
 Use question tool to capture mental state:
 ```
-question(
-  header="Context Capture",
-  question="What's the current mental context? (approach, next steps, any important context)",
-  followUp: null
-)
+const contextResponse = question(questions=[{
+  header: "Context Capture",
+  question: "What's the current mental context? (approach, next steps, any important context)",
+  options: []
+}])
 ```
 
-Store response as `mentalContext`.
+Store response from contextResponse[0] as `mentalContext`.
 
 **Step 3.6: Check modified files**
 
@@ -351,12 +351,37 @@ To resume: /gsd-mm-resume-work
 
 If user has modified files and wants to commit:
 
-**Step 7.1: Commit if files modified**
+**Step 7.1: Commit if files modified using gsd-mm-git-message**
 
 If modifiedFiles.length > 0:
+
 ```
+Task(
+  description="Generate WIP commit message",
+  subagent_type="gsd-mm-git-message",
+  prompt=`<commit_context>
+**Mode:** handoff-commit
+**Phase:** ${currentPhase}
+**Plan:** ${currentPlan}
+**Task:** ${currentTaskIndex + 1}/${totalTasks}
+**Commit Strategy:** per-phase
+
+**Context:**
+Work paused at task ${currentTaskIndex + 1} of ${totalTasks}
+
+**Next Action:** ${nextAction}
+
+**Staged files:**
+${modifiedFiles.join('\n')}
+</commit_context>`
+)
+```
+
+The agent returns the commit message. Then execute:
+
+```bash
 git add .
-git commit -m "wip: {phaseName} paused at task {currentTaskIndex + 1}/{totalTasks}"
+git commit -m "${generatedMessage}"
 ```
 
 **Step 7.2: Get commit hash**
@@ -376,16 +401,16 @@ Update confirmation message:
 **Task:** {currentTaskIndex + 1} of {totalTasks}
 **Status:** {status}
 
-────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────
 
 **Completed:** {completedCount} tasks
 **Remaining:** {remainingWork.length} tasks
 
-────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────
 
 **Next Action:** {nextAction}
 
-────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────
 
 Handoff concept created: {currentPhase}-handoff
 Committed as WIP: {commit_hash}

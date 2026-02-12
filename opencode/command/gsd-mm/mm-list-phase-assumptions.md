@@ -22,8 +22,8 @@ Uses MegaMemory to query project state and roadmap data.
 </objective>
 
  <execution_context>
- @~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
- @~/.config/opencode/gsd-mm/workflows/list-phase-assumptions.md
+ @./opencode/gsd-mm/references/preflight-check-project-exists.md
+ @./opencode/gsd-mm/workflows/list-phase-assumptions.md
  </execution_context>
 
 <megamemory_guide>
@@ -346,16 +346,16 @@ What do you think?
 
 Use question tool:
 ```
-question(
-  header="Assumption Feedback",
-  question="How do these assumptions look?",
-  options=[
+const feedbackResponse = question(questions=[{
+  header: "Assumption Feedback",
+  question: "How do these assumptions look?",
+  options: [
     {label: "Looks good", description: "Proceed to planning"},
     {label: "Clarify", description: "Discuss a specific assumption"},
     {label: "Correct", description: "Fix wrong assumptions"},
     {label: "Add detail", description: "Expand on an area"}
   ]
-)
+}])
 ```
 
 ## 8. Handle User Response

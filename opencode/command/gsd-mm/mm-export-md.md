@@ -7,7 +7,7 @@ tools:
   - write
   - bash
   - glob
-
+  - task
   - megamemory:list_roots
   - megamemory:understand
 ---
@@ -34,9 +34,9 @@ This is the reverse of the migration script — converts the knowledge graph bac
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 
 </execution_context>
 
@@ -816,9 +816,33 @@ Total files: ${totalFileCount}
   cd $outputDir
   ls -la
 
-**Archive to git:**
+**Archive to git using gsd-mm-git-message:**
+  # Generate commit message
+  Task(
+    description="Generate export commit message",
+    subagent_type="gsd-mm-git-message",
+    prompt=`<commit_context>
+**Mode:** export-commit
+**Commit Strategy:** per-phase
+
+**Export Summary:**
+- PROJECT.md
+- REQUIREMENTS.md (${allRequirements.length} requirements)
+- ROADMAP.md (${phases.length} phases)
+- STATE.md
+- config.json
+- MILESTONES.md (${milestones.length} milestones)
+- Phase directories: ${Object.keys(phaseGroups).length} total
+- Todos: ${todos.length} total
+
+**Staged files:**
+$outputDir/
+</commit_context>`
+  )
+
+  # Then commit with returned message
   git add $outputDir
-  git commit -m "docs: export knowledge graph to markdown"
+  git commit -m "${generatedMessage}"
 
 **Clean up when ready:**
   rm -rf $outputDir

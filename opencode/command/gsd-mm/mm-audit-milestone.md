@@ -21,9 +21,9 @@ This command reads existing verification concepts (phases already verified durin
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>
@@ -72,6 +72,34 @@ If response.roots.length === 0:
 → Display: "No projects found in MegaMemory"
 → Suggest: "Run /gsd-mm-new-project to initialize project"
 → Stop
+
+**Step 1.3: Load config and resolve models**
+
+Call:
+```
+megamemory_understand(query="config", top_k=5)
+```
+
+If response.matches.length > 0:
+```
+const configSummaryString = response.matches[0].summary
+const configData = JSON.parse(configSummaryString)
+
+const modelProfile = configData.model_profile || "balanced"
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+
+const modelLookup = {
+  quality: { integration_checker: aliases.balanced_model },
+  balanced: { integration_checker: aliases.balanced_model },
+  budget: { integration_checker: aliases.budget_model }
+}
+
+const models = modelLookup[modelProfile]
+```
 
 ---
 
@@ -252,7 +280,7 @@ Return integration report with:
 - Requirements coverage: which requirements satisfied/blocked
 </output>",
   subagent_type="gsd-mm-integration-checker",
-  model="sonnet",
+  model="${models.integration_checker}",
   description="Check milestone integration"
 )
 ```

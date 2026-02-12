@@ -30,9 +30,9 @@ Research how to implement a phase using MegaMemory. Spawns gsd-mm-phase-research
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>
@@ -95,11 +95,29 @@ const configData = JSON.parse(configSummaryString)
 const modelProfile = configData.model_profile || "balanced"
 ```
 
-**Model lookup table:**
+**Model lookup table (uses aliases):**
+
+First, extract model aliases from config (with defaults):
+```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-mm-phase-researcher | opus | sonnet | haiku |
+| gsd-mm-phase-researcher | quality_model | balanced_model | budget_model |
+
+```
+const modelLookup = {
+  quality: { researcher: aliases.quality_model },
+  balanced: { researcher: aliases.balanced_model },
+  budget: { researcher: aliases.budget_model }
+}
+const models = modelLookup[modelProfile]
+```
 
 Store resolved model for use in Task calls below.
 
@@ -153,15 +171,15 @@ If response.matches.length > 0:
 → Display: "Research already exists for this phase"
 → Use question tool:
 ```
-question(
-  header="Existing Research",
-  question="Research already exists for this phase. What would you like to do?",
-  options=[
+const researchResponse = question(questions=[{
+  header: "Existing Research",
+  question: "Research already exists for this phase. What would you like to do?",
+  options: [
     {label: "Update research", description: "Re-research and update existing concept"},
     {label: "View existing", description: "Show current research content"},
     {label: "Skip", description: "Keep existing research, exit"}
   ]
-)
+}])
 ```
 
 If user chooses "View existing":
@@ -330,31 +348,31 @@ megamemory_update_concept(
 
 **Step 5.2: Present options**
 ```
-question(
-  header="Research Complete",
-  question="What would you like to do next?",
-  options=[
+const nextResponse = question(questions=[{
+  header: "Research Complete",
+  question: "What would you like to do next?",
+  options: [
     {label: "Plan phase", description: "Create execution plans for this phase"},
     {label: "Dig deeper", description: "Research specific aspects in more detail"},
     {label: "Review full", description: "View complete research content"},
     {label: "Done", description: "Exit, research saved to MegaMemory"}
   ]
-)
+}])
 ```
 
 **`## CHECKPOINT REACHED`:**
 → Present checkpoint to user
 → Use question tool:
 ```
-question(
-  header="Research Checkpoint",
-  question="Research has reached a checkpoint. How would you like to proceed?",
-  options=[
+const checkpointResponse = question(questions=[{
+  header: "Research Checkpoint",
+  question: "Research has reached a checkpoint. How would you like to proceed?",
+  options: [
     {label: "Provide context", description: "I'll provide additional context"},
     {label: "Continue", description: "Resume research from checkpoint"},
     {label: "Manual", description: "Take manual control"}
   ]
-)
+}])
 ```
 
 If user chooses "Provide context":

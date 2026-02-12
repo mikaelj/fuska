@@ -29,10 +29,10 @@ Create executable phase concepts (plan concepts) for a roadmap phase with integr
 
 <execution_context>
 
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/phase-templates.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/phase-templates.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 
 </execution_context>
 
@@ -124,13 +124,31 @@ if (!modelProfile || modelProfile === "") {
 }
 ```
 
-**Model lookup table:**
+**Model lookup table (uses aliases):**
+
+First, extract model aliases from config (with defaults):
+```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-mm-phase-researcher | opus | sonnet | haiku |
-| gsd-mm-planner | opus | opus | sonnet |
-| gsd-mm-plan-checker | sonnet | sonnet | haiku |
+| gsd-mm-phase-researcher | quality_model | balanced_model | budget_model |
+| gsd-mm-planner | quality_model | quality_model | balanced_model |
+| gsd-mm-plan-checker | balanced_model | balanced_model | budget_model |
+
+```
+const modelLookup = {
+  quality: { researcher: aliases.quality_model, planner: aliases.quality_model, checker: aliases.balanced_model },
+  balanced: { researcher: aliases.balanced_model, planner: aliases.quality_model, checker: aliases.balanced_model },
+  budget: { researcher: aliases.budget_model, planner: aliases.balanced_model, checker: aliases.budget_model }
+}
+const models = modelLookup[modelProfile]
+```
 
 Store the resolved models (e.g., `researcherModel`, `plannerModel`, `checkerModel`) for use in Task calls below.
 
@@ -410,15 +428,15 @@ Wait for user response and handle accordingly.
 If existingPlansCount > 0:
 → Use question tool:
 ```
-question(
-  header="Existing Plans",
-  question="Plans already exist for this phase (${existingPlansCount} plan(s)). What would you like to do?",
-  options=[
+const plansResponse = question(questions=[{
+  header: "Existing Plans",
+  question: "Plans already exist for this phase (${existingPlansCount} plan(s)). What would you like to do?",
+  options: [
     {label: "Continue planning", description: "Add more plans to existing ones"},
     {label: "View existing", description: "Show current plans"},
     {label: "Replan from scratch", description: "Delete and recreate all plans"}
   ]
-)
+}])
 ```
 
 **Step 5.2: Handle user response**

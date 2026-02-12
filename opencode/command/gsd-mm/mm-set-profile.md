@@ -23,9 +23,9 @@ Implementation lives in the `gsd-mm-set-profile` agent so we don't duplicate the
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 </execution_context>
 
 <megamemory_guide>

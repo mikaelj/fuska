@@ -8,7 +8,7 @@ tools:
   bash: true
   grep: true
   glob: true
-color: "#FFFF00"
+  task: true
 ---
 
 <role>
@@ -660,25 +660,35 @@ git add src/types/user.ts
 
 **Step 2. Commit or defer (strategy-dependent):**
 
-**If `per-task`:** Commit immediately after staging.
+**If `per-task`:** Commit immediately after staging using `gsd-mm-git-message`.
 
-```bash
-git commit -m "{type}({phase}-{plan}): {concise task description}
+Use Task tool to generate commit message:
 
-- {high-level change 1}
-- {high-level change 2}
-"
+```
+Task(
+  description="Generate commit message for task",
+  subagent_type="gsd-mm-git-message",
+  prompt=`<commit_context>
+**Mode:** task-commit
+**Phase-Plan:** ${phase}-${plan}
+**Commit Strategy:** ${commitStrategy}
+
+**Staged files:**
+${stagedFiles.join('\n')}
+
+**Diff:**
+${diffOutput}
+</commit_context>`
+)
 ```
 
-**If `per-plan`:** Do NOT commit. Files remain staged. Commit once after ALL tasks in this plan complete:
+The agent returns the commit message. Then execute:
 
 ```bash
-git commit -m "{type}({phase}-{plan}): {plan objective summary}
-
-- {task 1}: {one-line summary}
-- {task 2}: {one-line summary}
-"
+git commit -m "${generatedMessage}"
 ```
+
+**If `per-plan`:** Do NOT commit. Files remain staged. Commit once after ALL tasks in this plan complete using the same Task tool pattern with all accumulated diffs.
 
 **If `per-phase`:** Do NOT commit. Files remain staged. The orchestrator (execute-phase) commits when the entire phase completes. You never run `git commit`.
 
@@ -690,42 +700,7 @@ TASK_COMMIT=$(git rev-parse --short HEAD)
 
 Track for summary concept creation.
 
-## Commit message rules (CRITICAL — read carefully)
-
-**LLMs default to extremely verbose commit messages. You MUST NOT do this.**
-
-- Subject line: max 72 chars, imperative mood
-- Body: **maximum 2-4 bullet points.** Never more.
-- Each bullet is ONE high-level sentence
-- **NEVER** list: imports, field names, parameter details, null checks, constructor changes, type annotations, or implementation mechanics
-- **NEVER** restate what the diff shows — explain *what* and *why*, not *how*
-- If you find yourself writing more than 4 bullets, STOP and summarize harder
-
-**BAD** (do not do this):
-```
-feat(02-02): parse discounts from API response
-
-- Added import api_price_calc.dart to data_parser.dart
-- Created _parseDiscounts() helper method
-- Extracts common fields: id, name, description, type
-- Uses pattern matching on type field
-- Maps snake_case to camelCase fields
-- Extracts time fields from HH:mm:ss to HH:mm
-- Returns empty list for null/empty array
-- Throws ParseError for missing fields
-- Made discounts field non-final
-- Calls _parseDiscounts() in _processJsonData()
-```
-
-**GOOD** (do this):
-```
-feat(02-02): parse discounts from API response
-
-- Map discount JSON to typed Discount subclasses via pattern matching
-- Assign parsed discounts to User after construction
-```
-
-  </task_commit_protocol>
+</task_commit_protocol>
 
 <summary_creation>
 

@@ -27,6 +27,11 @@ interface ModelProfilesConcept {
 
 ```typescript
 interface ModelProfilesData {
+  model_aliases: {
+    quality_model: string;   // e.g., "opencode/claude-opus-4"
+    balanced_model: string;  // e.g., "opencode/claude-sonnet-4"
+    budget_model: string;    // e.g., "opencode/claude-haiku-4"
+  };
   active_profile: 'quality' | 'balanced' | 'budget';
   presets: {
     quality: ModelStageMapping;
@@ -68,11 +73,13 @@ const STAGE_AGENTS: StageAgentMapping = {
   ],
   execution: [
     'gsd-executor',
-    'gsd-debugger'
+    'gsd-debugger',
+    'gsd-git-message'
   ],
   verification: [
     'gsd-verifier',
     'gsd-integration-checker',
+    'gsd-commit-checker',
     'gsd-set-profile',
     'gsd-settings'
   ]
@@ -101,8 +108,8 @@ import { megamemory_create_concept } from '@opencode/mcp-client';
 const modelProfiles = await megamemory_create_concept({
   name: 'model-profiles',
   kind: 'config',
-  summary: 'Model profiles with active=balanced, presets: quality(planning:claude-sonnet-4.5,execution:claude-haiku-4.1,verification:claude-sonnet-4.5), balanced(planning:claude-sonnet-4.5,execution:claude-3-5-haiku,verification:claude-3-5-haiku), budget(planning:claude-3-5-haiku,execution:claude-3-5-haiku,verification:claude-3-haiku)',
-  why: 'Controls model selection per GSD agent stage to balance quality vs token spend. Planning uses strongest models for architecture decisions, execution uses mid-tier to follow explicit plans, verification uses mid-tier for goal-backward reasoning',
+  summary: 'Model profiles with model_aliases: quality_model=opencode/claude-opus-4, balanced_model=opencode/claude-sonnet-4, budget_model=opencode/claude-haiku-4; active=balanced, presets: quality(planning:claude-opus-4,execution:claude-opus-4,verification:claude-opus-4), balanced(planning:claude-opus-4,execution:claude-sonnet-4,verification:claude-sonnet-4), budget(planning:claude-sonnet-4,execution:claude-sonnet-4,verification:claude-haiku-4)',
+  why: 'Controls model selection per GSD agent stage to balance quality vs token spend. Model aliases provide indirection between lookup tables and actual model IDs.',
   file_refs: ['opencode.json'],
   edges: [
     {
@@ -410,8 +417,42 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 | Stage | Agents |
 |-------|--------|
 | Planning | gsd-planner, gsd-plan-checker, gsd-phase-researcher, gsd-roadmapper, gsd-project-researcher, gsd-research-synthesizer, gsd-codebase-mapper |
-| Execution | gsd-executor, gsd-debugger |
-| Verification | gsd-verifier, gsd-integration-checker, gsd-set-profile, gsd-settings |
+| Execution | gsd-executor, gsd-debugger, gsd-git-message |
+| Verification | gsd-verifier, gsd-integration-checker, gsd-commit-checker, gsd-set-profile, gsd-settings |
+
+## Model Aliases
+
+Model aliases provide an indirection layer between lookup tables and actual model IDs. Instead of hardcoding model names like `opus`, `sonnet`, `haiku`, orchestrators use aliases:
+
+| Alias | Purpose | Example Value |
+|-------|---------|---------------|
+| `quality_model` | Strongest model for quality profile | `opencode/claude-opus-4` |
+| `balanced_model` | Mid-tier model for balanced profile | `opencode/claude-sonnet-4` |
+| `budget_model` | Lightweight model for budget profile | `opencode/claude-haiku-4` |
+
+**Lookup tables use aliases:**
+
+| Agent | quality | balanced | budget |
+|-------|---------|----------|--------|
+| gsd-mm-planner | quality_model | quality_model | balanced_model |
+| gsd-mm-executor | quality_model | balanced_model | balanced_model |
+| gsd-mm-plan-checker | balanced_model | balanced_model | budget_model |
+| gsd-mm-verifier | balanced_model | balanced_model | budget_model |
+| gsd-mm-phase-researcher | quality_model | balanced_model | budget_model |
+| gsd-mm-git-message | balanced_model | budget_model | budget_model |
+| gsd-mm-commit-checker | budget_model | budget_model | budget_model |
+
+**Resolution flow:**
+
+```
+1. Load config from MegaMemory
+2. Extract model_aliases: { quality_model, balanced_model, budget_model }
+3. Lookup table maps profile → alias
+4. Alias resolves to actual model ID
+5. Pass model to Task() call
+```
+
+This design allows changing underlying models without modifying lookup tables.
 
 ## Profile Configuration
 
@@ -420,13 +461,19 @@ Models are **user-configured**, not hardcoded. OpenCode supports multiple provid
 On first run, `/gsd-settings` runs the **Preset Setup Wizard**:
 
 1. Queries `opencode models` to discover available models
-2. Prompts user to select models for each profile/stage combination
-3. Saves to MegaMemory `model-profiles` concept
+2. Prompts user to configure model aliases (quality_model, balanced_model, budget_model)
+3. Prompts user to select models for each profile/stage combination
+4. Saves to MegaMemory `config` concept
 
 Configuration structure (stored in MegaMemory concept summary):
 
 ```json
 {
+  "model_aliases": {
+    "quality_model": "opencode/claude-opus-4",
+    "balanced_model": "opencode/claude-sonnet-4",
+    "budget_model": "opencode/claude-haiku-4"
+  },
   "active_profile": "balanced",
   "presets": {
     "quality": { "planning": "...", "execution": "...", "verification": "..." },
@@ -463,11 +510,52 @@ When configuring presets, consider these guidelines:
 Orchestrators resolve model before spawning:
 
 ```text
-1. Query MegaMemory for model-profiles concept
-2. Parse JSON from concept.summary to get active_profile (default: "balanced")
-3. Look up preset[profile][stage] for the agent's stage
-4. Apply any custom_overrides[profile][stage] if set
-5. Pass model parameter to Task call
+1. Query MegaMemory for config concept
+2. Parse JSON from concept.summary
+3. Extract model_aliases (with defaults if missing)
+4. Get model_profile (default: "balanced")
+5. Lookup table maps [profile][agent] → alias
+6. Alias resolves to actual model ID from model_aliases
+7. Pass model parameter to Task call
+```
+
+**Example resolution:**
+
+```javascript
+const configData = JSON.parse(configMatch.summary);
+const modelProfile = configData.model_profile || "balanced";
+
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+};
+
+const modelLookup = {
+  quality: {
+    researcher: aliases.quality_model,
+    planner: aliases.quality_model,
+    checker: aliases.balanced_model,
+    executor: aliases.quality_model,
+    verifier: aliases.balanced_model
+  },
+  balanced: {
+    researcher: aliases.balanced_model,
+    planner: aliases.quality_model,
+    checker: aliases.balanced_model,
+    executor: aliases.balanced_model,
+    verifier: aliases.balanced_model
+  },
+  budget: {
+    researcher: aliases.budget_model,
+    planner: aliases.balanced_model,
+    checker: aliases.budget_model,
+    executor: aliases.balanced_model,
+    verifier: aliases.budget_model
+  }
+};
+
+const models = modelLookup[modelProfile];
 ```
 
 Query pattern:

@@ -19,8 +19,8 @@ This delegates the implementation to the `gsd-mm-settings` agent, which manages 
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/helpers.ts
 </execution_context>
 
 <megamemory_guide>

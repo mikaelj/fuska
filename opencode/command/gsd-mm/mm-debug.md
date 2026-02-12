@@ -45,7 +45,7 @@ The important field is **`summary`** — it's a JSON string containing the debug
 </megamemory_guide>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 </execution_context>
 
 <context>
@@ -78,11 +78,29 @@ if (response.matches.length > 0) {
 
 Default to "balanced" if not set.
 
-**Model lookup table:**
+**Model lookup table (uses aliases):**
+
+First, extract model aliases from config (with defaults):
+```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-mm-debugger | opus | sonnet | sonnet |
+| gsd-mm-debugger | quality_model | balanced_model | balanced_model |
+
+```
+const modelLookup = {
+  quality: { debugger: aliases.quality_model },
+  balanced: { debugger: aliases.balanced_model },
+  budget: { debugger: aliases.balanced_model }
+}
+const models = modelLookup[modelProfile]
+```
 
 Store resolved model for use in Task calls below.
 

@@ -100,16 +100,34 @@ Query MegaMemory for planning config and resolve model profile:
 # Query for planning config concept
 megamemory:understand({query: "planning config"})
 
-# Parse response: If config concept exists, extract model_profile from summary JSON
-# If config concept missing, use default "balanced"
+# Parse response: If config concept exists, extract model_profile and model_aliases from summary JSON
+# If config concept missing, use default "balanced" with default aliases
 ```
 
-**Model lookup table:**
+**Model aliases (with defaults):**
+```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
+
+**Model lookup table (uses aliases):**
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| gsd-planner | opus | opus | sonnet |
-| gsd-plan-checker | sonnet | sonnet | haiku |
+| gsd-planner | quality_model | quality_model | balanced_model |
+| gsd-plan-checker | balanced_model | balanced_model | budget_model |
+
+```
+const modelLookup = {
+  quality: { planner: aliases.quality_model, checker: aliases.balanced_model },
+  balanced: { planner: aliases.quality_model, checker: aliases.balanced_model },
+  budget: { planner: aliases.balanced_model, checker: aliases.budget_model }
+}
+const models = modelLookup[modelProfile]
+```
 
 Store resolved models for use in Task calls below.
 </step>

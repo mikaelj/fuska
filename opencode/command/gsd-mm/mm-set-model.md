@@ -23,9 +23,9 @@ Unlike `/gsd-mm-set-profile` which switches between profiles, this command lets 
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 </execution_context>
 
 <megamemory_guide>

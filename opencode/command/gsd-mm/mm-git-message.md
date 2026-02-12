@@ -23,7 +23,7 @@ All modes can be combined with explicit phase-plan context (overrides auto-detec
 
 <execution_context>
 
-@~/.config/opencode/gsd-mm/references/git-integration.md
+@./opencode/gsd-mm/references/git-integration.md
 
 </execution_context>
 

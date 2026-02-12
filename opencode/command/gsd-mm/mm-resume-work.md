@@ -27,10 +27,10 @@ Routes to resume-project workflow which handles:
 </objective>
 
 <execution_context>
-@~/.config/opencode/gsd-mm/references/preflight-check-project-exists.md
+@./opencode/gsd-mm/references/preflight-check-project-exists.md
 
-@~/.config/opencode/gsd-mm/scripts/types.ts
-@~/.config/opencode/gsd-mm/scripts/helpers.ts
+@./opencode/gsd-mm/scripts/types.ts
+@./opencode/gsd-mm/scripts/helpers.ts
 
 </execution_context>
 
@@ -95,11 +95,11 @@ for (const project of projects) {
 
 → Use question tool:
 ```
-question(
-  header="Select Project",
-  question="Which project would you like to work on?",
-  options=projects.map(p => ({label: p.name, description: p.description}))
-)
+const projectResponse = question(questions=[{
+  header: "Select Project",
+  question: "Which project would you like to work on?",
+  options: projects.map(p => ({label: p.name, description: p.description}))
+}])
 ```
 
 **Step 1.4: Store selected project**
