@@ -91,6 +91,7 @@ interface MMDryRunResult {
 interface GitDryRunResult {
   clean: boolean;
   conflicts: string[];
+  error?: string;
 }
 
 interface MergeResult {
@@ -221,6 +222,7 @@ class WorktreeMergeRunner {
 
     const hasErrors = mmDryRunResult.conflicts.length > 0 || !gitDryRunResult.clean;
     if (hasErrors && !options.force && !options.dryRun) {
+      this.displayDryRunResults(branch, mmDryRunResult, gitDryRunResult);
       console.error('\nErrors detected in dry-run. Use --force to proceed anyway.');
       process.exit(1);
     }
@@ -361,6 +363,10 @@ class WorktreeMergeRunner {
       cwd: this.projectDir
     });
 
+    if (result.error) {
+      return { clean: false, conflicts: [], error: `Failed to run git: ${result.error.message}` };
+    }
+
     const exitCode = result.status;
 
     if (exitCode === 0) {
@@ -371,7 +377,6 @@ class WorktreeMergeRunner {
       return { clean: true, conflicts: [] };
     }
 
-    // Capture conflicts BEFORE aborting
     const conflicts: string[] = [];
     const diffResult = cp.spawnSync('git', ['diff', '--name-only', '--diff-filter=U'], {
       encoding: 'utf-8',
@@ -382,13 +387,16 @@ class WorktreeMergeRunner {
       conflicts.push(...diffResult.stdout.trim().split('\n').filter(Boolean));
     }
 
-    // Now abort the merge
+    const error = conflicts.length === 0
+      ? [result.stderr, result.stdout].filter(Boolean).join('\n').trim()
+      : undefined;
+
     cp.spawnSync('git', ['merge', '--abort'], {
       encoding: 'utf-8',
       cwd: this.projectDir
     });
 
-    return { clean: false, conflicts };
+    return { clean: false, conflicts, error };
   }
 
   private displayDryRunResults(branch: string, mmResult: MMDryRunResult, gitResult: GitDryRunResult): void {
@@ -407,6 +415,8 @@ class WorktreeMergeRunner {
     console.log(`\nGit merge (${branch}):`);
     if (gitResult.clean) {
       console.log('  [OK] Clean merge (no conflicts)');
+    } else if (gitResult.error) {
+      console.log(`  [FAIL] ${gitResult.error}`);
     } else {
       console.log(`  [FAIL] Conflicts in: ${gitResult.conflicts.join(', ')}`);
     }
