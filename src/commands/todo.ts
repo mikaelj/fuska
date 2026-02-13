@@ -2,22 +2,22 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
-interface TaskNode {
+interface TodoNode {
   id: string;
   name: string;
   kind: string;
   summary: string;
 }
 
-interface TaskData {
-  task_number: string;
-  slug: string;
-  description: string;
+interface TodoData {
+  title: string;
+  area: string;
   status: string;
-  mode: string;
-  created_at?: string;
-  completed_at?: string;
-  commit?: string;
+  created: string;
+  files?: string[];
+  problem?: string;
+  solution?: string;
+  completedAt?: string;
 }
 
 class TodoRunner {
@@ -50,172 +50,123 @@ class TodoRunner {
   private async displayTodos(): Promise<void> {
     const nodes = this.db.getAllActiveNodes();
     
-    // Find all task concepts
-    const tasks = this.findTasks(nodes);
+    const todos = this.findTodos(nodes);
     
-    if (tasks.length === 0) {
-      console.log('No tasks found in MegaMemory.');
+    if (todos.length === 0) {
+      console.log('No todos found in MegaMemory.');
       console.log('');
-      console.log('Tasks are created when you run /fuska-new-task.');
+      console.log('Todos are created when you run /fuska-add-todo.');
       return;
     }
 
-    // Build a map of summary nodes
-    const summaryMap = new Map<string, TaskNode>();
-    for (const node of nodes) {
-      if (node.name.startsWith('task-') && node.name.endsWith('-summary')) {
-        const taskName = node.name.replace('-summary', '');
-        summaryMap.set(taskName, node);
-      }
-    }
-
-    // Parse task data and separate into completed and pending
-    const taskDataList: Array<{ node: TaskNode; data: TaskData; summary?: any }> = [];
+    const todoDataList: Array<{ node: TodoNode; data: TodoData }> = [];
     
-    for (const task of tasks) {
+    for (const todo of todos) {
       try {
-        // Extract JSON from summary (may have markdown after the JSON)
-        const jsonMatch = task.summary.match(/^\{[\s\S]*?\n\}/);
-        let data: TaskData;
+        const jsonMatch = todo.summary.match(/^\{[\s\S]*?\n\}/);
+        let data: TodoData;
         
         if (jsonMatch) {
-          data = JSON.parse(jsonMatch[0]) as TaskData;
+          data = JSON.parse(jsonMatch[0]) as TodoData;
         } else {
-          // Try parsing the whole thing
-          data = JSON.parse(task.summary) as TaskData;
-        }
-
-        // Check for summary node
-        const summaryNode = summaryMap.get(task.name);
-        let summaryData: any = undefined;
-        
-        if (summaryNode) {
-          try {
-            const summaryJsonMatch = summaryNode.summary.match(/^\{[\s\S]*?\n\}/);
-            if (summaryJsonMatch) {
-              summaryData = JSON.parse(summaryJsonMatch[0]);
-            } else {
-              summaryData = JSON.parse(summaryNode.summary);
-            }
-            // If summary exists, task is completed
-            if (!data.status || data.status === 'planned' || data.status === 'planning') {
-              data.status = 'completed';
-            }
-          } catch (e) {
-            // Summary parsing failed, that's okay
-          }
+          data = JSON.parse(todo.summary) as TodoData;
         }
         
-        taskDataList.push({ node: task, data, summary: summaryData });
+        todoDataList.push({ node: todo, data });
       } catch (e) {
-        // If parsing fails, create a basic task data from the node
-        const summaryNode = summaryMap.get(task.name);
-        
-        taskDataList.push({
-          node: task,
-          data: {
-            task_number: this.extractTaskNumber(task.name),
-            slug: task.name.replace(/^task-\d+-/, ''),
-            description: task.name.replace(/[-_]/g, ' '),
-            status: summaryNode ? 'completed' : 'unknown',
-            mode: 'unknown'
-          },
-          summary: summaryNode ? { commit: 'unknown' } : undefined
-        });
+        // Skip unparseable todos
       }
     }
 
-    // Sort by task number
-    taskDataList.sort((a, b) => {
-      const numA = parseInt(a.data.task_number || '0');
-      const numB = parseInt(b.data.task_number || '0');
-      return numA - numB;
+    todoDataList.sort((a, b) => {
+      const dateA = new Date(a.data.created || 0).getTime();
+      const dateB = new Date(b.data.created || 0).getTime();
+      return dateB - dateA; // Newest first
     });
 
-    // Separate completed and pending
-    const completed = taskDataList.filter(t => 
-      t.data.status === 'completed' || 
-      t.data.status === 'done' ||
-      t.data.status === 'complete'
+    const done = todoDataList.filter(t => 
+      t.data.status === 'done' || 
+      t.data.status === 'completed'
     );
     
-    const pending = taskDataList.filter(t => 
-      t.data.status === 'planned' || 
-      t.data.status === 'planning' ||
-      t.data.status === 'in_progress' ||
-      t.data.status === 'in-progress' ||
-      t.data.status === 'unknown'
+    const pending = todoDataList.filter(t => 
+      t.data.status === 'pending' ||
+      t.data.status === 'planned' ||
+      !t.data.status
     );
 
-    // Display sections
-    if (completed.length > 0) {
-      console.log('Completed Tasks');
-      console.log('');
-      for (const task of completed) {
-        const checkbox = '✓';
-        const taskNum = `Task ${task.data.task_number.padStart(3, '0')}`;
-        const desc = task.data.description || task.data.slug.replace(/[-_]/g, ' ');
-        const date = task.summary?.completed_at ? this.formatDate(task.summary.completed_at) : 
-                     (task.data.completed_at ? this.formatDate(task.data.completed_at) : '');
-        const commit = task.summary?.commit ? ` [${task.summary.commit}]` : 
-                       (task.data.commit ? ` [${task.data.commit}]` : '');
-        
-        console.log(`  ${checkbox} ${taskNum}: ${desc}${date ? ` (${date})` : ''}${commit}`);
-      }
-    }
-
-    if (completed.length > 0 && pending.length > 0) {
-      console.log('');
-    }
-
     if (pending.length > 0) {
-      console.log('Pending Tasks');
+      console.log('Pending Todos');
       console.log('');
-      for (const task of pending) {
+      for (const todo of pending) {
         const bullet = '○';
-        const taskNum = `Task ${task.data.task_number.padStart(3, '0')}`;
-        const desc = task.data.description || task.data.slug.replace(/[-_]/g, ' ');
-        const status = task.data.status !== 'planned' ? ` (${task.data.status})` : '';
+        const title = todo.data.title || todo.node.name;
+        const area = todo.data.area || 'general';
+        const age = this.getRelativeTime(todo.data.created);
         
-        console.log(`  ${bullet} ${taskNum}: ${desc}${status}`);
+        console.log(`  ${bullet} ${title} (${area}, ${age})`);
       }
     }
 
-    // Summary
+    if (done.length > 0 && pending.length > 0) {
+      console.log('');
+    }
+
+    if (done.length > 0) {
+      console.log('Completed Todos');
+      console.log('');
+      for (const todo of done) {
+        const checkbox = '✓';
+        const title = todo.data.title || todo.node.name;
+        const area = todo.data.area || 'general';
+        const age = todo.data.completedAt 
+          ? this.getRelativeTime(todo.data.completedAt)
+          : this.getRelativeTime(todo.data.created);
+        
+        console.log(`  ${checkbox} ${title} (${area}, ${age})`);
+      }
+    }
+
     console.log('');
-    console.log(`Total: ${taskDataList.length} tasks (${completed.length} completed, ${pending.length} pending)`);
+    console.log(`Total: ${todoDataList.length} todos (${pending.length} pending, ${done.length} done)`);
   }
 
-  private findTasks(nodes: TaskNode[]): TaskNode[] {
-    const tasks: TaskNode[] = [];
+  private findTodos(nodes: TodoNode[]): TodoNode[] {
+    const todos: TodoNode[] = [];
 
     for (const node of nodes) {
-      // Skip summary nodes
-      if (node.name.endsWith('-summary')) {
-        continue;
-      }
-
-      // Check if this is a task node
-      if (node.name.startsWith('task-')) {
-        // Verify it has a task number pattern
-        if (/^task-\d+/.test(node.name)) {
-          tasks.push(node);
+      if (node.kind !== 'feature') continue;
+      
+      try {
+        const jsonMatch = node.summary.match(/^\{[\s\S]*?\n\}/);
+        const summaryText = jsonMatch ? jsonMatch[0] : node.summary;
+        const data = JSON.parse(summaryText);
+        
+        if (data.title !== undefined && (data.status === 'pending' || data.status === 'done' || data.status === 'completed')) {
+          todos.push(node);
         }
+      } catch (e) {
+        // Not a todo, skip
       }
     }
 
-    return tasks;
+    return todos;
   }
 
-  private extractTaskNumber(name: string): string {
-    const match = name.match(/^task-(\d+)/);
-    return match ? match[1] : '000';
-  }
-
-  private formatDate(dateString: string): string {
+  private getRelativeTime(dateString: string): string {
+    if (!dateString) return 'unknown';
+    
     try {
       const date = new Date(dateString);
-      return date.toISOString().split('T')[0];
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
     } catch (e) {
       return dateString;
     }
@@ -225,7 +176,7 @@ class TodoRunner {
 export function todoCommand(program: Command) {
   program
     .command('todo [project-path]')
-    .description('List all completed and pending Fuska tasks')
+    .description('List all pending and completed todos')
     .action(async (projectPath?: string) => {
       const runner = new TodoRunner({
         projectDir: projectPath || process.cwd()
