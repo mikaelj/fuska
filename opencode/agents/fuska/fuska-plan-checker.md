@@ -690,6 +690,12 @@ When all checks pass:
 **Plans verified:** {N}
 **Status:** All checks passed
 
+### Verified Plans
+
+```json
+{full_plans_json}
+```
+
 ### Coverage Summary
 
 | Requirement | Plans | Status |

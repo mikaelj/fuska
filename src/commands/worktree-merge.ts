@@ -395,10 +395,10 @@ class WorktreeMergeRunner {
     console.log('\n=== DRY RUN RESULTS ===\n');
 
     console.log('MegaMemory merge:');
-    console.log(`  ✓ Clean: ${mmResult.clean} concepts`);
-    console.log(`  ✓ Skipped (shared-context): ${mmResult.skipped} concepts`);
+    console.log(`  [OK] Clean: ${mmResult.clean} concepts`);
+    console.log(`  [OK] Skipped (shared-context): ${mmResult.skipped} concepts`);
     if (mmResult.conflicts.length > 0) {
-      console.log(`  ✗ Conflicts: ${mmResult.conflicts.length} concepts`);
+      console.log(`  [FAIL] Conflicts: ${mmResult.conflicts.length} concepts`);
       for (const c of mmResult.conflicts) {
         console.log(`      - ${c.name} (${c.id}) - ${c.reason}`);
       }
@@ -406,9 +406,9 @@ class WorktreeMergeRunner {
 
     console.log(`\nGit merge (${branch}):`);
     if (gitResult.clean) {
-      console.log('  ✓ Clean merge (no conflicts)');
+      console.log('  [OK] Clean merge (no conflicts)');
     } else {
-      console.log(`  ✗ Conflicts in: ${gitResult.conflicts.join(', ')}`);
+      console.log(`  [FAIL] Conflicts in: ${gitResult.conflicts.join(', ')}`);
     }
 
     console.log('\n────────────────');
@@ -1070,13 +1070,13 @@ class WorktreeMergeRunner {
     });
 
     if (result.status === 0) {
-      console.log(`  ✓ Merged ${branch}`);
+      console.log(`  [OK] Merged ${branch}`);
       this.session!.git_merged = true;
       await this.saveSession();
       return;
     }
 
-    console.log(`  ✗ Git merge has conflicts`);
+    console.log(`  [FAIL] Git merge has conflicts`);
 
     const diffResult = cp.spawnSync('git', ['diff', '--name-only', '--diff-filter=U'], {
       encoding: 'utf-8',
@@ -1167,7 +1167,7 @@ class WorktreeMergeRunner {
     console.log(`  Conflicts resolved: ${this.session!.conflicts_resolved}`);
     console.log(`  Backup: ${this.session!.backup_path}`);
     console.log();
-    console.log(`Git merge: ${this.session!.git_merged ? '✓ merged ' + this.session!.branch : 'skipped'}`);
+    console.log(`Git merge: ${this.session!.git_merged ? '[OK] merged ' + this.session!.branch : 'skipped'}`);
     console.log(`Pre-merge SHA: ${this.session!.pre_merge_sha} (saved for manual rollback if needed)`);
     console.log();
     console.log('Merge session archived:');

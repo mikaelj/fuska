@@ -1541,9 +1541,9 @@ class EnhancedPlanningToMegaMemoryMigration {
       try {
         const result = await this.megamemory.understand({ query });
         if (result.matches.length > 0) {
-          console.log(`  Query "${query}": ${result.matches.length} matches ✓`);
+          console.log(`  Query "${query}": ${result.matches.length} matches [OK]`);
         } else {
-          console.log(`  Query "${query}": No matches ⚠`);
+          console.log(`  Query "${query}": No matches [WARN]`);
         }
       } catch (error: any) {
         console.log(`  Query "${query}": Error - ${error.message.substring(0, 50)}...`);

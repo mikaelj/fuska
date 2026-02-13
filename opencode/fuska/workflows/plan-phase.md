@@ -391,6 +391,9 @@ REQUIREMENTS_RESULTS=$(megamemory understand "requirements" top_k=50)
 
 ## 10. Spawn fuska-plan-checker Agent
 
+Track: `iteration_count = 1`
+Track: `issues_history = []`
+
 Display:
 
 ```
@@ -435,18 +438,19 @@ Task(
 ## 11. Handle Checker Return
 
 **If `## VERIFICATION PASSED`:**
-- Display: `Plans verified. Ready for execution.`
+- Output the checker's full response (contains verified plans JSON)
+- Append orchestrator summary:
+  - **Iterations:** {iteration_count}
+  - **What Was Fixed:** {1 paragraph summary of issues raised and addressed, if iterations > 1}
 - Proceed to step 13
 
 **If `## ISSUES FOUND`:**
 - Display: `Checker found issues:`
 - List issues from checker output
-- Check iteration count
+- Append issues to `issues_history[]` for summary generation
 - Proceed to step 12
 
 ## 12. Revision Loop (Max 3 Iterations)
-
-Track: `iteration_count` (starts at 1 after initial plan + check)
 
 **If iteration_count < 3:**
 
