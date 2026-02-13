@@ -543,7 +543,7 @@ Check requirements concepts:
 
 Display spawning indicator:
 ```
-◆ Spawning 4 researchers in parallel...
+[IN_PROGRESS] Spawning 4 researchers in parallel...
   → Stack research
   → Features research
   → Architecture research
@@ -551,6 +551,79 @@ Display spawning indicator:
 ```
 
 Spawn 4 parallel fuska-project-researcher agents with context about MegaMemory usage:
+
+```
+Task(prompt="
+<objective>
+Research stack dimension for project: ${projectName}.
+</objective>
+
+<context>
+GREENFIELD PROJECT — Building from scratch.
+
+Project description: ${projectDescription}
+</context>
+
+<output>
+Create research concept: ${projectSlug}-stack-research
+Include standard stack options with recommendations
+Include why each technology is chosen
+</output>
+", subagent_type="fuska-project-researcher", model="${models.researcher}", description="Stack research")
+
+Task(prompt="
+<objective>
+Research features dimension for project: ${projectName}.
+</objective>
+
+<context>
+GREENFIELD PROJECT — Building from scratch.
+
+Project description: ${projectDescription}
+</context>
+
+<output>
+Create research concept: ${projectSlug}-features-research
+Categorize: table stakes, differentiators, anti-features
+Note complexity and dependencies
+</output>
+", subagent_type="fuska-project-researcher", model="${models.researcher}", description="Features research")
+
+Task(prompt="
+<objective>
+Research architecture dimension for project: ${projectName}.
+</objective>
+
+<context>
+GREENFIELD PROJECT — Building from scratch.
+
+Project description: ${projectDescription}
+</context>
+
+<output>
+Create research concept: ${projectSlug}-architecture-research
+Include recommended architecture patterns
+Include component boundaries and data flow
+</output>
+", subagent_type="fuska-project-researcher", model="${models.researcher}", description="Architecture research")
+
+Task(prompt="
+<objective>
+Research pitfalls dimension for project: ${projectName}.
+</objective>
+
+<context>
+GREENFIELD PROJECT — Building from scratch.
+
+Project description: ${projectDescription}
+</context>
+
+<output>
+Create research concept: ${projectSlug}-pitfalls-research
+For each pitfall: warning signs, prevention strategy, which phase should address
+</output>
+", subagent_type="fuska-project-researcher", model="${models.researcher}", description="Pitfalls research")
+```
 
 Each researcher creates MegaMemory concepts instead of markdown files:
 
@@ -632,7 +705,7 @@ Display stage banner:
  Fuska ► CREATING ROADMAP
 -----------------------------------------------------
 
-◆ Spawning roadmapper...
+[IN_PROGRESS] Spawning roadmapper...
 ```
 
 Spawn fuska-roadmapper agent with MegaMemory context:

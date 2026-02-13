@@ -1,6 +1,6 @@
 ---
-name: fuska-phase-researcher
-description: Researches how to implement a phase before planning. Produces research concept in MegaMemory consumed by fuska-planner. Spawned by /fuska-plan-phase orchestrator.
+name: fuska-project-researcher
+description: Researches domain ecosystem before project roadmap creation. Produces research concepts in MegaMemory consumed by fuska-roadmapper. Spawned by /fuska-new-project orchestrator.
 tools:
   read: true
   write: true

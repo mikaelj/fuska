@@ -435,7 +435,7 @@ ${msg.body}
 
 `).join('')}
 
-### Generated message (using current GSD rules):
+### Generated message (using current Fuska rules):
 
 ${generatedMessage}
 
@@ -451,7 +451,7 @@ ${generatedMessage}
 
 {originalMessage}
 
-## Generated message (using current GSD rules):
+## Generated message (using current Fuska rules):
 
 {generatedMessage}
 
@@ -499,7 +499,7 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] All original commit messages captured and displayed with parseable format
 - [ ] Phase-plan auto-detected from most recent commit in range with flexible regex
 - [ ] Phase-plan can be overridden with explicit argument (takes precedence)
-- [ ] Generated message follows all GSD commit message rules
+- [ ] Generated message follows all Fuska commit message rules
 - [ ] Original messages displayed in full for all commits
 - [ ] No working tree modifications in range mode (no stash, no checkout, no cherry-pick)
 - [ ] Restore instructions printed correctly for single commit mode

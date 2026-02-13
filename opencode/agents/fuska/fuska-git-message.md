@@ -230,7 +230,7 @@ ${msg.body}
 
 `).join('')}
 
-### Generated message (using current GSD rules):
+### Generated message (using current Fuska rules):
 
 ${generatedMessage}
 
@@ -246,7 +246,7 @@ ${generatedMessage}
 
 ${originalMessage}
 
-## Generated message (using current GSD rules):
+## Generated message (using current Fuska rules):
 
 ${generatedMessage}
 
@@ -282,7 +282,7 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] No tool call output shown
 - [ ] Only final commit message displayed
 - [ ] Usage header shown when no args
-- [ ] Commit message follows GSD rules
+- [ ] Commit message follows Fuska rules
 - [ ] Verification loop runs (max 3 attempts)
 - [ ] fuska-commit-checker spawned via Task tool
 - [ ] All modes working correctly

@@ -336,7 +336,7 @@ Display:
  Fuska ► RESEARCHING PHASE ${phaseNumber}
 ----------------------------------------------------
 
- ◆ Spawning researcher...
+ [IN_PROGRESS] Spawning researcher...
 ```
 
 ### Spawn fuska-phase-researcher
@@ -552,7 +552,7 @@ Display stage banner:
  Fuska ► PLANNING PHASE {X}
 -----------------------------------------------------
 
-◆ Spawning planner...
+[IN_PROGRESS] Spawning planner...
 ```
 
 Build the planner prompt by inlining the concept data gathered in step 6. Replace each section below with the actual summary content from the corresponding MegaMemory query:
@@ -707,7 +707,7 @@ All extracted data is used to build the checker prompt in step 10.
  Fuska ► VERIFYING PLANS
 -----------------------------------------------------
 
- ◆ Spawning plan checker panel...
+ [IN_PROGRESS] Spawning plan checker panel...
 ```
 
 **Step 10.2: Build panel prompt**

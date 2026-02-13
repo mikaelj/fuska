@@ -174,7 +174,7 @@ Display stage banner:
   Fuska: RESEARCHING PHASE {X}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-◆ Spawning researcher...
+[IN_PROGRESS] Spawning researcher...
 ```
 
 Proceed to spawn researcher.
@@ -293,7 +293,7 @@ Display stage banner:
   Fuska: PLANNING PHASE {X}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-◆ Spawning planner...
+[IN_PROGRESS] Spawning planner...
 ```
 
 Fill prompt with inlined concept data and spawn:
@@ -401,7 +401,7 @@ Display:
   Fuska: VERIFYING PLANS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-◆ Spawning plan checker...
+[IN_PROGRESS] Spawning plan checker...
 ```
 
 Fill checker prompt with inlined concept data and spawn:

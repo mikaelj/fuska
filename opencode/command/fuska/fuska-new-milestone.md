@@ -314,7 +314,7 @@ Researching [new features] ecosystem...
 
 Display spawning indicator:
 ```
-◆ Spawning 4 researchers in parallel...
+[IN_PROGRESS] Spawning 4 researchers in parallel...
   → Stack research (for new features)
   → Features research
   → Architecture research (integration)
@@ -583,7 +583,7 @@ Display stage banner:
  Fuska ► CREATING ROADMAP
 ----------------------------------------------------
 
-◆ Spawning roadmapper...
+[IN_PROGRESS] Spawning roadmapper...
 ```
 
 **Determine starting phase number:**

@@ -254,7 +254,7 @@ const phaseSummaries = phaseVerifications.map(v => {
  Fuska ► CHECKING INTEGRATION
 -----------------------------------------------------
 
-◆ Spawning integration checker...
+[IN_PROGRESS] Spawning integration checker...
 ```
 
 **Step 6.3: Spawn fuska-integration-checker agent**
