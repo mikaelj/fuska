@@ -361,60 +361,219 @@ class GitMessageRunner {
 
   private generateCommitMessage(diffContent: string, planContext: PlanContext | null): string {
     const type = this.determineCommitType(diffContent);
-    const scope = this.determineScope();
+    const scope = this.determineScopeFromDiff(diffContent);
     const subject = this.formatSubject(type, scope, diffContent);
     const body = this.formatBody(diffContent, planContext);
+    const footer = this.formatFooter();
 
-    return `${subject}\n\n${body}`.trim();
+    let message = `${subject}\n\n${body}`;
+    if (footer) {
+      message += `\n\n${footer}`;
+    }
+    return message.trim();
   }
 
   private determineCommitType(diff: string): string {
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
     const lowerDiff = diff.toLowerCase();
 
-    if (lowerDiff.includes('test.') || lowerDiff.includes('.test.') || lowerDiff.includes('.spec.')) {
+    // Test files
+    if (files.some(f => f.includes('.test.') || f.includes('.spec.') || f.includes('__tests__'))) {
       return 'test';
     }
 
-    if (lowerDiff.includes('fix') || lowerDiff.includes('bug') || lowerDiff.includes('error')) {
+    // Documentation files
+    if (files.every(f => f.endsWith('.md') || f.endsWith('.txt') || f.endsWith('.rst'))) {
+      return 'docs';
+    }
+
+    // Check for bug fixes: fixing errors, exceptions, correcting logic
+    const hasErrorHandling = addedLines.some(l => 
+      l.includes('catch') || l.includes('Error(') || l.includes('throw') || l.includes('.error')
+    );
+    const hasFixKeywords = lowerDiff.includes('fix') || lowerDiff.includes('bug') || lowerDiff.includes('issue');
+    const hasCorrection = addedLines.some(l => l.includes('correct') || l.includes('properly'));
+    
+    // More lines removed than added = likely a fix/refactor, not new feature
+    const isMostlyRemoval = removedLines.length > addedLines.length * 0.7;
+    
+    if ((hasFixKeywords || hasCorrection || hasErrorHandling) && isMostlyRemoval) {
       return 'fix';
     }
 
-    if (lowerDiff.includes('refactor') || lowerDiff.includes('reorg') || lowerDiff.includes('restructure')) {
+    // Style changes: formatting, whitespace, semicolons, etc.
+    const hasFormattingOnly = addedLines.every(l => 
+      l.trim() === '' || 
+      l.trim() === ';' || 
+      l.trim() === ',' ||
+      l.match(/^[\s{}()\[\];,]+$/) !== null
+    );
+    if (hasFormattingOnly && addedLines.length < 20) {
+      return 'style';
+    }
+
+    // Refactor: restructuring without changing behavior
+    const hasRefactorKeywords = lowerDiff.includes('refactor') || 
+      lowerDiff.includes('reorg') || 
+      lowerDiff.includes('restructure') ||
+      lowerDiff.includes('rename') ||
+      lowerDiff.includes('extract') ||
+      lowerDiff.includes('move');
+    
+    // Similar amounts added/removed = likely refactor
+    const isBalanced = Math.abs(addedLines.length - removedLines.length) < Math.max(addedLines.length, removedLines.length) * 0.3;
+    
+    if (hasRefactorKeywords || (isBalanced && addedLines.length > 5)) {
       return 'refactor';
     }
 
+    // Performance improvements
     if (lowerDiff.includes('performance') || lowerDiff.includes('perf') || lowerDiff.includes('optimize')) {
       return 'perf';
     }
 
-    if (lowerDiff.includes('package.json') || lowerDiff.includes('config') || lowerDiff.includes('dependency')) {
+    // Chore: build, config, dependencies, tooling
+    if (files.some(f => 
+      f.includes('package.json') || 
+      f.includes('.config') || 
+      f.includes('tsconfig') ||
+      f.includes('.yaml') ||
+      f.includes('.yml') ||
+      f.includes('Makefile') ||
+      f.includes('Dockerfile')
+    )) {
       return 'chore';
     }
 
+    // Default: new feature (net addition of code)
     return 'feat';
   }
 
-  private determineScope(): string {
+  private determineScopeFromDiff(diff: string): string {
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const functionsAdded = this.extractFunctionNames(addedLines);
+
+    // If only one file changed, derive scope from that
+    if (files.length === 1) {
+      return this.deriveScopeFromFile(files[0]);
+    }
+
+    // If multiple files, try to find a common pattern
+    if (files.length > 1) {
+      // Check if all files share a directory
+      const dirs = files.map(f => {
+        const parts = f.split('/');
+        return parts.length > 1 ? parts[0] : '';
+      }).filter(d => d);
+      
+      if (dirs.length > 0 && dirs.every(d => d === dirs[0])) {
+        return this.formatScopeName(dirs[0]);
+      }
+
+      // Otherwise use the primary file
+      const primaryFile = this.getPrimaryFile(files);
+      return this.deriveScopeFromFile(primaryFile);
+    }
+
+    // If we have functions, use the first one as scope
+    if (functionsAdded.length > 0) {
+      return this.formatScopeName(functionsAdded[0]);
+    }
+
+    // Fallback: no scope
+    return '';
+  }
+
+  private deriveScopeFromFile(filePath: string): string {
+    // Extract the base file name
+    const fileName = filePath.split('/').pop() || filePath;
+    
+    // Remove common suffixes
+    const baseName = fileName
+      .replace(/\.(ts|js|tsx|jsx|py|go|rs|java|c|cpp|h|hpp|md|txt|json|yaml|yml)$/, '')
+      .replace(/\.test$/, '')
+      .replace(/\.spec$/, '')
+      .replace(/\.config$/, '')
+      .replace(/\.types$/, '')
+      .replace(/-test$/, '')
+      .replace(/-spec$/, '');
+
+    // Convert camelCase/PascalCase to kebab-case
+    const kebabName = baseName
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+      .toLowerCase();
+
+    // Shorten common patterns
+    return this.formatScopeName(kebabName);
+  }
+
+  private formatScopeName(name: string): string {
+    // Truncate to reasonable length (max 15 chars for scope)
+    let scope = name.toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    // Common abbreviations
+    const abbreviations: Record<string, string> = {
+      'message': 'msg',
+      'command': 'cmd',
+      'config': 'cfg',
+      'database': 'db',
+      'management': 'mgmt',
+      'implementation': 'impl',
+      'initialize': 'init',
+      'authentication': 'auth',
+      'authorization': 'authz',
+      'development': 'dev',
+      'production': 'prod',
+      'environment': 'env',
+      'performance': 'perf',
+      'documentation': 'docs',
+      'calculation': 'calc',
+      'calculator': 'calc',
+      'worktree': 'worktree',
+      'megamemory': 'mm',
+    };
+
+    // Apply abbreviations
+    for (const [full, abbr] of Object.entries(abbreviations)) {
+      scope = scope.replace(new RegExp(full, 'g'), abbr);
+    }
+
+    // If still too long, take first two significant parts
+    if (scope.length > 15) {
+      const parts = scope.split('-').filter(p => p.length > 2);
+      if (parts.length > 2) {
+        scope = parts.slice(0, 2).join('-');
+      }
+    }
+
+    return scope.substring(0, 15);
+  }
+
+  private formatFooter(): string {
     if (!this.phasePlan) {
       return '';
     }
 
-    switch (this.commitStrategy.type) {
-      case 'per-phase':
-        const phaseMatch = this.phasePlan.match(/phase-(\d+)/);
-        if (phaseMatch) {
-          return `phase-${phaseMatch[1].padStart(2, '0')}`;
-        }
-        return '';
-      case 'per-plan':
-      case 'per-task':
-        const planMatch = this.phasePlan.match(/phase-(\d+)-plan-(\d+)/);
-        if (planMatch) {
-          return `${planMatch[1].padStart(2, '0')}-${planMatch[2].padStart(2, '0')}`;
-        }
-        return '';
-      default:
-        return '';
+    // Extract phase and plan numbers
+    const match = this.phasePlan.match(/phase-(\d+)(?:-plan-(\d+))?/);
+    if (!match) {
+      return '';
+    }
+
+    const phaseNum = match[1].padStart(2, '0');
+    const planNum = match[2] ? match[2].padStart(2, '0') : null;
+
+    if (planNum) {
+      return `Work on phase${phaseNum}-plan${planNum}`;
+    } else {
+      return `Work on phase${phaseNum}`;
     }
   }
 
@@ -568,13 +727,17 @@ class GitMessageRunner {
   }
   
   private getPrimaryFile(files: string[]): string {
-    // Prefer source files over tests, configs, etc.
+    // Prefer source files over tests, configs, dist, etc.
     const sourceFiles = files.filter(f => 
       !f.includes('.test.') && 
       !f.includes('.spec.') && 
       !f.includes('__tests__') &&
       !f.includes('node_modules') &&
-      !f.includes('.json')
+      !f.includes('.json') &&
+      !f.includes('/dist/') &&
+      !f.includes('.d.ts') &&
+      !f.endsWith('.map') &&
+      !f.endsWith('.js.map')
     );
     
     return sourceFiles[0] || files[0];
