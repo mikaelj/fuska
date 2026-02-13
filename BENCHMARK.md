@@ -199,7 +199,7 @@ For projects with 100+ concepts, MegaMemory provides measurable performance adva
 | **MegaMemory** | **O(1)** | Semantic search with embeddings, single database query |
 | **.planning/** | **O(N)** | Must traverse all files, read each to find relevant content |
 
-**MegaMemory** (`gsd-mm/opencode/gsd-mm/references/megamemory-integration.md:75-89`):
+**MegaMemory** (`fuska/opencode/fuska/references/megamemory-integration.md:75-89`):
 ```typescript
 // Single semantic query returns all relevant concepts
 const phases = await megamemory.understand({ query: 'phase', top_k: 100 });
@@ -321,7 +321,7 @@ const planFiles = await fs.readdir(plansDir);
 
 **Markdown**:
 ```typescript
-// From gsd-mm/src/scripts/helpers.ts (extractJson equivalent)
+// From fuska/src/scripts/helpers.ts (extractJson equivalent)
 const stateContent = fs.readFileSync('.planning/STATE.md', 'utf8');
 const stateData = grayMatter(stateContent); // ~5ms parse
 ```
@@ -329,7 +329,7 @@ const stateData = grayMatter(stateContent); // ~5ms parse
 
 **MegaMemory**:
 ```typescript
-// From gsd-mm/src/scripts/types.ts (MegaMemoryClient interface)
+// From fuska/src/scripts/types.ts (MegaMemoryClient interface)
 const result = await megamemory.understand({ query: 'state', top_k: 5 });
 // Indexed SELECT query via libsql
 ```
@@ -597,7 +597,7 @@ N+1. read tool → Read file N (requires step 1 output)
 
 ## Code-Based Implementation Details
 
-### Type Definitions (from `gsd-mm/src/scripts/types.ts`)
+### Type Definitions (from `fuska/src/scripts/types.ts`)
 
 ```typescript
 interface GSDConcept {
@@ -635,7 +635,7 @@ interface ConceptMatch {
 }
 ```
 
-### Template Functions (from `gsd-mm/src/scripts/project-templates.ts`)
+### Template Functions (from `fuska/src/scripts/project-templates.ts`)
 
 **Project Creation Template:**
 ```typescript
@@ -651,7 +651,7 @@ function createProjectConcept(slug: string, config: ProjectConfig): GSDConcept {
 }
 ```
 
-### Phase Templates (from `gsd-mm/src/scripts/phase-templates.ts`)
+### Phase Templates (from `fuska/src/scripts/phase-templates.ts`)
 
 **Phase Concept Template:**
 ```typescript
@@ -688,7 +688,7 @@ function createPlanConcept(phaseSlug: string, planId: string, planData: PlanData
 }
 ```
 
-### Helper Functions (from `gsd-mm/src/scripts/helpers.ts`)
+### Helper Functions (from `fuska/src/scripts/helpers.ts`)
 
 **JSON Extraction (handles mixed JSON + markdown):**
 ```typescript
@@ -711,7 +711,7 @@ kind: ${concept.kind}
 }
 ```
 
-### Workflow Patterns (from `gsd-mm/opencode/gsd-mm/workflows/plan-phase.md`)
+### Workflow Patterns (from `fuska/opencode/fuska/workflows/plan-phase.md`)
 
 **Loading Context Pattern (lines 327-349):**
 ```bash
@@ -920,13 +920,13 @@ PATTERNS=$(megamemory understand "pattern {domain}" top_k=10)
 
 **Empirical Data Source:**
 - Test project: `/tmp/testproj`
-- Migration: gsd-mm migration tool (348 files → 144 concepts)
+- Migration: fuska migration tool (348 files → 144 concepts)
 - Database: SQLite knowledge.db (144 nodes, 123 edges)
 - Storage comparison: 2,868 KB (markdown) vs 656 KB (MegaMemory)
 
 **Corrected from Original BENCHMARK.md:**
 1. Response format: `.matches` (not `.concepts`)
-2. Actual implementation details from gsd-mm codebase
+2. Actual implementation details from fuska codebase
 3. Empirical storage efficiency data (4.4x compression)
 4. Real concept distribution (70 components, 56 features, etc.)
 5. Actual tool call patterns from plan-phase.md workflow

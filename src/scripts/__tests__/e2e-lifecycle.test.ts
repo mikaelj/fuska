@@ -1,6 +1,6 @@
 import { MegaMemoryClient } from '../types';
 
-describe('Full GSD Lifecycle E2E Test', () => {
+describe('Full Fuska Lifecycle E2E Test', () => {
   let megaMemory: MegaMemoryClient;
 
   beforeAll(async () => {

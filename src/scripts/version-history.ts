@@ -1,4 +1,4 @@
-import { MegaMemoryClient, GSDConcept, ConceptMatch } from './types';
+import { MegaMemoryClient, FuskaConcept, ConceptMatch } from './types';
 import { extractJson } from './helpers';
 
 export interface VersionSnapshot {
@@ -12,7 +12,7 @@ export interface VersionSnapshot {
 export class VersionHistory {
   constructor(private megamemory: MegaMemoryClient) {}
 
-  async updateWithHistory(id: string, changes: Partial<GSDConcept>): Promise<{success: boolean; newVersion?: number}> {
+  async updateWithHistory(id: string, changes: Partial<FuskaConcept>): Promise<{success: boolean; newVersion?: number}> {
     const currentResult = await this.megamemory.understand({ query: id });
 
     if (currentResult.matches.length === 0) {

@@ -1,8 +1,8 @@
-import { GSDConcept, PhaseContextData, PlanData, SummaryData, ResearchData, UATData } from './types';
+import { FuskaConcept, PhaseContextData, PlanData, SummaryData, ResearchData, UATData } from './types';
 import { generateSummary, generateContextMarkdown, generatePlanMarkdown, generateSummaryMarkdown, generateResearchMarkdown, generateUATMarkdown } from './helpers';
 
 export class PhaseConceptTemplates {
-  static createContext(phaseSlug: string, contextData: PhaseContextData, relevantKnowledge: any[] = []): GSDConcept {
+  static createContext(phaseSlug: string, contextData: PhaseContextData, relevantKnowledge: any[] = []): FuskaConcept {
     const markdown = generateContextMarkdown(contextData, relevantKnowledge);
 
     return {
@@ -14,7 +14,7 @@ export class PhaseConceptTemplates {
     };
   }
 
-  static createPlan(phaseSlug: string, planNumber: number, planData: PlanData, patterns: any[] = [], relevantSummaries: any[] = []): GSDConcept {
+  static createPlan(phaseSlug: string, planNumber: number, planData: PlanData, patterns: any[] = [], relevantSummaries: any[] = []): FuskaConcept {
     const markdown = generatePlanMarkdown(planData, patterns, relevantSummaries);
     const planName = `${phaseSlug}-plan-${planNumber}`;
 
@@ -31,7 +31,7 @@ export class PhaseConceptTemplates {
     };
   }
 
-  static createResearch(phaseSlug: string, researchData: ResearchData): GSDConcept {
+  static createResearch(phaseSlug: string, researchData: ResearchData): FuskaConcept {
     const markdown = generateResearchMarkdown(researchData);
 
     return {
@@ -43,7 +43,7 @@ export class PhaseConceptTemplates {
     };
   }
 
-  static createSummary(phaseSlug: string, planNumber: number, summaryData: SummaryData): GSDConcept {
+  static createSummary(phaseSlug: string, planNumber: number, summaryData: SummaryData): FuskaConcept {
     const markdown = generateSummaryMarkdown(summaryData);
     const summaryName = `${phaseSlug}-plan-${planNumber}-summary`;
 
@@ -60,7 +60,7 @@ export class PhaseConceptTemplates {
     };
   }
 
-  static createUAT(phaseSlug: string, uatData: UATData): GSDConcept {
+  static createUAT(phaseSlug: string, uatData: UATData): FuskaConcept {
     const markdown = generateUATMarkdown(uatData);
 
     return {

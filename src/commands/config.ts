@@ -7,6 +7,7 @@ import { execSync } from 'child_process';
 type WorkflowMode = 'standard' | 'thorough' | 'balanced' | 'fast' | 'quick' | 'direct';
 type ProfileType = 'quality' | 'balanced' | 'budget';
 type CommitStrategy = 'per-phase' | 'per-plan' | 'per-task';
+type ContextualCheckerRole = 'security-auditor' | 'resource-guardian' | 'portability-watcher' | null;
 
 interface ProfilePreset {
   planning: string;
@@ -20,7 +21,20 @@ interface ProfileOverrides {
   budget: Partial<ProfilePreset>;
 }
 
-interface GSDConfig {
+interface CheckerPanel {
+  base: 'quality-advocate';
+  contextual: ContextualCheckerRole;
+  expert: 'dynamic';
+}
+
+interface ProjectClassification {
+  type: 'embedded-constrained' | 'web-api' | 'cli-tool' | 'flutter-app' | 'flutter-app-with-backend' | 'desktop-app' | 'generic';
+  detected_at: string;
+  confidence: 'high' | 'medium' | 'low';
+  signals: string[];
+}
+
+interface FuskaConfig {
   project_name: string;
   model_aliases?: {
     quality_model?: string;
@@ -45,6 +59,8 @@ interface GSDConfig {
   git?: {
     commit_strategy?: CommitStrategy;
   };
+  checker_panel?: CheckerPanel;
+  project_classification?: ProjectClassification;
 }
 
 interface ConfigOptions {
@@ -72,7 +88,7 @@ const MODE_DESCRIPTIONS: Record<WorkflowMode, string> = {
 class ConfigRunner {
   private projectDir: string;
   private db: any;
-  private config: GSDConfig | null = null;
+  private config: FuskaConfig | null = null;
   private configConceptId: string | null = null;
   private projectSlug: string = 'project';
 
@@ -96,12 +112,12 @@ class ConfigRunner {
 
     if (!await fs.pathExists(dbPath)) {
       console.error(`No .megamemory/knowledge.db found at ${resolvedPath}`);
-      console.error('Run /gsd-mm-new-project first.');
+      console.error('Run /fuska-new-project first.');
       process.exit(1);
     }
 
     const { KnowledgeDB } = await import('megamemory/dist/db.js');
-    this.db = new KnowledgeDB(path.join(resolvedPath, '.megamemory'));
+    this.db = new KnowledgeDB(dbPath);
   }
 
   private async loadConfig(): Promise<void> {
@@ -109,7 +125,7 @@ class ConfigRunner {
     const configNode = nodes.find((node: any) => node.name === 'config' && node.kind === 'config');
 
     if (!configNode) {
-      console.error('No GSD project found. Run /gsd-mm-new-project first.');
+      console.error('No Fuska project found. Run /fuska-new-project first.');
       process.exit(1);
     }
 
@@ -158,7 +174,7 @@ class ConfigRunner {
     const modeConfig = MODE_CONFIG[this.config.workflow.mode];
     const activeProfile = this.config.profiles.active_profile;
 
-    console.log(`GSD-MM Config: ${this.config.project_name || this.projectSlug}`);
+    console.log(`Fuska Config: ${this.config.project_name || this.projectSlug}`);
     console.log('│');
     console.log('├─ Model Aliases');
     console.log(`│  ├─ quality_model: ${this.config.model_aliases?.quality_model || '(not set)'}`);
@@ -186,6 +202,18 @@ class ConfigRunner {
     console.log(`│  ├─ plan_check: ${this.config.workflow.plan_check ? 'on' : 'off'}`);
     console.log(`│  └─ verifier: ${this.config.workflow.verifier ? 'on' : 'off'}`);
     console.log('│');
+    console.log('├─ Checker Panel');
+    console.log(`│  ├─ base: ${this.config.checker_panel?.base || 'quality-advocate'}`);
+    console.log(`│  ├─ contextual: ${this.config.checker_panel?.contextual || '(not detected)'}`);
+    console.log(`│  └─ expert: ${this.config.checker_panel?.expert || 'dynamic'}`);
+    console.log('│');
+    if (this.config.project_classification) {
+      console.log('├─ Project Classification');
+      console.log(`│  ├─ type: ${this.config.project_classification.type}`);
+      console.log(`│  ├─ confidence: ${this.config.project_classification.confidence}`);
+      console.log(`│  └─ signals: ${this.config.project_classification.signals.join(', ') || 'none'}`);
+      console.log('│');
+    }
     console.log(`└─ Git: ${this.config.git?.commit_strategy || 'per-phase'}`);
   }
 
@@ -244,6 +272,24 @@ class ConfigRunner {
     console.log('|------------------|----------------------------------------------|');
     console.log(`| commit_strategy  | ${(this.config.git?.commit_strategy || 'per-phase').padEnd(42)} |`);
     console.log('');
+
+    console.log('Checker Panel:');
+    console.log('| Role        | Value                                        |');
+    console.log('|-------------|----------------------------------------------|');
+    console.log(`| base        | ${(this.config.checker_panel?.base || 'quality-advocate').padEnd(42)} |`);
+    console.log(`| contextual  | ${(this.config.checker_panel?.contextual || 'not detected').padEnd(42)} |`);
+    console.log(`| expert      | ${(this.config.checker_panel?.expert || 'dynamic').padEnd(42)} |`);
+    console.log('');
+
+    if (this.config.project_classification) {
+      console.log('Project Classification:');
+      console.log('| Field       | Value                                        |');
+      console.log('|-------------|----------------------------------------------|');
+      console.log(`| type        | ${this.config.project_classification.type.padEnd(42)} |`);
+      console.log(`| confidence  | ${this.config.project_classification.confidence.padEnd(42)} |`);
+      console.log(`| signals     | ${this.config.project_classification.signals.join(', ').substring(0, 42).padEnd(42)} |`);
+      console.log('');
+    }
   }
 
   private async interactiveLoop(): Promise<void> {
@@ -258,6 +304,7 @@ class ConfigRunner {
           choices: [
             { name: 'Quick settings', value: 'quick' },
             { name: 'Configure model aliases', value: 'aliases' },
+            { name: 'Checker panel settings', value: 'checker_panel' },
             { name: 'Git commit strategy', value: 'git' },
             { name: 'Set stage override', value: 'set_override' },
             { name: 'Clear stage override', value: 'clear_override' },
@@ -273,6 +320,9 @@ class ConfigRunner {
           break;
         case 'aliases':
           await this.configureAliases();
+          break;
+        case 'checker_panel':
+          await this.configureCheckerPanel();
           break;
         case 'git':
           await this.configureGit();
@@ -418,6 +468,106 @@ class ConfigRunner {
 
     await this.saveConfig();
     console.log(`Commit strategy set to ${strategy}`);
+  }
+
+  private async configureCheckerPanel(): Promise<void> {
+    if (!this.config) return;
+
+    console.log('');
+    console.log('Checker Panel Configuration');
+    console.log('');
+    console.log('The checker panel runs during plan verification with three roles:');
+    console.log('  - Base: quality-advocate (always active)');
+    console.log('  - Contextual: Project-specific role (auto-detected or manual)');
+    console.log('  - Expert: Plan-specific role (auto-derived from plan content)');
+    console.log('');
+
+    const currentContextual = this.config.checker_panel?.contextual;
+    const detectedType = this.config.project_classification?.type || 'not detected';
+
+    console.log(`Current project type: ${detectedType}`);
+    console.log(`Current contextual role: ${currentContextual || 'not set'}`);
+    console.log('');
+
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'Checker panel action',
+        choices: [
+          { name: 'Override contextual role', value: 'override' },
+          { name: 'Reset to auto-detected', value: 'reset' },
+          { name: 'View role descriptions', value: 'view' },
+          { name: 'Cancel', value: 'cancel' }
+        ]
+      }
+    ]);
+
+    if (action === 'cancel') return;
+
+    if (action === 'view') {
+      console.log('');
+      console.log('Contextual Role Descriptions:');
+      console.log('');
+      console.log('  security-auditor:');
+      console.log('    For web/API projects. Checks auth, input validation, data protection,');
+      console.log('    API security, and error handling.');
+      console.log('');
+      console.log('  resource-guardian:');
+      console.log('    For embedded systems. Checks memory constraints, timing constraints,');
+      console.log('    resource management, protocol/communication, and robustness.');
+      console.log('');
+      console.log('  portability-watcher:');
+      console.log('    For CLI tools. Checks cross-platform paths, shell commands, encodings,');
+      console.log('    permissions, and platform-specific issues.');
+      console.log('');
+      return this.configureCheckerPanel();
+    }
+
+    if (action === 'reset') {
+      if (!this.config.checker_panel) {
+        this.config.checker_panel = {
+          base: 'quality-advocate',
+          contextual: null,
+          expert: 'dynamic'
+        };
+      } else {
+        this.config.checker_panel.contextual = null;
+      }
+      await this.saveConfig();
+      console.log('Reset to auto-detected role. Run /fuska-map-codebase to re-detect.');
+      return;
+    }
+
+    if (action === 'override') {
+      const { role } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'role',
+          message: 'Select contextual checker role',
+          choices: [
+            { name: 'security-auditor (web/API projects)', value: 'security-auditor' },
+            { name: 'resource-guardian (embedded systems)', value: 'resource-guardian' },
+            { name: 'portability-watcher (CLI tools)', value: 'portability-watcher' },
+            { name: 'None (quality-advocate only)', value: 'none' }
+          ],
+          default: currentContextual || 'none'
+        }
+      ]);
+
+      if (!this.config.checker_panel) {
+        this.config.checker_panel = {
+          base: 'quality-advocate',
+          contextual: role === 'none' ? null : role,
+          expert: 'dynamic'
+        };
+      } else {
+        this.config.checker_panel.contextual = role === 'none' ? null : role;
+      }
+
+      await this.saveConfig();
+      console.log(`Contextual role set to: ${role === 'none' ? 'none (auto-detect)' : role}`);
+    }
   }
 
   private async setOverride(): Promise<void> {
@@ -610,20 +760,17 @@ class ConfigRunner {
       ...existing,
       "$schema": "https://opencode.ai/config.json",
       "agent": {
-        "gsd-planner": { "model": effective.planning },
-        "gsd-plan-checker": { "model": effective.planning },
-        "gsd-phase-researcher": { "model": effective.planning },
-        "gsd-roadmapper": { "model": effective.planning },
-        "gsd-project-researcher": { "model": effective.planning },
-        "gsd-research-synthesizer": { "model": effective.planning },
-        "gsd-codebase-mapper": { "model": effective.planning },
-        "gsd-executor": { "model": effective.execution },
-        "gsd-debugger": { "model": effective.execution },
-        "gsd-verifier": { "model": effective.verification },
-        "gsd-integration-checker": { "model": effective.verification },
-        "gsd-set-profile": { "model": effective.verification },
-        "gsd-mm-settings": { "model": effective.verification },
-        "gsd-set-model": { "model": effective.verification }
+        "fuska-planner": { "model": effective.planning },
+        "fuska-plan-checker": { "model": effective.planning },
+        "fuska-phase-researcher": { "model": effective.planning },
+        "fuska-roadmapper": { "model": effective.planning },
+        "fuska-project-researcher": { "model": effective.planning },
+        "fuska-research-synthesizer": { "model": effective.planning },
+        "fuska-codebase-mapper": { "model": effective.planning },
+        "fuska-executor": { "model": effective.execution },
+        "fuska-debugger": { "model": effective.execution },
+        "fuska-verifier": { "model": effective.verification },
+        "fuska-integration-checker": { "model": effective.verification }
       }
     };
 
@@ -637,7 +784,7 @@ class ConfigRunner {
     
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(' GSD ► SETTINGS UPDATED');
+    console.log(' Fuska ► SETTINGS UPDATED');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
     console.log('| Setting            | Value                     |');
@@ -657,7 +804,7 @@ class ConfigRunner {
   private displayPresetsBanner(): void {
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(' GSD ► PRESETS CONFIGURED');
+    console.log(' Fuska ► PRESETS CONFIGURED');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
     console.log('Your model presets have been saved. Use "Reset presets"');
@@ -671,7 +818,7 @@ class ConfigRunner {
 export function configCommand(program: Command) {
   program
     .command('config [project-path]')
-    .description('Configure GSD-MM project settings')
+    .description('Configure Fuska project settings')
     .option('-v, --view', 'View current settings (non-interactive)')
     .action(async (projectPath?: string, options?: { view?: boolean }) => {
       const configOptions: ConfigOptions = {

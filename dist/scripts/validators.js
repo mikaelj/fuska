@@ -100,9 +100,6 @@ function validateConfigConcept(data) {
     if (!d.depth || typeof d.depth !== 'string') {
         errors.push('Missing or invalid "depth" (string required)');
     }
-    if (!d.gsd_version || typeof d.gsd_version !== 'string') {
-        errors.push('Missing or invalid "gsd_version" (string required)');
-    }
     if (typeof d.autonomous_mode !== 'boolean') {
         errors.push('Missing or invalid "autonomous_mode" (boolean required)');
     }

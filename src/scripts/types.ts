@@ -1,4 +1,4 @@
-export interface GSDConcept {
+export interface FuskaConcept {
   id?: string;
   name: string;
   kind: 'feature' | 'module' | 'pattern' | 'component' | 'config' | 'decision';
@@ -59,7 +59,7 @@ export interface ListRootsResult {
 
 export interface MegaMemoryClient {
   understand(query: {query: string; top_k?: number}): Promise<UnderstandResult>;
-  create_concept(concept: GSDConcept): Promise<{id: string; message: string}>;
+  create_concept(concept: FuskaConcept): Promise<{id: string; message: string}>;
   update_concept(params: {id: string; changes: UpdateChanges}): Promise<{message: string}>;
   remove_concept(params: {id: string; reason: string}): Promise<{message: string}>;
   link(params: {from: string; to: string; relation: RelationType; description?: string}): Promise<{message: string}>;
@@ -170,7 +170,6 @@ export interface StateData {
 
 export interface ConfigData {
   depth: string;
-  gsd_version: string;
   autonomous_mode: boolean;
 }
 

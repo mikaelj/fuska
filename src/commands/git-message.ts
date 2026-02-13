@@ -26,7 +26,7 @@ interface CommitStrategy {
 export function gitMessageCommand(program: Command) {
   program
     .command('git-message [args...]')
-    .description('Test and preview commit messages using GSD commit message rules')
+    .description('Test and preview commit messages using Fuska commit message rules')
     .option('-p, --project-dir <path>', 'Path to project with .megamemory/', process.cwd())
     .option('--debug', 'Show debug information')
     .action(async (args: string[], options: GitMessageOptions) => {
@@ -582,7 +582,7 @@ class GitMessageRunner {
         });
       }
 
-      console.log('\n### Generated message (using current GSD rules):\n');
+      console.log('\n### Generated message (using current Fuska rules):\n');
       console.log(generatedMessage);
       console.log('\n## Note:');
       console.log('- Working tree NOT modified (diff only, no cherry-pick or checkout)');
@@ -591,14 +591,14 @@ class GitMessageRunner {
       const originalMessage = originalMessages?.[0]?.body || '';
       console.log('## Original commit message:\n');
       console.log(originalMessage);
-      console.log('\n## Generated message (using current GSD rules):\n');
+      console.log('\n## Generated message (using current Fuska rules):\n');
       console.log(generatedMessage);
       console.log('\n## To commit with this message:');
       console.log('git commit --amend -m "' + generatedMessage.replace(/\n/g, '\\n') + '"');
     } else {
       // Working tree mode
       if (this.isDefaultMode) {
-        console.log(`## /gsd-mm git-message Usage:
+        console.log(`## /fuska git-message Usage:
 - No args: Generate commit message for current changes (unstaged + staged)
 - <commit-hash>: Replay existing commit and regenerate message
 - <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)

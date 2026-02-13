@@ -1,4 +1,4 @@
-import { MegaMemoryClient, GSDConcept } from './types';
+import { MegaMemoryClient, FuskaConcept } from './types';
 export interface VersionSnapshot {
     parent_concept: string;
     version: number;
@@ -9,7 +9,7 @@ export interface VersionSnapshot {
 export declare class VersionHistory {
     private megamemory;
     constructor(megamemory: MegaMemoryClient);
-    updateWithHistory(id: string, changes: Partial<GSDConcept>): Promise<{
+    updateWithHistory(id: string, changes: Partial<FuskaConcept>): Promise<{
         success: boolean;
         newVersion?: number;
     }>;

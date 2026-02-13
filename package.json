@@ -1,11 +1,11 @@
 {
-  "name": "gsd-mm",
+  "name": "fuska",
   "version": "0.0.1",
-  "description": "GSD with MegaMemory backend - Replace gsd-opencode's Markdown-file backend with MegaMemory's persistent knowledge graph",
+  "description": "Fuska - AI-assisted project management with MegaMemory backend - Replace gsd-opencode's Markdown-file backend with MegaMemory's persistent knowledge graph",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "gsd-mm": "./dist/cli.js"
+    "fuska": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
@@ -20,12 +20,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "commander": "^12.0.0",
     "fs-extra": "^11.2.0",
     "glob": "^10.3.10",
     "gray-matter": "^4.0.3",
-    "megamemory": "^1.3.1",
-    "commander": "^12.0.0",
-    "inquirer": "^9.2.0"
+    "inquirer": "^9.2.0",
+    "megamemory": "^1.3.3"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

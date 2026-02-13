@@ -72,7 +72,7 @@ console.log(banner);
 
 // Show help if requested
 if (hasHelp) {
-  console.log(`  ${yellow}Usage:${reset} npx gsd-mm [options]
+  console.log(`  ${yellow}Usage:${reset} npx fuska [options]
 
   ${yellow}Options:${reset}
     ${cyan}-g, --global${reset}              Install globally (to OpenCode config directory)
@@ -82,16 +82,16 @@ if (hasHelp) {
 
   ${yellow}Examples:${reset}
     ${dim}# Install to default ~/.config/opencode directory${reset}
-    npx gsd-mm --global
+    npx fuska --global
 
     ${dim}# Install to custom config directory (for multiple OpenCode accounts)${reset}
-    npx gsd-mm --global --config-dir ~/.opencode-bc
+    npx fuska --global --config-dir ~/.opencode-bc
 
     ${dim}# Using environment variable${reset}
-    OPENCODE_CONFIG_DIR=~/.opencode-bc npx gsd-mm --global
+    OPENCODE_CONFIG_DIR=~/.opencode-bc npx fuska --global
 
     ${dim}# Install to current project only${reset}
-    npx gsd-mm --local
+    npx fuska --local
 
   ${yellow}Notes:${reset}
     The --config-dir option is useful when you have multiple OpenCode
@@ -131,14 +131,14 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
       let content = fs.readFileSync(srcPath, "utf8");
 
       // 1) @-references to this repo → install-relative @-references
-      //    @gsd-mm/... → @~/.config/opencode/... (global)
-      //    @gsd-mm/... → @./.opencode/... (local)
-      content = content.replace(/@gsd-mm\//g, `@${pathPrefix}`);
+      //    @fuska/... → @~/.config/opencode/... (global)
+      //    @fuska/... → @./.opencode/... (local)
+      content = content.replace(/@fuska\//g, `@${pathPrefix}`);
 
       // 2) Plain (non-@) repo-local paths → install-relative paths
-      //    gsd-mm/... → ~/.config/opencode/... (global)
-      //    gsd-mm/... → ./.opencode/... (local)
-      content = content.replace(/\bgsd-mm\//g, pathPrefix);
+      //    fuska/... → ~/.config/opencode/... (global)
+      //    fuska/... → ./.opencode/... (local)
+      content = content.replace(/\bfuska\//g, pathPrefix);
 
       // 3) Back-compat: rewrite legacy Claude paths → OpenCode paths
       // NOTE: keep these rewrites verbatim for backward compatibility.
@@ -180,7 +180,7 @@ function install(isGlobal) {
     : "./.opencode/";
 
   function scanForUnresolvedRepoLocalTokens(destRoot) {
-    const tokenRegex = /@gsd-mm\/|\bgsd-mm\//g;
+    const tokenRegex = /@fuska\/|\bfuska\//g;
     const maxHits = 10;
     const hits = [];
 
@@ -221,7 +221,10 @@ function install(isGlobal) {
 
     if (hits.length > 0) {
       console.log(
-        `\n  ${yellow}⚠️  Install sanity check: unresolved repo-local tokens found${reset}`,
+        `  ${yellow}⚠️  Install sanity check: unresolved repo-local tokens found${reset}`,
+      );
+      console.log(
+        `  ${yellow}This may cause commands like /fuska-settings to fail in other repos (ENOENT).${reset}`,
       );
       console.log(
         `  ${yellow}This may cause commands like /gsd-mm-settings to fail in other repos (ENOENT).${reset}`,
@@ -247,23 +250,23 @@ function install(isGlobal) {
   const commandsDir = path.join(opencodeDir, "command");
   fs.mkdirSync(commandsDir, { recursive: true });
 
-  // Copy command/gsd-mm with path replacement
-  const gsdSrc = path.join(src, "command", "gsd-mm");
-  const gsdDest = path.join(commandsDir, "gsd-mm");
+  // Copy command/fuska with path replacement
+  const gsdSrc = path.join(src, "command", "fuska");
+  const gsdDest = path.join(commandsDir, "fuska");
   copyWithPathReplacement(gsdSrc, gsdDest, pathPrefix);
-  console.log(`  ${green}✓${reset} Installed command/gsd-mm`);
+  console.log(`  ${green}✓${reset} Installed command/fuska`);
 
-  // Copy agents/gsd-mm with path replacement
-  const agentsSrc = path.join(src, "agents", "gsd-mm");
-  const agentsDest = path.join(opencodeDir, "agents", "gsd-mm");
+  // Copy agents/fuska with path replacement
+  const agentsSrc = path.join(src, "agents", "fuska");
+  const agentsDest = path.join(opencodeDir, "agents", "fuska");
   copyWithPathReplacement(agentsSrc, agentsDest, pathPrefix);
-  console.log(`  ${green}✓${reset} Installed agents/gsd-mm`);
+  console.log(`  ${green}✓${reset} Installed agents/fuska`);
 
-  // Copy gsd-mm scripts/templates/references/workflows with path replacement
-  const skillSrc = path.join(src, "gsd-mm");
-  const skillDest = path.join(opencodeDir, "gsd-mm");
+  // Copy fuska scripts/templates/references/workflows with path replacement
+  const skillSrc = path.join(src, "fuska");
+  const skillDest = path.join(opencodeDir, "fuska");
   copyWithPathReplacement(skillSrc, skillDest, pathPrefix);
-  console.log(`  ${green}✓${reset} Installed gsd-mm`);
+  console.log(`  ${green}✓${reset} Installed fuska`);
 
   // Post-install diagnostic (do not fail install).
   scanForUnresolvedRepoLocalTokens(opencodeDir);
@@ -273,7 +276,7 @@ function install(isGlobal) {
   console.log(`  ${green}✓${reset} Created VERSION file`);
 
   console.log(`
-  ${green}Done!${reset} Run ${cyan}/gsd-mm-help${reset} to get started.
+  ${green}Done!${reset} Run ${cyan}/fuska-help${reset} to get started.
   `);
 }
 

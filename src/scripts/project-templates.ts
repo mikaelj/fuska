@@ -1,8 +1,8 @@
-import { GSDConcept, ProjectData, StateData, ConfigData, MilestoneData } from './types';
+import { FuskaConcept, ProjectData, StateData, ConfigData, MilestoneData } from './types';
 import { generateSummary } from './helpers';
 
 export class ProjectConceptTemplates {
-  static createProjectRoot(project: ProjectData): GSDConcept {
+  static createProjectRoot(project: ProjectData): FuskaConcept {
     return {
       name: project.slug,
       kind: 'feature',
@@ -13,7 +13,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createRequirementsModule(projectSlug: string): GSDConcept {
+  static createRequirementsModule(projectSlug: string): FuskaConcept {
     return {
       name: 'requirements',
       kind: 'module',
@@ -23,7 +23,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createRequirement(projectSlug: string, id: string, description: string, status: 'validated' | 'active' | 'out_of_scope'): GSDConcept {
+  static createRequirement(projectSlug: string, id: string, description: string, status: 'validated' | 'active' | 'out_of_scope'): FuskaConcept {
     return {
       name: `req-${id}`,
       kind: 'feature',
@@ -36,7 +36,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createRoadmapModule(projectSlug: string): GSDConcept {
+  static createRoadmapModule(projectSlug: string): FuskaConcept {
     return {
       name: 'roadmap',
       kind: 'module',
@@ -46,7 +46,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createPhase(projectSlug: string, number: number, slug: string, name: string, goal: string): GSDConcept {
+  static createPhase(projectSlug: string, number: number, slug: string, name: string, goal: string): FuskaConcept {
     return {
       name: `phase-${number}`,
       kind: 'feature',
@@ -62,7 +62,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createState(projectSlug: string, state: StateData): GSDConcept {
+  static createState(projectSlug: string, state: StateData): FuskaConcept {
     return {
       name: 'state',
       kind: 'config',
@@ -72,7 +72,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createConfig(projectSlug: string, config: ConfigData): GSDConcept {
+  static createConfig(projectSlug: string, config: ConfigData): FuskaConcept {
     return {
       name: 'config',
       kind: 'config',
@@ -82,7 +82,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createMilestonesModule(projectSlug: string): GSDConcept {
+  static createMilestonesModule(projectSlug: string): FuskaConcept {
     return {
       name: 'milestones',
       kind: 'module',
@@ -92,7 +92,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createResearchModule(projectSlug: string): GSDConcept {
+  static createResearchModule(projectSlug: string): FuskaConcept {
     return {
       name: 'research',
       kind: 'module',
@@ -102,7 +102,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createMilestone(projectSlug: string, name: string, milestone: MilestoneData): GSDConcept {
+  static createMilestone(projectSlug: string, name: string, milestone: MilestoneData): FuskaConcept {
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
     return {
@@ -117,7 +117,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createTodosModule(projectSlug: string): GSDConcept {
+  static createTodosModule(projectSlug: string): FuskaConcept {
     return {
       name: 'todos',
       kind: 'module',
@@ -127,7 +127,7 @@ export class ProjectConceptTemplates {
     };
   }
 
-  static createTodo(projectSlug: string, id: string, description: string, phaseRef?: string): GSDConcept {
+  static createTodo(projectSlug: string, id: string, description: string, phaseRef?: string): FuskaConcept {
     return {
       name: `todo-${id}`,
       kind: 'feature',

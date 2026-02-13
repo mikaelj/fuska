@@ -474,7 +474,7 @@ function exportCommand(program) {
                 throw new Error(`MegaMemory directory does not exist: ${megamemoryPath}`);
             }
             const { KnowledgeDB } = await Promise.resolve().then(() => __importStar(require('megamemory/dist/db.js')));
-            const db = new KnowledgeDB(megamemoryPath);
+            const db = new KnowledgeDB(path.join(megamemoryPath, 'knowledge.db'));
             const exporter = new ExportToMarkdown(db, options);
             await exporter.run();
         }

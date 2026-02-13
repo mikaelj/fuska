@@ -6,7 +6,7 @@ export function mapCommand(program: Command) {
     .command('map [area]')
     .description('Map codebase structure to MegaMemory using parallel analysis agents')
     .action((area: string | undefined) => {
-      const command = `/gsd-mm-map-codebase ${area || ''}`.trim();
+      const command = `/fuska-map-codebase ${area || ''}`.trim();
       
       console.log('Launching codebase mapper...\n');
       

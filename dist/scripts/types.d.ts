@@ -1,4 +1,4 @@
-export interface GSDConcept {
+export interface FuskaConcept {
     id?: string;
     name: string;
     kind: 'feature' | 'module' | 'pattern' | 'component' | 'config' | 'decision';
@@ -76,7 +76,7 @@ export interface MegaMemoryClient {
         query: string;
         top_k?: number;
     }): Promise<UnderstandResult>;
-    create_concept(concept: GSDConcept): Promise<{
+    create_concept(concept: FuskaConcept): Promise<{
         id: string;
         message: string;
     }>;
@@ -199,7 +199,6 @@ export interface StateData {
 }
 export interface ConfigData {
     depth: string;
-    gsd_version: string;
     autonomous_mode: boolean;
 }
 export interface MilestoneData {

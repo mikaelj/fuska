@@ -42,16 +42,16 @@ const OPENCODE_SOURCE = path.join(process.cwd(), 'opencode');
 function installCommand(program) {
     program
         .command('install')
-        .description('Install GSD-MM commands and agents from opencode/ to ~/.config/opencode')
+        .description('Install Fuska commands and agents from opencode/ to ~/.config/opencode')
         .option('--force', 'Overwrite existing directories')
         .action(async (options) => {
         try {
-            console.log('Installing GSD-MM to ~/.config/opencode...\n');
+            console.log('Installing Fuska to ~/.config/opencode...\n');
             await fs.ensureDir(OPENCODE_CONFIG);
             const summaries = [];
-            summaries.push(await installDirectory('gsd-mm', 'gsd-mm', options.force));
-            summaries.push(await installDirectory('command/gsd-mm', 'command/gsd-mm', options.force));
-            summaries.push(await installDirectory('agents/gsd-mm', 'agents/gsd-mm', options.force));
+            summaries.push(await installDirectory('fuska', 'fuska', options.force));
+            summaries.push(await installDirectory('command/fuska', 'command/fuska', options.force));
+            summaries.push(await installDirectory('agents/fuska', 'agents/fuska', options.force));
             showSummary(summaries);
         }
         catch (error) {
@@ -105,8 +105,8 @@ function showSummary(summaries) {
     console.log('─────────────────────────────────────');
     console.log(`  Total files installed: ${totalFiles}`);
     console.log('\nInstalled directories:');
-    console.log(`  ${OPENCODE_CONFIG}/gsd-mm/`);
-    console.log(`  ${OPENCODE_CONFIG}/command/gsd-mm/`);
-    console.log(`  ${OPENCODE_CONFIG}/agents/gsd-mm/`);
+    console.log(`  ${OPENCODE_CONFIG}/fuska/`);
+    console.log(`  ${OPENCODE_CONFIG}/command/fuska/`);
+    console.log(`  ${OPENCODE_CONFIG}/agents/fuska/`);
 }
 //# sourceMappingURL=install.js.map
