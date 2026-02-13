@@ -1,6 +1,6 @@
 # Phase Prompt Template (MegaMemory-Backed)
 
-> **Note:** Planning methodology is in `agents/gsd-planner.md`.
+> **Note:** Planning methodology is in `agents/fuska-planner.md`.
 > This template defines the PLAN.md output format that the agent produces.
 
 Template for phase plan storage in MegaMemory - executable phase plans optimized for parallel execution.

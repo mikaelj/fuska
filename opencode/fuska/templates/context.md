@@ -7,8 +7,8 @@ Template for phase context stored as MegaMemory concepts - captures implementati
 **Key principle:** Categories are NOT predefined. They emerge from what was actually discussed for THIS phase. A CLI phase has CLI-relevant sections, a UI phase has UI-relevant sections.
 
 **Downstream consumers:**
-- `gsd-phase-researcher` — Reads decisions to focus research (e.g., "card layout" → research card component patterns)
-- `gsd-planner` — Reads decisions to create specific tasks (e.g., "infinite scroll" → task includes virtualization)
+- `fuska-phase-researcher` — Reads decisions to focus research (e.g., "card layout" → research card component patterns)
+- `fuska-planner` — Reads decisions to create specific tasks (e.g., "infinite scroll" → task includes virtualization)
 
 ---
 
@@ -426,7 +426,7 @@ The output should answer: "What does the researcher need to investigate? What ch
 
 **After creation:**
 - Concept stored in MegaMemory as `phase-context:{phaseId}`
-- `gsd-phase-researcher` uses decisions to focus investigation
-- `gsd-planner` uses decisions + research to create executable tasks
+- `fuska-phase-researcher` uses decisions to focus investigation
+- `fuska-planner` uses decisions + research to create executable tasks
 - Downstream agents should NOT need to ask the user again about captured decisions
 </guidelines>

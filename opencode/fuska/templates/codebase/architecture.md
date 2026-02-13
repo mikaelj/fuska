@@ -216,7 +216,7 @@ Layers:
     - Used by: Service layer
 
 Data Flow: CLI Command Execution
-  1. User runs: gsd new-project
+  1. User runs: fuska new-project
   2. Commander parses args and flags
   3. Command handler invoked (src/commands/new-project.ts)
   4. Handler calls service methods (src/services/project.ts → create())
@@ -567,7 +567,7 @@ Cross-Cutting Concerns:
 
 **CLI Command Execution:**
 
-1. User runs: `gsd new-project`
+1. User runs: `fuska new-project`
 2. Commander parses args and flags
 3. Command handler invoked (`src/commands/new-project.ts`)
 4. Handler calls service methods (`src/services/project.ts` → `create()`)

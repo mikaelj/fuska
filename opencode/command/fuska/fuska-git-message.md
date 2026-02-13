@@ -165,7 +165,7 @@ ORIGINAL_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEA
 **Step 2a.2: Stash any current changes**
 
 ```bash
-git stash push -m "gsd-git-message-stash" --include-untracked 2>/dev/null
+git stash push -m "fuska-git-message-stash" --include-untracked 2>/dev/null
 ```
 
 Record whether the stash was actually created (check exit code or compare `git stash list` before/after).

@@ -23,7 +23,7 @@ MegaMemory is a persistent knowledge graph for Fuska projects. Unlike file-based
 Concepts are the atomic units of storage. Each concept represents a project entity (phase, plan, summary, requirement, etc.).
 
 ```typescript
-interface GSDConcept {
+interface FuskaConcept {
   id?: string;              // Auto-generated on create
   name: string;             // Unique identifier (e.g., 'phase-01', 'auth-service')
   kind: ConceptKind;        // Type: feature, module, pattern, component, config, decision

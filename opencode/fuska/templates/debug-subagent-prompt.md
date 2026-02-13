@@ -1,6 +1,6 @@
 # Debug Subagent Prompt Template (MegaMemory-Backed)
 
-Template for spawning gsd-debugger agent. Debug session data stored in MegaMemory.
+Template for spawning fuska-debugger agent. Debug session data stored in MegaMemory.
 
 ---
 
@@ -106,7 +106,7 @@ edges: [
 
 ```markdown
 <megamemory_operations>
-**Create Session (when /gsd-debug called):**
+**Create Session (when /fuska-debug called):**
 
 1. Create concept with issue_id and symptoms
 2. Set status to "gathering"
@@ -328,7 +328,7 @@ const resolveDebugSession = async (sessionId: string, resolution: {
 ## Usage Pattern for Agents
 
 ```markdown
-**When /gsd-debug is called:**
+**When /fuska-debug is called:**
 
 1. Create debug session concept with issue details
 2. Set status to "gathering"

@@ -1,6 +1,6 @@
 # Planner Subagent Prompt Template (MegaMemory-Backed)
 
-Template for spawning gsd-planner agent. Planning context and plans stored in MegaMemory.
+Template for spawning fuska-planner agent. Planning context and plans stored in MegaMemory.
 
 ---
 
@@ -34,7 +34,7 @@ megamemory:understand({query: "phase {phase} uat"})
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /gsd-execute-phase
+Output consumed by /fuska-execute-phase
 Plans must be executable prompts with:
 - Frontmatter (wave, depends_on, files_modified, autonomous)
 - Tasks in XML format
@@ -339,7 +339,7 @@ const resumePlanning = async (phaseNumber: string) => {
 ## Usage Pattern for Agents
 
 ```markdown
-**When /gsd-plan-phase is called:**
+**When /fuska-plan-phase is called:**
 
 1. Check for existing plans via `megamemory:understand({query: "phase {phase_number} plans"})`
 2. If exists → resume planning with existing state
@@ -374,4 +374,4 @@ const resumePlanning = async (phaseNumber: string) => {
 
 ## Note
 
-Planning methodology, task breakdown, dependency analysis, wave assignment, TDD detection, and goal-backward derivation are baked into the gsd-planner agent. This template only passes context.
+Planning methodology, task breakdown, dependency analysis, wave assignment, TDD detection, and goal-backward derivation are baked into the fuska-planner agent. This template only passes context.

@@ -325,7 +325,7 @@ skipped: [N]
 **Gaps:**
 - APPEND only when issue found (YAML format)
 - After diagnosis: fill `root_cause`, `artifacts`, `missing`, `debug_session`
-- This section feeds directly into /gsd-plan-phase --gaps
+- This section feeds directly into /fuska-plan-phase --gaps
 
 </section_rules>
 
@@ -363,7 +363,7 @@ skipped: [N]
 
 <lifecycle>
 
-**Creation:** When /gsd-verify-work starts new session
+**Creation:** When /fuska-verify-work starts new session
 - Extract tests from SUMMARY.md files
 - Set status to "testing"
 - Current Test points to test 1

@@ -1056,7 +1056,7 @@ No git operations needed - MegaMemory is the source of truth.
 
 <step name="load_project_state" priority="first">
 Load state from MegaMemory:
-- Query: "gsd state" or "current phase"
+- Query: "fuska state" or "current phase"
 - Get current position, decisions, pending todos, blockers
 
 If state concept missing, continue without state context.

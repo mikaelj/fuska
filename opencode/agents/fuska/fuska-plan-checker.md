@@ -242,7 +242,7 @@ issue:
 
 ## Dimension 7: Context Compliance (if context concept exists)
 
-**Question:** Do plans honor user decisions from /gsd:discuss-phase?
+**Question:** Do plans honor user decisions from /fuska-discuss-phase?
 
 **Only check if context concept was provided in the verification context.**
 

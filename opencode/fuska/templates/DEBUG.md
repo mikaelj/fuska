@@ -94,7 +94,7 @@ edges: [
 
 ```markdown
 <megamemory_operations>
-**Creation (when /gsd-debug called):**
+**Creation (when /fuska-debug called):**
 
 1. Create concept with trigger from user input
 2. Set status to "gathering"

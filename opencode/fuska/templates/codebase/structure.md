@@ -57,7 +57,7 @@ Directory Layout:
 get-shit-done/
 ├── bin/                # Executable entry points
 ├── commands/           # Slash command definitions
-│   └── gsd/           # GSD-specific commands
+│   └── fuska/         # Fuska-specific commands
 ├── get-shit-done/     # Skill resources
 │   ├── references/    # Principle documents
 │   ├── templates/     # File templates (including codebase templates)
@@ -69,7 +69,7 @@ get-shit-done/
 
 Directory Purposes:
 bin/: CLI entry points, install.js
-commands/gsd/: Slash command definitions for OpenCode
+commands/fuska/: Slash command definitions for OpenCode
 get-shit-done/references/: Core philosophy and guidance
 get-shit-done/templates/: Document templates for project knowledge
 get-shit-done/workflows/: Reusable multi-step procedures
@@ -87,7 +87,7 @@ Directories: kebab-case, plural for collections
 Special: {command-name}.md for commands, *-template.md for templates
 
 Where to Add New Code:
-Slash Command: commands/gsd/{command-name}.md
+Slash Command: commands/fuska/{command-name}.md
 Template: get-shit-done/templates/{name}.md
 Workflow: get-shit-done/workflows/{name}.md
 Reference: get-shit-done/references/{name}.md
@@ -192,7 +192,7 @@ Directory Layout:
 get-shit-done/
 ├── bin/                # Executable entry points
 ├── commands/           # Slash command definitions
-│   └── gsd/           # GSD-specific commands
+│   └── fuska/         # Fuska-specific commands
 ├── get-shit-done/     # Skill resources
 │   ├── references/    # Principle documents
 │   ├── templates/     # File templates
@@ -210,7 +210,7 @@ bin/:
   - Key files: install.js - handles npx installation
   - Subdirectories: None
 
-commands/gsd/:
+commands/fuska/:
   - Purpose: Slash command definitions for OpenCode
   - Contains: *.md files (one per command)
   - Key files: new-project.md, plan-phase.md, execute-plan.md
@@ -611,7 +611,7 @@ get-shit-done/
 - Key files: install.js - handles npx installation
 - Subdirectories: None
 
-**commands/gsd/**
+**commands/fuska/**
 - Purpose: Slash command definitions for OpenCode
 - Contains: *.md files (one per command)
 - Key files: new-project.md, plan-phase.md, execute-plan.md
@@ -672,7 +672,7 @@ get-shit-done/
 ## Where to Add New Code
 
 **New Slash Command:**
-- Primary code: `commands/gsd/{command-name}.md`
+- Primary code: `commands/fuska/{command-name}.md`
 - Tests: `tests/commands/{command-name}.test.js` (if testing implemented)
 - Documentation: Update `README.md` with new command
 
