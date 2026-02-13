@@ -836,12 +836,12 @@ PATTERNS=$(megamemory understand "pattern {domain}" top_k=10)
 | Joins/relationships | Nested file reads | **Single JOIN** |
 | Aggregations | Manual in-memory | **Database computed** |
 | Bulk writes | 3ms per file | **0.3ms per INSERT** |
-| Semantic search | ❌ grep/scan | ✅ **Vector search** |
+| Semantic search | No (grep/scan) | Yes (**Vector search**) |
 | Storage efficiency | 2,868 KB | **656 KB (4.4x)** |
-| Version history | File copies | ✅ **Built-in soft-delete** |
-| Cross-reference | Manual links | ✅ **Graph traversals** |
-| Setup complexity | ✅ Files only | Requires DB setup |
-| Human readability | ✅ Plain text | Requires export/viewer |
+| Version history | File copies | Yes (**Built-in soft-delete**) |
+| Cross-reference | Manual links | Yes (**Graph traversals**) |
+| Setup complexity | Yes (Files only) | Requires DB setup |
+| Human readability | Yes (Plain text) | Requires export/viewer |
 | **Tool calls (N items)** | **O(N) calls** | **O(1) calls** |
 
 ## Comparison Summary

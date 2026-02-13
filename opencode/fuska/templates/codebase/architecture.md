@@ -249,7 +249,7 @@ Key Abstractions:
 Entry Points:
   CLI Entry:
     - Location: src/index.ts
-    - Triggers: User runs gsd <command>
+    - Triggers: User runs fuska <command>
     - Responsibilities: Register commands, parse args, display help
 
   Commands:
@@ -602,7 +602,7 @@ Cross-Cutting Concerns:
 
 **CLI Entry:**
 - Location: `src/index.ts`
-- Triggers: User runs `gsd <command>`
+- Triggers: User runs `fuska <command>`
 - Responsibilities: Register commands, parse args, display help
 
 **Commands:**

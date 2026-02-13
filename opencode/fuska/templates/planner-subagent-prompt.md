@@ -103,7 +103,7 @@ summary: |
 why: |
   Stores executable plans for phase implementation.
   Plans contain tasks, dependencies, verification criteria, and must-haves.
-  Consumed by /gsd-execute-phase for execution.
+  Consumed by /fuska-execute-phase for execution.
 
 edges: [
   {
@@ -213,7 +213,7 @@ const createPlan = async (planId: string, phaseNumber: string, phaseName: string
     summary,
     why: "Stores executable plans for phase implementation. " +
           "Plans contain tasks, dependencies, verification criteria, and must-haves. " +
-          "Consumed by /gsd-execute-phase for execution.",
+          "Consumed by /fuska-execute-phase for execution.",
     edges,
     created_by_task: `Planning for Phase ${phaseNumber}`
   });

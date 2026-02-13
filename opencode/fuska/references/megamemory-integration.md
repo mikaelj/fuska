@@ -194,7 +194,7 @@ Create a new concept in the knowledge graph.
 
 ```typescript
 interface CreateConceptParams {
-  concept: GSDConcept;
+  concept: FuskaConcept;
 }
 
 interface CreateConceptResult {
@@ -1370,7 +1370,7 @@ const phaseData = safeParseSummary(phase.summary, {
 ```typescript
 async function createConceptIfNotExists(
   megamemory: MegaMemoryClient,
-  concept: GSDConcept
+  concept: FuskaConcept
 ): Promise<NodeWithContext> {
   // Check if exists
   const existing = await megamemory.understand({ query: concept.name });
@@ -1421,7 +1421,7 @@ const phase = await retryOperation(() => getConcept(megamemory, 'phase-01'));
 ### Validation
 
 ```typescript
-function validateConcept(concept: GSDConcept): string[] {
+function validateConcept(concept: FuskaConcept): string[] {
   const errors: string[] = [];
 
   // Required fields
@@ -1456,7 +1456,7 @@ function validateConcept(concept: GSDConcept): string[] {
 
 async function createValidatedConcept(
   megamemory: MegaMemoryClient,
-  concept: GSDConcept
+  concept: FuskaConcept
 ): Promise<{ id: string; message: string }> {
   const errors = validateConcept(concept);
 

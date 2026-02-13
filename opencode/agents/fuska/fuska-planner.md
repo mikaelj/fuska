@@ -33,7 +33,7 @@ Your job: Produce plan concepts in MegaMemory that OpenCode executors can query 
 <context_fidelity>
 ## CRITICAL: User Decision Fidelity
 
-The orchestrator provides user decisions from the phase context concept (created by /gsd:discuss-phase).
+The orchestrator provides user decisions from the phase context concept (created by /fuska-discuss-phase).
 
 **Before creating ANY task, verify:**
 

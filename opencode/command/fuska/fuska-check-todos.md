@@ -2,7 +2,7 @@
 name: fuska-check-todos
 description: List pending todos from MegaMemory and select one to work on
 argument-hint: "[area filter]"
- tools:
+tools:
   - read
   - write
   - bash

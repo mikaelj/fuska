@@ -165,7 +165,7 @@ const createDebugSession = async (slug: string, trigger: string, goal: 'find_roo
       relation: "connects_to",
       description: "Part of project debugging history"
     }],
-    created_by_task: "/gsd-debug command"
+    created_by_task: "/fuska-debug command"
   });
 
   return concept.id;

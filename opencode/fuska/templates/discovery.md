@@ -373,7 +373,7 @@ Before completing discovery, verify:
 - Niche/complex domains (3D, games, audio, shaders)
 - Need ecosystem knowledge, not just library choice
 - "How do experts build this" questions
-- Use `/gsd-research-phase` for these
+- Use `/fuska-research-phase` for these
 ```
 
 ---

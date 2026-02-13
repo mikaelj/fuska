@@ -339,7 +339,7 @@ skipped: [N]
 4. UAT.md Gaps section updated with diagnosis:
    - Each gap gets `root_cause`, `artifacts`, `missing`, `debug_session` filled
 5. status → "diagnosed"
-6. Ready for /gsd-plan-phase --gaps with root causes
+6. Ready for /fuska-plan-phase --gaps with root causes
 
 **After diagnosis:**
 ```yaml

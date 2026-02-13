@@ -17,7 +17,7 @@ Output ONLY the reference content below. Do NOT add:
 <reference>
 # Fuska Command Reference
 
-**Fuska** (Get Shit Done - MegaMemory) creates hierarchical project plans optimized for solo agentic development with OpenCode, storing all project data in MegaMemory knowledge graph.
+**Fuska** — Lean solo agentic development with MegaMemory knowledge graph. Works with OpenCode and Claude Code.
 
 ## Quick Start
 

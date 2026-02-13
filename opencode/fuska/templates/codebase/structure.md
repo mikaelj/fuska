@@ -115,14 +115,14 @@ const commandsDirConcept = await megamemory_create_concept({
   summary: `
 Purpose: Slash command definitions for OpenCode
 Contains: *.md files (one per command)
-Location: commands/gsd/
+Location: commands/fuska/
 Key files: new-project.md, plan-phase.md, execute-plan.md
 Structure: Flat (no subdirectories)
 `,
   why: "Centralized command definitions for easy discovery",
   file_refs: [
-    "commands/gsd/new-project.md",
-    "commands/gsd/plan-phase.md"
+    "commands/fuska/new-project.md",
+    "commands/fuska/plan-phase.md"
   ],
   edges: [
     {
@@ -147,7 +147,7 @@ Directory Layout:
 get-shit-done/
 ├── bin/                # Executable entry points
 ├── commands/           # Slash command definitions
-│   └── gsd/           # GSD-specific commands
+│   └── fuska/           # Fuska-specific commands
 ├── get-shit-done/     # Skill resources
 │   ├── references/    # Principle documents
 │   ├── templates/     # File templates
@@ -268,7 +268,7 @@ Special Patterns:
 
 Where to Add New Code:
 New Slash Command:
-  - Primary code: commands/gsd/{command-name}.md
+  - Primary code: commands/fuska/{command-name}.md
   - Tests: tests/commands/{command-name}.test.js (if testing implemented)
   - Documentation: Update README.md with new command
 
@@ -592,7 +592,7 @@ public/:
 get-shit-done/
 ├── bin/                # Executable entry points
 ├── commands/           # Slash command definitions
-│   └── gsd/           # GSD-specific commands
+│   └── fuska/           # Fuska-specific commands
 ├── get-shit-done/     # Skill resources
 │   ├── references/    # Principle documents
 │   ├── templates/     # File templates

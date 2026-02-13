@@ -1,7 +1,7 @@
 {
   "name": "fuska",
   "version": "0.0.1",
-  "description": "Fuska - AI-assisted project management with MegaMemory backend - Replace gsd-opencode's Markdown-file backend with MegaMemory's persistent knowledge graph",
+  "description": "Fuska - Lean solo agentic development with MegaMemory knowledge graph",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -13,12 +13,16 @@
     "watch": "tsc --watch"
   },
   "keywords": [
-    "gsd",
+    "fuska",
     "megamemory",
-    "integration"
+    "agentic"
   ],
   "author": "",
   "license": "MIT",
+  "files": [
+    "dist/",
+    "opencode/"
+  ],
   "dependencies": {
     "commander": "^12.0.0",
     "fs-extra": "^11.2.0",
