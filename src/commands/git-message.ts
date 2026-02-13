@@ -50,6 +50,7 @@ class GitMessageRunner {
   private phasePlan: string | null = null;
   private isDefaultMode: boolean = false;
   private commitStrategy: CommitStrategy = { type: 'per-phase' };
+  private originalCommitBody: string | null = null;
 
   constructor(options: GitMessageOptions) {
     this.options = options;
@@ -231,6 +232,9 @@ class GitMessageRunner {
       cwd: this.options.projectDir,
       encoding: 'utf-8'
     });
+    
+    // Store the original commit body for later use in body generation
+    this.originalCommitBody = originalMessage;
 
     // Auto-detect phasePlan from commit message if not provided
     if (!this.phasePlan) {
@@ -426,34 +430,202 @@ class GitMessageRunner {
   }
 
   private generateDescription(diff: string): string {
-    const lowerDiff = diff.toLowerCase();
-    const lines = diff.split('\n').filter(l => l.startsWith('+++') || l.startsWith('---'));
-
-    if (lowerDiff.includes('test') || lowerDiff.includes('spec')) {
-      return 'add tests';
+    // Parse diff to extract meaningful information
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
+    const functionsAdded = this.extractFunctionNames(addedLines);
+    const functionsRemoved = this.extractFunctionNames(removedLines);
+    
+    // Detect change type and construct specific description
+    const isTest = files.some(f => f.includes('.test.') || f.includes('.spec.') || f.includes('__tests__'));
+    const isConfig = files.some(f => f.includes('config') || f.includes('.json') || f.includes('.yaml') || f.includes('.yml'));
+    const isDocs = files.some(f => f.endsWith('.md') || f.endsWith('.txt'));
+    
+    // For test files
+    if (isTest && files.length === 1) {
+      const testFile = files[0].split('/').pop() || files[0];
+      return `add tests for ${this.cleanFileName(testFile)}`;
     }
-
-    if (lowerDiff.includes('fix') || lowerDiff.includes('bug')) {
-      return 'fix bug';
+    
+    // For config changes
+    if (isConfig && files.length === 1) {
+      const configFile = files[0].split('/').pop() || files[0];
+      return `update ${configFile}`;
     }
-
-    if (lowerDiff.includes('feature') || lowerDiff.includes('new')) {
-      return 'implement feature';
+    
+    // For documentation
+    if (isDocs && files.length === 1) {
+      const docFile = files[0].split('/').pop() || files[0];
+      return `update ${docFile}`;
     }
-
-    if (lowerDiff.includes('refactor')) {
-      return 'refactor code';
+    
+    // Function replacement pattern
+    if (functionsRemoved.length > 0 && functionsAdded.length > 0) {
+      const primaryRemoved = functionsRemoved[0];
+      const primaryAdded = functionsAdded[0];
+      if (primaryRemoved !== primaryAdded) {
+        return `replace ${primaryRemoved} with ${primaryAdded}`;
+      }
     }
-
-    if (lines.length > 0) {
-      return 'update code';
+    
+    // New function added
+    if (functionsAdded.length > 0 && functionsRemoved.length === 0) {
+      return `add ${functionsAdded[0]} function`;
     }
-
-    return 'make changes';
+    
+    // Function removed
+    if (functionsRemoved.length > 0 && functionsAdded.length === 0) {
+      return `remove ${functionsRemoved[0]} function`;
+    }
+    
+    // Analyze added/removed patterns for specific changes
+    const changePattern = this.detectChangePattern(addedLines, removedLines);
+    if (changePattern) {
+      return changePattern;
+    }
+    
+    // Fall back to file-based description
+    if (files.length === 1) {
+      const fileName = files[0].split('/').pop() || files[0];
+      const baseName = this.cleanFileName(fileName);
+      return `update ${baseName}`;
+    }
+    
+    if (files.length > 1) {
+      const primaryFile = this.getPrimaryFile(files);
+      const baseName = this.cleanFileName(primaryFile.split('/').pop() || primaryFile);
+      return `update ${baseName} and ${files.length - 1} other file${files.length > 2 ? 's' : ''}`;
+    }
+    
+    return 'update code';
+  }
+  
+  private extractChangedFiles(diff: string): string[] {
+    const files: string[] = [];
+    const lines = diff.split('\n');
+    
+    for (const line of lines) {
+      if (line.startsWith('diff --git ')) {
+        const match = line.match(/diff --git a\/(.+?) b\/(.+)$/);
+        if (match) {
+          files.push(match[2]); // Use the 'b/' path (new file)
+        }
+      }
+    }
+    
+    return files;
+  }
+  
+  private extractAddedLines(diff: string): string[] {
+    return diff.split('\n')
+      .filter(l => l.startsWith('+') && !l.startsWith('+++'))
+      .map(l => l.substring(1).trim());
+  }
+  
+  private extractRemovedLines(diff: string): string[] {
+    return diff.split('\n')
+      .filter(l => l.startsWith('-') && !l.startsWith('---'))
+      .map(l => l.substring(1).trim());
+  }
+  
+  private extractFunctionNames(lines: string[]): string[] {
+    const functions: string[] = [];
+    
+    for (const line of lines) {
+      // JavaScript/TypeScript: function name, const name =, async function name
+      let match = line.match(/(?:async\s+)?function\s+(\w+)/);
+      if (match) { functions.push(match[1]); continue; }
+      
+      match = line.match(/(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(?/);
+      if (match) { functions.push(match[1]); continue; }
+      
+      // Class methods
+      match = line.match(/^\s+(\w+)\s*\(/);
+      if (match && !['if', 'for', 'while', 'switch', 'catch'].includes(match[1])) {
+        functions.push(match[1]);
+        continue;
+      }
+      
+      // Python: def name
+      match = line.match(/def\s+(\w+)/);
+      if (match) { functions.push(match[1]); continue; }
+      
+      // Go: func name
+      match = line.match(/func\s+(?:\([^)]+\)\s*)?(\w+)/);
+      if (match) { functions.push(match[1]); continue; }
+    }
+    
+    return [...new Set(functions)]; // Dedupe
+  }
+  
+  private cleanFileName(fileName: string): string {
+    return fileName
+      .replace(/\.(ts|js|tsx|jsx|py|go|rs|java|c|cpp|h|hpp)$/, '')
+      .replace(/\.test$/, '')
+      .replace(/\.spec$/, '')
+      .replace(/-/g, ' ');
+  }
+  
+  private getPrimaryFile(files: string[]): string {
+    // Prefer source files over tests, configs, etc.
+    const sourceFiles = files.filter(f => 
+      !f.includes('.test.') && 
+      !f.includes('.spec.') && 
+      !f.includes('__tests__') &&
+      !f.includes('node_modules') &&
+      !f.includes('.json')
+    );
+    
+    return sourceFiles[0] || files[0];
+  }
+  
+  private detectChangePattern(addedLines: string[], removedLines: string[]): string | null {
+    const addedStr = addedLines.join(' ');
+    const removedStr = removedLines.join(' ');
+    
+    // Import changes
+    if (addedStr.includes('import ') || addedStr.includes('require(')) {
+      return 'update imports';
+    }
+    
+    // Type/interface changes
+    if (addedStr.includes('interface ') || addedStr.includes('type ')) {
+      return 'update type definitions';
+    }
+    
+    // Error handling
+    if (addedStr.includes('try {') || addedStr.includes('catch') || addedStr.includes('throw')) {
+      return 'add error handling';
+    }
+    
+    // Console/log statements
+    if (addedStr.includes('console.log') || addedStr.includes('console.error')) {
+      if (removedStr.includes('console.log') || removedStr.includes('console.error')) {
+        return 'update logging statements';
+      }
+      return 'add logging';
+    }
+    
+    // Export changes
+    if (addedStr.includes('export ') && !removedStr.includes('export ')) {
+      return 'add exports';
+    }
+    
+    return null;
   }
 
   private formatBody(diff: string, planContext: PlanContext | null): string {
     const bullets: string[] = [];
+    
+    // When regenerating from commit hash, extract bullets from original message
+    if (this.commitHash && this.originalCommitBody) {
+      const originalBullets = this.extractBulletsFromMessage(this.originalCommitBody);
+      if (originalBullets.length > 0) {
+        // Use original bullets, potentially enhanced with diff analysis
+        return originalBullets.slice(0, 4).map((b: string) => `- ${b}`).join('\n');
+      }
+    }
 
     switch (this.commitStrategy.type) {
       case 'per-phase':
@@ -467,16 +639,50 @@ class GitMessageRunner {
         break;
     }
 
-    return bullets.slice(0, 4).map(b => `- ${b}`).join('\n');
+    return bullets.slice(0, 4).map((b: string) => `- ${b}`).join('\n');
   }
 
   private generatePerPhaseBullets(diff: string, planContext: PlanContext | null): string[] {
     const bullets: string[] = [];
+    
+    // Extract specific changes from the diff for bullet points
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
+    const functionsAdded = this.extractFunctionNames(addedLines);
+    const functionsRemoved = this.extractFunctionNames(removedLines);
 
+    // If we have plan context with completed tasks, use them
     if (planContext?.completed && planContext.completed.length > 0) {
       bullets.push(`Plan ${this.extractPlanNumber(this.phasePlan)}: ${planContext.completed[0]}`);
     } else {
+      // Generate specific bullet from diff analysis
       bullets.push(`Plan ${this.extractPlanNumber(this.phasePlan)}: ${this.generateHighLevelSummary(diff)}`);
+    }
+    
+    // Add specific change details
+    if (functionsAdded.length > 0) {
+      bullets.push(`Add ${functionsAdded.slice(0, 3).join(', ')} function${functionsAdded.length > 1 ? 's' : ''}`);
+    }
+    
+    if (functionsRemoved.length > 0) {
+      bullets.push(`Remove ${functionsRemoved.slice(0, 3).join(', ')} function${functionsRemoved.length > 1 ? 's' : ''}`);
+    }
+    
+    // Check for specific patterns in the diff
+    const importChanges = addedLines.filter(l => l.includes('import ') || l.includes('require('));
+    if (importChanges.length > 0) {
+      const moduleNames = importChanges
+        .map(l => {
+          const match = l.match(/from\s+['"]([^'"]+)['"]/) || l.match(/require\s*\(\s*['"]([^'"]+)['"]/);
+          return match ? match[1] : null;
+        })
+        .filter((m): m is string => m !== null)
+        .slice(0, 3);
+      
+      if (moduleNames.length > 0) {
+        bullets.push(`Import ${moduleNames.join(', ')}`);
+      }
     }
 
     return bullets;
@@ -490,6 +696,13 @@ class GitMessageRunner {
 
   private generatePerPlanBullets(diff: string, planContext: PlanContext | null): string[] {
     const bullets: string[] = [];
+    
+    // Extract specific changes from the diff
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
+    const functionsAdded = this.extractFunctionNames(addedLines);
+    const functionsRemoved = this.extractFunctionNames(removedLines);
 
     if (planContext?.tasks && planContext.tasks.length > 0) {
       planContext.tasks.forEach(task => {
@@ -501,17 +714,43 @@ class GitMessageRunner {
     } else {
       bullets.push(this.generateHighLevelSummary(diff));
     }
+    
+    // Add specific implementation details
+    if (functionsAdded.length > 0 && bullets.length < 4) {
+      bullets.push(`Implement ${functionsAdded.slice(0, 2).join(' and ')}`);
+    }
+    
+    if (files.length > 0 && bullets.length < 4) {
+      const primaryFile = this.getPrimaryFile(files);
+      const fileName = this.cleanFileName(primaryFile.split('/').pop() || '');
+      bullets.push(`Update ${fileName}`);
+    }
 
     return bullets;
   }
 
   private generatePerTaskBullets(diff: string, planContext: PlanContext | null): string[] {
     const bullets: string[] = [];
+    
+    // Extract specific changes from the diff
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
+    const functionsAdded = this.extractFunctionNames(addedLines);
 
     bullets.push(this.generateHighLevelSummary(diff));
 
+    // Add specific implementation details
+    if (functionsAdded.length > 0) {
+      bullets.push(`Add ${functionsAdded[0]} function`);
+    } else if (files.length > 0) {
+      const primaryFile = this.getPrimaryFile(files);
+      const fileName = this.cleanFileName(primaryFile.split('/').pop() || '');
+      bullets.push(`Modify ${fileName}`);
+    }
+
     const secondBullet = this.generateSecondLevelSummary(diff);
-    if (secondBullet) {
+    if (secondBullet && bullets.length < 4) {
       bullets.push(secondBullet);
     }
 
@@ -519,29 +758,84 @@ class GitMessageRunner {
   }
 
   private generateHighLevelSummary(diff: string): string {
+    // Extract specific changes from the diff
+    const files = this.extractChangedFiles(diff);
+    const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
+    const functionsAdded = this.extractFunctionNames(addedLines);
+    const functionsRemoved = this.extractFunctionNames(removedLines);
+    
+    // Check for specific patterns
+    const isTest = files.some(f => f.includes('.test.') || f.includes('.spec.'));
     const lowerDiff = diff.toLowerCase();
-
-    if (lowerDiff.includes('test')) {
-      return 'Add test coverage for new functionality';
+    
+    // Test changes
+    if (isTest) {
+      const testFile = files.find(f => f.includes('.test.') || f.includes('.spec.'));
+      if (testFile) {
+        const testName = this.cleanFileName(testFile.split('/').pop() || '');
+        return `Add tests for ${testName}`;
+      }
+      return 'Add test coverage';
     }
-
-    if (lowerDiff.includes('fix')) {
-      return 'Fix issue causing incorrect behavior';
+    
+    // Function replacements
+    if (functionsRemoved.length > 0 && functionsAdded.length > 0) {
+      return `Replace ${functionsRemoved[0]} with ${functionsAdded[0]}`;
     }
-
-    if (lowerDiff.includes('new') || lowerDiff.includes('implement')) {
-      return 'Implement new feature with proper validation';
+    
+    // New functions
+    if (functionsAdded.length > 0) {
+      return `Add ${functionsAdded[0]} function`;
     }
-
-    if (lowerDiff.includes('refactor')) {
-      return 'Improve code structure and readability';
+    
+    // Removed functions
+    if (functionsRemoved.length > 0) {
+      return `Remove ${functionsRemoved[0]} function`;
     }
-
-    if (lowerDiff.includes('performance')) {
-      return 'Optimize performance for faster execution';
+    
+    // Import changes
+    const importChanges = addedLines.filter(l => l.includes('import ') || l.includes('require('));
+    if (importChanges.length > 0) {
+      return 'Update imports and dependencies';
     }
-
-    return 'Update code to meet requirements';
+    
+    // Type/interface changes
+    const typeChanges = addedLines.filter(l => l.includes('interface ') || l.includes('type '));
+    if (typeChanges.length > 0) {
+      return 'Update type definitions';
+    }
+    
+    // Error handling
+    const errorHandling = addedLines.filter(l => 
+      l.includes('try ') || l.includes('catch') || l.includes('throw ') || l.includes('Error(')
+    );
+    if (errorHandling.length > 0) {
+      return 'Add error handling and validation';
+    }
+    
+    // Logging changes
+    const logChanges = addedLines.filter(l => l.includes('console.') || l.includes('logger.'));
+    if (logChanges.length > 0) {
+      return 'Update logging and diagnostics';
+    }
+    
+    // Analyze the primary file being changed
+    if (files.length > 0) {
+      const primaryFile = this.getPrimaryFile(files);
+      const fileName = this.cleanFileName(primaryFile.split('/').pop() || '');
+      
+      // Check the nature of changes based on added/removed lines ratio
+      if (addedLines.length > removedLines.length * 2) {
+        return `Extend ${fileName} with new functionality`;
+      } else if (removedLines.length > addedLines.length * 2) {
+        return `Simplify ${fileName} by removing unused code`;
+      }
+      
+      return `Update ${fileName} implementation`;
+    }
+    
+    return 'Update code implementation';
   }
 
   private generateSecondLevelSummary(diff: string): string | null {
@@ -560,6 +854,24 @@ class GitMessageRunner {
     }
 
     return null;
+  }
+  
+  private extractBulletsFromMessage(message: string): string[] {
+    const bullets: string[] = [];
+    const lines = message.split('\n');
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Match bullet points: "- text" or "* text"
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        const bullet = trimmed.substring(2).trim();
+        if (bullet && !bullet.startsWith('#')) {
+          bullets.push(bullet);
+        }
+      }
+    }
+    
+    return bullets;
   }
 
   private printOutput(
