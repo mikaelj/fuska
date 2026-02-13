@@ -454,11 +454,35 @@ class GitMessageRunner {
   private determineScopeFromDiff(diff: string): string {
     const files = this.extractChangedFiles(diff);
     const addedLines = this.extractAddedLines(diff);
+    const removedLines = this.extractRemovedLines(diff);
     const functionsAdded = this.extractFunctionNames(addedLines);
+    const functionsRemoved = this.extractFunctionNames(removedLines);
+    const allFunctions = [...functionsAdded, ...functionsRemoved];
+
+    // Try to get scope from function names first (most specific)
+    const functionScope = this.deriveScopeFromFunctions(allFunctions);
+    if (functionScope) {
+      return functionScope;
+    }
+
+    // Try to get scope from diff content keywords
+    const keywordScope = this.deriveScopeFromKeywords(diff);
+    if (keywordScope) {
+      return keywordScope;
+    }
 
     // If only one file changed, derive scope from that
     if (files.length === 1) {
-      return this.deriveScopeFromFile(files[0]);
+      const fileScope = this.deriveScopeFromFile(files[0]);
+      if (!this.isGenericScope(fileScope)) {
+        return fileScope;
+      }
+      // File scope is generic, try combining with function hint
+      if (allFunctions.length > 0) {
+        const funcHint = this.extractFunctionHint(allFunctions[0]);
+        return this.formatScopeName(`${fileScope}-${funcHint}`);
+      }
+      return fileScope; // Fall back to generic if no better option
     }
 
     // If multiple files, try to find a common pattern
@@ -470,7 +494,16 @@ class GitMessageRunner {
       }).filter(d => d);
       
       if (dirs.length > 0 && dirs.every(d => d === dirs[0])) {
-        return this.formatScopeName(dirs[0]);
+        const dirScope = this.formatScopeName(dirs[0]);
+        if (!this.isGenericScope(dirScope)) {
+          return dirScope;
+        }
+        // Directory is generic, try to extract scope from file names
+        const primaryFile = this.getPrimaryFile(files);
+        const fileScope = this.deriveScopeFromFile(primaryFile);
+        if (!this.isGenericScope(fileScope)) {
+          return fileScope;
+        }
       }
 
       // Otherwise use the primary file
@@ -478,13 +511,161 @@ class GitMessageRunner {
       return this.deriveScopeFromFile(primaryFile);
     }
 
-    // If we have functions, use the first one as scope
-    if (functionsAdded.length > 0) {
-      return this.formatScopeName(functionsAdded[0]);
-    }
-
     // Fallback: no scope
     return '';
+  }
+
+  private isGenericScope(scope: string): boolean {
+    const genericScopes = new Set([
+      'lib', 'src', 'dist', 'utils', 'helpers', 'common', 'shared',
+      'core', 'base', 'main', 'app', 'index', 'types', 'constants',
+      'config', 'test', 'tests', 'spec', 'specs', 'public', 'private',
+      'internal', 'external', 'vendor', 'node-modules', 'build',
+      'scope', 'change', 'update', 'add', 'remove', 'fix', 'new',
+      'code', 'file', 'function', 'method', 'class', 'module'
+    ]);
+    return genericScopes.has(scope.toLowerCase());
+  }
+
+  private deriveScopeFromFunctions(functions: string[]): string | null {
+    if (functions.length === 0) return null;
+
+    // Try to derive meaningful scope from function names
+    for (const func of functions) {
+      const scope = this.extractFunctionHint(func);
+      if (scope && !this.isGenericScope(scope)) {
+        return this.formatScopeName(scope);
+      }
+    }
+    return null;
+  }
+
+  private extractFunctionHint(functionName: string): string {
+    // Extract meaningful part from function name
+    // e.g., calculatePriceForPreview -> pricing
+    // e.g., getServiceItemCost -> service-item-cost or service-item
+    // e.g., handleUserLogin -> user-login or auth
+    
+    const name = functionName
+      .replace(/^(get|set|add|remove|update|delete|handle|process|calculate|compute|validate|parse|format|create|build|generate|fetch|load|save|init|is|has|can|should)/i, '')
+      .replace(/^(async|sync)$/, '');
+    
+    if (name.length < 3) return functionName.toLowerCase();
+    
+    // Convert camelCase to words
+    const words = name.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().split(' ');
+    
+    // Map common patterns to domains
+    const domainMappings: Record<string, string> = {
+      'price': 'pricing',
+      'cost': 'cost-calc',
+      'discount': 'pricing',
+      'payment': 'payment',
+      'user': 'user',
+      'auth': 'auth',
+      'login': 'auth',
+      'logout': 'auth',
+      'token': 'auth',
+      'session': 'session',
+      'worktree': 'worktree',
+      'commit': 'git-msg',
+      'branch': 'git-branch',
+      'merge': 'git-merge',
+      'message': 'msg',
+      'config': 'cfg',
+      'database': 'db',
+      'cache': 'cache',
+      'file': 'file',
+      'path': 'path',
+      'url': 'url',
+      'api': 'api',
+      'request': 'api',
+      'response': 'api',
+      'error': 'error',
+      'exception': 'error',
+      'validation': 'validation',
+      'validate': 'validation',
+      'test': 'test',
+      'spec': 'test'
+    };
+    
+    // Check for domain keywords in function name
+    for (const word of words) {
+      if (domainMappings[word]) {
+        return domainMappings[word];
+      }
+    }
+    
+    // Return first significant word (skip common prefixes)
+    const skipWords = new Set(['for', 'with', 'from', 'to', 'by', 'and', 'or', 'the', 'a', 'an']);
+    for (const word of words) {
+      if (word.length > 2 && !skipWords.has(word)) {
+        return word;
+      }
+    }
+    
+    // Fall back to formatted function name
+    return this.formatScopeName(functionName);
+  }
+
+  private deriveScopeFromKeywords(diff: string): string | null {
+    const lowerDiff = diff.toLowerCase();
+    const allLines = diff.split('\n');
+    
+    // Domain keyword groups with their associated scope
+    const domainGroups: Array<{ keywords: string[]; scope: string }> = [
+      { keywords: ['price', 'cost', 'discount', 'subtotal', 'total', 'currency'], scope: 'pricing' },
+      { keywords: ['payment', 'checkout', 'billing', 'invoice', 'charge'], scope: 'payment' },
+      { keywords: ['user', 'account', 'profile', 'customer'], scope: 'user' },
+      { keywords: ['auth', 'login', 'logout', 'password', 'credential', 'token'], scope: 'auth' },
+      { keywords: ['session', 'cookie'], scope: 'session' },
+      { keywords: ['worktree', 'git worktree'], scope: 'worktree' },
+      { keywords: ['commit', 'git-message', 'commit message'], scope: 'git-msg' },
+      { keywords: ['branch', 'checkout', 'merge'], scope: 'git-branch' },
+      { keywords: ['megamemory', 'knowledge graph', 'concept'], scope: 'megamemory' },
+      { keywords: ['fuska', 'phase', 'plan'], scope: 'fuska' },
+      { keywords: ['worktree-merge', 'merge worktrees'], scope: 'worktree-merge' },
+      { keywords: ['template', 'template file'], scope: 'template' },
+      { keywords: ['workflow', 'command'], scope: 'workflow' },
+      { keywords: ['api', 'endpoint', 'request', 'response'], scope: 'api' },
+      { keywords: ['database', 'db', 'query', 'sql'], scope: 'db' },
+      { keywords: ['cache', 'cached', 'caching'], scope: 'cache' },
+      { keywords: ['test', 'spec', 'testing', 'mock'], scope: 'test' },
+      { keywords: ['error', 'exception', 'catch', 'throw'], scope: 'error' },
+      { keywords: ['validation', 'validate', 'validator'], scope: 'validation' },
+      { keywords: ['config', 'configuration', 'settings'], scope: 'config' },
+      { keywords: ['cli', 'command', 'argument'], scope: 'cli' }
+    ];
+    
+    // Score each domain group based on keyword matches
+    const scores: Map<string, number> = new Map();
+    
+    for (const group of domainGroups) {
+      let score = 0;
+      for (const keyword of group.keywords) {
+        // Count occurrences of keyword
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+        const matches = lowerDiff.match(regex);
+        if (matches) {
+          score += matches.length;
+        }
+      }
+      if (score > 0) {
+        scores.set(group.scope, score);
+      }
+    }
+    
+    // Return the highest scoring domain
+    let bestScope: string | null = null;
+    let bestScore = 0;
+    for (const [scope, score] of scores) {
+      if (score > bestScore) {
+        bestScore = score;
+        bestScope = scope;
+      }
+    }
+    
+    return bestScope;
   }
 
   private deriveScopeFromFile(filePath: string): string {
@@ -508,7 +689,19 @@ class GitMessageRunner {
       .toLowerCase();
 
     // Shorten common patterns
-    return this.formatScopeName(kebabName);
+    let scope = this.formatScopeName(kebabName);
+    
+    // If scope is generic, try to extract more specific parts
+    if (this.isGenericScope(scope)) {
+      // Try to extract meaningful parts from path
+      const pathParts = filePath.split('/').filter(p => !this.isGenericScope(p));
+      if (pathParts.length > 0) {
+        const meaningfulPart = pathParts[pathParts.length - 1].replace(/\.[^.]+$/, '');
+        scope = this.formatScopeName(meaningfulPart);
+      }
+    }
+    
+    return scope;
   }
 
   private formatScopeName(name: string): string {
