@@ -15,7 +15,7 @@ tools:
 ---
 
 <objective>
-Capture an idea, task, or issue that surfaces during a GSD session as a structured todo for later work using MegaMemory.
+Capture an idea, task, or issue that surfaces during a Fuska session as a structured todo for later work using MegaMemory.
 
 Enables "thought → capture → continue" flow without losing context or derailing current work.
 </objective>

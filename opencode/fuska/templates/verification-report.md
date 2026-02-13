@@ -469,9 +469,9 @@ const queryPhaseGaps = async (phaseNumber: string) => {
 ```markdown
 **Severity levels:**
 
-- 🛑 Blocker: Prevents goal achievement, must fix
-- ⚠️ Warning: Indicates incomplete but doesn't block
-- ℹ️ Info: Notable but not problematic
+- [BLOCK] Blocker: Prevents goal achievement, must fix
+- [WARN] Warning: Indicates incomplete but doesn't block
+- [INFO] Info: Notable but not problematic
 ```
 
 ---

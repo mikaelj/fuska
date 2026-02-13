@@ -2,7 +2,7 @@
 
 ## Overview
 
-MegaMemory is a persistent knowledge graph for GSD projects. Unlike file-based storage, MegaMemory stores all project data as interconnected concepts with semantic relationships, enabling intelligent querying, context-aware planning, and knowledge reuse across sessions.
+MegaMemory is a persistent knowledge graph for Fuska projects. Unlike file-based storage, MegaMemory stores all project data as interconnected concepts with semantic relationships, enabling intelligent querying, context-aware planning, and knowledge reuse across sessions.
 
 ### Why MegaMemory Instead of Files?
 
@@ -1470,7 +1470,7 @@ async function createValidatedConcept(
 
 ## Summary
 
-MegaMemory provides a persistent, semantic knowledge graph for GSD projects. By storing all project data as interconnected concepts, you enable intelligent querying, automatic context loading, and knowledge reuse across sessions.
+MegaMemory provides a persistent, semantic knowledge graph for Fuska projects. By storing all project data as interconnected concepts, you enable intelligent querying, automatic context loading, and knowledge reuse across sessions.
 
 **Key Principles:**
 

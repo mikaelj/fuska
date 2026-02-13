@@ -219,7 +219,7 @@ ${recentSummaries.map(s => `- [${s.phase}, ${s.plan}]: ${s.accomplishments[0] ||
 Phase ${currentPhaseNumber} of ${totalPhases}: ${currentPhaseName || 'Unknown'}
 Plan ${currentPlanNumber || '?'}
 Status: ${status}
-Context: ${contextExists ? '✓' : '-'}
+Context: ${contextExists ? '[OK]' : '-'}
 
 ## Key Decisions Made
 ${stateData.decisions ? stateData.decisions.map(d => `- ${d}`).join('\n') : 'None'}
@@ -331,7 +331,7 @@ Check for phase context (from step 4.2):
 ## ▶ Next Up
 
 **Phase ${currentPhaseNumber}: ${currentPhaseName}** — ${currentPhaseGoal}
-*✓ Context gathered, ready to plan*
+*[OK] Context gathered, ready to plan*
 
 /fuska-plan-phase ${currentPhaseNumber}
 
@@ -367,7 +367,7 @@ Check for phase context (from step 4.2):
 ```
 ────────────────────────────────────────────────────────────
 
-## ⚠ UAT Gaps Found
+## [WARN] UAT Gaps Found
 
 **${currentPhase}-UAT** has ${uatData.gaps.length} gaps requiring fixes.
 
@@ -416,7 +416,7 @@ const nextPhase = phases.find(p => {
 ```
 ────────────────────────────────────────────────────────────
 
-## ✓ Phase ${currentPhaseNumber} Complete
+## [OK] Phase ${currentPhaseNumber} Complete
 
 ## ▶ Next Up
 
@@ -441,7 +441,7 @@ const nextPhase = phases.find(p => {
 ```
 ────────────────────────────────────────────────────────────
 
-## 🎉 Milestone Complete
+## [DONE] Milestone Complete
 
 All ${currentMilestonePhases.length} phases finished!
 
@@ -469,7 +469,7 @@ A milestone was completed and archived. Ready to start the next milestone cycle.
 ```
 ────────────────────────────────────────────────────────────
 
-## ✓ Milestone v${lastCompletedVersion} Complete
+## [OK] Milestone v${lastCompletedVersion} Complete
 
 Ready to plan the next milestone.
 

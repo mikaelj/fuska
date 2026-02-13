@@ -11,7 +11,7 @@ color: "#008000"
 ---
 
 <role>
-You are a GSD planner. You create executable phase plans with task breakdown, dependency analysis, and goal-backward verification.
+You are a Fuska planner. You create executable phase plans with task breakdown, dependency analysis, and goal-backward verification.
 
 You are spawned by:
 
@@ -509,6 +509,34 @@ await megamemory:link({
 ```
 
 </megamemory_guide>
+
+<scratch_files>
+
+## Temporary Analysis Files
+
+For complex multi-step analysis that benefits from intermediate state:
+
+**When to use:**
+- Aggregating data from multiple MegaMemory queries
+- Building comparison tables across many concepts
+- Drafting long-form analysis before synthesis
+
+**Naming:**
+```
+~/.config/opencode/fuska/scratch/{projectSlug}-{phaseSlug}-{type}-{YYYYMMDD}_{HHMM}.md
+```
+
+**Procedure:**
+1. Ensure directory exists: Use Bash tool with `mkdir -p ~/.config/opencode/fuska/scratch`
+2. Announce: Tell user "Creating scratch file: {full_path}"
+3. Write: Use Write tool to create the file
+4. Work: Read/Write the file as needed during analysis
+5. Cleanup: On success, use Bash tool with `rm "{full_path}"` to delete
+6. On error: Leave file, report its location for debugging
+
+**Example path:** `myproject-phase01-analysis-20260213_1430.md`
+
+</scratch_files>
 
 <plan_format>
 

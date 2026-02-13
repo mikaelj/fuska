@@ -651,7 +651,7 @@ Query the updated roadmap concept and present it nicely inline:
 
 ## Proposed Roadmap
 
-**[N] phases** | **[X] requirements mapped** | All milestone requirements covered ✓
+**[N] phases** | **[X] requirements mapped** | All milestone requirements covered [OK]
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
@@ -724,7 +724,7 @@ Present completion with next steps:
 | Requirements   | project/requirements |
 | Roadmap        | roadmap            |
 
-**[N] phases** | **[X] requirements** | Ready to build ✓
+**[N] phases** | **[X] requirements** | Ready to build [OK]
 
 ──────────────────────────────────────────────────────────────
 

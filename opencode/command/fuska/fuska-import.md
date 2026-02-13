@@ -34,7 +34,7 @@ This is the reverse of `/fuska-export-md` — converts the traditional `.plannin
 - `codebase/` — codebase concepts (if present at top level)
 
 **Use cases:**
-- Migrate existing GSD projects from file-based to MegaMemory
+- Migrate existing Fuska projects from file-based to MegaMemory
 - Restore from a previous `/fuska-export-md` backup
 - One-time conversion utility
 

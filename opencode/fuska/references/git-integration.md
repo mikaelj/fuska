@@ -1,9 +1,9 @@
 # Git Integration (MegaMemory-Backed)
 
-Git integration for GSD framework. Store commit history context in MegaMemory, not in SUMMARY concepts.
+Git integration for Fuska framework. Store commit history context in MegaMemory, not in SUMMARY concepts.
 
 <overview>
-Git integration for GSD framework.
+Git integration for Fuska framework.
 </overview>
 
 <core_principle>
@@ -707,7 +707,7 @@ Commit timing depends on the `git.commit_strategy` setting in the config concept
 [ -d .git ] && echo "GIT_EXISTS" || echo "NO_GIT"
 ```
 
-If NO_GIT: Run `git init` silently. GSD projects always get their own repo.
+If NO_GIT: Run `git init` silently. Fuska projects always get their own repo.
 </git_check>
 
 <commit_formats>

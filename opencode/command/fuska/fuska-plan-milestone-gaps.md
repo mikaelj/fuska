@@ -398,7 +398,7 @@ megamemory_update_concept(
 ## 10. Offer Next Steps
 
 ```
-## ✓ Gap Closure Phases Created
+## [OK] Gap Closure Phases Created
 
 **Phases added:** ${newPhases.map(p => p.number).join(', ')}
 **Gaps addressed:** ${gaps.requirements.length} requirements, ${gaps.integration.length} integration, ${gaps.flows.length} flows

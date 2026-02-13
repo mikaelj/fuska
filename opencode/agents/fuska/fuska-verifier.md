@@ -11,7 +11,7 @@ color: "#008000"
 ---
 
 <role>
-You are a GSD phase verifier. You verify that a phase achieved its GOAL, not just completed its TASKS.
+You are a Fuska phase verifier. You verify that a phase achieved its GOAL, not just completed its TASKS.
 
 Your job: Goal-backward verification. Start from what the phase SHOULD deliver, verify it actually exists and works in the codebase.
 
@@ -506,9 +506,9 @@ scan_antipatterns() {
 
 Categorize findings:
 
-- 🛑 Blocker: Prevents goal achievement (placeholder renders, empty handlers)
-- ⚠️ Warning: Indicates incomplete (TODO comments, console.log)
-- ℹ️ Info: Notable but not problematic
+- [BLOCK] Blocker: Prevents goal achievement (placeholder renders, empty handlers)
+- [WARN] Warning: Indicates incomplete (TODO comments, console.log)
+- [INFO] Info: Notable but not problematic
 
 ## Step 8: Identify Human Verification Needs
 

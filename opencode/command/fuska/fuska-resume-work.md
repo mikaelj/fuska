@@ -477,7 +477,7 @@ Based on the status and detection results from step 5, output the appropriate ro
  Fuska ► READY TO PLAN
 -----------------------------------------------------
 
-**Phase {X}: {Name}** — Context available ✓
+**Phase {X}: {Name}** — Context available [OK]
 
 ──────────────────────────────────────────────────────────────
 
@@ -500,7 +500,7 @@ Based on the status and detection results from step 5, output the appropriate ro
  Fuska ► READY TO EXECUTE
 -----------------------------------------------------
 
-**Phase {X}: {Name}** — Plans ready ✓
+**Phase {X}: {Name}** — Plans ready [OK]
 
 {N} plans in {M} wave(s)
 
@@ -552,7 +552,7 @@ Incomplete:
  Fuska ► PHASE COMPLETE
 -----------------------------------------------------
 
-**Phase {X}: {Name}** — Verified ✓
+**Phase {X}: {Name}** — Verified [OK]
 
 ──────────────────────────────────────────────────────────────
 

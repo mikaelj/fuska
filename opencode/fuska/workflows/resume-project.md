@@ -112,11 +112,11 @@ Present complete project status to user:
 ╚══════════════════════════════════════════════════════════════╝
 
 [If incomplete work found:]
-⚠️  Incomplete work detected:
+[WARN]  Incomplete work detected:
     - [incomplete plan or blocked phase]
 
 [If interrupted agent found:]
-⚠️  Interrupted agent detected:
+[WARN]  Interrupted agent detected:
     Agent ID: [id]
     Task: [task description from agent concept.summary JSON]
     Interrupted: [timestamp]
@@ -124,15 +124,15 @@ Present complete project status to user:
     Resume with: Task tool (resume parameter with agent ID)
 
 [If pending todos exist:]
-📋 [N] pending todos — /fuska-check-todos to review
+[TODO] [N] pending todos — /fuska-check-todos to review
 
 [If blockers exist:]
-⚠️  Carried concerns:
+[WARN]  Carried concerns:
     - [blocker 1]
     - [blocker 2]
 
 [If alignment issues exist:]
-⚠️  Brief alignment: [status] - [assessment]
+[WARN]  Brief alignment: [status] - [assessment]
 ```
 
 </step>

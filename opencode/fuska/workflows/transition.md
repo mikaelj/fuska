@@ -100,7 +100,7 @@ Parse the result:
 <if mode="yolo">
 
 ```
-⚡ Auto-approved: Transition Phase [X] → Phase [X+1]
+[AUTO] Auto-approved: Transition Phase [X] → Phase [X+1]
 Phase [X] complete — all [Y] plans finished.
 
 Proceeding to mark done and advance...
@@ -127,11 +127,11 @@ Present:
 
 ```
 Phase [X] has incomplete plans:
-- {phase}-01-SUMMARY.md ✓ Complete
-- {phase}-02-SUMMARY.md ✗ Missing
-- {phase}-03-SUMMARY.md ✗ Missing
+- {phase}-01-SUMMARY.md [OK] Complete
+- {phase}-02-SUMMARY.md [FAIL] Missing
+- {phase}-03-SUMMARY.md [FAIL] Missing
 
-⚠️ Safety rail: Skipping plans requires confirmation (destructive action)
+[WARN] Safety rail: Skipping plans requires confirmation (destructive action)
 
 Options:
 1. Continue current phase (execute remaining plans)
@@ -271,7 +271,7 @@ Parse current PROJECT concept.summary JSON:
 
 1. **Requirements validated?**
    - Any Active requirements shipped in this phase?
-   - Move to validated array: `- ✓ [Requirement] — Phase X`
+   - Move to validated array: `- [OK] [Requirement] — Phase X`
 
 2. **Requirements invalidated?**
    - Any Active requirements discovered to be unnecessary or wrong?
@@ -488,8 +488,8 @@ Before:
 {
   "accumulated_context": {
     "blockers": [
-      "⚠️ [Phase 1] Database schema not indexed for common queries",
-      "⚠️ [Phase 2] WebSocket reconnection behavior on flaky networks unknown"
+      "[WARN] [Phase 1] Database schema not indexed for common queries",
+      "[WARN] [Phase 2] WebSocket reconnection behavior on flaky networks unknown"
     ]
   }
 }
@@ -500,7 +500,7 @@ After (if database indexing was addressed in Phase 2):
 {
   "accumulated_context": {
     "blockers": [
-      "⚠️ [Phase 2] WebSocket reconnection behavior on flaky networks unknown"
+      "[WARN] [Phase 2] WebSocket reconnection behavior on flaky networks unknown"
     ]
   }
 }
@@ -603,7 +603,7 @@ Phase [X] marked complete.
 
 Next: Phase [X+1] — [Name]
 
-⚡ Auto-continuing: Plan Phase [X+1] in detail
+[AUTO] Auto-continuing: Plan Phase [X+1] in detail
 ```
 
 Exit skill and invoke Command("/fuska-plan-phase [X+1]")
@@ -613,7 +613,7 @@ Exit skill and invoke Command("/fuska-plan-phase [X+1]")
 <if mode="interactive" OR="custom with gates.confirm_transition true">
 
 ```
-## ✓ Phase [X] Complete
+## [OK] Phase [X] Complete
 
 ---
 
@@ -647,9 +647,9 @@ Exit skill and invoke Command("/fuska-plan-phase [X+1]")
 ```
 Phase {X} marked complete.
 
-🎉 Milestone {version} is 100% complete — all {N} phases finished!
+[DONE] Milestone {version} is 100% complete — all {N} phases finished!
 
-⚡ Auto-continuing: Complete milestone and archive
+[AUTO] Auto-continuing: Complete milestone and archive
 ```
 
 Exit skill and invoke Command("/fuska-complete-milestone {version}")
@@ -659,9 +659,9 @@ Exit skill and invoke Command("/fuska-complete-milestone {version}")
 <if mode="interactive" OR="custom with gates.confirm_transition true">
 
 ```
-## ✓ Phase {X}: {Phase Name} Complete
+## [OK] Phase {X}: {Phase Name} Complete
 
-🎉 Milestone {version} is 100% complete — all {N} phases finished!
+[DONE] Milestone {version} is 100% complete — all {N} phases finished!
 
 ---
 

@@ -466,7 +466,7 @@ Display:
 -----------------------------------------------------
 
 Executed: ${plansToExecute.length} plan(s)
-Status: All summaries created ✓
+Status: All summaries created [OK]
 ```
 
 ---
@@ -789,7 +789,7 @@ Output this markdown directly (not as a code block). Route based on status:
 **Phase {Z}: {Name}**
 
 {Y} plans executed
-Goal verified ✓
+Goal verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
@@ -820,7 +820,7 @@ Goal verified ✓
 **v1.0**
 
 {N} phases completed
-All phase goals verified ✓
+All phase goals verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
@@ -851,7 +851,7 @@ All phase goals verified ✓
 **{ProjectName}**
 
 All {totalPhases} phases finished!
-All phase goals verified ✓
+All phase goals verified [OK]
 
 ──────────────────────────────────────────────────────────────
 

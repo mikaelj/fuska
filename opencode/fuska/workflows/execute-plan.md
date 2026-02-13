@@ -160,7 +160,7 @@ Confirm with user if ambiguous.
 
 <if mode="yolo">
 ```
-⚡ Auto-approved: Execute {phase}-{plan}-Plan
+[AUTO] Auto-approved: Execute {phase}-{plan}-Plan
 [Plan X of Y for Phase Z]
 
 Starting execution...
@@ -634,11 +634,11 @@ Parsing segments...
 
 Routing analysis:
 
-- Segment 1: No prior checkpoint → SUBAGENT ✓
+- Segment 1: No prior checkpoint → SUBAGENT [OK]
 - Checkpoint 4: Verify only → MAIN (required)
-- Segment 2: After verify → SUBAGENT ✓
+- Segment 2: After verify → SUBAGENT [OK]
 - Checkpoint 7: Verify only → MAIN (required)
-- Segment 3: After verify → SUBAGENT ✓
+- Segment 3: After verify → SUBAGENT [OK]
 
 Execution:
 [1] Spawning subagent for tasks 1-3...
@@ -675,7 +675,7 @@ Aggregating results...
 
 Creating Summary concept...
 Committing...
-✓ Complete
+[OK] Complete
 
 **Benefits of this pattern:**
 - Main context usage: ~20% (just orchestration + checkpoints)
@@ -826,11 +826,11 @@ I'll verify: vercel whoami returns your account
 
 Verifying authentication...
 Running: vercel whoami
-✓ Authenticated as: user@example.com
+[OK] Authenticated as: user@example.com
 
 Retrying deployment...
 Running: vercel --yes
-✓ Deployed to: https://myapp-abc123.vercel.app
+[OK] Deployed to: https://myapp-abc123.vercel.app
 
 Task 3 complete. Continuing to task 4...
 ```
@@ -981,7 +981,7 @@ Apply these rules automatically. Track all deviations for Summary documentation.
 2. Present clearly:
 
 ```
-⚠️ Architectural Decision Needed
+[WARN] Architectural Decision Needed
 
 Current task: [task name]
 Discovery: [what you found that prompted this]
@@ -1768,8 +1768,8 @@ If "issues_encountered" is NOT "None":
 
 <if mode="yolo">
 ```
-⚡ Auto-approved: Issues acknowledgment
-⚠️ Note: Issues were encountered during execution:
+[AUTO] Auto-approved: Issues acknowledgment
+[WARN] Note: Issues were encountered during execution:
 - [Issue 1]
 - [Issue 2]
 (Logged - continuing in yolo mode)
@@ -1899,11 +1899,11 @@ Do NOT skip this verification. Do NOT assume phase or milestone completion witho
 If `USER_SETUP_CREATED=true` (from generate_user_setup step), always include this warning block at the TOP of completion output:
 
 ```
-⚠️ USER SETUP REQUIRED
+[WARN] USER SETUP REQUIRED
 
 This phase introduced external services requiring manual configuration:
 
-📋 USER-SETUP concept: {phase}-USER-SETUP
+[TODO] USER-SETUP concept: {phase}-USER-SETUP
 
 Query: megamemory:understand({query: "phase {phase} user setup"})
 
@@ -1955,7 +1955,7 @@ Summary concept: {phase}-{plan}-Summary
 
 {Y} of {X} plan concepts complete for Phase {Z}.
 
-⚡ Auto-continuing: Execute next plan ({phase}-{next_plan})
+[AUTO] Auto-continuing: Execute next plan ({phase}-{next_plan})
 ```
 
 Loop back to identify_plan step automatically.
@@ -2027,7 +2027,7 @@ Query roadmap concept to get the next phase's name and goal.
 Plan {phase}-{plan} complete.
 Summary concept: {phase}-{plan}-Summary
 
-## ✓ Phase {Z}: {Phase Name} Complete
+## [OK] Phase {Z}: {Phase Name} Complete
 
 All {Y} plans finished.
 
@@ -2056,12 +2056,12 @@ All {Y} plans finished.
 **Route C: Milestone complete (all phases done)**
 
 ```
-🎉 MILESTONE COMPLETE!
+[DONE] MILESTONE COMPLETE!
 
 Plan {phase}-{plan} complete.
 Summary concept: {phase}-{plan}-Summary
 
-## ✓ Phase {Z}: {Phase Name} Complete
+## [OK] Phase {Z}: {Phase Name} Complete
 
 All {Y} plans finished.
 

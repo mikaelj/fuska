@@ -119,8 +119,8 @@ If no must_haves in plan concept, derive using goal-backward process:
 A truth is achievable if the supporting artifacts exist, are substantive, and are wired correctly.
 
 **Verification status:**
-- ✓ VERIFIED: All supporting artifacts pass all checks
-- ✗ FAILED: One or more supporting artifacts missing, stub, or unwired
+- [OK] VERIFIED: All supporting artifacts pass all checks
+- [FAIL] FAILED: One or more supporting artifacts missing, stub, or unwired
 - ? UNCERTAIN: Can't verify programmatically (needs human)
 
 **For each truth:**
@@ -199,10 +199,10 @@ Grep for function calls, component renders, etc.
 
 | Exists | Substantive | Wired | Status |
 |--------|-------------|-------|--------|
-| ✓ | ✓ | ✓ | ✓ VERIFIED |
-| ✓ | ✓ | ✗ | ⚠️ ORPHANED |
-| ✓ | ✗ | - | ✗ STUB |
-| ✗ | - | - | ✗ MISSING |
+| [OK] | [OK] | [OK] | [OK] VERIFIED |
+| [OK] | [OK] | [FAIL] | [WARN] ORPHANED |
+| [OK] | [FAIL] | - | [FAIL] STUB |
+| [FAIL] | - | - | [FAIL] MISSING |
 
 Record status and evidence for each artifact.
 </step>
@@ -274,8 +274,8 @@ For each requirement:
 3. Determine status based on supporting infrastructure
 
 **Requirement status:**
-- ✓ SATISFIED: All supporting truths verified
-- ✗ BLOCKED: One or more supporting truths failed
+- [OK] SATISFIED: All supporting truths verified
+- [FAIL] BLOCKED: One or more supporting truths failed
 - ? NEEDS HUMAN: Can't verify requirement programmatically
 </step>
 
@@ -301,9 +301,9 @@ Grep for return null, return {}, return [], => {}
 Grep for console.log and check surrounding context
 
 Categorize findings:
-- 🛑 Blocker: Prevents goal achievement (placeholder renders, empty handlers)
-- ⚠️ Warning: Indicates incomplete (TODO comments, console.log)
-- ℹ️ Info: Notable but not problematic
+- [BLOCK] Blocker: Prevents goal achievement (placeholder renders, empty handlers)
+- [WARN] Warning: Indicates incomplete (TODO comments, console.log)
+- [INFO] Info: Notable but not problematic
 </step>
 
 <step name="identify_human_verification">

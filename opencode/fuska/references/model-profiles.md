@@ -107,13 +107,13 @@ const modelProfiles = await megamemory_create_concept({
   name: 'model-profiles',
   kind: 'config',
   summary: 'Model profiles with model_aliases: quality_model=opencode/claude-opus-4, balanced_model=opencode/claude-sonnet-4, budget_model=opencode/claude-haiku-4; active=balanced, presets: quality(planning:claude-opus-4,execution:claude-opus-4,verification:claude-opus-4), balanced(planning:claude-opus-4,execution:claude-sonnet-4,verification:claude-sonnet-4), budget(planning:claude-sonnet-4,execution:claude-sonnet-4,verification:claude-haiku-4)',
-  why: 'Controls model selection per GSD agent stage to balance quality vs token spend. Model aliases provide indirection between lookup tables and actual model IDs.',
+  why: 'Controls model selection per Fuska agent stage to balance quality vs token spend. Model aliases provide indirection between lookup tables and actual model IDs.',
   file_refs: ['opencode.json'],
   edges: [
     {
       to: 'fuska-agents',
       relation: 'configured_by',
-      description: 'All GSD agents resolve models from these profiles'
+      description: 'All Fuska agents resolve models from these profiles'
     },
     {
       to: 'planning-config',
@@ -406,7 +406,7 @@ function formatProfilesSummary(
 
 # Model Profiles
 
-Model profiles control which OpenCode model each GSD agent uses. This allows balancing quality vs token spend.
+Model profiles control which OpenCode model each Fuska agent uses. This allows balancing quality vs token spend.
 
 ## Stage-to-Agent Mapping
 

@@ -307,7 +307,7 @@ const planConceptId = planResult.id
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- GSD > TASK ${nextNum}: ${DESCRIPTION}
+ Fuska > TASK ${nextNum}: ${DESCRIPTION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Mode: ${MODE} | Plan: task-${nextNum}-${slug}
 ```
@@ -316,7 +316,7 @@ const planConceptId = planResult.id
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- GSD > TASK ${nextNum}: ${DESCRIPTION}
+ Fuska > TASK ${nextNum}: ${DESCRIPTION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Mode: ${MODE} | Plan: task-${nextNum}-${slug}
 ```
@@ -789,7 +789,7 @@ megamemory_update_concept(
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- GSD > TASK COMPLETE
+ Fuska > TASK COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
  Task ${nextNum}: ${DESCRIPTION}
@@ -803,7 +803,7 @@ megamemory_update_concept(
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- GSD > TASK COMPLETE
+ Fuska > TASK COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
  Quick Task ${nextNum}: ${DESCRIPTION}

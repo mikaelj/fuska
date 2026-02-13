@@ -1,6 +1,6 @@
 # MegaMemory Query Patterns
 
-Quick reference for common MegaMemory queries used across GSD commands and agents.
+Quick reference for common MegaMemory queries used across Fuska commands and agents.
 
 ## API Reference
 

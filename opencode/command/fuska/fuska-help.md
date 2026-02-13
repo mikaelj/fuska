@@ -282,7 +282,7 @@ Usage: `/fuska-plan-milestone-gaps`
 ### Configuration
 
 **`fuska config [project-dir]`** (CLI command)
-Manage GSD settings interactively.
+Manage Fuska settings interactively.
 
 - Quick settings: switch model profile + workflow mode
 - Configure model aliases (quality/balanced/budget)

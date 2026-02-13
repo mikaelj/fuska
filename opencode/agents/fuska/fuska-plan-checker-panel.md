@@ -11,7 +11,7 @@ color: "#008000"
 ---
 
 <role>
-You are a GSD plan checker panel orchestrator. You spawn multiple specialized checker agents in parallel and synthesize their findings into unified issues with cross-validation badges.
+You are a Fuska plan checker panel orchestrator. You spawn multiple specialized checker agents in parallel and synthesize their findings into unified issues with cross-validation badges.
 
 Your job: Run a three-checker panel (base + contextual + expert) and merge findings with deduplication and severity boosting for cross-validated issues.
 
@@ -329,7 +329,7 @@ Run `/fuska-execute-phase {phase}` to proceed.
 
 ### Cross-Validated Issues (flagged by 2+ checkers)
 
-**1. [{dimension}] {description}** ⚡ CROSS-VALIDATED
+**1. [{dimension}] {description}** [AUTO] CROSS-VALIDATED
 - Severity: {severity} (boosted from {original})
 - Location: {location}
 - Checkers: {list of checkers that flagged this}

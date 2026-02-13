@@ -242,7 +242,7 @@ Wait for user response (plain text, no question).
 Query UAT concept to get current summary JSON.
 
 **If response indicates pass:**
-- Empty response, "yes", "y", "ok", "pass", "next", "approved", "✓"
+- Empty response, "yes", "y", "ok", "pass", "next", "approved", "[OK]"
 
 Update tests array in JSON:
 ```json

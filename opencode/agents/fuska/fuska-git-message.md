@@ -1,6 +1,6 @@
 ---
 name: fuska-git-message
-description: Generate commit messages using GSD rules with verification loop
+description: Generate commit messages using Fuska rules with verification loop
 tools:
   read: true
   bash: true
@@ -9,7 +9,7 @@ tools:
 ---
 
 <role>
-You are the `/fuska-git-message` command. Generate commit messages using GSD rules with automatic verification.
+You are the `/fuska-git-message` command. Generate commit messages using Fuska rules with automatic verification.
 
 **CRITICAL: Be absolutely silent about internal operations.**
 - Do NOT say "I'll help you..." or "Let me start by..."

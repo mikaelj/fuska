@@ -1,6 +1,6 @@
 ---
 name: fuska-git-message
-description: Generate a commit message using GSD rules without committing, or regenerate for an existing commit or commit range
+description: Generate a commit message using Fuska rules without committing, or regenerate for an existing commit or commit range
 argument-hint: "<commit-hash | commit-range | phase-X-plan-Y>"
 agent: fuska-git-message
 tools:
@@ -11,7 +11,7 @@ tools:
 
 <objective>
 
-Test and preview commit messages using the GSD commit message rules. Three modes:
+Test and preview commit messages using the Fuska commit message rules. Three modes:
 
 1. **Commit range mode:** Generate a unified commit message for multiple commits (e.g., `HEAD~5..HEAD`)
 2. **Commit hash mode:** Replay an existing commit's diff and generate what the message *should* look like under current rules

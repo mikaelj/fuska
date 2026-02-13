@@ -72,8 +72,8 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Status Symbols",
   kind: "config",
-  summary: "Standard symbol mapping: ✓ Complete, ✗ Failed, ◆ In Progress, ○ Pending, ⚡ Auto-approved, ⚠ Warning",
-  why: "Consistent visual language across all GSD output",
+  summary: "Standard symbol mapping: [OK] Complete, [FAIL] Failed, [IN_PROGRESS] In Progress, [PENDING] Pending, [AUTO] Auto-approved, [WARN] Warning",
+  why: "Consistent visual language across all Fuska output",
   parent_id: "ui-brand",
   file_refs: ["@ui-brand.md:53-61"]
 });
@@ -98,7 +98,7 @@ const symbols = await megamemory.understand({
 ```typescript
 // Validate anti-patterns before rendering
 const antiPatterns = await megamemory.understand({
-  query: "ui anti-patterns to avoid in GSD output"
+  query: "ui anti-patterns to avoid in Fuska output"
 });
 ```
 
@@ -132,7 +132,7 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Stage Names",
   kind: "config",
-  summary: "Standard stage names: QUESTIONING, RESEARCHING, DEFINING REQUIREMENTS, CREATING ROADMAP, PLANNING PHASE {N}, EXECUTING WAVE {N}, VERIFYING, PHASE {N} COMPLETE ✓, MILESTONE COMPLETE 🎉",
+  summary: "Standard stage names: QUESTIONING, RESEARCHING, DEFINING REQUIREMENTS, CREATING ROADMAP, PLANNING PHASE {N}, EXECUTING WAVE {N}, VERIFYING, PHASE {N} COMPLETE [OK], MILESTONE COMPLETE [DONE]",
   why: "Ensures consistent stage naming across workflow",
   file_refs: ["@ui-brand.md:16-24"]
 });
@@ -194,7 +194,7 @@ await megamemory.createConcept({
 
 <ui_patterns>
 
-Visual patterns for user-facing GSD output. Orchestrators @-reference this file.
+Visual patterns for user-facing Fuska output. Orchestrators @-reference this file.
 
 ## Stage Banners
 
@@ -214,8 +214,8 @@ Use for major workflow transitions.
 - `PLANNING PHASE {N}`
 - `EXECUTING WAVE {N}`
 - `VERIFYING`
-- `PHASE {N} COMPLETE ✓`
-- `MILESTONE COMPLETE 🎉`
+- `PHASE {N} COMPLETE [OK]`
+- `MILESTONE COMPLETE [DONE]`
 
 ---
 
@@ -245,13 +245,13 @@ User action required. 62-character width.
 ## Status Symbols
 
 ```
-✓  Complete / Passed / Verified
-✗  Failed / Missing / Blocked
-◆  In Progress
-○  Pending
-⚡ Auto-approved
-⚠  Warning
-🎉 Milestone complete (only in banner)
+[OK]          Complete / Passed / Verified
+[FAIL]        Failed / Missing / Blocked
+[IN_PROGRESS] In Progress
+[PENDING]     Pending
+[AUTO]        Auto-approved
+[WARN]        Warning
+[DONE]        Milestone complete (only in banner)
 ```
 
 ---
@@ -278,15 +278,15 @@ Plans: 3/5 complete
 ## Spawning Indicators
 
 ```
-◆ Spawning researcher...
+[IN_PROGRESS] Spawning researcher...
 
-◆ Spawning 4 researchers in parallel...
+[IN_PROGRESS] Spawning 4 researchers in parallel...
   → Stack research
   → Features research
   → Architecture research
   → Pitfalls research
 
-✓ Researcher complete: STACK.md written
+[OK] Researcher complete: STACK.md written
 ```
 
 ---
@@ -334,11 +334,11 @@ Always at end of major completions.
 ## Tables
 
 ```
-| Phase | Status | Plans | Progress |
-|-------|--------|-------|----------|
-| 1     | ✓      | 3/3   | 100%     |
-| 2     | ◆      | 1/4   | 25%      |
-| 3     | ○      | 0/2   | 0%       |
+| Phase | Status      | Plans | Progress |
+|-------|-------------|-------|----------|
+| 1     | [OK]        | 3/3   | 100%     |
+| 2     | [IN_PROGRESS] | 1/4   | 25%      |
+| 3     | [PENDING]   | 0/2   | 0%       |
 ```
 
 ---
@@ -348,7 +348,7 @@ Always at end of major completions.
 - Varying box/banner widths
 - Mixing banner styles (`===`, `---`, `***`)
 - Skipping `Fuska ►` prefix in banners
-- Random emoji (`🚀`, `✨`, `💫`)
+- Random decorative text (`***`, `~~~`, `###` decorations outside standard patterns)
 - Missing Next Up block after completions
 
 </ui_patterns>

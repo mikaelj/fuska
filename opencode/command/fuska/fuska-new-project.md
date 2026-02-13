@@ -707,7 +707,7 @@ Present completion with next steps:
 | Phases      | [N] |
 | Research     | [4 or 0] |
 
-All v1 requirements mapped to phases ✓
+All v1 requirements mapped to phases [OK]
 
 ──────────────────────────────────────────────────────────────
 
