@@ -41,7 +41,7 @@ why: "Core value statement — the ONE thing that matters most. If everything el
 ```
 name: "Validated Requirements"
 kind: "config"
-summary: "Requirements that shipped and proved valuable. Format: '- ✓ [Requirement] — [version/phase]'. These are locked — changing them requires explicit discussion."
+summary: "Requirements that shipped and proved valuable. Format: '- [OK] [Requirement] — [version/phase]'. These are locked — changing them requires explicit discussion."
 parent_id: "[Project Name]"
 
 name: "Active Requirements"
@@ -76,7 +76,7 @@ parent_id: "[Project Name]"
 name: "Key Decision: [Decision Name]"
 kind: "decision"
 summary: "[Choice made] — [Why it was made]"
-why: "Significant choice that affects future work. Track outcome when known: ✓ Good (proved correct), ⚠️ Revisit (may need reconsideration), — Pending (too early to evaluate)"
+why: "Significant choice that affects future work. Track outcome when known: [OK] Good (proved correct), [WARN] Revisit (may need reconsideration), — Pending (too early to evaluate)"
 parent_id: "[Project Name]"
 edges: [{to: "[affected requirement or module]", relation: "configured_by", description: "This decision affects [X]"}]
 ```
@@ -175,7 +175,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Active Requirements",
   changes: {
-    summary: "- ✓ User can sign up with email and password — Phase 1\n- ✓ User receives email verification after signup — Phase 1"
+    summary: "- [OK] User can sign up with email and password — Phase 1\n- [OK] User receives email verification after signup — Phase 1"
   }
 });
 
@@ -295,7 +295,7 @@ const context = await megamemory.understand({
 await megamemory.update_concept({
   id: "Active Requirements",
   changes: {
-    summary: "- ✓ User can sign up with email and password — Phase 1\n- [ ] User receives email verification after signup\n- [ ] User can reset password via email link"
+    summary: "- [OK] User can sign up with email and password — Phase 1\n- [ ] User receives email verification after signup\n- [ ] User can reset password via email link"
   }
 });
 
@@ -303,7 +303,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Validated Requirements",
   changes: {
-    summary: "- ✓ User can sign up with email and password — Phase 1"
+    summary: "- [OK] User can sign up with email and password — Phase 1"
   }
 });
 
@@ -387,7 +387,7 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| [Choice] | [Why] | [✓ Good / ⚠️ Revisit / — Pending] |
+| [Choice] | [Why] | [[OK] Good / [WARN] Revisit / — Pending] |
 
 ---
 *Last updated: [date] after [trigger]*
@@ -413,7 +413,7 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 
 **Requirements — Validated:**
 - Requirements that shipped and proved valuable
-- Format: `- ✓ [Requirement] — [version/phase]`
+- Format: `- [OK] [Requirement] — [version/phase]`
 - These are locked — changing them requires explicit discussion
 
 **Requirements — Active:**
@@ -441,8 +441,8 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 - Significant choices that affect future work
 - Add decisions as they're made throughout the project
 - Track outcome when known:
-  - ✓ Good — decision proved correct
-  - ⚠️ Revisit — decision may need reconsideration
+  - [OK] Good — decision proved correct
+  - [WARN] Revisit — decision may need reconsideration
   - — Pending — too early to evaluate
 
 **Last Updated:**

@@ -784,7 +784,7 @@ class ConfigRunner {
     
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(' Fuska ► SETTINGS UPDATED');
+    console.log(' Fuska: SETTINGS UPDATED');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
     console.log('| Setting            | Value                     |');
@@ -804,7 +804,7 @@ class ConfigRunner {
   private displayPresetsBanner(): void {
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(' Fuska ► PRESETS CONFIGURED');
+    console.log(' Fuska: PRESETS CONFIGURED');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
     console.log('Your model presets have been saved. Use "Reset presets"');

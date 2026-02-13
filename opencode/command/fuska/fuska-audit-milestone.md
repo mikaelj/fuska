@@ -251,7 +251,7 @@ const phaseSummaries = phaseVerifications.map(v => {
 
 ```
 -----------------------------------------------------
- Fuska ► CHECKING INTEGRATION
+ Fuska: CHECKING INTEGRATION
 -----------------------------------------------------
 
 [IN_PROGRESS] Spawning integration checker...
@@ -441,7 +441,7 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Complete milestone** — archive and tag
 
@@ -477,7 +477,7 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Plan gap closure** — create phases to complete milestone
 
@@ -513,7 +513,7 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Options
+## > Options
 
 **A. Complete milestone** — accept debt, track in backlog
 

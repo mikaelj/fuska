@@ -274,7 +274,7 @@ for (const summary of summaryConcepts) {
 Display:
 ```
 -----------------------------------------------
- Fuska ► UAT PHASE ${phaseNumber}
+ Fuska: UAT PHASE ${phaseNumber}
 ---------------------------------------------
 
 ${testList.length} tests to run
@@ -524,7 +524,7 @@ UAT complete [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Phase {Z+1}: {Name}** — {Goal from phase concept}
 /fuska-discuss-phase {Z+1} — gather context and clarify approach
@@ -555,7 +555,7 @@ Final phase verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Audit milestone** — verify requirements, cross-phase integration, E2E flows
 /fuska-audit-milestone
@@ -590,7 +590,7 @@ Fix plans verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Execute fix plans** — run diagnosed fixes
 /fuska-execute-phase {Z} --gaps-only
@@ -625,7 +625,7 @@ Fix planning blocked after {X} iterations
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Manual intervention required**
 

@@ -333,7 +333,7 @@ If (researchExists === false OR hasResearchFlag === true) AND hasGapsFlag === fa
 Display:
 ```
 ----------------------------------------------------
- Fuska ► RESEARCHING PHASE ${phaseNumber}
+ Fuska: RESEARCHING PHASE ${phaseNumber}
 ----------------------------------------------------
 
  [IN_PROGRESS] Spawning researcher...
@@ -549,7 +549,7 @@ Display stage banner:
 
 ```
 -----------------------------------------------------
- Fuska ► PLANNING PHASE {X}
+ Fuska: PLANNING PHASE {X}
 -----------------------------------------------------
 
 [IN_PROGRESS] Spawning planner...
@@ -704,7 +704,7 @@ All extracted data is used to build the checker prompt in step 10.
 
 ```
 -----------------------------------------------------
- Fuska ► VERIFYING PLANS
+ Fuska: VERIFYING PLANS
 -----------------------------------------------------
 
  [IN_PROGRESS] Spawning plan checker panel...
@@ -918,7 +918,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Execute Phase {X}** — run all {N} plans
 /fuska-execute-phase {X}

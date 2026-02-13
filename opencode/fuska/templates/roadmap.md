@@ -702,11 +702,11 @@ After completing first milestone, organize with milestone groupings:
 
 - ✅ **v1.0 MVP** - Phases 1-4 (shipped YYYY-MM-DD)
 - 🚧 **v1.1 [Name]** - Phases 5-6 (in progress)
-- 📋 **v2.0 [Name]** - Phases 7-10 (planned)
+- [TODO] **v2.0 [Name]** - Phases 7-10 (planned)
 ```
 
 **Notes:**
-- Milestone emoji: ✅ shipped, 🚧 in progress, 📋 planned
+- Milestone emoji: ✅ shipped, 🚧 in progress, [TODO] planned
 - Continuous phase numbering (01-99)
 - Progress includes milestone column
 

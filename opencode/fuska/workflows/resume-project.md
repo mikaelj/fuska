@@ -203,7 +203,7 @@ Based on user selection, route to appropriate workflow:
   ```
   ---
 
-  ## ▶ Next Up
+  ## > Next Up
 
   **{phase}-{plan}: [Plan Name]** — [objective from plan concept.summary JSON]
 
@@ -217,7 +217,7 @@ Based on user selection, route to appropriate workflow:
   ```
   ---
 
-  ## ▶ Next Up
+  ## > Next Up
 
   **Phase [N]: [Name]** — [Goal from roadmap concept.summary JSON]
 

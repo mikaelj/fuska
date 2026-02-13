@@ -1970,7 +1970,7 @@ Summary concept: {phase}-{plan}-Summary
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **{phase}-{next_plan}: [Plan Name]** — [objective from plan concept]
 
@@ -2033,7 +2033,7 @@ All {Y} plans finished.
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Phase {Z+1}: {Next Phase Name}** — {Goal from roadmap}
 
@@ -2071,7 +2071,7 @@ All {Y} plans finished.
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Complete Milestone** — archive and prepare for next
 

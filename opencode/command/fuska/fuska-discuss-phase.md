@@ -489,7 +489,7 @@ ${allDeferred.map(deferred => `- ${deferred}`).join('\n') || 'No deferred ideas'
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Research Phase ${phaseNumber}** — investigate domain ecosystem
 /fuska-plan-phase ${phaseNumber} --research

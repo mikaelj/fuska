@@ -210,7 +210,7 @@ const coreValue = `Core value of ${projectName}`; // default value proposition
 
 ```
 -----------------------------------------------------
- Fuska ► QUESTIONING
+ Fuska: QUESTIONING
 -----------------------------------------------------
 ```
 
@@ -529,7 +529,7 @@ Use question:
 Display stage banner:
 ```
 -----------------------------------------------------
- Fuska ► RESEARCHING
+ Fuska: RESEARCHING
 -----------------------------------------------------
 
 Researching [domain] ecosystem...
@@ -662,7 +662,7 @@ Research concepts found:
 Display stage banner:
 ```
 -----------------------------------------------------
- Fuska ► DEFINING REQUIREMENTS
+ Fuska: DEFINING REQUIREMENTS
 -----------------------------------------------------
 ```
 
@@ -702,7 +702,7 @@ Present for user confirmation.
 Display stage banner:
 ```
 -----------------------------------------------------
- Fuska ► CREATING ROADMAP
+ Fuska: CREATING ROADMAP
 -----------------------------------------------------
 
 [IN_PROGRESS] Spawning roadmapper...
@@ -784,7 +784,7 @@ All v1 requirements mapped to phases [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Phase 1: [Phase Name]** — [Goal]
 

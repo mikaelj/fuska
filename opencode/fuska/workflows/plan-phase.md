@@ -564,7 +564,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Execute Phase {X}** — run all {N} plans
 /fuska-execute-phase-megamemory {X}

@@ -423,7 +423,7 @@ Display:
   Fuska: Planning fixes
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-◆ Spawning planner for gap closure...
+[IN_PROGRESS] Spawning planner for gap closure...
 ```
 
 Spawn fuska-planner in --gaps mode:
@@ -474,7 +474,7 @@ Display:
   Fuska: Verifying fix plans
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-◆ Spawning plan checker...
+[IN_PROGRESS] Spawning plan checker...
 ```
 
 Initialize: `iteration_count = 1`
@@ -595,7 +595,7 @@ Plans verified and ready for execution.
 
 ───────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Execute fixes** — run fix plans
 

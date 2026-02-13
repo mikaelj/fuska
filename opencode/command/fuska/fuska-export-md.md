@@ -781,7 +781,7 @@ Display:
 
 ```
 ---------------------------------------------------
- Fuska ► EXPORT COMPLETE
+ Fuska: EXPORT COMPLETE
 ---------------------------------------------------
 
 Output Directory: $outputDir
@@ -810,7 +810,7 @@ Total files: ${totalFileCount}
 **Step 10.3: Offer next actions**
 
 ```
-## ▶ Next Actions
+## > Next Actions
 
 **Review exported files:**
   cd $outputDir

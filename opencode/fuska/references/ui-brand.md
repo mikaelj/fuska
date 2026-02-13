@@ -50,7 +50,7 @@ ui-brand (component)
 await megamemory.createConcept({
   name: "Stage Banner",
   kind: "pattern",
-  summary: "Major workflow transition display with Fuska ► prefix, 62-char width",
+  summary: "Major workflow transition display with Fuska: prefix, 62-char width",
   why: "Provides clear visual separation between workflow phases",
   parent_id: "ui-brand",
   file_refs: ["@ui-brand.md:10-13"],
@@ -63,7 +63,7 @@ await megamemory.createConcept({
     {
       to: "fuska-prefix",
       relation: "configured_by",
-      description: "Always uses Fuska ► prefix"
+      description: "Always uses Fuska: prefix"
     }
   ]
 });
@@ -115,7 +115,7 @@ const antiPatterns = await megamemory.understand({
 await megamemory.createConcept({
   name: "QUESTIONING Banner",
   kind: "pattern",
-  summary: "Stage banner for questioning phase: 'Fuska ► QUESTIONING'",
+  summary: "Stage banner for questioning phase: 'Fuska: QUESTIONING'",
   why: "Indicates active workflow stage",
   parent_id: "stage-banner",
   file_refs: ["@ui-brand.md:10-13", "@ui-brand.md:16"],
@@ -184,7 +184,7 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Restricted Emoji Usage",
   kind: "config",
-  summary: "Only use 🎉 in milestone banners, random emoji (🚀, ✨, 💫) are anti-patterns",
+  summary: "Only use [DONE] in milestone banners, random emoji (🚀, ✨, 💫) are anti-patterns",
   why: "Maintains professional, focused visual language",
   file_refs: ["@ui-brand.md:57", "@ui-brand.md:157"]
 });
@@ -202,7 +202,7 @@ Use for major workflow transitions.
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Fuska ► {STAGE NAME}
+ Fuska: {STAGE NAME}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -298,7 +298,7 @@ Always at end of major completions.
 ```
 ───────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **{Identifier}: {Name}** — {one-line description}
 
@@ -347,7 +347,7 @@ Always at end of major completions.
 
 - Varying box/banner widths
 - Mixing banner styles (`===`, `---`, `***`)
-- Skipping `Fuska ►` prefix in banners
+- Skipping `Fuska:` prefix in banners
 - Random decorative text (`***`, `~~~`, `###` decorations outside standard patterns)
 - Missing Next Up block after completions
 

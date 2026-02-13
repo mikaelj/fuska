@@ -205,8 +205,8 @@ A truth is achievable if the supporting artifacts exist, are substantive, and ar
 
 **Verification status:**
 
-- ✓ VERIFIED: All supporting artifacts pass all checks
-- ✗ FAILED: One or more supporting artifacts missing, stub, or unwired
+- [OK] VERIFIED: All supporting artifacts pass all checks
+- [FAIL] FAILED: One or more supporting artifacts missing, stub, or unwired
 - ? UNCERTAIN: Can't verify programmatically (needs human)
 
 For each truth:
@@ -333,10 +333,10 @@ check_used() {
 
 | Exists | Substantive | Wired | Status      |
 | ------ | ----------- | ----- | ----------- |
-| ✓      | ✓           | ✓     | ✓ VERIFIED  |
-| ✓      | ✓           | ✗     | ⚠️ ORPHANED |
-| ✓      | ✗           | -     | ✗ STUB      |
-| ✗      | -           | -     | ✗ MISSING   |
+| [OK]   | [OK]        | [OK]  | [OK] VERIFIED  |
+| [OK]   | [OK]        | [FAIL] | [WARN] ORPHANED |
+| [OK]   | [FAIL]      | -     | [FAIL] STUB      |
+| [FAIL] | -           | -     | [FAIL] MISSING   |
 
 ## Step 5: Verify Key Links (Wiring)
 
@@ -466,8 +466,8 @@ For each requirement:
 
 **Requirement status:**
 
-- ✓ SATISFIED: All supporting truths verified
-- ✗ BLOCKED: One or more supporting truths failed
+- [OK] SATISFIED: All supporting truths verified
+- [FAIL] BLOCKED: One or more supporting truths failed
 - ? NEEDS HUMAN: Can't verify requirement programmatically
 
 ## Step 7: Scan for Anti-Patterns

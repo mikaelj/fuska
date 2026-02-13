@@ -313,7 +313,7 @@ Display:
 
 ```
 -----------------------------------------------------
- Fuska ► PHASE {X} ASSUMPTIONS
+ Fuska: PHASE {X} ASSUMPTIONS
 -----------------------------------------------------
 
 **Phase {X}: {Phase Name}**

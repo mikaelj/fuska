@@ -48,7 +48,7 @@ continuation-format (pattern)
 await megamemory.createConcept({
   name: "Continuation Format Core",
   kind: "pattern",
-  summary: "Standard next steps format: ▶ Next Up header, identifier:name with description, inline command, /new explanation, Also available section with --- separators",
+  summary: "Standard next steps format: > Next Up header, identifier:name with description, inline command, /new explanation, Also available section with --- separators",
   why: "Consistent UX for guiding users through workflow transitions",
   file_refs: ["@continuation-format.md:8-25"],
   edges: [
@@ -216,7 +216,7 @@ Standard format for presenting next steps after completing a command or workflow
 ```
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **{identifier}: {name}** — {one-line description}
 
@@ -249,7 +249,7 @@ Standard format for presenting next steps after completing a command or workflow
 ```
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **02-03: Refresh Token Rotation** — Add /api/auth/refresh with sliding expiry
 
@@ -273,7 +273,7 @@ Add note that this is the last plan and what comes after:
 ```
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **02-03: Refresh Token Rotation** — Add /api/auth/refresh with sliding expiry
 *Final plan in Phase 2*
@@ -296,7 +296,7 @@ Add note that this is the last plan and what comes after:
 ```
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Phase 2: Authentication** — JWT login flow with refresh tokens
 
@@ -321,11 +321,11 @@ Show completion status before next action:
 ```
 ---
 
-## ✓ Phase 2 Complete
+## [OK] Phase 2 Complete
 
 3/3 plans executed
 
-## ▶ Next Up
+## > Next Up
 
 **Phase 3: Core Features** — User dashboard, settings, and data export
 
@@ -350,7 +350,7 @@ When there's no clear primary action:
 ```
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Phase 3: Core Features** — User dashboard, settings, and data export
 
@@ -370,11 +370,11 @@ When there's no clear primary action:
 ```
 ---
 
-## 🎉 Milestone v1.0 Complete
+## [DONE] Milestone v1.0 Complete
 
 All 4 phases shipped
 
-## ▶ Next Up
+## > Next Up
 
 **Start v1.1** — questioning → research → requirements → roadmap
 

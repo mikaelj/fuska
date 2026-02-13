@@ -887,11 +887,11 @@ User: done
 
 OpenCode: Verifying authentication...
 Running: vercel whoami
-✓ Authenticated as: user@example.com
+[OK] Authenticated as: user@example.com
 
 Retrying deployment...
 Running: vercel --yes
-✓ Deployed to: https://myapp-abc123.vercel.app
+[OK] Deployed to: https://myapp-abc123.vercel.app
 
 Task 3 complete. Continuing to task 4...
 ```

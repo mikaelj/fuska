@@ -306,7 +306,7 @@ Use question:
 Display stage banner:
 ```
 ----------------------------------------------------
- Fuska ► RESEARCHING
+ Fuska: RESEARCHING
 ----------------------------------------------------
 
 Researching [new features] ecosystem...
@@ -455,7 +455,7 @@ Research concepts created in MegaMemory.
 Display stage banner:
 ```
 ----------------------------------------------------
- Fuska ► DEFINING REQUIREMENTS
+ Fuska: DEFINING REQUIREMENTS
 ----------------------------------------------------
 ```
 
@@ -580,7 +580,7 @@ If "adjust": Return to scoping.
 Display stage banner:
 ```
 ----------------------------------------------------
- Fuska ► CREATING ROADMAP
+ Fuska: CREATING ROADMAP
 ----------------------------------------------------
 
 [IN_PROGRESS] Spawning roadmapper...
@@ -728,7 +728,7 @@ Present completion with next steps:
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Phase [N]: [Phase Name]** — [Goal from roadmap]
 

@@ -135,9 +135,9 @@ Phase 2: Authentication
 Goal: Users can securely access their accounts
 
 Success Criteria:
-1. User can create account with email/password ← AUTH-01 ✓
-2. User can log in across sessions ← AUTH-02 ✓
-3. User can log out from any page ← AUTH-03 ✓
+1. User can create account with email/password ← AUTH-01 [OK]
+2. User can log in across sessions ← AUTH-02 [OK]
+3. User can log out from any page ← AUTH-03 [OK]
 4. User can reset forgotten password ← ??? GAP
 
 Requirements: AUTH-01, AUTH-02, AUTH-03
@@ -252,13 +252,13 @@ CONT-01 → Phase 4
 CONT-02 → Phase 4
 ...
 
-Mapped: 12/12 ✓
+Mapped: 12/12 [OK]
 ```
 
 **If orphaned requirements found:**
 
 ```
-⚠️ Orphaned requirements (no phase):
+[WARN] Orphaned requirements (no phase):
 - NOTF-01: User receives in-app notifications
 - NOTF-02: User receives email for followers
 
@@ -343,8 +343,8 @@ When presenting to user for approval:
 
 ### Coverage
 
-✓ All [X] v1 requirements mapped
-✓ No orphaned requirements
+[OK] All [X] v1 requirements mapped
+[OK] No orphaned requirements
 
 ### Awaiting
 
@@ -524,7 +524,7 @@ When concepts are created and returning to orchestrator:
 
 **Phases:** {N}
 **Depth:** {from config}
-**Coverage:** {X}/{X} requirements mapped ✓
+**Coverage:** {X}/{X} requirements mapped [OK]
 
 | Phase | Goal | Requirements |
 |-------|------|--------------|
@@ -549,7 +549,7 @@ User can review concepts in MegaMemory knowledge graph.
 
 ### Coverage Notes
 
-⚠️ Issues found during creation:
+[WARN] Issues found during creation:
 - {gap description}
 - Resolution applied: {what was done}
 ```
@@ -577,7 +577,7 @@ After incorporating user feedback and updating files:
 | 1 - {name} | {goal} | {count} |
 | 2 - {name} | {goal} | {count} |
 
-**Coverage:** {X}/{X} requirements mapped ✓
+**Coverage:** {X}/{X} requirements mapped [OK]
 
 ### Ready for Planning
 

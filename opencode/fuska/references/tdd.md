@@ -418,21 +418,21 @@ const tddGuidance = await megamemory_understand({
 
 // Returns decision framework:
 // TDD Candidates:
-// - Business logic with defined inputs/outputs ✓
-// - API endpoints with request/response contracts ✓
-// - Data transformations, parsing, formatting ✓
-// - Validation rules and constraints ✓
-// - Algorithms with testable behavior ✓
-// - State machines and workflows ✓
-// - Utility functions with clear specifications ✓
+// - Business logic with defined inputs/outputs [OK]
+// - API endpoints with request/response contracts [OK]
+// - Data transformations, parsing, formatting [OK]
+// - Validation rules and constraints [OK]
+// - Algorithms with testable behavior [OK]
+// - State machines and workflows [OK]
+// - Utility functions with clear specifications [OK]
 //
 // Skip TDD (use standard with type="auto"):
-// - UI layout, styling, visual components ✗
-// - Configuration changes ✗
-// - Glue code connecting existing components ✗
-// - One-off scripts and migrations ✗
-// - Simple CRUD with no business logic ✗
-// - Exploratory prototyping ✗
+// - UI layout, styling, visual components [FAIL]
+// - Configuration changes [FAIL]
+// - Glue code connecting existing components [FAIL]
+// - One-off scripts and migrations [FAIL]
+// - Simple CRUD with no business logic [FAIL]
+// - Exploratory prototyping [FAIL]
 //
 // Heuristic: Can you write expect(fn(input)).toBe(output) before writing fn?
 // → Yes: Create TDD plan

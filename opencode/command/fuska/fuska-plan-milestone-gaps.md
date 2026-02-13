@@ -405,7 +405,7 @@ megamemory_update_concept(
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Plan first gap closure phase**
 

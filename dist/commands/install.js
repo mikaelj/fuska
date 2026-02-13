@@ -85,7 +85,7 @@ async function installDirectory(sourceRel, targetRel, force) {
         absolute: false,
         ignore: ['node_modules', '.git', '**/*.test.ts', '**/__tests__/**']
     });
-    console.log(`  ✓ Copied ${files.length} files`);
+    console.log(`  [OK] Copied ${files.length} files`);
     return {
         source: sourceRel,
         target: targetRel,

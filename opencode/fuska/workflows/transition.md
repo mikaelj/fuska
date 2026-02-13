@@ -322,7 +322,7 @@ After (Phase 2 shipped JWT auth, discovered rate limiting needed):
       "- [ ] Rate limiting on sync endpoint"
     ],
     "validated": [
-      "- ✓ JWT authentication — Phase 2"
+      "- [OK] JWT authentication — Phase 2"
     ],
     "out_of_scope": [
       "- OAuth2 — complexity not needed for v1"
@@ -617,7 +617,7 @@ Exit skill and invoke Command("/fuska-plan-phase [X+1]")
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Phase [X+1]: [Name]** — [Goal from ROADMAP]
 
@@ -665,7 +665,7 @@ Exit skill and invoke Command("/fuska-complete-milestone {version}")
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Complete Milestone {version}** — archive and prepare for next
 

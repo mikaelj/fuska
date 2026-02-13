@@ -504,7 +504,7 @@ Use `fuska config` to view or override the contextual checker role.
 
 ────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 ${!stateData.current_phase ? 'Initialize project' : 'Continue with project planning'}
 

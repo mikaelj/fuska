@@ -317,7 +317,7 @@ Output this markdown directly (not as a code block):
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Plan Phase {N}**
 

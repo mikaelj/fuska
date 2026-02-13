@@ -204,7 +204,7 @@ if (currentPhase) {
 
 ```
 ----------------------------------------------------
- Fuska ► PROJECT PROGRESS
+ Fuska: PROJECT PROGRESS
 ----------------------------------------------------
 
 **[Project Name]**
@@ -306,7 +306,7 @@ If incompletePlan found:
 ```
 ────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **${incompletePlan.name}** — ${incompletePlan.objective}
 
@@ -328,7 +328,7 @@ Check for phase context (from step 4.2):
 ```
 ────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Phase ${currentPhaseNumber}: ${currentPhaseName}** — ${currentPhaseGoal}
 *[OK] Context gathered, ready to plan*
@@ -345,7 +345,7 @@ Check for phase context (from step 4.2):
 ```
 ────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Phase ${currentPhaseNumber}: ${currentPhaseName}** — ${currentPhaseGoal}
 
@@ -418,7 +418,7 @@ const nextPhase = phases.find(p => {
 
 ## [OK] Phase ${currentPhaseNumber} Complete
 
-## ▶ Next Up
+## > Next Up
 
 **Phase ${nextPhase.number}: ${nextPhase.name}** — ${nextPhase.goal}
 
@@ -445,7 +445,7 @@ const nextPhase = phases.find(p => {
 
 All ${currentMilestonePhases.length} phases finished!
 
-## ▶ Next Up
+## > Next Up
 
 **Complete Milestone** — archive and prepare for next
 
@@ -473,7 +473,7 @@ A milestone was completed and archived. Ready to start the next milestone cycle.
 
 Ready to plan the next milestone.
 
-## ▶ Next Up
+## > Next Up
 
 **Start Next Milestone** — questioning → research → requirements → roadmap
 

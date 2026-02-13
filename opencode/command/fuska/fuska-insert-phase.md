@@ -317,7 +317,7 @@ Project state updated in MegaMemory
 
 ---
 
-## ▶ Next Up
+## > Next Up
 
 **Phase {decimal_phase}: {description}** — urgent insertion
 

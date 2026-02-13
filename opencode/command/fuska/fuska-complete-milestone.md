@@ -83,7 +83,7 @@ If response.matches.length === 0:
 
 ## Pre-flight Check
 
-⚠ No milestone audit found. Run /fuska-audit-milestone first to verify
+[WARN] No milestone audit found. Run /fuska-audit-milestone first to verify
 requirements coverage, cross-phase integration, and E2E flows.
 
 ────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ If audit exists and has gaps:
 
 ## Pre-flight Check
 
-⚠ Milestone audit found gaps. Run /fuska-plan-milestone-gaps to create
+[WARN] Milestone audit found gaps. Run /fuska-plan-milestone-gaps to create
 phases that close the gaps, or proceed anyway to accept as tech debt.
 
 ────────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ phases that close the gaps, or proceed anyway to accept as tech debt.
 Suggest: "Run /fuska-plan-milestone-gaps first" or offer "Proceed anyway" option
 
 If audit exists and status is "passed":
-→ Display: "✓ Milestone audit passed. Proceeding with completion."
+→ Display: "[OK] Milestone audit passed. Proceeding with completion."
 → Continue to step 1
 
 ---
@@ -234,7 +234,7 @@ if (phaseStatus !== "complete" || completedSummaries < totalPlans) {
 **Phases in milestone:** ${milestonePhases.length}
 **Phases completed:** ${milestonePhases.length - incompletePhases.length}
 
-${incompletePhases.length > 0 ? `Incomplete phases:\n${incompletePhases.map(p => `- ${p}`).join('\n')}` : 'All phases complete ✓'}
+${incompletePhases.length > 0 ? `Incomplete phases:\n${incompletePhases.map(p => `- ${p}`).join('\n')}` : 'All phases complete [OK]'}
 
 ────────────────────────────────────────────────────────────
 
@@ -682,7 +682,7 @@ git push origin v${{version}}
 
 ────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Start Next Milestone** — questioning → research → requirements → roadmap
 /fuska-new-milestone

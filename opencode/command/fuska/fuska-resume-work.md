@@ -143,7 +143,7 @@ const lastActivity = stateData.last_activity
 
 ```
 ----------------------------------------------------
- Fuska ► PROJECT STATE
+ Fuska: PROJECT STATE
 ----------------------------------------------------
 
 **${projectName || 'Project'}**
@@ -474,14 +474,14 @@ Based on the status and detection results from step 5, output the appropriate ro
 
 ```
 -----------------------------------------------------
- Fuska ► READY TO PLAN
+ Fuska: READY TO PLAN
 -----------------------------------------------------
 
 **Phase {X}: {Name}** — Context available [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up (Recommended)
+## > Next Up (Recommended)
 
 **Plan Phase {X}** — Create execution plans
 /fuska-plan-phase {X}
@@ -497,7 +497,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 
 ```
 -----------------------------------------------------
- Fuska ► READY TO EXECUTE
+ Fuska: READY TO EXECUTE
 -----------------------------------------------------
 
 **Phase {X}: {Name}** — Plans ready [OK]
@@ -506,7 +506,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Execute Phase {X}**
 /fuska-execute-phase {X}
@@ -520,7 +520,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 
 ```
 -----------------------------------------------------
- Fuska ► INCOMPLETE WORK DETECTED
+ Fuska: INCOMPLETE WORK DETECTED
 -----------------------------------------------------
 
 **Phase {X}: {Name}**
@@ -531,7 +531,7 @@ Incomplete:
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Resume Execution**
 /fuska-execute-phase {X}
@@ -549,14 +549,14 @@ Incomplete:
 
 ```
 -----------------------------------------------------
- Fuska ► PHASE COMPLETE
+ Fuska: PHASE COMPLETE
 -----------------------------------------------------
 
 **Phase {X}: {Name}** — Verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Next Phase**
 /fuska-discuss-phase {X+1}

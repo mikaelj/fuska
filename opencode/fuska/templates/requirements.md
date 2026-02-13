@@ -463,7 +463,7 @@ async function initializeRequirements(
   await megamemory.create_concept({
     name: "Requirement Traceability",
     kind: "config",
-    summary: `Coverage: v1 requirements ${requirements.filter(r => r.version === "v1").length} total, mapped to phases 0, unmapped ${requirements.filter(r => r.version === "v1").length} ⚠️`,
+    summary: `Coverage: v1 requirements ${requirements.filter(r => r.version === "v1").length} total, mapped to phases 0, unmapped ${requirements.filter(r => r.version === "v1").length} [WARN]`,
     parent_id: reqConcept.id
   });
 
@@ -746,7 +746,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v1 requirements: [X] total
 - Mapped to phases: [Y]
-- Unmapped: [Z] ⚠️
+- Unmapped: [Z] [WARN]
 
 ---
 *Requirements defined: [date]*

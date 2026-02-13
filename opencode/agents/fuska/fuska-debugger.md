@@ -377,9 +377,9 @@ Trace backwards:
 **Example:** Works locally, fails in CI
 ```
 Differences:
-- Node version: Same ✓
-- Environment variables: Same ✓
-- Timezone: Different! ✗
+- Node version: Same [OK]
+- Environment variables: Same [OK]
+- Timezone: Different! [FAIL]
 
 Test: Set local timezone to UTC (like CI)
 Result: Now fails locally too
@@ -582,7 +582,7 @@ test('should handle undefined user data gracefully', () => {
 });
 
 // 2. Verify test fails (confirms it reproduces bug)
-// ✗ TypeError: Cannot read property 'name' of undefined
+// [FAIL] TypeError: Cannot read property 'name' of undefined
 
 // 3. Fix the code
 function processUserData(user) {
@@ -591,7 +591,7 @@ function processUserData(user) {
 }
 
 // 4. Verify test passes
-// ✓ should handle undefined user data gracefully
+// [OK] should handle undefined user data gracefully
 
 // 5. Test is now regression protection forever
 ```

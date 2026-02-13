@@ -462,7 +462,7 @@ const summaryData = JSON.parse(response.matches[0].summary)
 Display:
 ```
 -----------------------------------------------------
- Fuska ► PHASE ${phaseNumber} EXECUTION COMPLETE
+ Fuska: PHASE ${phaseNumber} EXECUTION COMPLETE
 -----------------------------------------------------
 
 Executed: ${plansToExecute.length} plan(s)
@@ -793,7 +793,7 @@ Goal verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Phase {Z+1}: {Name}** — {Goal from phase concept}
 /fuska-discuss-phase {Z+1} — gather context and clarify approach
@@ -824,7 +824,7 @@ All phase goals verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Audit milestone** — verify requirements, cross-phase integration, E2E flows
 /fuska-audit-milestone
@@ -855,7 +855,7 @@ All phase goals verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Complete Milestone** — verify all requirements, cross-phase integration
 
@@ -890,7 +890,7 @@ Report: UAT concept {phase}-uat
 
 ──────────────────────────────────────────────────────────────
 
-## ▶ Next Up
+## > Next Up
 
 **Plan gap closure** — create additional plans to complete phase
 /fuska-plan-phase {Z} --gaps
