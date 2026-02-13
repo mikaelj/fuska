@@ -190,13 +190,15 @@ This creates all phases for the milestone at once (e.g., Phase 1–5). You then 
 
 ### 3. Work Through Phases
 
-| Step | Command |
-|------|---------|
-| (Optional) Discuss phase | `/fuska-discuss-phase <N>` |
-| Plan phase | `/fuska-plan-phase <N>` |
-| Execute phase | `/fuska-execute-phase <N>` |
-| (Optional) Verify work | `/fuska-verify-work <N>` |
-| Move to next phase | `/fuska-discuss-phase <N+1>` or `/fuska-plan-phase <N+1>` |
+| Step | Command | When to Use |
+|------|---------|-------------|
+| **Discuss** (optional) | `/fuska-discuss-phase <N>` | Requirements have gray areas (UI, UX, behavior) — asks targeted questions to clarify |
+| **Plan** | `/fuska-plan-phase <N>` | Always — creates detailed task list with dependencies |
+| **Execute** | `/fuska-execute-phase <N>` | Always — implements tasks with atomic commits |
+| **Verify** (optional) | `/fuska-verify-work <N>` | Need confidence the code delivers what the phase promised |
+| **Next phase** | `/fuska-plan-phase <N+1>` | Start the next phase (discuss again if needed) |
+
+**Typical flow:** Most phases skip discuss and go straight to `/fuska-plan-phase <N>`. Use discuss when you're uncertain about implementation details.
 
 That's it — repeat for each phase until the milestone is complete.
 
@@ -269,7 +271,7 @@ Creates a detailed execution plan for phase N.
 Executes tasks from the plan with atomic commits. Handles deviations, pauses, and checkpoints.
 
 **During execution you can:**
-- `/fuska-pause-work` — Pause mid-phase (creates a checkpoint)
+- `/fuska-pause-work` — Capture mental context before ending session (optional)
 - `/fuska-resume-work` — Resume from where you left off
 - `/fuska-add-todo` — Capture ideas without derailing current work
 
@@ -472,21 +474,34 @@ See [Settings & Configuration](docs/configuration.md) for details on:
 
 ## Session Continuity
 
-### Pausing Mid-Phase
+Fuska tracks progress **continuously** — `/fuska-resume-work` always knows your exact position.
 
-```bash
-/fuska-pause-work
-```
-
-Creates a **checkpoint** — a snapshot of your current progress including completed tasks, pending work, and context — and saves it to MegaMemory.
-
-### Resuming Later
+### Resuming Work
 
 ```bash
 /fuska-resume-work
 ```
 
-Restores from the checkpoint and continues where you left off.
+Shows exact task position (e.g., "Task 3 of 7") from continuous state tracking. Works even if you never paused — just close your session and resume later.
+
+**What gets restored:**
+- Exact task position (tracked automatically after each task commit)
+- Your mental context (if you paused earlier)
+- Project state and recent activity
+
+### Optionally Capturing Mental Context
+
+```bash
+/fuska-pause-work
+```
+
+**Optional** — use only when you want to preserve "why I was doing X" or "I was about to try Y" context.
+
+**What gets captured:**
+- Mental context (your thoughts on approach/next steps)
+- Modified files (optional WIP commit)
+
+Task position is already tracked — pause-work is purely for capturing your thinking.
 
 ### Checking Progress
 
@@ -543,6 +558,8 @@ Key highlights:
 | `fuska migrate [dir]` | Migrate `.planning/` to MegaMemory | `--clean` to delete existing DB first |
 | `fuska config [dir]` | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view |
 | `fuska export` | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
+| `fuska projects` | List all projects with ASCII tree showing milestones and phases | — |
+| `fuska todo` | List completed and pending tasks | — |
 | `fuska worktree-add <name>` | Create git worktree with shared context | `--no-context`, `-f, --force` |
 | `fuska worktree-merge <name>` | Merge worktree (MM + git) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
 
@@ -588,8 +605,8 @@ Key highlights:
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `/fuska-pause-work` | Pause current work, create checkpoint | — |
-| `/fuska-resume-work` | Resume from last checkpoint | — |
+| `/fuska-pause-work` | Capture mental context for next session | — |
+| `/fuska-resume-work` | Restore context and show task position | — |
 | `/fuska-add-todo` | Add todo item | `[description]` — auto-extracts from conversation if omitted |
 | `/fuska-check-todos` | View all todos | — |
 | `/fuska-merge-worktrees` | Merge knowledge databases from git worktrees | `<branch1> [branch2...]` — worktree subdirectory names |
@@ -644,7 +661,7 @@ Key highlights:
 | Term | Definition |
 |------|-----------|
 | **Atomic commit** | A small, self-contained code change that implements a single task from the plan |
-| **Checkpoint** | A snapshot of in-progress work saved by `/fuska-pause-work`, allowing you to resume later |
+| **Checkpoint** | A structured pause point during execution where user verification is required (e.g., visual review, decision input). **Not the same as pause-work** — task progress is tracked continuously. |
 | **Checker panel** | A role-based plan verification system with three specialized checkers (base, contextual, expert) that verify plans from different perspectives |
 | **Concept** | A unit of knowledge in MegaMemory (e.g., a project, requirement, plan, or phase) |
 | **Deviation** | When execution diverges from the planned tasks — handled automatically by the executor |
