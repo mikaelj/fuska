@@ -702,6 +702,36 @@ Track for summary concept creation.
 
 </task_commit_protocol>
 
+<task_position_update>
+
+## Update State with Task Position
+
+After each task commit, update the state concept with current position:
+
+```typescript
+// Query current state
+const stateResult = await megamemory:understand({ query: "state", top_k: 1 });
+const stateId = stateResult.matches[0].id;
+const stateData = JSON.parse(stateResult.matches[0].summary);
+
+// Update with current task position
+const updatedState = {
+  ...stateData,
+  current_task: taskIndex + 1,
+  total_tasks: planTasks.length,
+  last_activity: `Task ${taskIndex + 1}/${planTasks.length}: ${task.name}`
+};
+
+await megamemory:update_concept({
+  id: stateId,
+  changes: { summary: JSON.stringify(updatedState) }
+});
+```
+
+This enables resume-work to show exact position without pause-work.
+
+</task_position_update>
+
 <summary_creation>
 
 ## Create Summary Concept

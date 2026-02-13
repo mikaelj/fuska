@@ -91,9 +91,28 @@ If status === "phase_complete" OR status === "ready_to_plan":
 → Suggest: "Run /fuska-resume-work to see current status"
 → Stop
 
-## 2. Load Phase Context
+## 2. Extract Position from State
 
-**Step 2.1: Query phase concept**
+**Step 2.1: Get position from state (no calculation needed)**
+
+From stateData extracted in step 1.3:
+```
+const currentTask = stateData.current_task || 1
+const totalTasks = stateData.total_tasks || 0
+const currentPhase = stateData.current_phase
+const currentPlan = stateData.current_plan
+```
+
+**Step 2.2: Fallback if position missing (legacy)**
+
+If current_task is undefined:
+```
+megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
+const completedCount = response.matches.length
+const currentTask = completedCount + 1
+```
+
+**Step 2.3: Get phase/plan names**
 
 If currentPhase exists:
 ```
@@ -104,12 +123,8 @@ If response.matches.length > 0:
 ```
 const phaseSummaryString = response.matches[0].summary
 const phaseData = JSON.parse(phaseSummaryString)
-
 const phaseName = phaseData.name
-const phaseGoal = phaseData.goal
 ```
-
-**Step 2.2: Query current plan concept**
 
 If currentPlan exists:
 ```
@@ -120,88 +135,12 @@ If response.matches.length > 0:
 ```
 const planSummaryString = response.matches[0].summary
 const planData = JSON.parse(planSummaryString)
-
 const planObjective = planData.objective
-const planTasks = planData.tasks || []
-const totalTasks = planTasks.length
 ```
 
-**Step 2.3: Query completed tasks**
+## 3. Capture Mental Context
 
-```
-megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
-```
-
-If response.matches.length > 0:
-```
-const completedTaskIds = new Set(response.matches.map(match => match.id))
-```
-
-**Step 2.4: Calculate current position**
-
-```
-const completedCount = planTasks.filter(task => completedTaskIds.has(task.id)).length
-const currentTaskIndex = completedCount
-const currentTask = planTasks[currentTaskIndex] || null
-```
-
-## 3. Gather Complete State
-
-**Step 3.1: Collect work completed**
-
-From summary concepts and plan data:
-```
-const completedWork = planTasks.slice(0, completedCount).map(task => ({
-  id: task.id,
-  name: task.name,
-  status: "completed"
-}))
-```
-
-**Step 3.2: Collect work remaining**
-
-From plan data:
-```
-const remainingWork = planTasks.slice(completedCount).map(task => ({
-  id: task.id,
-  name: task.name,
-  status: task === currentTask ? "in_progress" : "not_started"
-}))
-```
-
-**Step 3.3: Query decisions**
-
-```
-megamemory_understand(query="decision", top_k=20)
-```
-
-Extract decisions related to current phase:
-```
-const phaseDecisions = response.matches
-  .filter(match => {
-    const summaryString = match.summary
-    const decData = JSON.parse(summaryString)
-    return decData.phase === currentPhase
-  })
-  .map(match => {
-    const summaryString = match.summary
-    const decData = JSON.parse(summaryString)
-    return {
-      decision: decData.decision,
-      rationale: decData.rationale,
-      madeAt: decData.made_at
-    }
-  })
-```
-
-**Step 3.4: Query blockers**
-
-From state concept:
-```
-const blockers = stateData.blockers || []
-```
-
-**Step 3.5: Gather mental context**
+**Step 3.1: Gather mental context**
 
 Use question tool to capture mental state:
 ```
@@ -214,7 +153,7 @@ const contextResponse = question(questions=[{
 
 Store response from contextResponse[0] as `mentalContext`.
 
-**Step 3.6: Check modified files**
+**Step 3.2: Check modified files**
 
 ```bash
 git status --porcelain 2>/dev/null || echo ""
@@ -236,37 +175,19 @@ const modifiedFiles = gitStatusOutput
 ```
 const handoffData = {
   phase: currentPhase,
-  phase_name: phaseName,
   plan: currentPlan,
-  task: currentTaskIndex + 1,
+  task: currentTask,
   total_tasks: totalTasks,
-  status: "in_progress",
-  last_updated: new Date().toISOString(),
-
-  current_position: {
-    phase: currentPhase,
-    phase_name: phaseName,
-    plan: currentPlan,
-    task: currentTaskIndex + 1,
-    objective: planObjective,
-    total_tasks: totalTasks
-  },
-
-  completed_work: completedWork,
-
-  remaining_work: remainingWork,
-
-  decisions_made: phaseDecisions,
-
-  blockers: blockers,
+  status: "paused",
+  paused_at: new Date().toISOString(),
 
   context: mentalContext,
 
   modified_files: modifiedFiles,
 
-  next_action: mentalContext.includes("next") ?
-    mentalContext.match(/next[:\s]+([^.\n]+)/i)?.[1]?.trim() || "Continue from task " + (currentTaskIndex + 1) :
-    "Continue from task " + (currentTaskIndex + 1)
+  next_action: mentalContext.includes("next")
+    ? mentalContext.match(/next[:\s]+([^.\n]+)/i)?.[1]?.trim()
+    : `Continue from task ${currentTask}`
 }
 ```
 
@@ -299,7 +220,7 @@ const updatedStateData = {
     paused_at: new Date().toISOString(),
     phase: currentPhase,
     plan: currentPlan,
-    task: currentTaskIndex + 1
+    task: currentTask
   }
 }
 ```
@@ -326,13 +247,12 @@ Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kin
 
 **Phase:** {phaseName}
 **Plan:** {currentPlan}
-**Task:** {currentTaskIndex + 1} of {totalTasks}
+**Task:** {currentTask} of {totalTasks}
 **Status:** {status}
 
 ────────────────────────────────────────────────────────────
 
-**Completed:** {completedCount} tasks
-**Remaining:** {remainingWork.length} tasks
+**Context:** {mentalContext}
 
 ────────────────────────────────────────────────────────────
 
@@ -363,11 +283,11 @@ Task(
 **Mode:** handoff-commit
 **Phase:** ${currentPhase}
 **Plan:** ${currentPlan}
-**Task:** ${currentTaskIndex + 1}/${totalTasks}
+**Task:** ${currentTask}/${totalTasks}
 **Commit Strategy:** per-phase
 
 **Context:**
-Work paused at task ${currentTaskIndex + 1} of ${totalTasks}
+Work paused at task ${currentTask} of ${totalTasks}
 
 **Next Action:** ${nextAction}
 
@@ -398,13 +318,12 @@ Update confirmation message:
 
 **Phase:** {phaseName}
 **Plan:** {currentPlan}
-**Task:** {currentTaskIndex + 1} of {totalTasks}
+**Task:** {currentTask} of {totalTasks}
 **Status:** {status}
 
 ────────────────────────────────────────────────────
 
-**Completed:** {completedCount} tasks
-**Remaining:** {remainingWork.length} tasks
+**Context:** {mentalContext}
 
 ────────────────────────────────────────────────────
 

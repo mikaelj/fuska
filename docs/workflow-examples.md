@@ -32,13 +32,13 @@ First, map the codebase so Fuska understands your architecture, then create the 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
 | 1 | `/fuska-execute-phase 2` | — | Executor starts. Completes Wave 1 (ingredient aggregation logic, 5 tasks). Begins Wave 2 (shopping list UI)… |
-| 2 | `/fuska-pause-work` | — | Creates checkpoint: "Phase 2, Wave 2, task 3/6 complete. Shopping list renders but grouping-by-aisle not started. 7 commits so far." Saves to MegaMemory. |
+| 2 | `/fuska-pause-work` | *"Was about to refactor the grouping logic to use a Map instead of object for O(1) lookups"* | Captures mental context. Task position already tracked in state (Task 3 of 6). Saves handoff with context. |
 
 *Next morning, new session:*
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 3 | `/fuska-resume-work` | — | Restores checkpoint. Shows summary: "Resuming Phase 2 — Shopping List Generation. Wave 2, 3 tasks remaining: aisle grouping, quantity combining, print view." Continues execution. |
+| 3 | `/fuska-resume-work` | — | Shows: "Phase 2 — Shopping List Generation. Task 3 of 6." Displays your context: "Was about to refactor grouping logic to use Map." Continues from task 3. |
 | 4 | `/fuska-add-todo` | *"Look into Instacart API for direct-to-cart shopping list export"* | Creates todo tagged `integration`: "Investigate Instacart API for shopping list export." Doesn't interrupt current work. |
 | 5 | *(execution completes)* | — | Remaining 3 tasks complete. 4 more atomic commits. Phase 2 execution finished. |
 | 6 | `/fuska-verify-work 2` | — | "Shopping list aggregates ingredients from weekly plan" → **PASS**. "Items grouped by aisle" → **PASS**. "Print view renders cleanly" → **PASS**. Phase 2 complete. |

@@ -190,18 +190,20 @@ Usage: `/fuska-progress`
 **`/fuska-resume-work`**
 Resume work from previous session with full context restoration.
 
-- Queries state concept for project context
-- Shows current position and recent progress
-- Offers next actions based on project state
+- Shows exact task position from state (e.g., "Task 4 of 7")
+- If paused earlier, shows your mental context
+- Detects incomplete work and checkpoints
+- Routes to appropriate next action
 
 Usage: `/fuska-resume-work`
 
 **`/fuska-pause-work`**
-Create context handoff when pausing work mid-phase.
+Capture mental context when pausing work mid-phase.
 
-- Creates handoff concept with current state
-- Updates state concept session continuity section
-- Captures in-progress work context
+- Asks for your mental context (approach, next steps)
+- Creates handoff concept with mental context + modified files
+- Task position is already tracked continuously (no calculation needed)
+- Optional: creates WIP commit for uncommitted changes
 
 Usage: `/fuska-pause-work`
 

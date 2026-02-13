@@ -166,6 +166,9 @@ export interface StateData {
   status: string;
   progress: number;
   last_activity: string;
+  current_task?: number;
+  total_tasks?: number;
+  blockers?: string[];
 }
 
 export interface ConfigData {

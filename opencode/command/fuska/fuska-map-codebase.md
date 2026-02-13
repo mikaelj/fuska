@@ -1,7 +1,7 @@
 ---
 name: fuska-map-codebase
 description: Analyze codebase with serial mapper agents to produce MegaMemory concepts
-argument-hint: "[optional: specific area to map, e.g., 'api' or 'auth']"
+argument-hint: "[--domains-only] [optional: specific area to map]"
 agent: fuska-codebase-mapper
 tools:
   - read
@@ -51,7 +51,10 @@ The important field is **`summary`** — it's a JSON string containing the conce
 </megamemory_guide>
 
 <context>
-Focus area: `$ARGUMENTS` (optional - if provided, tells agents to focus on specific subsystem)
+
+**Parse arguments:**
+- If `$ARGUMENTS` contains `--domains-only`: Set `DOMAINS_ONLY = true`, remove flag from args
+- Remaining `$ARGUMENTS` (if any): Focus area for agents
 
 **Load project state if exists:**
 Check for state concept in MegaMemory - loads context if project already initialized
@@ -60,6 +63,7 @@ Check for state concept in MegaMemory - loads context if project already initial
 - Before /fuska-new-project (brownfield codebases) - creates codebase concepts first
 - After /fuska-new-project (greenfield codebases) - updates codebase concepts as code evolves
 - Anytime to refresh codebase understanding
+- With `--domains-only`: Fast domain discovery only (skips tech/arch/quality/concerns)
 </context>
 
 <when_to_use>
@@ -154,9 +158,16 @@ Display: "Project root: ${PROJECT_ROOT}"
 
 ## 3. Spawn Mapper Agents (Serial)
 
-Display: "Spawning 4 mapper agents (serial)..."
+**If `DOMAINS_ONLY` is true:**
+- Display: "Spawning 1 mapper agent (domains-only mode)..."
+- Skip directly to Step 3.9 (Agent 5: Domains Focus)
+- Skip verification of codebase-tech/arch/quality/concerns (step 4.1-4.4)
+- Jump to step 4.5 after domains agent completes
 
-Spawn 4 fuska-codebase-mapper agents serially (one at a time):
+**Otherwise:**
+- Display: "Spawning 5 mapper agents (serial)..."
+
+Spawn 5 fuska-codebase-mapper agents serially (one at a time):
 
 **Agent 1: Tech focus**
 Creates concept:
@@ -362,7 +373,82 @@ Task(
 Wait for the agent to complete, then:
 Display: "[OK] Concerns mapping complete"
 
+### Spawn Agent 5: Domains Focus
+
+**Step 3.9: Build domains focus prompt**
+```
+<project_root>${PROJECT_ROOT}</project_root>
+
+<focus_area>
+${ARGUMENTS || 'entire codebase'}
+</focus_area>
+
+<objective>
+Discover business domains in the project at ${PROJECT_ROOT}.
+
+IMPORTANT: All exploration (ls, find, grep, glob, read) must target ${PROJECT_ROOT}, not the current directory. Use absolute paths.
+
+Create multiple domain concepts:
+- Each domain gets a `domain-{name}` concept with file_refs
+- Domains are business areas (pricing, auth, booking, etc.)
+- Include all files that belong to each domain in file_refs
+
+Use megamemory:create_concept() for each domain discovered.
+</objective>
+
+<output>
+Return confirmation when complete:
+## DOMAINS MAPPING COMPLETE
+
+Created concepts:
+- domain-pricing (5 files)
+- domain-auth (3 files)
+- domain-booking (4 files)
+
+Domains discovered: [list of domain names]
+</output>
+```
+
+**Step 3.10: Spawn agent**
+```
+Task(
+  prompt=domainsPrompt,
+  subagent_type="fuska-codebase-mapper",
+  model="balanced",
+  description="Discover business domains"
+)
+```
+
+**Step 3.10b: Wait for agent and display progress**
+Wait for the agent to complete, then:
+Display: "[OK] Domains mapping complete"
+
 ## 4. Verify Codebase Concepts
+
+**If `DOMAINS_ONLY` is true:**
+
+Display: "Verifying domain concepts..."
+
+**Step 4.1d: Query domain concepts**
+```
+megamemory_understand(query="domain", top_k=50)
+```
+
+**Step 4.2d: Check for domain concepts**
+
+Verify at least one domain concept was created:
+- [ ] domain-* (at least one)
+
+If no domain concepts found:
+→ Display: "Warning: No domain concepts were created"
+
+If domain concepts found:
+→ Display: "Domains discovered: {list of domain names}"
+→ Display: "[OK] Domain mapping complete"
+
+Jump to Step 6 (Present Completion Summary).
+
+**Otherwise (full mapping):**
 
 Display: "Verifying created concepts..."
 
@@ -373,11 +459,12 @@ megamemory_understand(query="codebase", top_k=20)
 
 **Step 4.2: Check for expected concepts**
 
-Verify all 4 concepts were created:
+Verify all 5 concept types were created:
 - [ ] codebase-tech
 - [ ] codebase-arch
 - [ ] codebase-quality
 - [ ] codebase-concerns
+- [ ] domain-* (at least one)
 
 **Step 4.3: Display verification results**
 
@@ -385,7 +472,7 @@ If any concept missing:
 → Display: "Warning: Some concepts were not created: {missing concepts}"
 
 If all concepts present:
-→ Display: "All 4 codebase concepts created successfully"
+→ Display: "All 5 codebase concept types created successfully"
 
 **Step 4.4: Query and display project classification**
 
@@ -426,6 +513,7 @@ megamemory_create_concept({
     { to: "codebase-arch", relation: "connects_to" },
     { to: "codebase-quality", relation: "connects_to" },
     { to: "codebase-concerns", relation: "connects_to" }
+    // Note: domain-* concepts are standalone, not children of codebase
   ]
 })
 ```
@@ -436,7 +524,7 @@ Display: "Created codebase root concept"
 
 ## 5. Update State Concept
 
-**Skip this step if `HAS_PROJECT` is false** (no state concept to update).
+**Skip this step if `HAS_PROJECT` is false OR `DOMAINS_ONLY` is true** (no full mapping to record).
 
 Display: "Updating project state..."
 
@@ -467,6 +555,25 @@ megamemory_update_concept(
 
 ## 6. Present Completion Summary
 
+**If `DOMAINS_ONLY` is true:**
+```
+---------------------------------------------------
+  Fuska: Domains mapped
+---------------------------------------------------
+
+Domains discovered:
+- domain-pricing (N files)
+- domain-auth (N files)
+- ...
+
+N domain concepts created in MegaMemory
+
+Use `fuska git-message <commit>` to get domain-aware scopes.
+────────────────────────────────────────────────────────────
+```
+
+**Otherwise (full mapping):**
+
 Query config for checker_panel settings:
 ```
 megamemory_understand(query="config", top_k=5)
@@ -489,7 +596,7 @@ Architecture: [summary from agent 2]
 Conventions: [summary from agent 3]
 Concerns: [summary from agent 4]
 
-5 concepts created in MegaMemory (codebase + 4 sub-concepts)
+5 codebase concepts + N domain concepts created in MegaMemory
 
 ────────────────────────────────────────────────────────────
 
@@ -527,9 +634,9 @@ ${!stateData.current_phase
 
 <success_criteria>
 - [ ] MegaMemory validated (connectivity OK)
-- [ ] All 4 serial mapper agents spawned
+- [ ] All 5 serial mapper agents spawned
 - [ ] Agents completed without errors
-- [ ] All 4 codebase concepts created in MegaMemory (codebase-tech, codebase-arch, codebase-quality, codebase-concerns)
+- [ ] All 4 codebase concepts + 1+ domain concepts created in MegaMemory
 - [ ] Codebase concepts verified
 - [ ] `codebase` root concept created grouping the 4 sub-concepts
 - [ ] State concept updated with mapping status (if project exists)

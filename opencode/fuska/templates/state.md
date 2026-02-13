@@ -104,7 +104,7 @@ const state = await megamemory.create_concept({
 await megamemory.create_concept({
   name: "Current Position",
   kind: "config",
-  summary: "Phase: 1 of 4 (Authentication)\nPlan: 0 of 3 in current phase\nStatus: Ready to plan\nLast activity: 2025-01-20 — State initialized\nProgress: ░░░░░░░░░░ 0%",
+  summary: "Phase: 1 of 4 (Authentication)\nPlan: 0 of 3 in current phase\nTask: 0 of 0 (none in progress)\nStatus: Ready to plan\nLast activity: 2025-01-20 — State initialized\nProgress: ░░░░░░░░░░ 0%",
   parent_id: state.id
 });
 
@@ -144,6 +144,25 @@ await megamemory.create_concept({
 });
 ```
 
+## Update During Execution
+
+After each task completes, update the state with task position:
+
+```typescript
+// Update with task position during execution
+await megamemory.update_concept({
+  id: "Current Position",
+  changes: {
+    summary: `Phase: ${phaseNum} of 4
+Plan: ${planNum} of ${totalPlansInPhase} in current phase
+Task: ${taskNum} of ${totalTasks} (in progress)
+Status: In progress
+Last activity: ${new Date().toISOString().split('T')[0]} — Task ${taskNum}: ${taskName}
+Progress: [${progressBars}] ${progress}%`
+  }
+});
+```
+
 ## Update After Plan Completion
 
 ```typescript
@@ -151,7 +170,7 @@ await megamemory.create_concept({
 await megamemory.update_concept({
   id: "Current Position",
   changes: {
-    summary: "Phase: 1 of 4 (Authentication)\nPlan: 1 of 3 in current phase\nStatus: Ready to plan\nLast activity: 2025-01-20 — Completed 01-01: User sign-up flow\nProgress: ██░░░░░░░░ 20%"
+    summary: "Phase: 1 of 4 (Authentication)\nPlan: 1 of 3 in current phase\nTask: 7 of 7 (complete)\nStatus: Ready to plan\nLast activity: 2025-01-20 — Completed 01-01: User sign-up flow\nProgress: ██░░░░░░░░ 20%"
   }
 });
 
@@ -439,7 +458,7 @@ async function updateStateAfterPlan(
   await megamemory.update_concept({
     id: "Current Position",
     changes: {
-      summary: `Phase: ${phaseNum} of 4\nPlan: ${planNum} of ${totalPlansInPhase} in current phase\nStatus: Ready to plan\nLast activity: ${new Date().toISOString().split('T')[0]} — Completed 0${phaseNum}-0${planNum}\nProgress: [${progressBars}] ${progress}%`
+      summary: `Phase: ${phaseNum} of 4\nPlan: ${planNum} of ${totalPlansInPhase} in current phase\nTask: ${totalTasks} of ${totalTasks} (complete)\nStatus: Ready to plan\nLast activity: ${new Date().toISOString().split('T')[0]} — Completed 0${phaseNum}-0${planNum}\nProgress: [${progressBars}] ${progress}%`
     }
   });
 

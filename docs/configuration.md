@@ -77,20 +77,71 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 
 ---
 
-## Quick Mode vs /fuska-do
+## Phase Planning with `--mode quick` vs Standalone `/fuska-do`
 
-| Aspect | Quick mode (`--mode quick`) | `/fuska-do` command |
-|---------|-----------------------------|---------------------------|
-| **Purpose** | Speed-focused planning within a phase | Unplanned ad-hoc tasks |
-| **Agent flow** | Planner → Executor only | Planner → Executor only |
-| **Concept storage** | Phase-based: `phase-01-plan-001` | Standalone: `task-001-fix-typo` |
-| **Roadmap ties** | ✅ Tied to phase structure | ❌ Separate from roadmap |
-| **State updates** | Updates roadmap and phase status | Updates `state.tasks_completed` |
-| **User input** | Must specify phase: `/fuska-plan-phase 2 --mode quick` | Just run command, prompted: `/fuska-do` |
+Both options use the same lightweight agent chain (Planner → Executor), but they differ in **scope** and **state management**.
 
-**Quick mode** (`--mode quick`) is for small tasks within a phase where you want Fuska guarantees (atomic commits, state tracking) but faster execution.
+### What is `--mode quick`?
 
-**`/fuska-do`** is for unplanned work—bug fixes, small refactorings, one-off tasks—that you don't want to tie to any phase.
+Quick mode is one of the six [workflow modes](#workflow-modes) you can pass to `/fuska-plan-phase`. It skips research and plan checking, running only:
+
+```
+Planner → Executor
+```
+
+This is useful when you're already in a phase and want faster execution without giving up Fuska's guarantees (atomic commits, deviation handling, state tracking).
+
+### Comparison
+
+| Aspect | `--mode quick` (on `/fuska-plan-phase`) | `/fuska-do` |
+|--------|----------------------------------------|-------------|
+| **Scope** | Work within an existing phase | Standalone work outside phase structure |
+| **Agent flow** | Planner → Executor | Planner → Executor |
+| **Concept storage** | Phase-based: `phase-02-plan-003` | Standalone: `task-001-fix-typo` |
+| **Roadmap ties** | ✅ Updates phase status and roadmap | ❌ Separate from roadmap |
+| **Commit strategy** | Follows project's git strategy | Per-task commits |
+| **Example** | `/fuska-plan-phase 2 --mode quick` | `/fuska-do quick fix footer alignment` |
+
+### Decision Guide
+
+**Use `--mode quick` when:**
+- The work belongs to an existing phase (e.g., "phase 2: authentication")
+- You want state tracking and atomic commits tied to your roadmap
+- The solution is straightforward but still needs proper task breakdown
+
+```bash
+# You're in phase 2 (auth) and need to add a simple endpoint
+/fuska-plan-phase 2 --mode quick
+# → Creates phase-02-plan-003, tracks progress in roadmap
+```
+
+**Use `/fuska-do` when:**
+- The task is unplanned and doesn't fit any phase
+- It's a one-off: bug fix, typo, minor refactoring, quick polish
+- You don't want to expand the roadmap for minor work
+
+```bash
+# Ad-hoc task that doesn't belong to any phase
+/fuska-do quick fix the footer alignment on mobile
+# → Creates task-001-fix-footer-alignment, tracked separately
+```
+
+### Concept Storage Example
+
+```yaml
+# With --mode quick (tied to phase 02):
+phase-02-plan-003:
+  summary: "Add password reset endpoint"
+  status: completed
+  tasks: [done, done, done]
+
+# With /fuska-do (standalone):
+task-001-fix-footer-alignment:
+  summary: "Fix footer alignment on mobile breakpoints"
+  status: completed
+```
+
+The key difference: `--mode quick` keeps your work organized within the phase structure, while `/fuska-do` creates isolated task concepts for unplanned work.
 
 ---
 
@@ -98,34 +149,96 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 
 Controls how often Fuska creates git commits during execution. Set during `/fuska-new-project`.
 
-| Strategy | Commits When | Git Log Looks Like |
-|----------|--------------|--------------------|
-| **per-phase** (default) | Once when all plans in a phase complete | `feat(phase-02): user authentication system` |
-| **per-plan** | Once per plan (groups all tasks) | `feat(02-01): JWT generation and validation` |
-| **per-task** | After every individual task | `feat(02-01): add JWT signing helper` *(3 commits for 3 tasks in plan 02-01)* |
+### Commit Message Format
 
-**Example: same work, different strategies**
+All commits follow semantic commit format with a phase/plan trailer:
+
+```
+{type}({scope}): {concise description}
+
+- {high-level change 1}
+- {high-level change 2}
+
+{phase-plan}
+```
+
+- **Type:** `feat`, `fix`, `test`, `refactor`, `perf`, `chore`, `docs`, `wip`
+- **Scope:** Semantic area being changed (e.g., `auth`, `checkout`, `jose`, `api`) — NOT phase numbers
+- **Body:** 2-4 bullets, high-level *what* and *why* only
+- **Trailer:** Phase-plan identifier (e.g., `02-01` for plan 1 in phase 2)
+
+### Example: Same Work, Different Strategies
 
 Three tasks in plan 02-01 (JWT auth): set up jose library, add refresh token rotation, protect routes with middleware.
 
 *per-phase* — 1 commit for the entire phase:
 ```
-feat(phase-02): user authentication system
+feat(auth): add JWT authentication with refresh tokens
+
+- Integrate jose library for token signing and validation
+- Implement refresh token rotation with secure storage
+- Protect routes with auth middleware
+
+phase-02
 ```
 
 *per-plan* — 1 commit for the plan:
 ```
-feat(02-01): JWT auth with refresh token rotation
+feat(auth): add JWT authentication with refresh tokens
+
+- Integrate jose library for token signing and validation
+- Implement refresh token rotation with secure storage
+- Protect routes with auth middleware
+
+02-01
 ```
 
 *per-task* — 3 separate commits:
 ```
-feat(02-01): set up jose library and token generation
-feat(02-01): add refresh token rotation with secure storage
-feat(02-01): protect routes with auth middleware
+feat(jose): set up library and token generation
+
+- Configure jose with RS256 signing
+- Create access token generation helper
+
+02-01
+
+---
+
+feat(auth): add refresh token rotation with secure storage
+
+- Store refresh tokens with httpOnly cookie
+- Implement rotation on token use
+
+02-01
+
+---
+
+feat(middleware): protect routes with auth middleware
+
+- Verify JWT on protected endpoints
+- Return 401 for invalid/expired tokens
+
+02-01
 ```
 
-**Stored in config concept as:**
+### Commit Message Rules
+
+- **Subject line:** max 72 characters, imperative mood ("add" not "added")
+- **Scope:** semantic area (`auth`, `checkout`, `api`, `ui`, etc.)
+- **Body:** 2-4 bullets max — never list implementation details (imports, field names, types)
+- **Trailer:** phase-plan identifier (`02-01`, `phase-02`) based on commit strategy
+- **The git diff** is the source of truth for *how* — the message explains *what* and *why*
+
+### Trailer Format by Strategy
+
+| Strategy | Trailer Format | Example |
+|----------|---------------|---------|
+| **per-phase** (default) | `phase-{NN}` | `phase-02` |
+| **per-plan** | `{phase}-{plan}` | `02-01` |
+| **per-task** | `{phase}-{plan}` | `02-01` |
+
+### Config Storage
+
 ```json
 {
   "git": {
@@ -133,21 +246,6 @@ feat(02-01): protect routes with auth middleware
   }
 }
 ```
-
-**Commit message format (all strategies):**
-
-```
-{type}({scope}): {concise description}
-
-- {high-level change 1}
-- {high-level change 2}
-```
-
-Commit messages are kept concise by design:
-- Subject line: max 72 characters, imperative mood
-- Body: **2-4 bullet points maximum** — each bullet is one high-level sentence
-- Never lists implementation details like imports, field names, parameter types, or null checks
-- The git diff is the source of truth for *how* — the commit message explains *what* and *why*
 
 **Why per-phase is the default:** For solo dev + AI workflows, MegaMemory already tracks granular task completion. Per-phase gives the cleanest git history while MegaMemory handles the detailed context. Use per-task if you need fine-grained `git bisect` or work with other developers who rely on git log.
 
@@ -182,15 +280,15 @@ The **checker panel** is a role-based plan verification system that runs during 
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    PLAN CHECKER PANEL                    │
+│                    PLAN CHECKER PANEL                         │
 ├─────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   QUALITY    │  │  CONTEXTUAL  │  │   EXPERT     │   │
-│  │  ADVOCATE    │  │  (derived)   │  │  (dynamic)   │   │
-│  │              │  │              │  │              │   │
-│  │  Always      │  │ Project-     │  │ Plan-        │   │
-│  │  runs        │  │ derived      │  │ specific     │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   QUALITY     │  │  CONTEXTUAL    │  │   EXPERT      │    │
+│  │  ADVOCATE     │  │  (derived)     │  │  (dynamic)    │    │
+│  │               │  │                │  │               │    │
+│  │  Always       │  │ Project-       │  │ Plan-         │    │
+│  │  runs         │  │ derived        │  │ specific      │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -237,3 +335,79 @@ Project Classification Detected:
   Confidence: high
   Signals: express, JWT, session-based auth
 ```
+
+---
+
+## Session Continuity
+
+Fuska tracks your progress **continuously** — you don't need to explicitly save state before ending a session.
+
+### What's Tracked Automatically
+
+The executor updates the state concept after **every task commit**:
+
+| Field | Example | Updated When |
+|-------|---------|--------------|
+| `current_phase` | `phase-02` | Phase transitions |
+| `current_plan` | `phase-02-plan-03` | Plan starts/completes |
+| `current_task` | `3` | After each task commit |
+| `total_tasks` | `7` | When plan loads |
+| `last_activity` | `Task 3/7: Add form validation` | After each task commit |
+| `status` | `in_progress` | State changes |
+
+This means `/fuska-resume-work` always knows exactly where you are — **even if you never ran pause-work**.
+
+### When to Use `/fuska-pause-work`
+
+Since progress is tracked automatically, pause-work is now **optional**. Use it only when you want to capture **mental context**:
+
+```
+/fuska-pause-work
+```
+
+**Captures:**
+- Your mental context ("Was about to refactor to use a Map for O(1) lookups")
+- Modified files (optional WIP commit)
+
+**Does NOT need to capture:**
+- Task position (already in state)
+- Completed work (already in summaries)
+- Decisions (already in decision concepts)
+
+### When Resume Works Without Pause
+
+```bash
+# End session mid-execution (no pause-work)
+# ... next day ...
+
+/fuska-resume-work
+# → "Phase 2 — Shopping List. Task 3 of 7."
+# → "No mental context (no pause recorded)"
+# → Continues from task 3
+```
+
+Resume always works because task position is tracked continuously.
+
+### When Resume Shows Extra Context
+
+```bash
+# Pause with mental context
+/fuska-pause-work
+# → "What's the context?" → "Was about to refactor grouping logic to use Map"
+
+# ... next day ...
+
+/fuska-resume-work
+# → "Phase 2 — Shopping List. Task 3 of 7."
+# → "Context: Was about to refactor grouping logic to use Map"
+# → Continues from task 3 with your notes
+```
+
+### Key Insight
+
+**Checkpoint** ≠ **pause-work**:
+
+- **Checkpoint** — A structured pause point during execution where user verification is required (e.g., visual review, decision input). Defined in plans with `type="checkpoint:human-verify"`.
+- **pause-work** — Optional command to capture mental context before ending a session. Task progress is already saved.
+
+You can run `/fuska-resume-work` at any time — it will show your exact position whether or not you paused.

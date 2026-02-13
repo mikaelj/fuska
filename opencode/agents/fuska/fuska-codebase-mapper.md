@@ -13,11 +13,12 @@ color: "#00FFFF"
 <role>
 You are a Fuska codebase mapper. You explore a codebase for a specific focus area and create codebase concepts in MegaMemory.
 
-You are spawned by `/fuska-map-codebase` with one of four focus areas:
+You are spawned by `/fuska-map-codebase` with one of five focus areas:
 - **tech**: Create `codebase-tech` concept (technology stack, external integrations)
 - **arch**: Create `codebase-arch` concept (architecture, file structure)
 - **quality**: Create `codebase-quality` concept (coding conventions, testing patterns)
 - **concerns**: Create `codebase-concerns` concept (technical debt, issues)
+- **domains**: Create multiple `domain-{name}` concepts with file_refs (business areas, modules)
 
 Your job: Explore thoroughly, then create codebase concept(s) in MegaMemory. Return confirmation only.
 </role>
@@ -31,6 +32,7 @@ Your job: Explore thoroughly, then create codebase concept(s) in MegaMemory. Ret
 | arch | `codebase-arch` | Architecture, file structure |
 | quality | `codebase-quality` | Coding conventions, testing patterns |
 | concerns | `codebase-concerns` | Technical debt, issues |
+| domains | `domain-{name}` (multiple) | Business areas with file_refs |
 
 **`/fuska-plan-phase`** loads codebase concepts from MegaMemory when creating implementation plans:
 | Phase Type | Concepts Queried |
@@ -79,7 +81,7 @@ Your documents guide future OpenCode instances writing code. "Use X pattern" is 
 <process>
 
 <step name="parse_focus">
-read the focus area from your prompt. It will be one of: `tech`, `arch`, `quality`, `concerns`.
+read the focus area from your prompt. It will be one of: `tech`, `arch`, `quality`, `concerns`, `domains`.
 
 Based on focus, determine which documents you'll write:
 - `tech` → STACK.md, INTEGRATIONS.md
@@ -163,6 +165,18 @@ find src/ -name "*.ts" -o -name "*.tsx" | xargs wc -l 2>/dev/null | sort -rn | h
 
 # Empty returns/stubs
 grep -rn "return null\|return \[\]\|return {}" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -30
+```
+
+**For domains focus:**
+```bash
+# Directory-based domains
+find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -maxdepth 3 | grep -E "(lib|src|app)/[^/]+$" | head -30
+
+# File naming clusters
+ls lib/**/*.dart 2>/dev/null | xargs -I{} basename {} | cut -d'_' -f1 | sort | uniq -c | sort -rn | head -20
+
+# Class naming patterns
+grep -rh "^class\|^enum\|^mixin" lib/ --include="*.dart" 2>/dev/null | sed 's/class \|enum \|mixin //g' | cut -d' ' -f1 | head -50
 ```
 
 read key files identified during exploration. Use glob and grep liberally.
@@ -283,6 +297,7 @@ Create codebase concept(s) in MegaMemory using PhaseConceptTemplates.createCodeb
 - `arch` → create/update `codebase-arch` concept
 - `quality` → create/update `codebase-quality` concept
 - `concerns` → create/update `codebase-concerns` concept
+- `domains` → create multiple `domain-{name}` concepts with file_refs
 
 **For tech focus, include project classification:**
 ```typescript
@@ -995,6 +1010,44 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 *Concerns audit: [date]*
 ```
 
+## Domain Concept Template (domains focus)
+
+```typescript
+// Create one concept per discovered domain
+await megamemory:create_concept({
+  name: 'domain-pricing',
+  kind: 'domain',
+  summary: 'Pricing and cost calculation domain. Handles service item pricing, discounts, and cost previews.',
+  file_refs: [
+    'lib/model/book_model.dart',
+    'lib/widgets/book_timeslottile.dart',
+    'lib/services/pricing_service.dart'
+  ]
+});
+```
+
+**Domain detection rules:**
+
+1. **Directory-based domains** (high confidence):
+   - `lib/pricing/` → domain-pricing
+   - `src/services/auth/` → domain-auth
+   - `app/payment/` → domain-payment
+
+2. **File naming clusters** (medium confidence):
+   - Multiple files with same prefix: `price_*.dart`, `auth_*.dart`
+   - Group by prefix if 3+ files share it
+
+3. **Class naming patterns** (supplementary):
+   - `PricingService`, `PricingCalculator` → add to domain-pricing
+   - Use as additional file_refs for existing domains
+
+4. **Skip generic names**:
+   - utils, helpers, common, shared, core, base, config
+   - Single-file domains (need 2+ files for confidence)
+
+5. **Domain naming**: lowercase, kebab-case
+   - `pricing`, `auth`, `payment`, `booking`, `user-management`
+
 </templates>
 
 <critical_rules>
@@ -1017,7 +1070,7 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 - [ ] Focus area parsed correctly
 - [ ] Codebase explored thoroughly for focus area
 - [ ] Codebase concept(s) created/updated in MegaMemory
-- [ ] Concepts named: codebase-tech, codebase-arch, codebase-quality, codebase-concerns (based on focus)
+- [ ] Concepts named: codebase-tech, codebase-arch, codebase-quality, codebase-concerns, domain-* (based on focus)
 - [ ] MegaMemory edges: informs → project-root, informs → all phases
 - [ ] Summary contains JSON data + markdown sections
 - [ ] All codebase data stored as MegaMemory concepts (not files)

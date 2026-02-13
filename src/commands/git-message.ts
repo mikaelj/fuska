@@ -23,6 +23,16 @@ interface CommitStrategy {
   type: 'per-phase' | 'per-plan' | 'per-task';
 }
 
+interface DomainLookupResult {
+  domain: string | null;
+  confidence: number;
+}
+
+interface RecentCommitHint {
+  domain: string;
+  score: number;
+}
+
 export function gitMessageCommand(program: Command) {
   program
     .command('git-message [args...]')
@@ -459,35 +469,55 @@ class GitMessageRunner {
     const functionsRemoved = this.extractFunctionNames(removedLines);
     const allFunctions = [...functionsAdded, ...functionsRemoved];
 
-    // Try to get scope from function names first (most specific)
+    // PRIORITY 1: MegaMemory domain lookup (if confidence >= 2)
+    const mmResult = this.loadDomainFromFileMapping(files);
+    if (mmResult.domain && mmResult.confidence >= 2) {
+      return mmResult.domain;
+    }
+
+    // PRIORITY 2: MegaMemory with low confidence - enhance with recent commits
+    if (mmResult.domain && mmResult.confidence === 1) {
+      const recentHints = this.analyzeRecentCommitDiffs();
+      if (recentHints.some(h => h.domain === mmResult.domain)) {
+        return mmResult.domain;
+      }
+    }
+
+    // PRIORITY 3: Function-based scope (from function names in diff)
     const functionScope = this.deriveScopeFromFunctions(allFunctions);
     if (functionScope) {
       return functionScope;
     }
 
-    // Try to get scope from diff content keywords
-    const keywordScope = this.deriveScopeFromKeywords(diff);
+    // PRIORITY 4: Keyword-based scope (enhanced by recent commits if diff is small)
+    const diffLines = diff.split('\n').length;
+    let keywordScope = this.deriveScopeFromKeywords(diff);
+    
+    if (!keywordScope && diffLines < 20) {
+      const recentHints = this.analyzeRecentCommitDiffs();
+      if (recentHints.length > 0) {
+        keywordScope = recentHints[0].domain;
+      }
+    }
+    
     if (keywordScope) {
       return keywordScope;
     }
 
-    // If only one file changed, derive scope from that
+    // PRIORITY 5: File-based scope (current fallback)
     if (files.length === 1) {
       const fileScope = this.deriveScopeFromFile(files[0]);
       if (!this.isGenericScope(fileScope)) {
         return fileScope;
       }
-      // File scope is generic, try combining with function hint
       if (allFunctions.length > 0) {
         const funcHint = this.extractFunctionHint(allFunctions[0]);
         return this.formatScopeName(`${fileScope}-${funcHint}`);
       }
-      return fileScope; // Fall back to generic if no better option
+      return fileScope;
     }
 
-    // If multiple files, try to find a common pattern
     if (files.length > 1) {
-      // Check if all files share a directory
       const dirs = files.map(f => {
         const parts = f.split('/');
         return parts.length > 1 ? parts[0] : '';
@@ -498,7 +528,6 @@ class GitMessageRunner {
         if (!this.isGenericScope(dirScope)) {
           return dirScope;
         }
-        // Directory is generic, try to extract scope from file names
         const primaryFile = this.getPrimaryFile(files);
         const fileScope = this.deriveScopeFromFile(primaryFile);
         if (!this.isGenericScope(fileScope)) {
@@ -506,13 +535,154 @@ class GitMessageRunner {
         }
       }
 
-      // Otherwise use the primary file
       const primaryFile = this.getPrimaryFile(files);
       return this.deriveScopeFromFile(primaryFile);
     }
 
-    // Fallback: no scope
     return '';
+  }
+
+  private loadDomainFromFileMapping(files: string[]): DomainLookupResult {
+    try {
+      const megamemoryPath = path.join(this.options.projectDir, '.megamemory');
+      const { KnowledgeDB } = require('megamemory/dist/db.js');
+      const db = new KnowledgeDB(megamemoryPath);
+      
+      const allNodes = db.getAllActiveNodes();
+      const domainVotes: Map<string, { count: number; kinds: string[] }> = new Map();
+      
+      for (const file of files) {
+        const normalizedFile = file.replace(/^\.\//, '');
+        
+        for (const node of allNodes) {
+          if (!node.file_refs || !Array.isArray(node.file_refs)) continue;
+          
+          for (const ref of node.file_refs) {
+            if (ref === normalizedFile || ref === `./${normalizedFile}`) {
+              const domain = this.extractDomainFromConcept(node.name, node.summary);
+              if (domain && !this.isGenericScope(domain)) {
+                const existing = domainVotes.get(domain) || { count: 0, kinds: [] };
+                existing.count++;
+                if (!existing.kinds.includes(node.kind)) {
+                  existing.kinds.push(node.kind);
+                }
+                domainVotes.set(domain, existing);
+              }
+            }
+          }
+        }
+      }
+      
+      if (domainVotes.size === 0) {
+        return { domain: null, confidence: 0 };
+      }
+      
+      let bestDomain: string | null = null;
+      let bestScore = 0;
+      
+      for (const [domain, data] of domainVotes) {
+        let score = data.count;
+        if (data.kinds.includes('feature')) {
+          score += 0.5;
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestDomain = domain;
+        }
+      }
+      
+      return { domain: bestDomain, confidence: Math.floor(bestScore) };
+    } catch {
+      return { domain: null, confidence: 0 };
+    }
+  }
+
+  private extractDomainFromConcept(name: string, summary?: string): string | null {
+    const nameLower = name.toLowerCase();
+    
+    const domainPatterns: Array<{ pattern: RegExp; domain: string }> = [
+      { pattern: /pricing|price|cost|discount/i, domain: 'pricing' },
+      { pattern: /payment|checkout|billing/i, domain: 'payment' },
+      { pattern: /auth|login|token|session/i, domain: 'auth' },
+      { pattern: /user|account|profile/i, domain: 'user' },
+      { pattern: /worktree/i, domain: 'worktree' },
+      { pattern: /git-message|commit.*message/i, domain: 'git-msg' },
+      { pattern: /merge/i, domain: 'merge' },
+      { pattern: /megamemory|knowledge.*graph/i, domain: 'megamemory' },
+      { pattern: /fuska|phase|plan/i, domain: 'fuska' },
+      { pattern: /config/i, domain: 'config' },
+      { pattern: /template/i, domain: 'template' },
+      { pattern: /workflow/i, domain: 'workflow' },
+      { pattern: /api|endpoint/i, domain: 'api' },
+      { pattern: /database|db/i, domain: 'db' },
+      { pattern: /cache/i, domain: 'cache' },
+      { pattern: /test|spec/i, domain: 'test' },
+    ];
+    
+    for (const { pattern, domain } of domainPatterns) {
+      if (pattern.test(nameLower)) {
+        return domain;
+      }
+    }
+    
+    const nameParts = nameLower
+      .replace(/[-_\s]+/g, ' ')
+      .replace(/command|module|service|handler|function|class/gi, '')
+      .trim()
+      .split(' ')
+      .filter(p => p.length > 2);
+    
+    if (nameParts.length > 0) {
+      return this.formatScopeName(nameParts[0]);
+    }
+    
+    if (summary) {
+      for (const { pattern, domain } of domainPatterns) {
+        if (pattern.test(summary)) {
+          return domain;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  private analyzeRecentCommitDiffs(): RecentCommitHint[] {
+    try {
+      const commitHashes = execSync('git log -3 --format="%H" --no-merges', {
+        cwd: this.options.projectDir,
+        encoding: 'utf-8'
+      }).trim().split('\n').filter(h => h);
+      
+      const domainScores: Map<string, number> = new Map();
+      
+      for (const hash of commitHashes) {
+        try {
+          const diff = execSync(`git diff ${hash}^ ${hash}`, {
+            cwd: this.options.projectDir,
+            encoding: 'utf-8'
+          });
+          
+          const scope = this.deriveScopeFromKeywords(diff);
+          if (scope && !this.isGenericScope(scope)) {
+            const current = domainScores.get(scope) || 0;
+            domainScores.set(scope, current + 1);
+          }
+        } catch {
+          continue;
+        }
+      }
+      
+      const hints: RecentCommitHint[] = [];
+      for (const [domain, score] of domainScores) {
+        hints.push({ domain, score });
+      }
+      
+      hints.sort((a, b) => b.score - a.score);
+      return hints.slice(0, 3);
+    } catch {
+      return [];
+    }
   }
 
   private isGenericScope(scope: string): boolean {

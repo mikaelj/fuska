@@ -173,7 +173,12 @@ const taskId = await megamemory.create_concept({
 await megamemory.create_concept({
   name: `commit-history:${phasePlan}:session-creation`,
   kind: "decision",
-  summary: `Commit ${commitHash}: 'feat(04-01): implement payment session creation'. Files: src/app/api/checkout/session/route.ts (+50), src/lib/stripe.ts (+15), src/types/checkout.ts (+15). Adds Stripe checkout session creation endpoint with line items, metadata, error handling.`,
+  summary: `Commit ${commitHash}: 'feat(api): implement payment session creation
+
+- Create checkout session endpoint with line items
+- Return session URL to client
+
+04-01'`. Files: src/app/api/checkout/session/route.ts (+50), src/lib/stripe.ts (+15), src/types/checkout.ts (+15). Adds Stripe checkout session creation endpoint with line items, metadata, error handling.`,
   why: "Commits payment session implementation",
   file_refs: [
     "src/app/api/checkout/session/route.ts:1-50",
@@ -228,7 +233,11 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: `commit-history:${phasePlan}:metadata`,
   kind: "decision",
-  summary: `Commit i1j2k3l: 'docs(04-01): complete checkout flow plan'. Tasks completed: 3/3. Code files already committed per-task. Plan state tracked in MegaMemory.`,
+  summary: `Commit i1j2k3l: 'docs(checkout): complete checkout flow plan
+
+- All 3 tasks completed: webhook, session, page
+
+04-01'`. Tasks completed: 3/3. Code files already committed per-task. Plan state tracked in MegaMemory.`,
   why: "Commits plan completion metadata",
   file_refs: [
     "src/app/api/checkout/session/route.ts",
@@ -280,7 +289,11 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: "commit-history:04-02:handoff",
   kind: "decision",
-  summary: "Commit m4n5o6p: 'wip: checkout paused at task 1/3'. Current: payment-webhook-handler. Context: Webhook signature verification done, payment intent handling started. Files committed: src/app/api/webhooks/stripe/route.ts (partial). Plan state in MegaMemory.",
+  summary: `Commit m4n5o6p: 'wip: checkout paused at task 1/3
+
+Current: payment-webhook-handler
+
+04-02'`. Context: Webhook signature verification done, payment intent handling started. Files committed: src/app/api/webhooks/stripe/route.ts (partial). Plan state in MegaMemory.`,
   why: "Commits handoff state for resumption",
   file_refs: [
     "src/app/api/webhooks/stripe/route.ts:1-30"
@@ -454,7 +467,11 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: "commit-history:02-02:test-red",
   kind: "decision",
-  summary: `Commit ${testCommit}: 'test(02-02): add failing test for JWT generation'. Files: src/__tests__/jwt.test.ts (+30). Tests token claims, expiry, verification. Expected to fail.`,
+  summary: `Commit ${testCommit}: 'test(auth): add failing test for JWT generation
+
+- Test token claims, expiry, and signature verification
+
+02-02'`. Files: src/__tests__/jwt.test.ts (+30). Tests token claims, expiry, verification. Expected to fail.`,
   why: "TDD RED commit",
   file_refs: ["src/__tests__/jwt.test.ts:1-30"],
   edges: [{ to: "task:02-02:jwt-failing-test", relation: "completes", description: "Commits test" }],
@@ -480,7 +497,11 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: "commit-history:02-02:impl-green",
   kind: "decision",
-  summary: `Commit ${implCommit}: 'feat(02-02): implement JWT generation'. Files: src/utils/jwt.ts (+40). Uses jose library, HS256, userId/exp claims. Tests now pass.`,
+  summary: `Commit ${implCommit}: 'feat(jose): implement JWT generation
+
+- Create tokens with HS256, userId and expiry claims
+
+02-02'`. Files: src/utils/jwt.ts (+40). Uses jose library, HS256, userId/exp claims. Tests now pass.`,
   why: "TDD GREEN commit",
   file_refs: ["src/utils/jwt.ts:1-40"],
   edges: [{ to: "task:02-02:jwt-implementation", relation: "completes", description: "Commits implementation" }],
@@ -528,7 +549,11 @@ const metaCommit = await bash("git rev-parse HEAD");
 await megamemory.create_concept({
   name: "commit-history:04-01:metadata",
   kind: "decision",
-  summary: `Commit ${metaCommit}: 'docs(04-01): complete checkout flow plan'. Tasks completed: 3/3. Code files already committed per-task. Plan state tracked in MegaMemory.`,
+  summary: `Commit ${metaCommit}: 'docs(checkout): complete checkout flow plan
+
+- All 3 tasks completed and verified
+
+04-01'`. Tasks completed: 3/3. Code files already committed per-task. Plan state tracked in MegaMemory.`,
   why: "Commits plan completion metadata only",
   file_refs: [
     "src/app/api/checkout/session/route.ts",
@@ -576,7 +601,11 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: `commit-history:${currentPhasePlan}:handoff`,
   kind: "decision",
-  summary: `Commit ${await bash("git rev-parse HEAD")}: 'wip: checkout paused at task 1/3'. Current: ${currentTask}. Files: src/app/api/webhooks/stripe/route.ts (partial). Plan state in MegaMemory. Ready to resume.`,
+  summary: `Commit ${await bash("git rev-parse HEAD")}: 'wip: checkout paused at task 1/3
+
+Current: ${currentTask}
+
+04-02'`. Files: src/app/api/webhooks/stripe/route.ts (partial). Plan state in MegaMemory. Ready to resume.`,
   why: "Commits handoff state",
   file_refs: ["src/app/api/webhooks/stripe/route.ts"],
   edges: [
@@ -742,7 +771,7 @@ These rules apply to ALL commit strategies. Every commit message MUST follow the
 
 ### What a BAD commit message looks like (DO NOT DO THIS)
 ```
-feat(phase-02-plan-02): Parse discounts array from API response and map to Discount subclasses
+feat(api): Parse discounts array from API response and map to Discount subclasses
 
 - Added import 'package:goride/util/api_price_calc.dart' to data_parser.dart
 - Created _parseDiscounts() helper method that parses discounts array from API JSON
@@ -763,12 +792,14 @@ This is 11 bullet points restating the diff. Completely useless.
 
 ### What a GOOD commit message looks like (DO THIS)
 ```
-feat(02-02): parse discounts from API response
+feat(api): parse discounts from API response
 
 - Map discount JSON to typed Discount subclasses via pattern matching
 - Assign parsed discounts to User after construction
+
+02-02
 ```
-Two bullets. High-level. The diff shows the rest.
+Two bullets. High-level. The diff shows the rest. Phase/plan in the trailer.
 
 </commit_message_rules>
 
@@ -793,20 +824,27 @@ git commit
 Each task gets its own commit immediately after completion.
 
 ```
-{type}({phase}-{plan}): {concise task description}
+{type}({scope}): {concise task description}
 
 - {high-level change 1}
 - {high-level change 2}
+
+{phase}-{plan}
 ```
+
+- **Scope:** Semantic area (`auth`, `api`, `checkout`, etc.)
+- **Trailer:** Phase-plan identifier (`02-01`)
 
 **Max 2-4 bullets. See commit message rules above.**
 
 ```bash
 git add src/specific/file.ts tests/specific.test.ts
-git commit -m "feat(02-01): add user registration endpoint
+git commit -m "feat(auth): add user registration endpoint
 
 - Validate email/password and check for duplicates
 - Return JWT token on success
+
+02-01
 "
 ```
 
@@ -818,21 +856,27 @@ git commit -m "feat(02-01): add user registration endpoint
 All tasks in a plan are staged as they complete. One commit when the plan finishes.
 
 ```
-{type}({phase}-{plan}): {plan objective summary}
+{type}({scope}): {plan objective summary}
 
 - {task 1}: {one-line summary}
 - {task 2}: {one-line summary}
 - {task 3}: {one-line summary}
+
+{phase}-{plan}
 ```
 
-One bullet per task. Each bullet is one sentence max.
+- **Scope:** Semantic area (`auth`, `api`, `checkout`, etc.)
+- **Trailer:** Phase-plan identifier (`02-01`)
+- One bullet per task. Each bullet is one sentence max.
 
 ```bash
-git commit -m "feat(02-01): JWT auth with refresh token rotation
+git commit -m "feat(auth): add JWT auth with refresh token rotation
 
 - Set up jose library and token generation
 - Add refresh token rotation with secure storage
 - Protect routes with auth middleware
+
+02-01
 "
 ```
 
@@ -844,20 +888,26 @@ git commit -m "feat(02-01): JWT auth with refresh token rotation
 All tasks across all plans are staged as they complete. One commit when the phase finishes.
 
 ```
-{type}(phase-{NN}): {phase goal summary}
+{type}({scope}): {phase goal summary}
 
 - Plan {NN}-01: {one-line summary}
 - Plan {NN}-02: {one-line summary}
+
+phase-{NN}
 ```
 
-One bullet per plan. Each bullet is one sentence max.
+- **Scope:** Semantic area (`auth`, `api`, `checkout`, etc.)
+- **Trailer:** Phase identifier (`phase-02`)
+- One bullet per plan. Each bullet is one sentence max.
 
 ```bash
-git commit -m "feat(phase-02): user authentication system
+git commit -m "feat(auth): add user authentication system
 
 - Plan 02-01: JWT generation and validation with jose
 - Plan 02-02: refresh token rotation and secure storage
 - Plan 02-03: protected route middleware
+
+phase-02
 "
 ```
 
@@ -870,12 +920,16 @@ git commit -m "feat(phase-02): user authentication system
 wip: [phase-name] paused at task [X]/[Y]
 
 Current: [task name]
+
+{phase}-{plan}
 ```
 
 ```bash
 git add -u && git commit -m "wip: auth paused at task 2/5
 
 Current: refresh token rotation
+
+02-02
 "
 ```
 
@@ -906,36 +960,56 @@ Current: refresh token rotation
 
 **per-phase (recommended — cleanest history):**
 ```
-a7f2d1 feat(phase-04): checkout with Stripe payments
-3e9c4b feat(phase-03): product catalog with search and filters
-8a1b2c feat(phase-02): JWT auth with refresh token rotation
-5c3d7e feat(phase-01): Next.js 15 + Prisma + Tailwind scaffold
+a7f2d1 feat(checkout): add Stripe payments integration
+        phase-04
+3e9c4b feat(catalog): add product search and filters
+        phase-03
+8a1b2c feat(auth): add JWT auth with refresh token rotation
+        phase-02
+5c3d7e feat(scaffold): set up Next.js 15 + Prisma + Tailwind
+        phase-01
 2f4a8d docs: initialize ecommerce-app (5 phases)
 ```
 
 **per-plan (moderate granularity):**
 ```
-4d5e6f feat(04-01): checkout flow with Stripe sessions
-7g8h9i feat(03-02): product listing with pagination
-9s0t1u feat(03-01): product catalog schema
-8b9c0d feat(02-02): refresh token rotation
-7k8l9m feat(02-01): JWT generation and validation
-6t7u8v feat(01-01): project scaffold
+4d5e6f feat(checkout): add Stripe session flow
+        04-01
+7g8h9i feat(catalog): add product listing with pagination
+        03-02
+9s0t1u feat(db): add product catalog schema
+        03-01
+8b9c0d feat(auth): implement refresh token rotation
+        02-02
+7k8l9m feat(auth): add JWT generation and validation
+        02-01
+6t7u8v feat(scaffold): configure project structure
+        01-01
 2f4a8d docs: initialize ecommerce-app (5 phases)
 ```
 
 **per-task (most granular):**
 ```
-4d5e6f feat(04-01): add webhook signature verification
-7g8h9i feat(04-01): implement payment session creation
-0j1k2l feat(04-01): create checkout page component
-8b9c0d feat(02-02): implement refresh token rotation
-1e2f3g test(02-02): add failing test for token refresh
-7k8l9m feat(02-01): add JWT generation and validation
-0n1o2p chore(02-01): install jose library
-6t7u8v feat(01-01): configure Tailwind and globals
-9w0x1y feat(01-01): set up Prisma with database
-2z3a4b feat(01-01): create Next.js 15 project
+4d5e6f feat(stripe): add webhook signature verification
+        04-01
+7g8h9i feat(api): implement payment session creation
+        04-01
+0j1k2l feat(ui): create checkout page component
+        04-01
+8b9c0d feat(auth): implement refresh token rotation
+        02-02
+1e2f3g test(auth): add failing test for token refresh
+        02-02
+7k8l9m feat(jose): add JWT generation and validation
+        02-01
+0n1o2p chore(deps): install jose library
+        02-01
+6t7u8v feat(ui): configure Tailwind and globals
+        01-01
+9w0x1y feat(db): set up Prisma with database
+        01-01
+2z3a4b feat(scaffold): create Next.js 15 project
+        01-01
 2f4a8d docs: initialize ecommerce-app (5 phases)
 ```
 

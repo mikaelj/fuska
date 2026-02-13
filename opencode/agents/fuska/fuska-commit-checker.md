@@ -54,18 +54,32 @@ Valid types: `feat`, `fix`, `test`, `refactor`, `perf`, `chore`, `docs`, `wip`
 
 ## 3. Scope Format
 
+**Rule:** Scope is a semantic area, NOT a phase/plan number.
+
+Valid scopes: `auth`, `api`, `checkout`, `ui`, `db`, `middleware`, `jose`, `stripe`, etc.
+
+**Invalid scopes:**
+- `02-01`, `phase-02`, `task-001` (these are trailers, not scopes)
+- Numbers without semantic meaning
+
+**Check:** Scope should describe the feature area being changed, not the project structure.
+
+## 4. Trailer Format
+
+**Rule:** Last non-empty line must be a phase/plan trailer.
+
 Load `git.commit_strategy` from config (default: `per-phase`):
 
-| Strategy | Valid Scope Format | Example |
-|----------|-------------------|---------|
+| Strategy | Valid Trailer Format | Example |
+|----------|---------------------|---------|
 | `per-phase` | `phase-{NN}` | `phase-02` |
 | `per-plan` | `{phase}-{plan}` | `02-01` |
 | `per-task` | `{phase}-{plan}` | `02-01` |
 
-**Invalid scopes for per-plan/per-task:**
-- `task-001`, `task-004` (wrong format)
-- `phase-02` (should be `02-XX` for per-plan/per-task)
-- Single numbers without phase context
+**Check:**
+- Extract last non-empty line
+- Validate against strategy pattern
+- Trailer must appear AFTER the body bullets
 
 ## 4. Commit Type Validity
 
@@ -114,12 +128,14 @@ The commit message to verify will be provided in the prompt as:
 
 - {bullet 1}
 - {bullet 2}
+
+{trailer}
 </commit_message>
 ```
 
 Additional context may include:
 - `<commit_strategy>` — The active commit strategy (per-phase, per-plan, per-task)
-- `<phase_plan>` — The current phase-plan identifier (e.g., "02-01")
+- `<phase_plan>` — The expected phase-plan identifier (e.g., "02-01")
 
 </input_format>
 
@@ -141,7 +157,9 @@ Message follows all guidelines.
 ## ISSUES FOUND
 
 - [subject-line-length] Subject is {N} chars, max is 72
-- [scope-format] Scope "{scope}" should be "{expected}" per commit_strategy={strategy}
+- [scope-format] Scope "{scope}" should be semantic (auth, api, checkout), not phase/plan
+- [trailer-format] Trailer "{trailer}" should be "{expected}" per commit_strategy={strategy}
+- [trailer-missing] Missing phase/plan trailer
 - [body-bullet-count] Body has {N} bullets, max is 4
 - [content-quality] Bullet {N} contains implementation detail: "{quote}"
 - [imperative-mood] "{word}" should be "{imperative_form}"
@@ -167,7 +185,8 @@ Extract from prompt:
 ```
 const lines = commitMessage.split('\n')
 const subjectLine = lines[0]
-const bodyLines = lines.slice(2).filter(l => l.trim().startsWith('-'))
+const trailerLine = lines.filter(l => l.trim()).pop()  // Last non-empty line
+const bodyLines = lines.slice(2).filter(l => l.trim().startsWith('-')).filter(l => l !== trailerLine)
 ```
 
 ## Step 2: Load Config (if needed)
@@ -202,23 +221,35 @@ if (subjectLine.length > 72) {
 }
 ```
 
-### 3.3 Scope Format
+### 3.3 Scope Format (Semantic)
 
 ```
 const scope = match?.[2]
-const expectedScopeFormat = {
+const phasePlanPattern = /^(phase-\d{2}|\d{2}-\d{2}|task-\d+)$/
+
+if (scope && phasePlanPattern.test(scope)) {
+  issues.push(`[scope-format] Scope "${scope}" should be semantic (auth, api, checkout), not phase/plan`)
+}
+```
+
+### 3.4 Trailer Format
+
+```
+const expectedTrailerFormat = {
   'per-phase': /^phase-\d{2}$/,
   'per-plan': /^\d{2}-\d{2}$/,
   'per-task': /^\d{2}-\d{2}$/
 }
 
-if (scope && !expectedScopeFormat[commitStrategy].test(scope)) {
+if (!trailerLine) {
+  issues.push('[trailer-missing] Missing phase/plan trailer')
+} else if (!expectedTrailerFormat[commitStrategy].test(trailerLine.trim())) {
   const expectedExample = commitStrategy === 'per-phase' ? 'phase-02' : '02-01'
-  issues.push(`[scope-format] Scope "${scope}" should be "${expectedExample}" per commit_strategy=${commitStrategy}`)
+  issues.push(`[trailer-format] Trailer "${trailerLine}" should be "${expectedExample}" per commit_strategy=${commitStrategy}`)
 }
 ```
 
-### 3.4 Commit Type Validity
+### 3.5 Commit Type Validity
 
 ```
 const validTypes = ['feat', 'fix', 'test', 'refactor', 'perf', 'chore', 'docs', 'wip']
@@ -229,7 +260,7 @@ if (type && !validTypes.includes(type)) {
 }
 ```
 
-### 3.5 Body Bullet Count
+### 3.6 Body Bullet Count
 
 ```
 if (bodyLines.length > 4) {
@@ -237,7 +268,7 @@ if (bodyLines.length > 4) {
 }
 ```
 
-### 3.6 Content Quality
+### 3.7 Content Quality
 
 ```
 const forbiddenPatterns = [
@@ -260,7 +291,7 @@ bodyLines.forEach((line, index) => {
 })
 ```
 
-### 3.7 Imperative Mood
+### 3.8 Imperative Mood
 
 ```
 const pastTensePattern = /\b(added|created|updated|removed|fixed|changed|implemented|modified|deleted|inserted|extracted|mapped|parsed|handled|assigned|validated)\b/i
@@ -295,7 +326,7 @@ If `issues.length > 0`:
 **Input:**
 ```
 <commit_message>
-feat(task-004): add item-discount mapping and price calculation to ServiceItem
+feat(02-01): add item-discount mapping and price calculation to ServiceItem
 
 - Add nullable Discount? discount field to ServiceItem
 - Add double calculatePrice(Booking) method using calculate() from api_price_calc.dart
@@ -305,6 +336,7 @@ feat(task-004): add item-discount mapping and price calculation to ServiceItem
 </commit_message>
 
 <commit_strategy>per-task</commit_strategy>
+<phase_plan>02-01</phase_plan>
 ```
 
 **Output:**
@@ -312,16 +344,19 @@ feat(task-004): add item-discount mapping and price calculation to ServiceItem
 ## ISSUES FOUND
 
 - [subject-line-length] Subject is 79 chars, max is 72
-- [scope-format] Scope "task-004" should be "02-01" per commit_strategy=per-task
+- [scope-format] Scope "02-01" should be semantic (auth, api, checkout), not phase/plan
+- [trailer-missing] Missing phase/plan trailer
 - [body-bullet-count] Body has 5 bullets, max is 4
 - [content-quality] Bullet 1 contains implementation detail: "nullable Discount? discount field"
 - [content-quality] Bullet 2 contains implementation detail: "double calculatePrice(Booking) method"
 
 ### Suggested fix:
-feat(02-01): add discount and price calc to ServiceItem
+feat(api): add discount and price calc to ServiceItem
 
 - Map discounts from API to ServiceItem with price calculation
 - Handle discount type assignment via pattern matching
+
+02-01
 ```
 
 ## Example 2: Verification Passed
@@ -329,13 +364,16 @@ feat(02-01): add discount and price calc to ServiceItem
 **Input:**
 ```
 <commit_message>
-feat(02-01): add discount and price calculation to ServiceItem
+feat(api): add discount and price calculation to ServiceItem
 
 - Map discounts from API to ServiceItem with price calculation
 - Handle discount type assignment via pattern matching
+
+02-01
 </commit_message>
 
 <commit_strategy>per-task</commit_strategy>
+<phase_plan>02-01</phase_plan>
 ```
 
 **Output:**
@@ -354,7 +392,9 @@ Message follows all guidelines.
 - [ ] Includes suggested fix when issues found
 - [ ] Subject line format checked
 - [ ] Subject line length checked (max 72)
-- [ ] Scope format validated against commit_strategy
+- [ ] Scope validated as semantic (not phase/plan)
+- [ ] Trailer format validated against commit_strategy
+- [ ] Trailer presence checked
 - [ ] Body bullet count checked (max 4)
 - [ ] Content quality checked (no implementation mechanics)
 - [ ] Imperative mood checked

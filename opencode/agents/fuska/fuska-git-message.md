@@ -161,9 +161,22 @@ Extract: objective, tasks, completed from summary JSON.
 Apply commit message rules from git-integration.md:
 
 1. **Determine type:** feat, fix, test, refactor, perf, chore based on diff content
-2. **Determine scope:** Based on phasePlan and commitStrategy
+2. **Determine scope:** Semantic area being changed (`auth`, `api`, `checkout`, `ui`, `db`, etc.)
 3. **Format subject:** Max 72 chars, imperative mood, `{type}({scope}): {description}`
 4. **Format body:** 2-4 bullets, high-level only
+5. **Add trailer:** Phase-plan identifier based on commitStrategy:
+   - `per-phase` → `phase-{NN}` (e.g., `phase-02`)
+   - `per-plan` / `per-task` → `{phase}-{plan}` (e.g., `02-01`)
+
+**Final format:**
+```
+{type}({scope}): {description}
+
+- {bullet 1}
+- {bullet 2}
+
+{trailer}
+```
 
 ## Step 5a: Verification Loop
 

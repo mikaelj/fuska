@@ -137,6 +137,9 @@ const currentPlan = stateData.current_plan
 const status = stateData.status
 const progress = stateData.progress
 const lastActivity = stateData.last_activity
+
+const currentTask = stateData.current_task
+const totalTasks = stateData.total_tasks
 ```
 
 **Step 2.4: Display formatted status**
@@ -234,6 +237,23 @@ Display: "Checkpoint detected in ${currentPhase}"
 If incompletePlans.length === 0 AND checkpointPlans.length === 0:
 ```
 Display: "No incomplete work detected"
+```
+
+**Step 3.6: Show task-level position**
+
+If currentTask exists:
+```
+Display: "Task ${currentTask} of ${totalTasks}"
+```
+
+**Step 3.7: Legacy fallback**
+
+If currentTask is undefined:
+```
+megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
+const completedCount = response.matches.length
+const inferredTask = completedCount + 1
+Display: "Task ${inferredTask} (inferred) - legacy project, run execute to update tracking"
 ```
 
 ---

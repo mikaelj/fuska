@@ -1,5 +1,7 @@
 # MegaMemory Performance Benchmark
 
+> **Back to:** [README.md](../README.md)
+
 ## Overview
 
 MegaMemory is a persistent knowledge graph for GSD projects that stores all project data as interconnected concepts with semantic relationships. This document provides theoretical and empirical analysis comparing MegaMemory to traditional `.planning/` markdown approach.
