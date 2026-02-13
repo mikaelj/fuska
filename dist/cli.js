@@ -10,6 +10,8 @@ const config_1 = require("./commands/config");
 const map_1 = require("./commands/map");
 const worktree_add_1 = require("./commands/worktree-add");
 const worktree_merge_1 = require("./commands/worktree-merge");
+const projects_1 = require("./commands/projects");
+const todo_1 = require("./commands/todo");
 const program = new commander_1.Command();
 program
     .name('fuska')
@@ -23,5 +25,7 @@ program
 (0, map_1.mapCommand)(program);
 (0, worktree_add_1.worktreeAddCommand)(program);
 (0, worktree_merge_1.worktreeMergeCommand)(program);
+(0, projects_1.projectsCommand)(program);
+(0, todo_1.todoCommand)(program);
 program.parse(process.argv);
 //# sourceMappingURL=cli.js.map
