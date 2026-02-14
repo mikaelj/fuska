@@ -15,16 +15,13 @@ Output ONLY the reference content below. Do NOT add:
 </objective>
 
 <reference>
-## TTY Detection
+## Output Format Selection
 
-**First, determine output context:**
-
-1. If viewing in a terminal/chat (TTY context): Output the **Compact Format** below (asterisk list, one-liners)
-2. If exporting to documentation/web (non-TTY): Output the **Full Verbose Format** (detailed command descriptions)
+**This is a TTY/terminal context.** Output ONLY the **Compact Format** below (asterisk-prefixed list).
 
 ---
 
-# Compact Format (TTY Output)
+# Fuska Command Reference (Compact)
 
 **Fuska** — Lean solo agentic development with MegaMemory knowledge graph.
 
@@ -36,68 +33,68 @@ Output ONLY the reference content below. Do NOT add:
 
 ## Project Initialization
 
-* `/fuska-new-project` — Initialize new project with research, requirements, and roadmap
-* `/fuska-map-codebase` — Map existing codebase for brownfield projects
+* `/fuska-new-project` — Initialize new project through unified flow.
+* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
 
 ## Phase Planning
 
-* `/fuska-discuss-phase <N>` — Articulate your vision for a phase before planning
-* `/fuska-research-phase <N>` — Ecosystem research for niche/complex domains
-* `/fuska-list-phase-assumptions <N>` — Preview OpenCode's intended approach
-* `/fuska-plan-phase <N>` — Create detailed execution plan for a phase
+* `/fuska-discuss-phase <number>` — Articulate your vision for a phase before planning.
+* `/fuska-research-phase <number>` — Ecosystem research for niche/complex domains.
+* `/fuska-list-phase-assumptions <number>` — See what's planned before execution.
+* `/fuska-plan-phase <number>` — Create detailed execution plan.
 
 ## Execution
 
-* `/fuska-execute-phase <N>` — Execute all plans in a phase with wave-based parallelization
+* `/fuska-execute-phase <phase-number>` — Execute all plans in a phase with wave-based parallelization.
 
 ## Roadmap Management
 
-* `/fuska-add-phase <desc>` — Add new phase to end of current milestone
-* `/fuska-insert-phase <after> <desc>` — Insert urgent work as decimal phase
-* `/fuska-remove-phase <N>` — Remove a future phase and renumber
+* `/fuska-add-phase <description>` — Add new phase to end of current milestone.
+* `/fuska-insert-phase <after> <description>` — Insert urgent work as decimal phase.
+* `/fuska-remove-phase <number>` — Remove a future phase and renumber subsequent phases.
 
 ## Milestone Management
 
-* `/fuska-new-milestone <name>` — Start a new milestone with questioning flow
-* `/fuska-complete-milestone <ver>` — Archive completed milestone and create git tag
+* `/fuska-new-milestone <name>` — Start a new milestone through unified flow.
+* `/fuska-complete-milestone <version>` — Archive completed milestone and prepare for next version.
 
-## Progress & Sessions
+## Progress Tracking
 
-* `/fuska-progress` — Check status, see recent work, route to next action
-* `/fuska-resume-work` — Resume with full context restoration
-* `/fuska-pause-work` — Capture mental context when pausing mid-phase
+* `/fuska-progress` — Check project status and intelligently route to next action.
+* `/fuska-resume-work` — Resume work from previous session with full context restoration.
+* `/fuska-pause-work` — Capture mental context when pausing work mid-phase.
 
 ## Debugging
 
-* `/fuska-debug [desc]` — Systematic debugging with persistent state (survives /new)
+* `/fuska-debug [issue description]` — Systematic debugging with persistent state across context resets.
 
 ## Todo Management
 
-* `/fuska-add-todo [desc]` — Capture idea/task from conversation context
-* `/fuska-check-todos [area]` — List pending todos and select one to work on
+* `/fuska-add-todo [description]` — Capture idea or task as todo from current conversation.
+* `/fuska-check-todos [area]` — List pending todos and select one to work on.
 
-## Verification
+## User Acceptance Testing
 
-* `/fuska-verify-work [phase]` — Validate built features through conversational UAT
+* `/fuska-verify-work [phase]` — Validate built features through conversational UAT.
 
 ## Milestone Auditing
 
-* `/fuska-audit-milestone [ver]` — Audit completion against original intent
-* `/fuska-plan-milestone-gaps` — Create phases to close identified gaps
-
-## Quick Tasks
-
-* `/fuska-do [mode] [desc]` — Execute ad-hoc tasks (direct/quick/fast/balanced/thorough/standard)
+* `/fuska-audit-milestone [version]` — Audit milestone completion against original intent.
+* `/fuska-plan-milestone-gaps` — Create phases to close gaps identified by audit.
 
 ## Configuration
 
-* `fuska config` — Interactive settings (model profile, workflow mode, git strategy)
+* `fuska config [project-dir]` — Manage Fuska settings interactively.
 
-## Utility
+## Quick Tasks
 
-* `/fuska-help` — Show this command reference
+* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees.
 
-## More Info
+## Utility Commands
+
+* `/fuska-help` — Show this command reference.
+
+## Getting Help
 
 * Run `/fuska-progress` to check where you're up to
 * Query `state` concept for current context
@@ -105,7 +102,7 @@ Output ONLY the reference content below. Do NOT add:
 
 ---
 
-# Full Verbose Format (Non-TTY / Documentation Export)
+# Full Verbose Format (Documentation Export Only)
 
 # Fuska Command Reference
 
