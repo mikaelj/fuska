@@ -33,72 +33,72 @@ Output ONLY the reference content below. Do NOT add:
 
 ## Project Initialization
 
-* `/fuska-new-project` — Initialize new project through unified flow.
-* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
+\* `/fuska-new-project` — Initialize new project through unified flow.
+\* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
 
 ## Phase Planning
 
-* `/fuska-discuss-phase <number>` — Articulate your vision for a phase before planning.
-* `/fuska-research-phase <number>` — Ecosystem research for niche/complex domains.
-* `/fuska-list-phase-assumptions <number>` — See what's planned before execution.
-* `/fuska-plan-phase <number>` — Create detailed execution plan.
+\* `/fuska-discuss-phase <number>` — Articulate your vision for a phase before planning.
+\* `/fuska-research-phase <number>` — Ecosystem research for niche/complex domains.
+\* `/fuska-list-phase-assumptions <number>` — See what's planned before execution.
+\* `/fuska-plan-phase <number>` — Create detailed execution plan.
 
 ## Execution
 
-* `/fuska-execute-phase <phase-number>` — Execute all plans in a phase with wave-based parallelization.
+\* `/fuska-execute-phase <phase-number>` — Execute all plans in a phase with wave-based parallelization.
 
 ## Roadmap Management
 
-* `/fuska-add-phase <description>` — Add new phase to end of current milestone.
-* `/fuska-insert-phase <after> <description>` — Insert urgent work as decimal phase.
-* `/fuska-remove-phase <number>` — Remove a future phase and renumber subsequent phases.
+\* `/fuska-add-phase <description>` — Add new phase to end of current milestone.
+\* `/fuska-insert-phase <after> <description>` — Insert urgent work as decimal phase.
+\* `/fuska-remove-phase <number>` — Remove a future phase and renumber subsequent phases.
 
 ## Milestone Management
 
-* `/fuska-new-milestone <name>` — Start a new milestone through unified flow.
-* `/fuska-complete-milestone <version>` — Archive completed milestone and prepare for next version.
+\* `/fuska-new-milestone <name>` — Start a new milestone through unified flow.
+\* `/fuska-complete-milestone <version>` — Archive completed milestone and prepare for next version.
 
 ## Progress Tracking
 
-* `/fuska-progress` — Check project status and intelligently route to next action.
-* `/fuska-resume-work` — Resume work from previous session with full context restoration.
-* `/fuska-pause-work` — Capture mental context when pausing work mid-phase.
+\* `/fuska-progress` — Check project status and intelligently route to next action.
+\* `/fuska-resume-work` — Resume work from previous session with full context restoration.
+\* `/fuska-pause-work` — Capture mental context when pausing work mid-phase.
 
 ## Debugging
 
-* `/fuska-debug [issue description]` — Systematic debugging with persistent state across context resets.
+\* `/fuska-debug [issue description]` — Systematic debugging with persistent state across context resets.
 
 ## Todo Management
 
-* `/fuska-add-todo [description]` — Capture idea or task as todo from current conversation.
-* `/fuska-check-todos [area]` — List pending todos and select one to work on.
+\* `/fuska-add-todo [description]` — Capture idea or task as todo from current conversation.
+\* `/fuska-check-todos [area]` — List pending todos and select one to work on.
 
 ## User Acceptance Testing
 
-* `/fuska-verify-work [phase]` — Validate built features through conversational UAT.
+\* `/fuska-verify-work [phase]` — Validate built features through conversational UAT.
 
 ## Milestone Auditing
 
-* `/fuska-audit-milestone [version]` — Audit milestone completion against original intent.
-* `/fuska-plan-milestone-gaps` — Create phases to close gaps identified by audit.
+\* `/fuska-audit-milestone [version]` — Audit milestone completion against original intent.
+\* `/fuska-plan-milestone-gaps` — Create phases to close gaps identified by audit.
 
 ## Configuration
 
-* `fuska config [project-dir]` — Manage Fuska settings interactively.
+\* `fuska config [project-dir]` — Manage Fuska settings interactively.
 
 ## Quick Tasks
 
-* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees.
+\* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees.
 
 ## Utility Commands
 
-* `/fuska-help` — Show this command reference.
+\* `/fuska-help` — Show this command reference.
 
 ## Getting Help
 
-* Run `/fuska-progress` to check where you're up to
-* Query `state` concept for current context
-* Query `roadmap` concept for phase status
+\* Run `/fuska-progress` to check where you're up to
+\* Query `state` concept for current context
+\* Query `roadmap` concept for phase status
 
 ---
 
