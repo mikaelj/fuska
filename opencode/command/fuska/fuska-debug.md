@@ -45,7 +45,7 @@ The important field is **`summary`** — it's a JSON string containing the debug
 </megamemory_guide>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-project-exists.md
 </execution_context>
 
 <context>

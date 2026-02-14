@@ -27,10 +27,10 @@ Routes to resume-project workflow which handles:
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-project-exists.md
 
-@./opencode/fuska/scripts/types.ts
-@./opencode/fuska/scripts/helpers.ts
+@../../fuska/scripts/types.ts
+@../../fuska/scripts/helpers.ts
 
 </execution_context>
 

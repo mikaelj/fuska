@@ -24,7 +24,7 @@ You are NOT a checker yourself — you orchestrate checkers and synthesize resul
 </role>
 
 <execution_context>
-@./opencode/fuska/references/checker-roles.md
+@../../fuska/references/checker-roles.md
 </execution_context>
 
 <panel_architecture>

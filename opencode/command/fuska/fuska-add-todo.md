@@ -21,8 +21,8 @@ Enables "thought → capture → continue" flow without losing context or derail
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
-@./opencode/fuska/scripts/types.ts
+@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/scripts/types.ts
 </execution_context>
 
 <megamemory_guide>

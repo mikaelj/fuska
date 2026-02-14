@@ -366,7 +366,7 @@ class ProjectsRunner {
   }
 
   private formatChildName(name: string): string {
-    // Extract meaningful part from names like "codebase-tech" or "gsd-mm/config"
+    // Extract meaningful part from names like "codebase-tech" or "fuska/config"
     const parts = name.split('/');
     const lastPart = parts[parts.length - 1];
     

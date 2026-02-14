@@ -29,7 +29,7 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees (atomic commits, state tra
 
 <execution_context>
 
-@./opencode/fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-project-exists.md
 
 Orchestration is inline. Mode determines which agents spawn.
 

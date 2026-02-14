@@ -22,8 +22,8 @@ Uses MegaMemory to query project state and roadmap data.
 </objective>
 
  <execution_context>
- @./opencode/fuska/references/preflight-check-project-exists.md
- @./opencode/fuska/workflows/list-phase-assumptions.md
+ @../../fuska/references/preflight-check-project-exists.md
+ @../../fuska/workflows/list-phase-assumptions.md
  </execution_context>
 
 <megamemory_guide>

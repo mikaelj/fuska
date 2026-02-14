@@ -31,9 +31,9 @@ This is the brownfield equivalent of new-project. The project exists, project co
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
-@./opencode/fuska/scripts/types.ts
-@./opencode/fuska/scripts/phase-templates.ts
+@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/scripts/types.ts
+@../../fuska/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>

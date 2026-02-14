@@ -18,7 +18,7 @@ Enables seamless resumption in fresh session with full context restoration.
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-project-exists.md
 </execution_context>
 
 <megamemory_guide>

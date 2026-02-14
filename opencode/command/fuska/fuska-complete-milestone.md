@@ -24,9 +24,9 @@ Output: Milestone archived in MegaMemory, requirements archived, state concept u
 </objective>
 
  <execution_context>
- @./opencode/fuska/references/preflight-check-project-exists.md
- @./opencode/fuska/scripts/types.ts
- @./opencode/fuska/scripts/helpers.ts
+ @../../fuska/references/preflight-check-project-exists.md
+ @../../fuska/scripts/types.ts
+ @../../fuska/scripts/helpers.ts
  
  </execution_context>
 

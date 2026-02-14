@@ -26,10 +26,10 @@ Context budget: ~15% orchestrator, 100% fresh per subagent.
 
 <execution_context>
 
-@./opencode/fuska/references/preflight-check-project-exists.md
-@./opencode/fuska/scripts/types.ts
-@./opencode/fuska/scripts/phase-templates.ts
-@./opencode/fuska/scripts/helpers.ts
+@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/scripts/types.ts
+@../../fuska/scripts/phase-templates.ts
+@../../fuska/scripts/helpers.ts
 
 </execution_context>
 

@@ -25,7 +25,7 @@ One command creates all fix phases — no manual `/fuska-add-phase` per gap.
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-project-exists.md
 <!-- Spawns fuska-planner agent which has all planning expertise baked in -->
 </execution_context>
 

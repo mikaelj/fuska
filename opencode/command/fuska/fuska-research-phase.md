@@ -30,9 +30,9 @@ Research how to implement a phase using MegaMemory. Spawns fuska-phase-researche
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
-@./opencode/fuska/scripts/types.ts
-@./opencode/fuska/scripts/phase-templates.ts
+@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/scripts/types.ts
+@../../fuska/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>

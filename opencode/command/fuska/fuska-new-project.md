@@ -64,14 +64,14 @@ This is most leveraged moment in any project. Deep questioning here means better
 
  <execution_context>
  
- @./opencode/fuska/references/preflight-check-connectivity.md
- @./opencode/fuska/references/questioning.md
- @./opencode/fuska/references/ui-brand.md
+ @../../fuska/references/preflight-check-connectivity.md
+ @../../fuska/references/questioning.md
+ @../../fuska/references/ui-brand.md
  
- @./opencode/fuska/scripts/types.ts
- @./opencode/fuska/scripts/project-templates.ts
- @./opencode/fuska/scripts/phase-templates.ts
- @./opencode/fuska/scripts/helpers.ts
+ @../../fuska/scripts/types.ts
+ @../../fuska/scripts/project-templates.ts
+ @../../fuska/scripts/phase-templates.ts
+ @../../fuska/scripts/helpers.ts
  
  </execution_context>
 

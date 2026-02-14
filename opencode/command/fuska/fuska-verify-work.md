@@ -23,11 +23,11 @@ Output: {phase}-uat concept — tracking all test results. If issues found: diag
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-project-exists.md
 
-@./opencode/fuska/scripts/types.ts
-@./opencode/fuska/scripts/phase-templates.ts
-@./opencode/fuska/scripts/helpers.ts
+@../../fuska/scripts/types.ts
+@../../fuska/scripts/phase-templates.ts
+@../../fuska/scripts/helpers.ts
 
 </execution_context>
 

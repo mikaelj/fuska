@@ -23,9 +23,9 @@ Purpose: Handle urgent work discovered during execution without renumbering enti
 </objective>
 
 <execution_context>
-@./opencode/fuska/references/preflight-check-project-exists.md
-@./opencode/fuska/scripts/types.ts
-@./opencode/fuska/scripts/phase-templates.ts
+@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/scripts/types.ts
+@../../fuska/scripts/phase-templates.ts
 </execution_context>
 
 <megamemory_guide>
