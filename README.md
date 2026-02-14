@@ -1,8 +1,12 @@
 # Fuska
 
+*"Cheating is good" — Gordon Gekko (and every smart developer)*
+
+**"Fuska"** means "to cheat" in Swedish — because sometimes the smartest way to build software is to let AI do the heavy lifting.
+
 Fuska is a project management system for solo agentic development, using [MegaMemory](https://github.com/0xK3vin/MegaMemory)'s persistent knowledge graph for semantic search and typed relationships.
 
-Works with both **OpenCode** and (*probably, very little testing*) **Claude Code**.
+Works with **OpenCode** and (*probably, very little testing, and maybe not the cli tool*) **Claude Code**.
 
 Based on [gsd-opencode](https://github.com/rokicool/gsd-opencode) and [Get Shit Done](https://github.com/gsd-build/get-shit-done).
 
@@ -62,6 +66,134 @@ Full chain. Maximum quality. For critical features where you want peace of mind.
 Cross-validation boosts severity when 2+ checkers flag the same issue.
 
 **The difference from regular AI coding:** Fuska maintains persistent state across sessions. Your project context, decisions, and progress survive forever in MegaMemory's knowledge graph. Resume a task next week and the AI remembers exactly where you left off.
+
+---
+
+## What's Different from GSD?
+
+| Feature | GSD (Get Shit Done) | Fuska |
+|---------|---------------------|-------|
+| **Plan Verification** | Single plan-checker agent | **Expert Panel** — 3 specialized checkers (base quality advocate + contextual role + plan-derived expert) with cross-validation severity boosting |
+| **Ad-hoc Tasks** | `/gsd-quick` — single mode (planner → executor) | **`/fuska-do`** — 6 modes (direct/quick/fast/balanced/thorough/standard) with configurable agent chain |
+| **Commit Messages** | Path-based scope extraction, manual formatting | **Domain-aware scopes** from MegaMemory mapping + commit checker agent validates format, content, and quality |
+| **Model Selection** | Claude models only (via profiles) | **Any OpenCode-supported model** — configure aliases for quality/balanced/budget tiers |
+| **Commit Strategy** | Per-task (fixed) | **Configurable** — per-phase / per-plan / per-task, with smarter commits via checker panel + domain knowledge |
+| **Worktree Support** | None | **Full integration** — `fuska worktree-add` copies MegaMemory context, `fuska worktree-merge` syncs knowledge back |
+| **CLI Tool** | None (all via opencode commands) | **`fuska` CLI** — install, config, migrate, export, projects, todo, worktree management |
+| **Storage Backend** | `.planning/` markdown files | **MegaMemory** knowledge graph — 700x faster semantic queries, survives git resets |
+| **Migration** | N/A | **Import existing** `.planning/` directories with `fuska migrate` |
+| **Session continuity** | Requires `/gsd-pause-work` to capture context | **Automatic** — task position tracked after every commit; pause-work optional for mental context only |
+| **Codebase mapping** | Manual exploration | **`/fuska-map-codebase`** — auto-detects tech, architecture, quality, concerns, and domains |
+| **Domain mapping** | N/A | **`/fuska-map-domains`** — discovers business domains for commit scopes and context |
+
+### Expert Panel Checker
+
+Instead of a single plan-checker, Fuska uses a **panel of specialized checkers** that provide different perspectives:
+
+- **Base (always):** Quality Advocate — task completeness, testability, error handling, maintainability, observability, performance, documentation
+
+- **Contextual (project-derived):** Auto-detected from your project type:
+  - Security Auditor — Web/API projects (auth, input validation, data protection)
+  - Resource Guardian — Embedded systems (memory, timing, resource constraints)
+  - Portability Watcher — CLI tools (cross-platform paths, shell commands)
+
+- **Expert (plan-derived):** Dynamically selected based on plan content:
+  - Security Veteran — auth, login, password, token, jwt, oauth
+  - Distributed Systems Engineer — websocket, realtime, stream, queue
+  - Payments Expert — payment, stripe, checkout, billing, subscription
+  - API Design Veteran — api, endpoint, rest, graphql, route
+  - Data Architect — database, schema, migration, prisma, sql
+  - Performance Engineer — performance, cache, optimize, latency
+
+**Cross-validation:** When 2+ checkers flag the same issue, it gets a `cross_validated` badge and severity boost. This catches problems a single checker would miss.
+
+### `/fuska-do` vs `/gsd-quick`
+
+Both handle ad-hoc tasks outside the phase structure, but Fuska offers more control:
+
+| Aspect | `/gsd-quick` | `/fuska-do` |
+|--------|--------------|-------------|
+| **Modes** | 1 (planner → executor) | 6 (direct/quick/fast/balanced/thorough/standard) |
+| **Research** | Never | Optional (balanced/thorough/standard modes) |
+| **Plan checking** | Never | Optional (fast/thorough/standard modes) |
+| **Verification** | Never | Optional (standard mode) |
+| **Storage** | `.planning/quick/` markdown | MegaMemory concepts |
+| **Auto-execute** | Always | Mode-dependent (quick/fast/standard auto-execute) |
+
+**When to use which mode:**
+- **Direct** — You know exactly what to do, just need task breakdown (~80% faster)
+- **Quick** — Small tasks with known solutions (~70% faster)
+- **Fast** — Familiar tech stack, want validated plans (~50% faster)
+- **Balanced** — Moderate uncertainty, need research (~35% faster)
+- **Thorough** — New domain, need verified plans (~20% faster)
+- **Standard** — Critical systems, full verification chain (0% saved)
+
+### Smarter Commit Messages
+
+Fuska generates better commits through three mechanisms:
+
+**1. Commit Checker Agent** validates every message:
+- Subject line format: `{type}({scope}): {description}`
+- Max 72 characters, imperative mood
+- Semantic scope (never task/phase numbers as scope)
+- Max 4 bullets, no implementation details
+- Automatic phase-plan trailer
+
+**2. Domain-Aware Scopes** from `/fuska-map-domains`:
+- Scopes derived from business domain concepts stored in MegaMemory
+- Example: `feat(pricing):` instead of `feat(lib/data/:)`
+- Falls back to path-based extraction if no domains mapped
+
+**3. Plan Context Integration**:
+- `/fuska-git-message` loads plan objective from MegaMemory
+- Writes *why* bullets (outcome-focused), not *how* bullets (implementation)
+- Three modes: working tree, single commit replay, commit range unification
+
+**Result:** Commits that read like a changelog of outcomes, not a diary of implementation details.
+
+### Any Model You Want
+
+GSD only supports Claude models. Fuska works with **any model supported by OpenCode**:
+
+```bash
+fuska config
+# Select "Model aliases" → configure quality_model, balanced_model, budget_model
+```
+
+**Example configurations:**
+- Quality: `opencode/claude-opus-4`, Balanced: `opencode/claude-sonnet-4`, Budget: `opencode/claude-haiku-4`
+- Quality: `openai/gpt-4o`, Balanced: `openai/gpt-4o-mini`, Budget: `openai/gpt-3.5-turbo`
+- Quality: `anthropic/claude-3-opus`, Balanced: `google/gemini-pro`, Budget: `meta/llama-3`
+
+Stage overrides let you use different models for planning, execution, or verification without changing the whole profile.
+
+### The `fuska` CLI
+
+Some operations make more sense outside of opencode. The `fuska` CLI handles:
+
+| Command | Purpose |
+|---------|---------|
+| `fuska install` | Install Fuska to opencode/claude configs |
+| `fuska config` | Interactive settings (profiles, modes, commit strategy) |
+| `fuska config --view` | View current settings non-interactively |
+| `fuska migrate` | Import existing `.planning/` directories into MegaMemory |
+| `fuska export` | Export MegaMemory concepts to markdown for review |
+| `fuska projects` | List all projects in MegaMemory |
+| `fuska todo` | List completed and pending tasks |
+| `fuska worktree-add` | Create worktree with MegaMemory context copy |
+| `fuska worktree-merge` | Merge worktree back, syncing MegaMemory + git |
+
+**Worktree workflow:**
+```bash
+# Start experimental work
+fuska worktree-add feature-x
+
+# ... work in worktree with full MegaMemory context ...
+
+# Merge back when done
+fuska worktree-merge feature-x
+# MegaMemory concepts merged + git branch merged
+```
 
 ---
 
