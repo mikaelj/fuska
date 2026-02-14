@@ -10,13 +10,14 @@ interface JsonRunOptions {
 interface StreamState {
   hasOutputStarted: boolean;
   hadError: boolean;
+  lastEndedWithNewline: boolean;
 }
 
 export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
   return new Promise((resolve, reject) => {
     const cmdArgs = ['run', '--format', 'json', options.command, ...(options.args || [])];
     const label = options.progressLabel || 'Working';
-    const state: StreamState = { hasOutputStarted: false, hadError: false };
+    const state: StreamState = { hasOutputStarted: false, hadError: false, lastEndedWithNewline: true };
     
     process.stdout.write(label);
     
@@ -30,9 +31,7 @@ export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
     });
 
     child.on('close', (code) => {
-      if (!state.hasOutputStarted) {
-        process.stdout.write('\n');
-      }
+      process.stdout.write('\n');
       resolve(state.hadError ? 1 : (code ?? 0));
     });
 
@@ -52,7 +51,14 @@ function streamTextEvents(chunk: string, state: StreamState): void {
           process.stdout.write('\n\n');
           state.hasOutputStarted = true;
         }
-        process.stdout.write(markdownToAnsi(event.part.text));
+        // Add newline separator if previous output didn't end with one
+        if (!state.lastEndedWithNewline) {
+          process.stdout.write('\n');
+        }
+        const text = markdownToAnsi(event.part.text);
+        process.stdout.write(text);
+        // Track whether this output ends with a newline
+        state.lastEndedWithNewline = text.endsWith('\n');
       } else if (event.type === 'error') {
         state.hadError = true;
         if (!state.hasOutputStarted) {
