@@ -397,6 +397,8 @@ fuska worktree-add feature-sharing
 
 #### Merging a Worktree
 
+NOTE: Requires https://github.com/0xK3vin/MegaMemory/pull/5 to be merged.
+
 ```bash
 fuska worktree-merge <name>
 ```
@@ -561,7 +563,7 @@ Key highlights:
 | `fuska projects` | List all projects with ASCII tree showing milestones and phases | — |
 | `fuska todo` | List completed and pending tasks | — |
 | `fuska worktree-add <name>` | Create git worktree with shared context | `--no-context`, `-f, --force` |
-| `fuska worktree-merge <name>` | Merge worktree (MM + git) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
+| `fuska worktree-merge <name>` | Merge worktree (MM + git) (requires https://github.com/0xK3vin/MegaMemory/pull/5 to be merged first) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
 
 ### Slash Commands
 
