@@ -1,36 +1,29 @@
 import { Command } from 'commander';
-import { spawn } from 'child_process';
+import { runOpenCodeJson } from './utils/json-output';
 
 export function mapCommand(program: Command) {
   program
     .command('map [area]')
     .description('Map codebase structure to MegaMemory using parallel analysis agents')
     .option('--domains-only', 'Run only domain discovery (faster)')
-    .action((area: string | undefined, options: { domainsOnly?: boolean }) => {
-      let command = '/fuska-map-codebase';
+    .action(async (area: string | undefined, options: { domainsOnly?: boolean }) => {
+      const command = options.domainsOnly 
+        ? '/fuska-map-domains' 
+        : '/fuska-map-codebase';
       
-      if (options.domainsOnly) {
-        command += ' --domains-only';
-      }
-      if (area) {
-        command += ` ${area}`;
-      }
+      const args = area ? [area] : [];
+      const label = options.domainsOnly ? 'Mapping domains' : 'Mapping codebase';
       
-      console.log('Launching codebase mapper...\n');
-      
-      const child = spawn('opencode', ['run', command], {
-        env: process.env,
-        stdio: 'inherit'
-      });
-
-      child.on('error', (err) => {
-        console.error(`\nError: Failed to spawn opencode: ${err.message}`);
-        console.error('Ensure opencode is installed and available in PATH');
+      try {
+        const code = await runOpenCodeJson({
+          command,
+          args,
+          progressLabel: label
+        });
+        process.exit(code);
+      } catch (err: any) {
+        console.error(`\nError: ${err.message}`);
         process.exit(1);
-      });
-
-      child.on('close', (code) => {
-        process.exit(code ?? 0);
-      });
+      }
     });
 }

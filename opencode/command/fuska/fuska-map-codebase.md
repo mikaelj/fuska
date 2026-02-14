@@ -1,7 +1,7 @@
 ---
 name: fuska-map-codebase
 description: Analyze codebase with serial mapper agents to produce MegaMemory concepts
-argument-hint: "[--domains-only] [optional: specific area to map]"
+argument-hint: "[optional: specific area to map]"
 agent: fuska-codebase-mapper
 tools:
   - read
@@ -9,6 +9,7 @@ tools:
   - glob
   - grep
   - webfetch
+  - question
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
@@ -21,13 +22,10 @@ Analyze existing codebase using serial fuska-codebase-mapper agents to produce s
 
 Each mapper agent explores a focus area and **creates concepts directly** in MegaMemory. Agents run serially (one at a time) to reduce resource contention. The orchestrator only receives confirmations, keeping context usage minimal.
 
-Output: MegaMemory concepts for codebase state (tech, arch, quality, concerns).
-</objective>
+Output: MegaMemory concepts for tech, architecture, quality, concerns, and domains.
 
- <execution_context>
-  @./opencode/fuska/references/preflight-check-connectivity.md
-  @./opencode/fuska/references/preflight-check-project-exists.md
-  </execution_context>
+**For domain discovery only**, use `fuska map --domains-only` which runs a faster, focused operation.
+</objective>
 
 <megamemory_guide>
 
@@ -52,18 +50,15 @@ The important field is **`summary`** — it's a JSON string containing the conce
 
 <context>
 
-**Parse arguments:**
-- If `$ARGUMENTS` contains `--domains-only`: Set `DOMAINS_ONLY = true`, remove flag from args
-- Remaining `$ARGUMENTS` (if any): Focus area for agents
-
 **Load project state if exists:**
 Check for state concept in MegaMemory - loads context if project already initialized
 
-**This command can run:**
+**This command runs:**
 - Before /fuska-new-project (brownfield codebases) - creates codebase concepts first
 - After /fuska-new-project (greenfield codebases) - updates codebase concepts as code evolves
 - Anytime to refresh codebase understanding
-- With `--domains-only`: Fast domain discovery only (skips tech/arch/quality/concerns)
+
+**For faster domain discovery only**, use `fuska map --domains-only`
 </context>
 
 <when_to_use>
@@ -77,26 +72,36 @@ Check for state concept in MegaMemory - loads context if project already initial
 **Skip map-codebase for:**
 - Greenfield projects with no code yet (nothing to map)
 - Trivial codebases (<5 files)
+- When you only need domains (use --domains-only instead)
 </when_to_use>
 
 <process>
 
-## 0. Preflight Check
+### 1. Preflight Check
 
 Display: "Checking MegaMemory connectivity..."
 
-Follow the MegaMemory Connectivity Preflight Check from @preflight-check-connectivity.md.
+**Ping MCP with any query** (just to verify server responds):
+```
+megamemory_understand(query="connectivity-ping", top_k=1)
+```
 
-## 1. Validate MegaMemory
+If tool call fails or returns `MEGAMEMORY_ERROR:`:
+→ Display: "MegaMemory MCP server is not responding. Check MCP configuration and restart."
+→ Stop
+
+If any response (even empty matches): MCP is working, continue.
+
+### 2. Validate MegaMemory
 
 Display: "Validating MegaMemory state..."
 
-**Step 1.1: Call list_roots**
+**2.1: Call list_roots**
 ```
 megamemory_list_roots()
 ```
 
-**Step 1.2: Check for project**
+**2.2: Check for project**
 
 If a root with `kind="feature"` exists:
 → Set `HAS_PROJECT = true`
@@ -106,7 +111,7 @@ If no root with `kind="feature"` exists:
 → Set `HAS_PROJECT = false`
 → Display: "No project found — mapping codebase standalone"
 
-**Step 1.3: Query state concept**
+**2.3: Query state concept**
 
 If `HAS_PROJECT`:
 ```
@@ -115,12 +120,12 @@ megamemory_understand(query="state", top_k=5)
 
 If not `HAS_PROJECT`: skip (state doesn't exist yet).
 
-**Step 1.4: Check if codebase concepts exist**
+**2.4: Check if codebase concepts exist**
 ```
 megamemory_understand(query="codebase", top_k=20)
 ```
 
-**Step 1.5: Handle existing codebase**
+**2.5: Handle existing codebase**
 
 If codebase concepts exist:
 → Display: "Codebase concepts already exist in MegaMemory"
@@ -144,50 +149,33 @@ If user chooses "View existing":
 If user chooses "Skip":
 → Stop
 
-## 2. Determine Project Root
-
-**Step 2.0: Get the user's working directory**
+### 3. Get Project Root
 
 ```bash
 pwd
 ```
 
-Store result as `$PROJECT_ROOT`. This is the directory the agents must explore — NOT the opencode config directory.
+Store result as `$PROJECT_ROOT`. This is the directory the agents must explore.
 
 Display: "Project root: ${PROJECT_ROOT}"
 
-## 3. Spawn Mapper Agents (Serial)
+### 4. Spawn 5 Mapper Agents
 
-**If `DOMAINS_ONLY` is true:**
-- Display: "Spawning 1 mapper agent (domains-only mode)..."
-- Skip directly to Step 3.9 (Agent 5: Domains Focus)
-- Skip verification of codebase-tech/arch/quality/concerns (step 4.1-4.4)
-- Jump to step 4.5 after domains agent completes
-
-**Otherwise:**
-- Display: "Spawning 5 mapper agents (serial)..."
+Display: "Spawning 5 mapper agents (serial)..."
 
 Spawn 5 fuska-codebase-mapper agents serially (one at a time):
 
-**Agent 1: Tech focus**
-Creates concept:
-- codebase-tech (tech stack, languages, frameworks, external integrations)
+**Agent 1: Tech focus** → codebase-tech
+**Agent 2: Architecture focus** → codebase-arch
+**Agent 3: Quality focus** → codebase-quality
+**Agent 4: Concerns focus** → codebase-concerns
+**Agent 5: Domains focus** → domain-* concepts
 
-**Agent 2: Architecture focus**
-Creates concept:
-- codebase-arch (architecture patterns, directory layout, module organization)
+---
 
-**Agent 3: Quality focus**
-Creates concept:
-- codebase-quality (coding conventions, testing patterns)
+#### 4.1: Spawn Agent 1 - Tech Focus
 
-**Agent 4: Concerns focus**
-Creates concept:
-- codebase-concerns (technical debt, known issues, security)
-
-### Spawn Agent 1: Tech Focus
-
-**Step 3.1: Build tech focus prompt**
+**Build tech focus prompt:**
 ```
 <project_root>${PROJECT_ROOT}</project_root>
 
@@ -218,7 +206,7 @@ Stack summary:
 </output>
 ```
 
-**Step 3.2: Spawn agent**
+**Spawn agent:**
 ```
 Task(
   prompt=techPrompt,
@@ -228,13 +216,14 @@ Task(
 )
 ```
 
-**Step 3.2b: Wait for agent and display progress**
-Wait for the agent to complete, then:
+Wait for completion, then:
 Display: "[OK] Tech mapping complete"
 
-### Spawn Agent 2: Architecture Focus
+---
 
-**Step 3.3: Build architecture focus prompt**
+#### 4.2: Spawn Agent 2 - Architecture Focus
+
+**Build architecture focus prompt:**
 ```
 <project_root>${PROJECT_ROOT}</project_root>
 
@@ -265,7 +254,7 @@ Architecture summary:
 </output>
 ```
 
-**Step 3.4: Spawn agent**
+**Spawn agent:**
 ```
 Task(
   prompt=architecturePrompt,
@@ -275,13 +264,14 @@ Task(
 )
 ```
 
-**Step 3.4b: Wait for agent and display progress**
-Wait for the agent to complete, then:
+Wait for completion, then:
 Display: "[OK] Architecture mapping complete"
 
-### Spawn Agent 3: Quality Focus
+---
 
-**Step 3.5: Build quality focus prompt**
+#### 4.3: Spawn Agent 3 - Quality Focus
+
+**Build quality focus prompt:**
 ```
 <project_root>${PROJECT_ROOT}</project_root>
 
@@ -312,7 +302,7 @@ Quality summary:
 </output>
 ```
 
-**Step 3.6: Spawn agent**
+**Spawn agent:**
 ```
 Task(
   prompt=qualityPrompt,
@@ -322,13 +312,14 @@ Task(
 )
 ```
 
-**Step 3.6b: Wait for agent and display progress**
-Wait for the agent to complete, then:
+Wait for completion, then:
 Display: "[OK] Quality mapping complete"
 
-### Spawn Agent 4: Concerns Focus
+---
 
-**Step 3.7: Build concerns focus prompt**
+#### 4.4: Spawn Agent 4 - Concerns Focus
+
+**Build concerns focus prompt:**
 ```
 <project_root>${PROJECT_ROOT}</project_root>
 
@@ -359,7 +350,7 @@ Concerns summary:
 </output>
 ```
 
-**Step 3.8: Spawn agent**
+**Spawn agent:**
 ```
 Task(
   prompt=concernsPrompt,
@@ -369,13 +360,14 @@ Task(
 )
 ```
 
-**Step 3.8b: Wait for agent and display progress**
-Wait for the agent to complete, then:
+Wait for completion, then:
 Display: "[OK] Concerns mapping complete"
 
-### Spawn Agent 5: Domains Focus
+---
 
-**Step 3.9: Build domains focus prompt**
+#### 4.5: Spawn Agent 5 - Domains Focus
+
+**Build domains focus prompt:**
 ```
 <project_root>${PROJECT_ROOT}</project_root>
 
@@ -388,12 +380,22 @@ Discover business domains in the project at ${PROJECT_ROOT}.
 
 IMPORTANT: All exploration (ls, find, grep, glob, read) must target ${PROJECT_ROOT}, not the current directory. Use absolute paths.
 
-Create multiple domain concepts:
-- Each domain gets a `domain-{name}` concept with file_refs
-- Domains are business areas (pricing, auth, booking, etc.)
-- Include all files that belong to each domain in file_refs
+**Create SEPARATE domain concepts - one per business area:**
 
-Use megamemory:create_concept() for each domain discovered.
+- domain-pricing (files related to pricing/costs)
+- domain-booking (files related to bookings/reservations)
+- domain-auth (files related to authentication/login)
+- etc.
+
+**Each concept MUST have:**
+- name: 'domain-{name}' (e.g., domain-pricing, not codebase-domains)
+- kind: 'domain'
+- file_refs: [...] (actual file paths from the project)
+
+**DO NOT create a single codebase-domains concept.**
+**DO NOT use kind: 'pattern' for domains.**
+
+Use megamemory:create_concept() ONCE for EACH domain discovered.
 </objective>
 
 <output>
@@ -409,7 +411,7 @@ Domains discovered: [list of domain names]
 </output>
 ```
 
-**Step 3.10: Spawn agent**
+**Spawn agent:**
 ```
 Task(
   prompt=domainsPrompt,
@@ -419,45 +421,19 @@ Task(
 )
 ```
 
-**Step 3.10b: Wait for agent and display progress**
-Wait for the agent to complete, then:
+Wait for completion, then:
 Display: "[OK] Domains mapping complete"
 
-## 4. Verify Codebase Concepts
-
-**If `DOMAINS_ONLY` is true:**
-
-Display: "Verifying domain concepts..."
-
-**Step 4.1d: Query domain concepts**
-```
-megamemory_understand(query="domain", top_k=50)
-```
-
-**Step 4.2d: Check for domain concepts**
-
-Verify at least one domain concept was created:
-- [ ] domain-* (at least one)
-
-If no domain concepts found:
-→ Display: "Warning: No domain concepts were created"
-
-If domain concepts found:
-→ Display: "Domains discovered: {list of domain names}"
-→ Display: "[OK] Domain mapping complete"
-
-Jump to Step 6 (Present Completion Summary).
-
-**Otherwise (full mapping):**
+### 5. Verify All Concepts
 
 Display: "Verifying created concepts..."
 
-**Step 4.1: Query all codebase concepts**
+**5.1: Query all codebase concepts**
 ```
 megamemory_understand(query="codebase", top_k=20)
 ```
 
-**Step 4.2: Check for expected concepts**
+**5.2: Check for expected concepts**
 
 Verify all 5 concept types were created:
 - [ ] codebase-tech
@@ -466,7 +442,7 @@ Verify all 5 concept types were created:
 - [ ] codebase-concerns
 - [ ] domain-* (at least one)
 
-**Step 4.3: Display verification results**
+**5.3: Display verification results**
 
 If any concept missing:
 → Display: "Warning: Some concepts were not created: {missing concepts}"
@@ -474,7 +450,7 @@ If any concept missing:
 If all concepts present:
 → Display: "All 5 codebase concept types created successfully"
 
-**Step 4.4: Query and display project classification**
+**5.4: Query and display project classification**
 
 Query the config concept to check for project classification:
 ```
@@ -496,7 +472,7 @@ Display: "  Signals: ${classification.signals.join(', ')}"
 If no classification found:
 → Display: "Project classification not yet detected (run with tech focus)"
 
-**Step 4.5: Create codebase root concept**
+### 6. Create Codebase Root Concept
 
 Display: "Creating codebase root concept..."
 
@@ -522,18 +498,18 @@ If this concept already exists (refresh scenario), use `megamemory_update_concep
 
 Display: "Created codebase root concept"
 
-## 5. Update State Concept
+### 7. Update State Concept
 
-**Skip this step if `HAS_PROJECT` is false OR `DOMAINS_ONLY` is true** (no full mapping to record).
+If `HAS_PROJECT` is false, skip this step.
 
 Display: "Updating project state..."
 
-**Step 5.1: Extract state ID**
+**7.1: Extract state ID**
 ```
 const stateId = stateResponse.matches[0].id
 ```
 
-**Step 5.2: Build updated state data**
+**7.2: Build updated state data**
 ```
 const updatedStateData = {
   ...stateData,
@@ -543,7 +519,7 @@ const updatedStateData = {
 }
 ```
 
-**Step 5.3: Update state concept**
+**7.3: Update state concept**
 ```
 megamemory_update_concept(
   id=stateId,
@@ -553,26 +529,7 @@ megamemory_update_concept(
 )
 ```
 
-## 6. Present Completion Summary
-
-**If `DOMAINS_ONLY` is true:**
-```
----------------------------------------------------
-  Fuska: Domains mapped
----------------------------------------------------
-
-Domains discovered:
-- domain-pricing (N files)
-- domain-auth (N files)
-- ...
-
-N domain concepts created in MegaMemory
-
-Use `fuska git-message <commit>` to get domain-aware scopes.
-────────────────────────────────────────────────────────────
-```
-
-**Otherwise (full mapping):**
+### 8. Present Summary
 
 Query config for checker_panel settings:
 ```

@@ -162,26 +162,7 @@ If `commitHash` is provided:
 ORIGINAL_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEAD)
 ```
 
-**Step 2a.2: Stash any current changes**
-
-```bash
-git stash push -m "fuska-git-message-stash" --include-untracked 2>/dev/null
-```
-
-Record whether the stash was actually created (check exit code or compare `git stash list` before/after).
-
-**Step 2a.3: Detach at parent, apply commit as working tree changes**
-
-```bash
-PARENT=$(git rev-parse ${commitHash}^)
-git checkout --detach $PARENT
-git cherry-pick --no-commit $commitHash
-git reset HEAD
-```
-
-This leaves the commit's changes as unstaged working tree modifications.
-
-**Step 2a.4: Read original commit message**
+**Step 2a.2: Read original commit message**
 
 ```bash
 git log -1 --format="%B" $commitHash
@@ -189,7 +170,7 @@ git log -1 --format="%B" $commitHash
 
 Store as `originalMessage`.
 
-**Step 2a.5: Extract phase-plan from commit message (if no explicit phasePlan arg)**
+**Step 2a.3: Extract phase-plan from commit message (if no explicit phasePlan arg)**
 
 If `phasePlan` is not set, try to parse scope from the subject line:
 
@@ -214,10 +195,10 @@ if (scopeMatch) {
 }
 ```
 
-**Step 2a.6: Read the diff**
+**Step 2a.4: Read the diff**
 
 ```bash
-git diff
+git diff ${commitHash}^ ${commitHash}
 ```
 
 Store as `diffContent`.
@@ -361,7 +342,37 @@ If `phasePlan` is not known:
 
 ---
 
-## Step 3.5: Print usage header (if default mode)
+## Step 3.1: Load domain context from MegaMemory
+
+Query all domain concepts to match changed files to business areas:
+
+```
+megamemory_understand(query="domain", top_k=50)
+```
+
+**Domain naming convention:** Domain concepts must have IDs starting with `domain-` (e.g., `domain-pricing`, `domain-booking`, `domain-auth`).
+
+Filter results to concepts where `id.startsWith("domain-")`.
+
+**Extract changed files from diff:**
+
+Parse `diffContent` for file paths:
+- Lines matching `diff --git a/... b/...` → extract the path after `b/`
+- Lines matching `+++ b/...` → extract the path after `b/`
+
+**Match files to domains:**
+
+For each changed file (in order they appear in diff):
+1. Check if it matches any `file_refs` in domain concepts
+2. File refs may include line ranges (e.g., `lib/data/common.dart:287-593`) — match the path portion only (strip `:XXX-YYY` suffix)
+3. First match wins — store as `domainScope` (e.g., `pricing` from `domain-pricing`)
+
+If no domains found or no file matches:
+→ `domainScope = null`
+
+---
+
+## Step 3.2: Print usage header (if default mode)
 
 If `isDefaultMode` is true:
 
@@ -390,11 +401,19 @@ Apply the `<commit_message_rules>` and `<commit_formats>` from git-integration.m
 
 **Step 4.2: Determine scope**
 
-- If `phasePlan` is known, use it as scope (format depends on commit strategy):
-  - `per-phase`: `phase-{NN}` (e.g., `phase-02`)
-  - `per-plan`: `{phase}-{plan}` (e.g., `02-01`)
-  - `per-task`: `{phase}-{plan}` (e.g., `02-01`)
-- If unknown, omit scope or use a descriptive word
+**Scope Rules (CRITICAL):**
+- Scope MUST be a semantic area: `auth`, `api`, `checkout`, `ui`, `db`, `benchmark`, `pricing`, `data`, `config`, etc.
+- NEVER use task numbers, phase numbers, or plan identifiers as scope
+- BAD: `refactor(task-002): ...` — task-002 is metadata, not an area
+- GOOD: `refactor(benchmark): ...` — benchmark is the semantic area
+- Phase-plan identifiers go in the TRAILER (footer), not the scope
+
+Priority order:
+1. If `domainScope` is found from MegaMemory domain concepts → use domain name (e.g., `pricing`, `booking`)
+2. Else extract area from changed file paths (e.g., `lib/data/` → scope: `data`, `lib/benchmark/` → scope: `benchmark`)
+3. Else → omit scope entirely (format: `{type}: {description}`)
+
+**NEVER** extract scope from diff content (variable names, renames, function names, etc.)
 
 **Step 4.3: Format subject line**
 
@@ -416,6 +435,32 @@ Use the format matching `commitStrategy` from git-integration.md:
 - `per-phase`: one bullet per plan
 - `per-plan`: one bullet per task
 - `per-task`: 2-4 high-level bullets
+
+**Step 4.6: Add trailer (phase-plan identifier)**
+
+If `phasePlan` is known, add as trailer in the footer:
+- `per-phase` → `phase-{NN}` (e.g., `phase-02`)
+- `per-plan` / `per-task` → `{phase}-{plan}` (e.g., `02-01`, `task-002`)
+
+**Final format:**
+```
+{type}({scope}): {description}
+
+- {bullet 1}
+- {bullet 2}
+
+{trailer}
+```
+
+Example:
+```
+refactor(benchmark): merge UserDataBenchmark into Benchmarker
+
+- Move accumulator pattern methods from UserDataBenchmark to Benchmarker
+- Update all call sites to use centralized benchmark class
+
+task-002
+```
 
 ---
 
@@ -455,12 +500,9 @@ ${generatedMessage}
 
 {generatedMessage}
 
-## Restore working tree:
-
-git checkout -- .    # discard cherry-picked changes
-git clean -fd        # remove any new files from the cherry-pick
-git checkout {ORIGINAL_BRANCH}
-git stash pop  # only if stash was created
+## Note:
+- Working tree NOT modified (read-only diff comparison)
+- Safe to run anytime
 ```
 
 **If working tree mode:**
@@ -484,8 +526,8 @@ git add <files> && git commit -m "${generatedMessage}"
 ```
 
 **IMPORTANT:**
-- In range mode, do NOT automatically restore working tree (no changes were made)
-- In single commit mode, do NOT automatically restore working tree - print instructions instead
+- In range mode, working tree is never modified (read-only diff comparison)
+- In single commit mode, working tree is never modified (read-only diff comparison)
 - In working tree mode, print commit instructions
 
 </process>
@@ -502,7 +544,8 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Generated message follows all Fuska commit message rules
 - [ ] Original messages displayed in full for all commits
 - [ ] No working tree modifications in range mode (no stash, no checkout, no cherry-pick)
-- [ ] Restore instructions printed correctly for single commit mode
+- [ ] No working tree modifications in single commit mode (read-only diff comparison)
+- [ ] Read-only note displayed for single commit and range modes
 - [ ] Error messages are clear and actionable
 - [ ] All existing modes (single commit, working tree) remain functional
 - [ ] Large range warning displayed when commit count > 50
@@ -510,11 +553,19 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Git log parsing handles empty commit bodies correctly
 - [ ] Subject line: max 72 chars, imperative mood, `{type}({scope}): {description}`
 - [ ] Body: max 2-4 bullets, high-level only, no implementation details
+- [ ] Scope is ALWAYS a semantic area (`benchmark`, `pricing`, `api`), NEVER task/phase numbers
+- [ ] Trailer contains phase-plan identifier (e.g., `task-002`, `02-01`, `phase-02`)
 - [ ] Message is printed, nothing is committed
 - [ ] No arguments defaults to working tree mode (unstaged + staged)
 - [ ] Usage header printed when no arguments provided
 - [ ] Usage header NOT printed when explicit arguments given
 - [ ] Header contains valid usage information
 - [ ] Suggested commit message always generated
+- [ ] Domain concepts queried from MegaMemory (query="domain")
+- [ ] Changed files extracted from diff content
+- [ ] Files matched against domain file_refs
+- [ ] Domain scope used when phasePlan is unknown and domain match found
+- [ ] Scope omitted (not random word) when neither phasePlan nor domainScope found
+- [ ] Never extracts scope from diff content (variable names, renames, function names)
 
 </success_criteria>

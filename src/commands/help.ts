@@ -1,16 +1,16 @@
 import { Command } from 'commander';
 import { runOpenCodeJson } from './utils/json-output';
 
-export function gitMessageCommand(program: Command) {
+export function helpCommand(program: Command) {
   program
-    .command('git-message [args...]')
-    .description('Test and preview commit messages using Fuska commit message rules')
+    .command('help [args...]')
+    .description('Show Fuska usage guide and available commands')
     .action(async (args: string[]) => {
       try {
         const code = await runOpenCodeJson({
-          command: '/fuska-git-message',
+          command: '/fuska-help',
           args,
-          progressLabel: 'Working'
+          progressLabel: 'Loading help'
         });
         process.exit(code);
       } catch (err: any) {

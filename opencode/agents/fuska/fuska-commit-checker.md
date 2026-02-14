@@ -54,15 +54,17 @@ Valid types: `feat`, `fix`, `test`, `refactor`, `perf`, `chore`, `docs`, `wip`
 
 ## 3. Scope Format
 
-**Rule:** Scope is a semantic area, NOT a phase/plan number.
+**Rule:** Scope MUST be a semantic area. NEVER accept task/phase/plan numbers as scope.
 
-Valid scopes: `auth`, `api`, `checkout`, `ui`, `db`, `middleware`, `jose`, `stripe`, etc.
+Valid scopes: `auth`, `api`, `checkout`, `ui`, `db`, `middleware`, `jose`, `stripe`, `benchmark`, `pricing`, `data`, `config`, `booking`, etc.
 
-**Invalid scopes:**
-- `02-01`, `phase-02`, `task-001` (these are trailers, not scopes)
-- Numbers without semantic meaning
+**INVALID scopes (MUST REJECT):**
+- `task-002`, `task-001`, `task-*` — these are task identifiers, NOT areas
+- `02-01`, `04-02`, `\d{2}-\d{2}` — these are phase-plan identifiers, NOT areas
+- `phase-02`, `phase-*` — these are phase identifiers, NOT areas
+- Any pattern matching `/^(phase-\d+|task-\d+|\d{2}-\d{2})$/`
 
-**Check:** Scope should describe the feature area being changed, not the project structure.
+**Check:** Scope should describe the feature area being changed, not the project structure. If scope matches a task/phase pattern, ALWAYS reject with `[scope-format]`.
 
 ## 4. Trailer Format
 
@@ -225,10 +227,10 @@ if (subjectLine.length > 72) {
 
 ```
 const scope = match?.[2]
-const phasePlanPattern = /^(phase-\d{2}|\d{2}-\d{2}|task-\d+)$/
+const invalidScopePattern = /^(phase-\d+|task-\d+|\d{2}-\d{2})$/
 
-if (scope && phasePlanPattern.test(scope)) {
-  issues.push(`[scope-format] Scope "${scope}" should be semantic (auth, api, checkout), not phase/plan`)
+if (scope && invalidScopePattern.test(scope)) {
+  issues.push(`[scope-format] Scope "${scope}" is a task/phase identifier, NOT a semantic area. Use: auth, api, benchmark, pricing, data, etc.`)
 }
 ```
 

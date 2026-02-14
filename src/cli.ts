@@ -12,6 +12,8 @@ import { worktreeAddCommand } from './commands/worktree-add';
 import { worktreeMergeCommand } from './commands/worktree-merge';
 import { projectsCommand } from './commands/projects';
 import { todoCommand } from './commands/todo';
+import { progressCommand } from './commands/progress';
+import { helpCommand } from './commands/help';
 
 const program = new Command();
 
@@ -23,6 +25,7 @@ program
 migrateCommand(program);
 exportCommand(program);
 installCommand(program);
+helpCommand(program);
 gitMessageCommand(program);
 configCommand(program);
 mapCommand(program);
@@ -30,5 +33,6 @@ worktreeAddCommand(program);
 worktreeMergeCommand(program);
 projectsCommand(program);
 todoCommand(program);
+progressCommand(program);
 
 program.parse(process.argv);

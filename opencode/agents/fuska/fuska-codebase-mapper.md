@@ -182,6 +182,50 @@ grep -rh "^class\|^enum\|^mixin" lib/ --include="*.dart" 2>/dev/null | sed 's/cl
 read key files identified during exploration. Use glob and grep liberally.
 </step>
 
+<step name="process_domains" if="focus == 'domains'">
+**For domains focus, follow this exact process:**
+
+**Step 1: Scan for domain clusters**
+- Run directory scan: find subdirectories under lib/, src/, app/
+- Run file prefix scan: group files by common prefix (e.g., book_*.dart, price_*.dart)
+- Run class scan: find classes with common prefixes
+
+**Step 2: Identify 3-7 domains**
+- Each domain = a business area (NOT a technical layer)
+- Examples: pricing, booking, auth, user, vehicle, ble, inspection
+- Skip: utils, helpers, common, shared, core, base, config, model, widgets (too generic)
+
+**Step 3: Create ONE concept per domain**
+For each domain, call megamemory:create_concept() separately:
+
+Example - Domain 1:
+    name: 'domain-pricing'
+    kind: 'domain'
+    summary: 'Pricing and cost calculations. Includes ServiceItem pricing fields, discount logic, and preview calculations.'
+    file_refs: ['lib/model/book_model.dart', 'lib/util/api_price_calc.dart']
+
+Example - Domain 2:
+    name: 'domain-booking'
+    kind: 'domain'
+    summary: 'Booking/reservation flow. Includes Booking model, slot selection, and availability checks.'
+    file_refs: ['lib/model/booking_selection.dart', 'lib/model/book_model.dart']
+
+**CRITICAL:**
+- name MUST be domain-{something} (lowercase, kebab-case)
+- kind MUST be 'domain' (not 'pattern')
+- Each domain gets its OWN concept - do NOT create a single codebase-domains concept
+- file_refs must be ACTUAL files that exist in the project
+
+**ANTI-PATTERN - Do NOT do this:**
+    name: 'codebase-domains'  // WRONG: should be domain-{name}
+    kind: 'pattern'           // WRONG: should be 'domain'
+    summary: 'All business entities...'  // WRONG: too broad
+
+**CORRECT - Create separate concepts:**
+    { name: 'domain-pricing', kind: 'domain', ... }
+    { name: 'domain-booking', kind: 'domain', ... }
+</step>
+
 <step name="detect_project_classification" if="focus == 'tech'">
 Based on exploration findings, classify the project type and derive contextual checker role.
 
@@ -1075,4 +1119,7 @@ await megamemory:create_concept({
 - [ ] Summary contains JSON data + markdown sections
 - [ ] All codebase data stored as MegaMemory concepts (not files)
 - [ ] Confirmation returned (not concept contents)
+- [ ] For domains focus: Created 3+ separate concepts named domain-{name} with kind: 'domain'
+- [ ] Each domain concept has focused file_refs (not all files mixed together)
+- [ ] No concept named 'codebase-domains' exists
 </success_criteria>
