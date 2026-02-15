@@ -244,7 +244,60 @@ Doc plan concept updated: doc-{NUMBER}-{slug}
 Outline stored in concept summary
 ```
 
+## Revision Mode
+
+When called for revision after checker issues:
+
+```markdown
+## REVISION COMPLETE
+
+**Document:** {doc-slug}
+**Revision:** Addressed checker issues
+
+### Changes Made
+
+1. {Change 1 - e.g., "Added 'Risks & Mitigations' section"}
+2. {Change 2 - e.g., "Reordered sections for stakeholder audience"}
+3. {Change 3 - e.g., "Added missing key points to Design section"}
+
+### Updated Outline
+
+1. {Section Name}
+   - {key point 1}
+   - {key point 2}
+
+...
+
+### MegaMemory
+
+Doc plan concept updated: doc-{NUMBER}-{slug}
+```
+
 </structured_returns>
+
+<revision_handling>
+
+## When Called for Revision
+
+If the orchestrator provides checker issues to address:
+
+1. **Load current outline** from doc plan concept
+2. **Analyze issues** from checker output:
+   - Blockers must be fixed
+   - Warnings should be fixed
+   - Recommendations optional
+3. **Make targeted changes** - don't replan from scratch
+4. **Update concept** with revised outline
+5. **Return REVISION COMPLETE** with changes summary
+
+**Revision principles:**
+- Fix only what's broken
+- Preserve working sections
+- Add missing sections
+- Reorder if needed
+- Don't change for the sake of change
+
+</revision_handling>
 
 <success_criteria>
 

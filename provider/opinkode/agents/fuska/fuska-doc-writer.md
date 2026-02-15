@@ -222,6 +222,33 @@ When writing finishes successfully:
 Content concept created: doc-{NUMBER}-{slug}-content
 ```
 
+## Revision Complete
+
+When called for revision after reviewer feedback:
+
+```markdown
+## REVISION COMPLETE
+
+**File:** {output_file}
+**Revision:** Addressed reviewer issues
+
+### Changes Made
+
+1. {Change 1 - e.g., "Fixed passive voice in Overview section"}
+2. {Change 2 - e.g., "Added code example to Steps section"}
+3. {Change 3 - e.g., "Clarified technical term in Design section"}
+
+### Updated Stats
+
+**Words:** {word_count}
+**Sections:** {N}
+
+### MegaMemory
+
+Content concept updated: doc-{NUMBER}-{slug}-content
+review_status remains "pending" until reviewer confirms
+```
+
 ## File Exists Error
 
 If file already exists (should not happen, orchestrator handles):
@@ -234,7 +261,50 @@ If file already exists (should not happen, orchestrator handles):
 This file already exists. The orchestrator should have handled this conflict.
 ```
 
+## Write Error
+
+If write operation fails:
+
+```markdown
+## WRITE ERROR
+
+**File:** {output_file}
+**Error:** {error_message}
+
+**Suggested fix:** {suggestion based on error type}
+
+Common fixes:
+- Permission denied: Check file permissions
+- Directory not found: Create directory first with mkdir -p
+- Disk full: Free up disk space
+```
+
 </structured_returns>
+
+<revision_handling>
+
+## When Called for Revision
+
+If the orchestrator provides reviewer issues to address:
+
+1. **Read current document** from output file
+2. **Analyze issues** from reviewer output:
+   - Identify sections with issues
+   - Understand what needs to change
+3. **Make targeted changes**:
+   - Fix specific issues mentioned
+   - Don't rewrite everything
+   - Preserve good content
+4. **Update content concept** with new word count
+5. **Return REVISION COMPLETE** with changes summary
+
+**Revision principles:**
+- Address each issue specifically
+- Don't change unrelated content
+- Improve, don't overhaul
+- Keep document coherent
+
+</revision_handling>
 
 <success_criteria>
 

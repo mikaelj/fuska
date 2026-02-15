@@ -812,7 +812,7 @@ Go to `<offer_next>`.
 
 <offer_next>
 
-Output this markdown directly:
+Output this markdown directly (replacing variables with actual values):
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -821,65 +821,216 @@ Output this markdown directly:
 
  Document: doc-${NUMBER}-${SLUG}
  Topic: ${TOPIC}
- Type: ${TYPE} | Audience: ${AUDIENCE}
+ Type: ${TYPE} | Audience: ${AUDIENCE} | Depth: ${DEPTH}
 
  Output: ${OUTPUT_FILE}
- Words: ${word_count} | Sections: ${N}
+ Words: ${WORD_COUNT} | Sections: ${SECTION_COUNT}
 
  Mode: ${MODE}
- Research: ${MODE === "standard" ? "✓" : "✗"} | Check: ${MODE === "standard" ? "✓" : "✗"} | Review: ${MODE === "standard" ? "✓" : "✗"}
+ ${MODE === "standard" ? "Research: ✓ | Check: ✓ | Review: ✓" : "Research: ✗ | Check: ✗ | Review: ✗"}
+
+ MegaMemory:
+ - doc-${NUMBER}-${SLUG} (plan)
+ ${MODE === "standard" ? "- doc-${NUMBER}-${SLUG}-research (research)" : ""}
+ - doc-${NUMBER}-${SLUG}-content (content)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Variables to extract from writer output:**
+- WORD_COUNT: From writer's "## WRITING COMPLETE" section
+- SECTION_COUNT: Count of sections in writer output table
+
+**Store for next operations:**
+```
+// Track word count and sections for summary
+let WORD_COUNT = 0
+let SECTION_COUNT = 0
+let RESEARCH_DONE = MODE === "standard"
+let CHECK_DONE = MODE === "standard"
+let REVIEW_DONE = MODE === "standard"
 ```
 
 </offer_next>
 
 <standalone_mode>
 
-When no project context exists (STANDALONE_MODE = true):
+When no project context exists (STANDALONE_MODE = true or HAS_PROJECT = false):
 
-1. Skip project-specific queries (roadmap, requirements, etc.)
-2. Create concepts at root level (`parent_id: null`)
-3. Research focuses on public domain knowledge
-4. Output file still defaults to `docs/{slug}.md` (creates directory if needed)
-5. All concepts have `has_project: false` and `project_slug: null`
+## Detection
+
+After `megamemory:list_roots()`:
+- If `roots.length === 0` → Standalone mode
+- If no root matches current directory → Standalone mode
+
+## Behavior Differences
+
+| Aspect | With Project | Standalone |
+|--------|-------------|------------|
+| parent_id | projectSlug | null |
+| has_project | true | false |
+| project_slug | projectSlug | null |
+| Research scope | Project + domain | Public domain only |
+| Config lookup | Query config concept | Use defaults |
+
+## Model Profile in Standalone
+
+When no project config exists, use default model profile:
+
+```
+modelProfile = "balanced"
+
+aliases = {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+```
+
+## Output Directory
+
+Even in standalone mode:
+- Default output: `docs/{slug}.md`
+- Create `docs/` directory if needed: `mkdir -p docs`
+- All file operations work the same
 
 </standalone_mode>
 
 <error_handling>
 
+## Edge Cases and Recovery
+
 | Scenario | Handling |
 |----------|----------|
 | No topic provided | Prompt with question tool, loop until provided |
-| Invalid type | Show valid types, re-prompt |
-| Research blocked | Offer skip or abort |
-| Plan check fails 3x | Offer proceed anyway or manual revision |
-| Write fails (file error) | Display error, suggest fix |
-| Review fails 3x | Offer accept or manual revision |
-| No project context | Continue in standalone mode |
-| File exists | Prompt: overwrite / new filename / cancel |
+| Invalid type | Show valid types: architecture, implementation, story-breakdown, design, migration, guide |
+| Invalid audience | Show valid audiences: self, team, stakeholder, contractor |
+| Research blocked | Offer: Skip research / Provide context / Abort |
+| Plan check fails 3x | Offer: Proceed anyway / Revise manually |
+| Write fails (permission) | Display error, check file permissions |
+| Write fails (disk full) | Display error, suggest cleanup |
+| Write fails (directory) | Display error, try `mkdir -p` |
+| Review fails 3x | Offer: Accept document / Revise manually |
+| No project context | Continue in standalone mode (parent_id: null) |
+| File exists | Prompt: Overwrite / New filename / Cancel |
 | MegaMemory unavailable | Display MCP diagnostic, stop |
+| Doc number collision | Re-query, increment, retry |
+
+## Write Error Recovery
+
+If writer returns error (not "## WRITING COMPLETE"):
+
+```
+Display: "Write failed: {error_message}"
+
+Suggest fixes based on error type:
+
+- Permission denied: "Check file permissions for ${OUTPUT_FILE}"
+- Directory not found: "Creating directory..." → bash("mkdir -p $(dirname '${OUTPUT_FILE}')") → Retry
+- Disk full: "Insufficient disk space. Free up space and retry."
+- File locked: "File may be open in another application."
+
+response = question({
+  questions: [{
+    header: "Write Failed",
+    question: "How would you like to proceed?",
+    options: [
+      { label: "Retry", description: "Try writing again" },
+      { label: "Different path", description: "Choose a different output file" },
+      { label: "Abort", description: "Cancel this operation" }
+    ]
+  }]
+})
+```
+
+## Agent Spawn Failure
+
+If Task() call fails or returns unexpected result:
+
+```
+Display: "Agent failed: {agent_name}"
+Display: "Error: {error_details}"
+
+response = question({
+  questions: [{
+    header: "Agent Failed",
+    question: "How would you like to proceed?",
+    options: [
+      { label: "Retry", description: "Try the agent again" },
+      { label: "Skip step", description: "Continue without this step" },
+      { label: "Abort", description: "Cancel this operation" }
+    ]
+  }]
+})
+```
+
+## Concept Creation Failure
+
+If megamemory:create_concept fails:
+
+```
+Display: "Failed to create MegaMemory concept: {concept_name}"
+Display: "Error: {error_message}"
+
+// Concepts are critical for tracking - cannot continue without them
+response = question({
+  questions: [{
+    header: "MegaMemory Error",
+    question: "Cannot continue without concept tracking. How would you like to proceed?",
+    options: [
+      { label: "Retry", description: "Try creating the concept again" },
+      { label: "Diagnose", description: "Check MegaMemory connectivity" },
+      { label: "Abort", description: "Cancel this operation" }
+    ]
+  }]
+})
+```
 
 </error_handling>
 
 <success_criteria>
 
+## Command Structure
+
 - [ ] Mode parsed from first word (standard|quick), default=quick
 - [ ] Topic, type, audience prompted if missing
+- [ ] Invalid type/audience shows valid options and re-prompts
+
+## MegaMemory Integration
+
 - [ ] MegaMemory connectivity checked in preflight
 - [ ] Project context detected (standalone vs project mode)
-- [ ] Doc plan concept created with correct parent_id
+- [ ] Doc plan concept created with correct parent_id (null for standalone)
 - [ ] Number generation queries existing doc-* concepts
 - [ ] File conflict handled before concept creation
+- [ ] Research concept created with correct edges (standard mode)
+- [ ] Content concept created with file_refs
+
+## Agent Flow
+
 - [ ] Research phase runs in standard mode (skipped in quick)
+- [ ] Research blocked handled with skip/abort options
 - [ ] Planner creates outline, updates concept
-- [ ] Checker validates (standard mode)
-- [ ] Revision loops work (max 3 iterations)
+- [ ] Checker validates with expert panel (standard mode)
+- [ ] Revision loops work for planner ← checker (max 3 iterations)
 - [ ] Writer creates markdown with frontmatter
-- [ ] Writer creates content concept
+- [ ] Writer ensures directory exists before write
 - [ ] Reviewer checks quality (standard mode)
+- [ ] Revision loops work for writer ← reviewer (max 3 iterations)
+
+## Output Quality
+
+- [ ] Document includes proper frontmatter (doc_id, slug, type, audience, depth, generated, mode)
 - [ ] Final concept status = "complete"
-- [ ] Git commit offered
-- [ ] Completion banner displayed
+- [ ] Git commit offered after completion
+- [ ] Completion banner displays all required info (document, topic, type, audience, output, words, sections, mode, phases)
+
+## Edge Cases
+
+- [ ] Works without project context (standalone mode)
+- [ ] Uses default model profile in standalone mode
+- [ ] Handles write failures with recovery options
+- [ ] Handles agent failures with retry/skip options
+- [ ] Handles MegaMemory errors gracefully
 
 </success_criteria>
