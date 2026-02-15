@@ -3,6 +3,12 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import inquirer from 'inquirer';
 import { execSync } from 'child_process';
+import {
+  readProviderConfig,
+  writeProviderConfig,
+  detectInstalledProviders,
+  ProviderType
+} from './utils/provider-config';
 
 type WorkflowMode = 'standard' | 'thorough' | 'balanced' | 'fast' | 'quick' | 'direct';
 type ProfileType = 'quality' | 'balanced' | 'budget';
@@ -815,17 +821,107 @@ class ConfigRunner {
   }
 }
 
+async function runGlobalConfigMode(): Promise<void> {
+  const currentConfig = await readProviderConfig();
+  const installed = await detectInstalledProviders();
+
+  if (installed.length === 0) {
+    console.error('No AI provider found. Install opencode or claude first.');
+    console.error('  opencode: https://github.com/opencode-ai/opencode');
+    console.error('  claude: https://claude.ai/code');
+    process.exit(1);
+  }
+
+  console.log('Fuska Global Configuration');
+  console.log('');
+
+  if (currentConfig) {
+    console.log(`Current provider: ${currentConfig.provider}`);
+  } else {
+    console.log('Current provider: (not set)');
+  }
+  console.log('');
+
+  const { provider } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'provider',
+      message: 'Select AI provider:',
+      choices: installed.map(p => ({
+        name: p,
+        value: p
+      })),
+      default: currentConfig?.provider || installed[0]
+    }
+  ]);
+
+  await writeProviderConfig({ provider: provider as ProviderType });
+  console.log(`\nProvider set to ${provider}`);
+}
+
+async function isValidProject(projectDir: string): Promise<boolean> {
+  const resolvedPath = path.resolve(projectDir);
+  const dbPath = path.join(resolvedPath, '.megamemory', 'knowledge.db');
+  return await fs.pathExists(dbPath);
+}
+
 export function configCommand(program: Command) {
   program
     .command('config [project-path]')
-    .description('Configure Fuska project settings')
+    .description('Configure Fuska settings. Without args: global config (provider). With project path: project-level config. Use "set-provider <name>" to set AI provider directly.')
     .option('-v, --view', 'View current settings (non-interactive)')
     .action(async (projectPath?: string, options?: { view?: boolean }) => {
-      const configOptions: ConfigOptions = {
-        projectDir: projectPath || process.cwd()
-      };
-      
-      const runner = new ConfigRunner(configOptions);
-      await runner.run(options?.view || false);
+      const args = process.argv.slice(3);
+
+      // Handle set-provider subcommand
+      if (args[0] === 'set-provider') {
+        const provider = args[1];
+
+        if (!provider) {
+          console.error('Usage: fuska config set-provider <opencode|claude>');
+          process.exit(1);
+        }
+
+        if (provider !== 'opencode' && provider !== 'claude') {
+          console.error(`Invalid provider: ${provider}`);
+          console.error('Use: opencode or claude');
+          process.exit(1);
+        }
+
+        await writeProviderConfig({ provider: provider as ProviderType });
+        console.log(`Provider set to ${provider}`);
+        return;
+      }
+
+      // Determine if we have a valid project
+      const candidatePath = projectPath || process.cwd();
+      const hasProject = await isValidProject(candidatePath);
+
+      if (hasProject) {
+        // Project-level config mode
+        const configOptions: ConfigOptions = {
+          projectDir: candidatePath
+        };
+
+        const runner = new ConfigRunner(configOptions);
+        await runner.run(options?.view || false);
+      } else if (!projectPath) {
+        // No project specified and cwd is not a project - global config mode
+        if (options?.view) {
+          const currentConfig = await readProviderConfig();
+          if (currentConfig) {
+            console.log(`Provider: ${currentConfig.provider}`);
+          } else {
+            console.log('Provider: (not set)');
+          }
+        } else {
+          await runGlobalConfigMode();
+        }
+      } else {
+        // Project path specified but not valid
+        console.error(`No .megamemory/knowledge.db found at ${path.resolve(projectPath)}`);
+        console.error('Run /fuska-new-project first.');
+        process.exit(1);
+      }
     });
 }
