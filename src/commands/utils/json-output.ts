@@ -93,6 +93,10 @@ export function runAIProviderJson(options: JsonRunOptions): Promise<number> {
 
     child.on('close', (code) => {
       stopTimer();
+      // Ensure final newline so shell prompt doesn't overwrite last output line
+      if (!state.lastEndedWithNewline && state.hasOutputStarted) {
+        process.stdout.write('\n');
+      }
       resolve(state.hadError ? 1 : (code ?? 0));
     });
 
