@@ -102,37 +102,40 @@ class ConfigRunner {
     this.projectDir = options.projectDir;
   }
 
-  async run(viewOnly: boolean = false): Promise<void> {
-    await this.preflightCheck();
-    await this.loadConfig();
+  async run(viewOnly: boolean = false): Promise<boolean> {
+    if (!await this.preflightCheck()) {
+      return false;
+    }
+    if (!await this.loadConfig()) {
+      return false;
+    }
     if (viewOnly) {
       this.displayTreeView();
     } else {
       await this.interactiveLoop();
     }
+    return true;
   }
 
-  private async preflightCheck(): Promise<void> {
+  private async preflightCheck(): Promise<boolean> {
     const resolvedPath = path.resolve(this.projectDir);
     const dbPath = path.join(resolvedPath, '.megamemory', 'knowledge.db');
 
     if (!await fs.pathExists(dbPath)) {
-      console.error(`No .megamemory/knowledge.db found at ${resolvedPath}`);
-      console.error('Run /fuska-new-project first.');
-      process.exit(1);
+      return false;
     }
 
     const { KnowledgeDB } = await import('megamemory/dist/db.js');
     this.db = new KnowledgeDB(dbPath);
+    return true;
   }
 
-  private async loadConfig(): Promise<void> {
+  private async loadConfig(): Promise<boolean> {
     const nodes = this.db.getAllActiveNodes();
     const configNode = nodes.find((node: any) => node.name === 'config' && node.kind === 'config');
 
     if (!configNode) {
-      console.error('No Fuska project found. Run /fuska-new-project first.');
-      process.exit(1);
+      return false;
     }
 
     this.configConceptId = configNode.id;
@@ -141,13 +144,15 @@ class ConfigRunner {
       this.config = JSON.parse(configNode.summary);
     } catch (e) {
       console.error('Failed to parse config. Invalid JSON format.');
-      process.exit(1);
+      return false;
     }
 
     const projectNode = nodes.find((node: any) => node.kind === 'feature' && node.name !== 'config');
     if (projectNode) {
       this.projectSlug = projectNode.name;
     }
+    
+    return true;
   }
 
   private getEffectiveModels(): ProfilePreset & { overridden: string[] } {
@@ -873,7 +878,6 @@ export function configCommand(program: Command) {
     .action(async (projectPath?: string, options?: { view?: boolean }) => {
       const args = process.argv.slice(3);
 
-      // Handle set-provider subcommand
       if (args[0] === 'set-provider') {
         const provider = args[1];
 
@@ -893,35 +897,37 @@ export function configCommand(program: Command) {
         return;
       }
 
-      // Determine if we have a valid project
       const candidatePath = projectPath || process.cwd();
-      const hasProject = await isValidProject(candidatePath);
+      const hasMegamemory = await isValidProject(candidatePath);
 
-      if (hasProject) {
-        // Project-level config mode
+      if (hasMegamemory) {
         const configOptions: ConfigOptions = {
           projectDir: candidatePath
         };
 
         const runner = new ConfigRunner(configOptions);
-        await runner.run(options?.view || false);
-      } else if (!projectPath) {
-        // No project specified and cwd is not a project - global config mode
-        if (options?.view) {
-          const currentConfig = await readProviderConfig();
-          if (currentConfig) {
-            console.log(`Provider: ${currentConfig.provider}`);
-          } else {
-            console.log('Provider: (not set)');
-          }
-        } else {
-          await runGlobalConfigMode();
+        const success = await runner.run(options?.view || false);
+        
+        if (success) {
+          return;
         }
-      } else {
-        // Project path specified but not valid
+      }
+
+      if (projectPath && !hasMegamemory) {
         console.error(`No .megamemory/knowledge.db found at ${path.resolve(projectPath)}`);
         console.error('Run /fuska-new-project first.');
         process.exit(1);
+      }
+
+      if (options?.view) {
+        const currentConfig = await readProviderConfig();
+        if (currentConfig) {
+          console.log(`Provider: ${currentConfig.provider}`);
+        } else {
+          console.log('Provider: (not set)');
+        }
+      } else {
+        await runGlobalConfigMode();
       }
     });
 }
