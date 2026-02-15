@@ -911,6 +911,9 @@ export function configCommand(program: Command) {
         if (success) {
           return;
         }
+        
+        console.log(`No Fuska project config found in ${path.resolve(candidatePath)}`);
+        console.log('Falling back to global config mode.\n');
       }
 
       if (projectPath && !hasMegamemory) {
