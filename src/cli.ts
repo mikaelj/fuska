@@ -10,11 +10,12 @@ import { configCommand } from './commands/config';
 import { mapCommand } from './commands/map';
 import { worktreeAddCommand } from './commands/worktree-add';
 import { worktreeMergeCommand } from './commands/worktree-merge';
-import { projectsCommand } from './commands/projects';
+import { initiativesCommand } from './commands/initiatives';
 import { todoCommand } from './commands/todo';
 import { progressCommand } from './commands/progress';
 import { providerCommand } from './commands/provider';
 import { helpCommand } from './commands/help';
+import { infoCommand } from './commands/info';
 
 const program = new Command();
 
@@ -33,8 +34,9 @@ configCommand(program);
 mapCommand(program);
 worktreeAddCommand(program);
 worktreeMergeCommand(program);
-projectsCommand(program);
+initiativesCommand(program);
 todoCommand(program);
 progressCommand(program);
+infoCommand(program);
 
 program.parse(process.argv);
