@@ -180,6 +180,7 @@ Some operations make more sense outside of opencode. The `fuska` CLI handles:
 | `fuska export` | Export MegaMemory concepts to markdown for review |
 | `fuska projects` | List all projects in MegaMemory |
 | `fuska todo` | List completed and pending tasks |
+| `fuska info` | Display codebase and domain mappings in ASCII tree |
 | `fuska worktree-add` | Create worktree with MegaMemory context copy |
 | `fuska worktree-merge` | Merge worktree back, syncing MegaMemory + git |
 
@@ -213,6 +214,7 @@ fuska worktree-merge feature-x
   - [Milestones](#milestones)
   - [Todos](#todos)
   - [Worktree Management](#worktree-management)
+  - [Documentation](#documentation)
   - [Settings & Configuration](docs/configuration.md)
 - [Session Continuity](#session-continuity)
 - [Migration from .planning/](#migration-from-planning)
@@ -660,6 +662,48 @@ git worktree remove feature-auth
 git branch -d feature-auth
 ```
 
+### Documentation
+
+Create documentation as deliverables — architecture docs, implementation guides, design specs, migration plans — with quality assurance built in.
+
+```bash
+/fuska-doc "Authentication architecture" --type architecture --audience team
+```
+
+**What happens:**
+1. **Planner** creates document outline matching the type template
+2. **Writer** generates markdown file with frontmatter and proper structure
+3. Done — document saved to `docs/{slug}.md`
+
+**Standard mode adds quality assurance:**
+1. **Researcher** investigates domain, audience needs, existing docs
+2. **Checker** validates outline with expert panel (quality + audience + domain)
+3. **Writer** generates document
+4. **Reviewer** checks clarity, completeness, accuracy
+
+**Document types:**
+
+| Type | Sections | Best For |
+|------|----------|----------|
+| `architecture` | Problem, Options, Design, Risks | System design decisions |
+| `implementation` | Overview, Steps, Examples | How-to guides for devs |
+| `story-breakdown` | Epic, Stories, Criteria | Work planning |
+| `design` | Problem, Concepts, Mockups | Product/UX specs |
+| `migration` | Current, Target, Steps | System migrations |
+| `guide` | Purpose, Steps, Reference | Tutorials and references |
+
+**Example:**
+```bash
+# Quick mode (default) - just plan and write
+/fuska-doc "How to deploy" --type guide --audience team
+
+# Standard mode - full quality assurance
+/fuska-doc standard "Auth system" --type architecture --audience stakeholder
+
+# Custom output path
+/fuska-doc "API design" --type design --output docs/api/v1-design.md
+```
+
 ---
 
 ## Settings & Configuration
@@ -761,6 +805,7 @@ Key highlights:
 | `fuska export` | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
 | `fuska projects` | List all projects with ASCII tree showing milestones and phases | — |
 | `fuska todo` | List completed and pending tasks | — |
+| `fuska info` | Display codebase and domain mappings from MegaMemory | `--long` for detailed view |
 | `fuska worktree-add <name>` | Create git worktree with shared context | `--no-context`, `-f, --force` |
 | `fuska worktree-merge <name>` | Merge worktree (MM + git) (requires https://github.com/0xK3vin/MegaMemory/pull/5 to be merged first) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
 
@@ -819,6 +864,29 @@ Key highlights:
 | `/fuska-do` | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` — mode: direct/quick/fast/balanced/thorough/standard |
 | `/fuska-progress` | Detailed progress with phase status | — |
 | `/fuska-help` | Show all available commands | — |
+
+#### Documentation
+
+| Command | Description | Arguments |
+|---------|-------------|-----------|
+| `/fuska-doc` | Create documentation as deliverables | `[standard\|quick] <topic> [--type TYPE] [--audience AUD] [--depth DEPTH] [--output PATH]` |
+
+**Document types:** `architecture`, `implementation`, `story-breakdown`, `design`, `migration`, `guide`
+
+**Audiences:** `self`, `team`, `stakeholder`, `contractor`
+
+**Depths:** `brief` (3-4 sections), `standard` (5-7 sections), `comprehensive` (8-12 sections)
+
+**Modes:**
+- **Quick** (default): Plan → Write — fast document creation
+- **Standard**: Research → Plan → Check → Write → Review — full quality assurance
+
+**Examples:**
+```bash
+/fuska-doc "API authentication flow" --type implementation --audience team
+/fuska-doc standard "Migration plan" --type migration --audience stakeholder
+/fuska-doc "System architecture" --type architecture --output docs/arch.md
+```
 
 #### Git Integration
 
