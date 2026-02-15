@@ -8,7 +8,8 @@
     "fuska": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:claude",
+    "build:claude": "ts-node scripts/build-claude.ts",
     "prepare": "npm run build",
     "test": "jest",
     "watch": "tsc --watch"
@@ -22,7 +23,8 @@
   "license": "MIT",
   "files": [
     "dist/",
-    "opencode/"
+    "provider/opinkode/",
+    "provider/klod/"
   ],
   "dependencies": {
     "commander": "^12.0.0",

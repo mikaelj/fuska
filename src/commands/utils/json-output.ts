@@ -73,11 +73,12 @@ export function runAIProviderJson(options: JsonRunOptions): Promise<number> {
     };
 
     updateProgress();
-    const timer = setInterval(updateProgress, 1000);
+    let timer: ReturnType<typeof setInterval> | null = setInterval(updateProgress, 1000);
 
     const stopTimer = () => {
       if (timer) {
         clearInterval(timer);
+        timer = null;
         process.stdout.write(`\r${' '.repeat(lastProgressLen)}\r`);
       }
     };

@@ -209,6 +209,7 @@ fuska worktree-merge feature-x
   - [Adding/Removing Phases](#addingremoving-phases)
 - [Other Workflows](#other-workflows)
   - [Quick Fixes](#quick-fixes)
+  - [Debug Workflow](#debug-workflow)
   - [Milestones](#milestones)
   - [Todos](#todos)
   - [Worktree Management](#worktree-management)
@@ -219,6 +220,7 @@ fuska worktree-merge feature-x
 - [Command Reference](#command-reference)
   - [Git Integration](#git-integration)
 - [Glossary](#glossary)
+- [Development](docs/development.md)
 - [Acknowledgments & License](#acknowledgments--license)
 
 ---
@@ -227,33 +229,53 @@ fuska worktree-merge feature-x
 
 ```bash
 npm install -g fuska
-fuska install --opencode    # or --claude, or --both
+fuska install
 ```
 
-**Target options:**
-- `--opencode` — Install to `~/.config/opencode/` (direct copy)
-- `--claude` — Install to `~/.claude/` (with format transforms)
+On first run, Fuska will prompt you to select a provider:
+
+```
+? Select provider:
+❯ opencode (~/.config/opencode/)
+  claude (~/.claude/)
+  both
+```
+
+Your choice is saved to `~/.config/fuska/fuska.jsonc` for future installs.
+
+**Options:**
+- `--opencode` — Install to `~/.config/opencode/`
+- `--claude` — Install to `~/.claude/`
 - `--both` — Install to both locations
+- `--force` — Replace existing directories without prompting
+- `--dry-run` — Preview changes without making them
 
-Use `--force` to overwrite existing directories.
+### How It Works
 
-### Manual Installation
+Fuska creates **symlinks** from your config directories to the npm package:
 
-For OpenCode:
-```bash
-cp -r opencode/command/fuska/ ~/.config/opencode/command/fuska/
-cp -r opencode/agents/fuska/ ~/.config/opencode/agents/fuska/
-cp -r opencode/fuska/ ~/.config/opencode/fuska/
+```
+~/.config/opencode/fuska → /opt/homebrew/lib/node_modules/fuska/provider/opinkode/fuska
+~/.config/opencode/command/fuska → .../fuska/provider/opinkode/command/fuska
+~/.config/opencode/agents/fuska → .../fuska/provider/opinkode/agents/fuska
 ```
 
-For Claude Code:
-```bash
-# Commands become skills in ~/.claude/skills/fuska-*/SKILL.md
-# Agents become subagents in ~/.claude/agents/fuska/*.md
-# Resources go to ~/.claude/fuska/
-#
-# Note: skills must be directly in ~/.claude/skills/*/ (no subdirectory nesting)
+This means package updates are immediately available—no reinstall needed.
+
+### Migrating from Old Installations
+
+If you have existing Fuska files (from copy-based installs), `fuska install` will offer to replace them with symlinks:
+
 ```
+Old installation detected at ~/.config/opencode/fuska
+? Replace with symlink? (Y/n)
+```
+
+Use `--force` to skip the prompt.
+
+### Development Installation
+
+For contributing to Fuska, see [docs/development.md](docs/development.md).
 
 ---
 
@@ -463,6 +485,51 @@ For small, ad-hoc tasks that don't need full phase planning:
 **When to use:** bug fixes, small refactorings, one-off tasks, unplanned work outside phase structure.
 
 **Note:** `/fuska-do` creates standalone task concepts separate from your project's phase structure. For speed-focused work within a phase, use `/fuska-plan-phase <N> --mode quick` instead.
+
+### Debug Workflow
+
+Systematic debugging with automatic handoff to execution:
+
+```bash
+/fuska-debug [issue description]
+```
+
+**What happens:**
+1. **Gather symptoms** — Expected vs actual, error messages, reproduction steps
+2. **Investigate** — fuska-debugger agent uses scientific method: hypothesis → test → evidence
+3. **Root cause found** — Returns with complexity assessment (simple/moderate/complex)
+4. **Smart handoff** — Recommends mode based on complexity, hands off to `/fuska-do`
+
+#### Fix Complexity → Mode Recommendation
+
+| Complexity | Criteria | Recommended Mode |
+|------------|----------|------------------|
+| **simple** | One-line fix, obvious location, no edge cases | quick |
+| **moderate** | Multiple files OR needs defensive handling OR has edge cases | balanced |
+| **thorough** | New patterns, architectural changes, or unfamiliar domain | thorough |
+
+**Example:**
+```
+You: /fuska-debug login button doesn't work
+
+Fuska: [investigates...]
+       ## ROOT CAUSE FOUND
+       Root Cause: onClick handler returns early due to null check
+       Fix Complexity: simple
+       Files Involved: src/components/LoginButton.tsx
+       Suggested Fix: Add null coalescing on line 42
+       
+       Select mode to proceed with fix:
+       ❯ Quick (Recommended) — Based on simple fix complexity
+         Balanced
+         Thorough
+         Standard
+         Manual — I'll fix it myself
+```
+
+**Key insight:** The debugger already did the investigation, so `/fuska-do` skips the researcher step — findings pass directly to the planner. No redundant work.
+
+**When to use:** Production bugs, unexpected behavior, errors you can't immediately explain.
 
 ### Milestones
 
@@ -688,7 +755,7 @@ Key highlights:
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `fuska install` | Install commands and agents to AI tool config | `--opencode`, `--claude`, `--both`, `--force` |
+| `fuska install` | Install commands and agents via symlinks | `--opencode`, `--claude`, `--both`, `--force`, `--dry-run` |
 | `fuska migrate [dir]` | Migrate `.planning/` to MegaMemory | `--clean` to delete existing DB first |
 | `fuska config [dir]` | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view |
 | `fuska export` | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
@@ -785,7 +852,7 @@ Key highlights:
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `/fuska-debug` | Debug Fuska issues | — |
+| `/fuska-debug` | Systematic debugging with smart handoff to `/fuska-do` | `[issue description]` — auto-resumes active session if no description |
 | `/fuska-export-md` | Export to Markdown | — |
 
 ---
@@ -800,6 +867,7 @@ Key highlights:
 | **Concept** | A unit of knowledge in MegaMemory (e.g., a project, requirement, plan, or phase) |
 | **Deviation** | When execution diverges from the planned tasks — handled automatically by the executor |
 | **Executor** | The agent that implements plan tasks with atomic commits during the execution stage |
+| **Fix complexity** | Assessment of how difficult a bug fix will be (simple/moderate/complex), used to recommend execution mode for debug handoff |
 | **Goal-backward verification** | Checking whether code delivers what a phase *promised* (its goal and success criteria), not just whether tasks were completed |
 | **Integration checker** | An agent that verifies external integrations (APIs, services) work correctly |
 | **Milestone** | An optional grouping of phases into a release (e.g., "v1.0") |
