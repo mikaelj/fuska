@@ -46,11 +46,13 @@ interface CodebaseConcerns {
 class InfoRunner {
   private projectDir: string;
   private long: boolean;
+  private verbose: boolean;
   private db: any;
 
-  constructor(options: { projectDir: string; long: boolean }) {
+  constructor(options: { projectDir: string; long: boolean; verbose: boolean }) {
     this.projectDir = options.projectDir;
     this.long = options.long;
+    this.verbose = options.verbose;
   }
 
   async run(): Promise<void> {
@@ -310,14 +312,12 @@ class InfoRunner {
         }
       }
 
-      if (this.long && files.length > 0) {
+      const showFiles = this.long || (this.verbose && files.length <= 5);
+      if (showFiles && files.length > 0) {
         items.push('');
         items.push('Files:');
-        for (const file of files.slice(0, 10)) {
+        for (const file of files) {
           items.push(`  ${file}`);
-        }
-        if (files.length > 10) {
-          items.push(`  ... and ${files.length - 10} more`);
         }
       }
 
@@ -331,7 +331,7 @@ class InfoRunner {
       return;
     }
 
-    const maxItems = this.long ? 100 : 4;
+    const maxItems = this.long ? 100 : (this.verbose ? 10 : 4);
     const displayItems = items.slice(0, maxItems);
 
     for (let i = 0; i < displayItems.length; i++) {
@@ -367,11 +367,13 @@ export function infoCommand(program: Command) {
   program
     .command('info [project-path]')
     .description('Display codebase and domain mappings from MegaMemory')
-    .option('-l, --long', 'Show full details including file references')
-    .action(async (projectPath?: string, options?: { long?: boolean }) => {
+    .option('-l, --long', 'Show full details including all file references')
+    .option('-v, --verbose', 'Show file listings for domains with 5 or fewer files')
+    .action(async (projectPath?: string, options?: { long?: boolean; verbose?: boolean }) => {
       const runner = new InfoRunner({
         projectDir: projectPath || process.cwd(),
-        long: options?.long || false
+        long: options?.long || false,
+        verbose: options?.verbose || false
       });
       await runner.run();
     });
