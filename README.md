@@ -201,7 +201,7 @@ fuska worktree-merge feature-x
 ## Table of Contents
 
 - [Installation](#installation)
-- [What is a "Project"?](#what-is-a-project)
+- [What is an "Initiative"?](#what-is-an-initiative)
 - [Getting Started](#getting-started)
 - [Workflow Examples](docs/workflow-examples.md)
 - [Core Workflow: Phases](#core-workflow-phases)
@@ -281,23 +281,23 @@ For contributing to Fuska, see [docs/development.md](docs/development.md).
 
 ---
 
-## What is a "Project"?
+## What is an "Initiative"?
 
-**A project is an EFFORT or INITIATIVE — not a codebase or version.**
+**An initiative is an EFFORT — not a codebase or version.**
 
 It's: "I want to build X" where X = feature, system, or product.
 
 ### Examples
 
-| Scenario | What "Project" Means |
-|----------|---------------------|
+| Scenario | What "Initiative" Means |
+|----------|-------------------------|
 | New app from scratch | The entire app: "Todo App" |
 | Existing app, adding feature | Specific work: "Add push notifications" |
-| Multiple features in same codebase | Separate projects: "Push notifications", "Dark mode", "User profiles" |
+| Multiple features in same codebase | Separate initiatives: "Push notifications", "Dark mode", "User profiles" |
 
-### Can You Have Multiple Projects?
+### Can You Have Multiple Initiatives?
 
-**Yes!** You can have multiple projects in one codebase. Each has its own:
+**Yes!** You can have multiple initiatives in one codebase. Each has its own:
 - Name/slug (e.g., "push-notifications")
 - Requirements
 - Roadmap with phases
@@ -309,10 +309,10 @@ my-flutter-app/
 ├── lib/
 ├── .megamemory/
 │   └── knowledge.db          ← Single database contains:
-│       ├── project: push-notifications
-│       ├── project: dark-mode
-│       ├── project: user-profiles
-│       └── ... (more projects)
+│       ├── initiative: push-notifications
+│       ├── initiative: dark-mode
+│       ├── initiative: user-profiles
+│       └── ... (more initiatives)
 └── pubspec.yaml
 ```
 
@@ -328,13 +328,13 @@ If you have an existing codebase, map it first so Fuska understands the architec
 /fuska-map-codebase [area]
 ```
 
-### 2. Initialize a Project
+### 2. Initialize an Initiative
 
 ```bash
 /fuska-new-project ["description"]
 ```
 
-Walks through project setup:
+Walks through initiative setup:
 - Project name, core value, goals
 - Research domain ecosystem (optional)
 - Define requirements
@@ -367,7 +367,7 @@ See [Workflow Examples](docs/workflow-examples.md) for detailed usage scenarios 
 - Pausing and resuming across sessions
 - Handling verification failures
 - Quick fixes for production bugs
-- Managing multiple projects
+- Managing multiple initiatives
 - Working with milestones
 - Merging knowledge from git worktrees
 
@@ -384,7 +384,7 @@ A **phase** is a work bucket that groups related requirements into a deliverable
 - **Success criteria** — observable behaviors that must be true when the phase completes
 - **Plans** — detailed task lists with dependencies, generated during planning
 
-**Example phases for a "Push Notifications" project:**
+**Example phases for a "Push Notifications" initiative:**
 - Phase 1: Backend API (goal: "Users can send push notifications")
 - Phase 2: iOS implementation (goal: "iOS users receive notifications")
 - Phase 3: Android implementation (goal: "Android users receive notifications")
@@ -475,18 +475,18 @@ For small, ad-hoc tasks that don't need full phase planning:
 - Mode-aware agent chain: direct | quick | fast | balanced | thorough | standard
 - Auto-executes for quick/fast/standard; asks before executing for direct/balanced/thorough
 - Creates separate "quick task" concepts (not tied to the roadmap)
-- Uses project's configured workflow mode by default, or specify one explicitly
+- Uses initiative's configured workflow mode by default, or specify one explicitly
 
 **Examples:**
 ```bash
-/fuska-do fix the login redirect bug          # Uses project's default mode
+/fuska-do fix the login redirect bug          # Uses initiative's default mode
 /fuska-do quick fix typo in README            # Quick mode: plan + auto-execute
 /fuska-do thorough add payment integration    # Thorough: research + plan + check + ask
 ```
 
 **When to use:** bug fixes, small refactorings, one-off tasks, unplanned work outside phase structure.
 
-**Note:** `/fuska-do` creates standalone task concepts separate from your project's phase structure. For speed-focused work within a phase, use `/fuska-plan-phase <N> --mode quick` instead.
+**Note:** `/fuska-do` creates standalone task concepts separate from your initiative's phase structure. For speed-focused work within a phase, use `/fuska-plan-phase <N> --mode quick` instead.
 
 ### Debug Workflow
 
@@ -751,7 +751,8 @@ Task position is already tracked — pause-work is purely for capturing your thi
 ### Checking Progress
 
 ```bash
-/fuska-progress       # Detailed progress with phase status
+fuska progress        # Detailed progress with phase status
+fuska progress --json # Machine-readable output for scripts
 ```
 
 ---
@@ -803,21 +804,22 @@ Key highlights:
 | `fuska migrate [dir]` | Migrate `.planning/` to MegaMemory | `--clean` to delete existing DB first |
 | `fuska config [dir]` | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view |
 | `fuska export` | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
-| `fuska projects` | List all projects with ASCII tree showing milestones and phases | — |
+| `fuska projects` | List all initiatives with ASCII tree showing milestones and phases | — |
 | `fuska todo` | List completed and pending tasks | — |
-| `fuska info` | Display codebase and domain mappings from MegaMemory | `--long` for detailed view |
+| `fuska info` | Display codebase and domain mappings from MegaMemory | `--long` for all files, `--verbose` for small domains |
+| `fuska progress` | Check project progress and show next action | `--json` for machine-readable output |
 | `fuska worktree-add <name>` | Create git worktree with shared context | `--no-context`, `-f, --force` |
 | `fuska worktree-merge <name>` | Merge worktree (MM + git) (requires https://github.com/0xK3vin/MegaMemory/pull/5 to be merged first) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
 
 ### Slash Commands
 
-#### Project Setup
+#### Initiative Setup
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `/fuska-new-project` | Initialize new Fuska project | `["description"]` — optional milestone name |
+| `/fuska-new-project` | Initialize new Fuska initiative | `["description"]` — optional milestone name |
 | `/fuska-map-codebase` | Map existing codebase structure | `[area]` — optional area to focus on |
-| `/fuska-import` | Import existing project | — |
+| `/fuska-import` | Import existing initiative | — |
 
 #### Phase Workflow
 
@@ -862,7 +864,6 @@ Key highlights:
 | Command | Description | Arguments |
 |---------|-------------|-----------|
 | `/fuska-do` | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` — mode: direct/quick/fast/balanced/thorough/standard |
-| `/fuska-progress` | Detailed progress with phase status | — |
 | `/fuska-help` | Show all available commands | — |
 
 #### Documentation
@@ -932,7 +933,7 @@ Key highlights:
 | **Atomic commit** | A small, self-contained code change that implements a single task from the plan |
 | **Checkpoint** | A structured pause point during execution where user verification is required (e.g., visual review, decision input). **Not the same as pause-work** — task progress is tracked continuously. |
 | **Checker panel** | A role-based plan verification system with three specialized checkers (base, contextual, expert) that verify plans from different perspectives |
-| **Concept** | A unit of knowledge in MegaMemory (e.g., a project, requirement, plan, or phase) |
+| **Concept** | A unit of knowledge in MegaMemory (e.g., an initiative, requirement, plan, or phase) |
 | **Deviation** | When execution diverges from the planned tasks — handled automatically by the executor |
 | **Executor** | The agent that implements plan tasks with atomic commits during the execution stage |
 | **Fix complexity** | Assessment of how difficult a bug fix will be (simple/moderate/complex), used to recommend execution mode for debug handoff |
@@ -947,7 +948,7 @@ Key highlights:
 | **Project classification** | Auto-detected project type (web-api, embedded-constrained, cli-tool, etc.) used to select the contextual checker role |
 | **Requirement** | A specific feature or behavior that needs to be built, assigned to a phase |
 | **Researcher** | An agent that investigates technologies, patterns, and prior art during the planning stage |
-| **Roadmap** | The overall structure of phases and milestones for a project, created during `/fuska-new-project` |
+| **Roadmap** | The overall structure of phases and milestones for an initiative, created during `/fuska-new-project` |
 | **Stage** | A category of work in the Fuska workflow: planning, execution, or verification — each uses different agents |
 | **Success criteria** | Observable behaviors that must be true when a phase completes — used for goal-backward verification |
 | **Verifier** | An agent that performs goal-backward verification after phase execution |
