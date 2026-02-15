@@ -269,6 +269,17 @@ class InfoRunner {
     }
   }
 
+  private parseFileRefs(fileRefs: string[] | string | null | undefined): string[] {
+    if (!fileRefs) return [];
+    if (Array.isArray(fileRefs)) return fileRefs;
+    try {
+      const parsed = JSON.parse(fileRefs);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
   private renderDomainsSection(domains: InfoNode[]): void {
     console.log('Domains');
     console.log('');
@@ -280,13 +291,18 @@ class InfoRunner {
       const childPrefix = isLast ? '   ' : '│  ';
 
       const displayName = this.formatDomainName(domain.name);
-      console.log(`${connector} ${displayName}`);
+      const files = this.parseFileRefs(domain.file_refs);
+      console.log(`${connector} ${displayName} (${files.length} files)`);
 
       const data = this.extractJson(domain.summary);
       const items: string[] = [];
 
-      if (data.description) {
-        items.push(this.truncate(data.description as string, 60));
+      let description = data.description as string | undefined;
+      if (!description && domain.summary) {
+        description = domain.summary.split('\n')[0];
+      }
+      if (description) {
+        items.push(this.truncate(description, 70));
       }
       if (data.responsibilities && Array.isArray(data.responsibilities)) {
         for (const resp of (data.responsibilities as string[]).slice(0, this.long ? 10 : 3)) {
@@ -294,9 +310,14 @@ class InfoRunner {
         }
       }
 
-      if (this.long && domain.file_refs && domain.file_refs.length > 0) {
-        for (const file of domain.file_refs.slice(0, 5)) {
-          items.push(file);
+      if (this.long && files.length > 0) {
+        items.push('');
+        items.push('Files:');
+        for (const file of files.slice(0, 10)) {
+          items.push(`  ${file}`);
+        }
+        if (files.length > 10) {
+          items.push(`  ... and ${files.length - 10} more`);
         }
       }
 
