@@ -13,6 +13,7 @@ import { worktreeMergeCommand } from './commands/worktree-merge';
 import { projectsCommand } from './commands/projects';
 import { todoCommand } from './commands/todo';
 import { progressCommand } from './commands/progress';
+import { providerCommand } from './commands/provider';
 import { helpCommand } from './commands/help';
 
 const program = new Command();
@@ -25,6 +26,7 @@ program
 migrateCommand(program);
 exportCommand(program);
 installCommand(program);
+providerCommand(program);
 helpCommand(program);
 gitMessageCommand(program);
 configCommand(program);

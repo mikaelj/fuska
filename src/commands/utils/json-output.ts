@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import { markdownToAnsi } from './markdown-to-ansi';
+import { getOrPromptProvider } from './provider-config';
 
 interface JsonRunOptions {
   command: string;
@@ -23,7 +24,8 @@ function formatElapsed(ms: number): string {
 }
 
 export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const provider = await getOrPromptProvider();
     const cmdArgs = ['run', '--format', 'json', options.command, ...(options.args || [])];
     const label = options.progressLabel || 'Working';
     const state: StreamState = { hasOutputStarted: false, hadError: false, lastEndedWithNewline: true };
@@ -49,7 +51,7 @@ export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
       }
     };
     
-    const child = spawn('opencode', cmdArgs, {
+    const child = spawn(provider, cmdArgs, {
       env: process.env,
       stdio: ['inherit', 'pipe', 'inherit']
     });
