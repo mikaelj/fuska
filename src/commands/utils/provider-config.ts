@@ -6,8 +6,10 @@ const HOME = process.env.HOME || '';
 const FUSKA_CONFIG_DIR = path.join(HOME, '.config/fuska');
 const FUSKA_CONFIG_FILE = path.join(FUSKA_CONFIG_DIR, 'fuska.jsonc');
 
+export type ProviderType = 'opencode' | 'claude';
+
 export interface ProviderConfig {
-  provider: 'opencode' | 'claude';
+  provider: ProviderType;
 }
 
 /**

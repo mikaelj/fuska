@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 import { markdownToAnsi } from './markdown-to-ansi';
-import { getOrPromptProvider } from './provider-config';
+import { getOrPromptProvider, ProviderType } from './provider-config';
 
 interface JsonRunOptions {
   command: string;
@@ -23,16 +23,47 @@ function formatElapsed(ms: number): string {
   return `${min}m ${sec}s`;
 }
 
+/**
+ * Build command-line arguments for the specified provider.
+ *
+ * OpenCode: `opencode run --format json <command>`
+ * Claude: `claude --print --output-format stream-json <prompt>`
+ */
+function buildProviderArgs(provider: ProviderType, command: string, args?: string[]): string[] {
+  if (provider === 'opencode') {
+    return ['run', '--format', 'json', command, ...(args || [])];
+  } else {
+    // Claude CLI uses --print for non-interactive mode and --output-format stream-json for streaming
+    // The command is passed as the prompt argument
+    const prompt = args && args.length > 0 ? `${command} ${args.join(' ')}` : command;
+    return ['--print', '--output-format', 'stream-json', prompt];
+  }
+}
+
+/**
+ * Run an AI provider command with JSON output format.
+ * Automatically detects the provider and uses the appropriate command-line syntax.
+ *
+ * @deprecated Use runAIProviderJson for clarity. This alias is kept for backward compatibility.
+ */
 export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
+  return runAIProviderJson(options);
+}
+
+/**
+ * Run an AI provider command with JSON streaming output.
+ * Supports both OpenCode and Claude CLI with provider-specific argument handling.
+ */
+export function runAIProviderJson(options: JsonRunOptions): Promise<number> {
   return new Promise(async (resolve, reject) => {
     const provider = await getOrPromptProvider();
-    const cmdArgs = ['run', '--format', 'json', options.command, ...(options.args || [])];
+    const cmdArgs = buildProviderArgs(provider, options.command, options.args);
     const label = options.progressLabel || 'Working';
     const state: StreamState = { hasOutputStarted: false, hadError: false, lastEndedWithNewline: true };
-    
+
     const startTime = Date.now();
     let lastProgressLen = 0;
-    
+
     const updateProgress = () => {
       const elapsed = Date.now() - startTime;
       const text = `${label}... ${formatElapsed(elapsed)}`;
@@ -40,24 +71,24 @@ export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
       process.stdout.write(`\r${text}${padding}`);
       lastProgressLen = text.length;
     };
-    
+
     updateProgress();
     const timer = setInterval(updateProgress, 1000);
-    
+
     const stopTimer = () => {
       if (timer) {
         clearInterval(timer);
         process.stdout.write(`\r${' '.repeat(lastProgressLen)}\r`);
       }
     };
-    
+
     const child = spawn(provider, cmdArgs, {
       env: process.env,
       stdio: ['inherit', 'pipe', 'inherit']
     });
 
     child.stdout.on('data', (data) => {
-      streamTextEvents(data.toString(), state, stopTimer);
+      streamTextEvents(data.toString(), state, stopTimer, provider);
     });
 
     child.on('close', (code) => {
@@ -72,35 +103,81 @@ export function runOpenCodeJson(options: JsonRunOptions): Promise<number> {
   });
 }
 
-function streamTextEvents(chunk: string, state: StreamState, stopTimer: () => void): void {
+function streamTextEvents(chunk: string, state: StreamState, stopTimer: () => void, provider: ProviderType): void {
   const lines = chunk.split('\n').filter(l => l.trim());
-  
+
   for (const line of lines) {
     try {
       const event = JSON.parse(line);
-      
-      if (event.type === 'text' && event.part?.text) {
-        if (!state.hasOutputStarted) {
-          stopTimer();
-          process.stdout.write('\n');
-          state.hasOutputStarted = true;
+
+      // Handle both OpenCode and Claude JSON output formats
+      if (provider === 'opencode') {
+        // OpenCode format: { type: 'text', part: { text: '...' } }
+        if (event.type === 'text' && event.part?.text) {
+          if (!state.hasOutputStarted) {
+            stopTimer();
+            process.stdout.write('\n');
+            state.hasOutputStarted = true;
+          }
+          if (!state.lastEndedWithNewline) {
+            process.stdout.write('\n');
+          }
+          const text = markdownToAnsi(event.part.text);
+          process.stdout.write(text);
+          state.lastEndedWithNewline = text.endsWith('\n');
+        } else if (event.type === 'error') {
+          state.hadError = true;
+          if (!state.hasOutputStarted) {
+            stopTimer();
+            process.stdout.write('\n');
+            state.hasOutputStarted = true;
+          }
+          process.stderr.write(event.message || event.part?.text || 'Unknown error\n');
         }
-        // Add newline separator if previous output didn't end with one
-        if (!state.lastEndedWithNewline) {
-          process.stdout.write('\n');
+      } else {
+        // Claude format: { type: 'content_block_delta', delta: { type: 'text_delta', text: '...' } }
+        // Or: { type: 'result', result: '...' } for final result
+        // Or: { type: 'assistant', message: { content: [...] } }
+        let text: string | null = null;
+
+        if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta?.text) {
+          text = event.delta.text;
+        } else if (event.type === 'result' && typeof event.result === 'string') {
+          text = event.result;
+        } else if (event.type === 'text' && event.text) {
+          text = event.text;
+        } else if (event.type === 'message' && event.content) {
+          // Handle message with content array
+          if (Array.isArray(event.content)) {
+            const textBlock = event.content.find((b: { type?: string; text?: string }) => b.type === 'text');
+            if (textBlock?.text) text = textBlock.text;
+          } else if (typeof event.content === 'string') {
+            text = event.content;
+          }
         }
-        const text = markdownToAnsi(event.part.text);
-        process.stdout.write(text);
-        // Track whether this output ends with a newline
-        state.lastEndedWithNewline = text.endsWith('\n');
-      } else if (event.type === 'error') {
-        state.hadError = true;
-        if (!state.hasOutputStarted) {
-          stopTimer();
-          process.stdout.write('\n');
-          state.hasOutputStarted = true;
+
+        if (text) {
+          if (!state.hasOutputStarted) {
+            stopTimer();
+            process.stdout.write('\n');
+            state.hasOutputStarted = true;
+          }
+          if (!state.lastEndedWithNewline) {
+            process.stdout.write('\n');
+          }
+          const formatted = markdownToAnsi(text);
+          process.stdout.write(formatted);
+          state.lastEndedWithNewline = formatted.endsWith('\n');
+        } else if (event.type === 'error' || event.error) {
+          state.hadError = true;
+          if (!state.hasOutputStarted) {
+            stopTimer();
+            process.stdout.write('\n');
+            state.hasOutputStarted = true;
+          }
+          const errorMsg = event.error?.message || event.message || 'Unknown error';
+          process.stderr.write(`${errorMsg}\n`);
         }
-        process.stderr.write(event.message || event.part?.text || 'Unknown error\n');
       }
     } catch {
       // Not valid JSON, skip
