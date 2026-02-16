@@ -63,7 +63,38 @@ megamemory_understand(query="debug active session", top_k=10)
 
 Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
 
-## 0. Resolve Model Profile
+## 0.5. Help Check
+
+If `$ARGUMENTS` starts with "help" (case-insensitive):
+
+```
+const input = "$ARGUMENTS" || ""
+if (input.trim().toLowerCase().startsWith("help")) {
+  Display:
+  Help for /fuska-debug:
+
+  Debug issues using scientific method with persistent state.
+
+  DEBUG FLOW:
+    1. Gather symptoms → expected, actual, errors, reproduction, timeline
+    2. Investigate → spawn fuska-debugger agent to find root cause
+    3. Root cause → identify the underlying issue
+    4. Select mode → choose fix complexity: quick|fast|balanced|thorough|standard|manual
+    5. Fix → spawn fuska-do with debug context to apply fix
+
+  Modes (based on fix complexity):
+    quick     - Simple fixes, trusted patterns
+    fast      - Plan validation, familiar territory
+    balanced  - Research + execution, moderate uncertainty
+    thorough  - Research + validation, new territory
+    standard  - Full chain + verification, critical systems
+    manual    - Display findings, I'll fix it myself
+
+  -> Stop
+}
+```
+
+## 0.6. Resolve Model Profile
 
 Read model profile for agent spawning:
 

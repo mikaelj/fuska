@@ -85,11 +85,41 @@ If tool call fails:
 → Display: "Check that MegaMemory server is running"
 → Stop
 
-**Step 0.2: Detect project context**
+**Step 0.2: Help check**
+
+If `$ARGUMENTS` first word is "help" (case-insensitive):
 
 ```
-let HAS_PROJECT = false
-let projectSlug = null
+const input = "$ARGUMENTS".trim()
+const firstWord = input.split(/\s+/)[0]?.toLowerCase()
+
+if (firstWord === "help") {
+  Display:
+  Help for /fuska-doc:
+
+  Create documents as deliverables with research, planning, and review.
+
+  Usage: /fuska-doc [mode] <topic> [--type TYPE] [--audience AUD] [--depth DEPTH] [--output PATH]
+
+  Modes:
+    quick    - Plan → Write only (default)
+    standard - Research → Plan → Check → Write → Review
+
+  Flags:
+    --type      Document type: architecture, implementation, story-breakdown, design, migration, guide
+    --audience  Target audience: self, team, stakeholder, contractor
+    --depth     Content depth: brief (3-4 sections), standard (5-7), comprehensive (8-12)
+    --output    Output file path (default: docs/{slug}.md)
+
+  → Stop
+}
+```
+
+**Step 0.3: Detect project context**
+
+```
+let HAS_INITIATIVE = false
+let initiativeSlug = null
 
 if (roots.length > 0) {
   // Look for project concept matching current directory
@@ -100,19 +130,19 @@ if (roots.length > 0) {
   )
   
   if (project) {
-    HAS_PROJECT = true
-    projectSlug = project.name
+    HAS_INITIATIVE = true
+    initiativeSlug = project.name
   }
 }
 
-if (!HAS_PROJECT) {
+if (!HAS_INITIATIVE) {
   STANDALONE_MODE = true
 }
 ```
 
 **Step 0.3: Resolve model profile (if project exists)**
 
-If HAS_PROJECT:
+If HAS_INITIATIVE:
 ```
 megamemory_understand(query="config", top_k=5)
 
@@ -313,8 +343,8 @@ const docPlanData = {
   outline: [],
   research_concept: null,
   output_file: OUTPUT_FILE,
-  has_project: HAS_PROJECT,
-  project_slug: projectSlug,
+  has_initiative: HAS_INITIATIVE,
+  initiative_slug: initiativeSlug,
   created_at: new Date().toISOString(),
   completed_at: null
 }
@@ -323,8 +353,8 @@ megamemory_create_concept({
   name: `doc-${NUMBER}-${SLUG}`,
   kind: "feature",
   summary: JSON.stringify(docPlanData),
-  parent_id: HAS_PROJECT ? projectSlug : null,
-  edges: HAS_PROJECT ? [{ to: projectSlug, relation: "part_of" }] : []
+  parent_id: HAS_INITIATIVE ? initiativeSlug : null,
+  edges: HAS_INITIATIVE ? [{ to: initiativeSlug, relation: "part_of" }] : []
 })
 
 const docPlanName = `doc-${NUMBER}-${SLUG}`
@@ -359,7 +389,7 @@ Research domain knowledge for document: ${TOPIC}
 Document type: ${TYPE}
 Target audience: ${AUDIENCE}
 Depth: ${DEPTH}
-Project context: ${HAS_PROJECT ? projectSlug : "standalone mode"}
+Project context: ${HAS_INITIATIVE ? initiativeSlug : "standalone mode"}
 
 Doc plan concept: doc-${NUMBER}-${SLUG}
 </context>
@@ -867,9 +897,9 @@ After `megamemory:list_roots()`:
 
 | Aspect | With Project | Standalone |
 |--------|-------------|------------|
-| parent_id | projectSlug | null |
-| has_project | true | false |
-| project_slug | projectSlug | null |
+| parent_id | initiativeSlug | null |
+| has_initiative | true | false |
+| initiative_slug | initiativeSlug | null |
 | Research scope | Project + domain | Public domain only |
 | Config lookup | Query config concept | Use defaults |
 

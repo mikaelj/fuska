@@ -68,6 +68,34 @@ Follow the MegaMemory Project Exists Preflight Check from @preflight-check-proje
 
 ---
 
+## 0.5. Help Check
+
+If `$ARGUMENTS` starts with "help" (case-insensitive):
+
+```
+const input = "$ARGUMENTS" || ""
+if (input.trim().toLowerCase().startsWith("help")) {
+  Display:
+  Help for /fuska-do:
+
+  Execute unplanned tasks with mode-aware agent chain.
+
+  Usage: /fuska-do [mode] [description]
+
+  Modes:
+    direct    - Planner → Executor | Ask first | You know exactly what to do
+    quick     - Planner → Executor | Yes | Small tasks, trusted patterns
+    fast      - + Plan Checker | Yes | Familiar tech, validated plans
+    balanced  - + Researcher | Ask first | Some uncertainty, need guidance
+    thorough  - Research + Check | Ask first | New domains, high stakes
+    standard  - Full chain + Verifier | Yes | Critical systems, production code
+
+  -> Stop
+}
+```
+
+---
+
 ## 1. Load All Context (Single Pass)
 
 Query MegaMemory for all needed concepts upfront. All subsequent steps use these cached results — NO additional queries for data already loaded here.
@@ -79,7 +107,7 @@ megamemory_understand(query="config", top_k=5)
 ```
 
 If response.matches.length === 0:
--> Display: "No project found. Run `/fuska-new-project` first."
+-> Display: "No initiative found. Run `/fuska-new-initiative` first."
 -> If DESCRIPTION available from arguments, add: "When prompted, describe: {DESCRIPTION}"
 -> Stop
 
@@ -109,7 +137,7 @@ megamemory_understand(query="state", top_k=5)
 ```
 
 If response.matches.length === 0:
--> Display: "State concept not found. Run `/fuska-new-project` to initialize project."
+-> Display: "State concept not found. Run `/fuska-new-initiative` to initialize initiative."
 -> Stop
 
 Extract:
@@ -297,8 +325,7 @@ const planData = {
   status: "planning",
   created_at: new Date().toISOString(),
   project_context: {
-    current_phase: stateData?.current_phase,
-    last_activity: stateData?.last_activity
+    current_phase: stateData?.current_phase
   },
   tasks: [],
   wave: 1,
@@ -354,7 +381,13 @@ Display: `Researching...`
 **Step 5.1: Build researcher prompt (adapted for quick tasks)**
 
 ```
-const researcherPrompt = `<objective>
+const researcherPrompt = `<critical_constraints>
+Return: ## RESEARCH COMPLETE with key findings
+Create concept with name="task-${nextNum}-${slug}-research", kind="pattern"
+Keep research focused and concise — this is a standalone task, not a full phase
+</critical_constraints>
+
+<objective>
 Research how to implement: ${DESCRIPTION}
 
 Answer: "What do I need to know to PLAN this task well?"
@@ -362,7 +395,6 @@ This is a standalone task, not a full phase. Focus on:
 - Relevant patterns in the existing codebase
 - Key libraries or APIs needed
 - Common pitfalls for this type of task
-Keep research focused and concise.
 </objective>
 
 <context>
@@ -379,7 +411,6 @@ megamemory_create_concept(
   why="Research for task ${nextNum}",
   parent_id=null
 )
-Return: ## RESEARCH COMPLETE with key findings
 </output>`
 ```
 
@@ -421,7 +452,15 @@ Display: `Planning...`
 **Step 6.1: Build planner prompt**
 
 ```
-const plannerPrompt = `<planning_context>
+const plannerPrompt = `<critical_constraints>
+Create a SINGLE plan with 1-3 focused tasks
+Quick tasks MUST be atomic and self-contained
+Target ~30% context usage (simple, focused)
+Each task needs: files, action, verify, done
+Return: ## PLANNING COMPLETE with task list
+</critical_constraints>
+
+<planning_context>
 
 **Mode:** ${MODE}
 **Task Number:** ${nextNum}
@@ -448,17 +487,9 @@ Research is complete (debug investigation done). Use these findings directly - n
 
 </planning_context>
 
-<constraints>
-- Create a SINGLE plan with 1-3 focused tasks
-- Quick tasks should be atomic and self-contained
-- Target ~30% context usage (simple, focused)
-- Each task needs: files, action, verify, done
-</constraints>
-
 <output>
 Update plan concept: ${planConceptId}
 Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlanData)})
-Return: ## PLANNING COMPLETE with task list
 </output>`
 ```
 
@@ -501,7 +532,14 @@ const planData = JSON.parse(response.matches[0].summary)
 **Step 7.2: Build checker prompt (simplified for standalone tasks)**
 
 ```
-const checkerPrompt = `<verification_context>
+const checkerPrompt = `<critical_constraints>
+Return one of:
+- ## VERIFICATION PASSED -- plan is ready
+- ## ISSUES FOUND -- structured issue list with fix hints
+Skip phase-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a standalone task, not a phase plan.
+</critical_constraints>
+
+<verification_context>
 
 **Task:** ${DESCRIPTION}
 **Plan Data:** ${JSON.stringify(planData, null, 2)}
@@ -510,15 +548,7 @@ Verify this task plan. Focus on:
 1. Task completeness: Does every task have files, action, verify, done?
 2. Scope sanity: Are there 1-3 tasks? Would they complete in ~30% context?
 
-Skip phase-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a standalone task, not a phase plan.
-
-</verification_context>
-
-<expected_output>
-Return one of:
-- ## VERIFICATION PASSED -- plan is ready
-- ## ISSUES FOUND -- structured issue list with fix hints
-</expected_output>`
+</verification_context>`
 ```
 
 **Step 7.3: Spawn checker**
@@ -613,11 +643,15 @@ const planData = JSON.parse(response.matches[0].summary)
  TASK ${nextNum}: ${DESCRIPTION}
  Mode: ${MODE}
 ───────────────────────────────────────────────────
- Tasks (${planData.tasks.length}):
-${planData.tasks.map((t, i) => `  ${i+1}. ${t.action || t.description || t}`).join('\n')}
-───────────────────────────────────────────────────
  Files: ${planData.files_modified?.join(', ') || 'TBD'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+───────────────────────────────────────────────────
+
+${planData.tasks.map((t, i) => `TASK ${i+1}: ${t.name || t.action || t.description || 'Task ' + (i+1)}
+   Files: ${Array.isArray(t.files) ? t.files.join(', ') : (t.files || 'TBD')}
+   Action: ${t.action || t.description || 'N/A'}
+   Verify: ${t.verify || 'N/A'}
+   Done: ${t.done || 'N/A'}
+`).join('\n')}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 **Step 8.3: Branch by mode**
@@ -694,18 +728,20 @@ const planData = JSON.parse(response.matches[0].summary)
 **Step 9.2: Build executor prompt**
 
 ```
-const executorPrompt = `Execute task ${nextNum}: ${DESCRIPTION}
+const executorPrompt = `<critical_constraints>
+Execute all tasks in the plan
+Commit each task atomically
+Create summary concept named exactly: task-${nextNum}-${slug}-summary (kind: "config")
+Do NOT update roadmap concept (standalone tasks are separate from phases)
+Return: ## EXECUTION COMPLETE
+Include: Commit: <hash>
+</critical_constraints>
+
+Execute task ${nextNum}: ${DESCRIPTION}
 
 Plan concept: task-${nextNum}-${slug}
 Plan data: ${JSON.stringify(planData, null, 2)}
 Project state: ${JSON.stringify(stateData, null, 2)}
-
-<constraints>
-- Execute all tasks in the plan
-- Commit each task atomically
-- Create summary concept named exactly: task-${nextNum}-${slug}-summary (kind: "config")
-- Do NOT update roadmap concept (standalone tasks are separate from phases)
-</constraints>
 
 <output>
 Create summary concept:
@@ -715,8 +751,6 @@ megamemory_create_concept(
   summary=JSON.stringify(summaryData),
   why="Task ${nextNum} execution summary"
 )
-Return: ## EXECUTION COMPLETE
-Include: Commit: <hash>
 </output>`
 ```
 
@@ -755,7 +789,12 @@ Display: `Verifying...`
 **Step 10.1: Build verifier prompt (adapted for quick task)**
 
 ```
-const verifierPrompt = `<verification_context>
+const verifierPrompt = `<critical_constraints>
+Return: ## Verification Complete with status: passed | gaps_found
+Create concept named: task-${nextNum}-${slug}-verification
+</critical_constraints>
+
+<verification_context>
 Verify task ${nextNum}: ${DESCRIPTION}
 
 **Plan concept:** task-${nextNum}-${slug}
@@ -774,7 +813,6 @@ megamemory_create_concept(
   why="Verification for task ${nextNum}"
 )
 
-Return: ## Verification Complete with status: passed | gaps_found
 </verification_context>`
 ```
 
@@ -810,7 +848,6 @@ stateData.tasks_completed.push({
   plan_concept: `task-${nextNum}-${slug}`,
   mode: MODE
 })
-stateData.last_activity = `Task ${nextNum} completed: ${DESCRIPTION}`
 
 megamemory_update_concept(
   id=stateId,
