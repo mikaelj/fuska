@@ -11,6 +11,7 @@ tools:
   - bash
 
   - question
+  - task
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
@@ -107,7 +108,7 @@ megamemory_understand(query="config", top_k=5)
 ```
 
 If response.matches.length === 0:
--> Display: "No initiative found. Run `/fuska-new-initiative` first."
+-> Display: "No initiative found. Run `fuska init` first."
 -> If DESCRIPTION available from arguments, add: "When prompted, describe: {DESCRIPTION}"
 -> Stop
 
@@ -137,7 +138,7 @@ megamemory_understand(query="state", top_k=5)
 ```
 
 If response.matches.length === 0:
--> Display: "State concept not found. Run `/fuska-new-initiative` to initialize initiative."
+-> Display: "State concept not found. Run `fuska init` to initialize initiative."
 -> Stop
 
 Extract:
@@ -730,11 +731,10 @@ const planData = JSON.parse(response.matches[0].summary)
 ```
 const executorPrompt = `<critical_constraints>
 Execute all tasks in the plan
-Commit each task atomically
+Do NOT commit (commit happens at end of fuska-do, not during execution)
 Create summary concept named exactly: task-${nextNum}-${slug}-summary (kind: "config")
 Do NOT update roadmap concept (standalone tasks are separate from phases)
 Return: ## EXECUTION COMPLETE
-Include: Commit: <hash>
 </critical_constraints>
 
 Execute task ${nextNum}: ${DESCRIPTION}
@@ -768,15 +768,67 @@ Task(
 **Step 9.4: Handle executor return**
 
 If `## EXECUTION COMPLETE`:
-```
-const commitMatch = executorOutput.match(/Commit:\s*([a-f0-9]+)/i)
-const commitHash = commitMatch ? commitMatch[1] : "unknown"
-```
--> Continue to Step 10
+-> Continue to Step 9.5
 
 If error:
 -> Display: "Execution failed"
 -> Stop
+
+---
+
+## 9.5. Generate Commit Message
+
+**Step 9.5.1: Get staged changes**
+
+```
+bash("git diff HEAD", description="Get all changes for commit message")
+const diffOutput = result
+```
+
+If diff is empty:
+-> Display: "No changes detected. Skipping commit."
+-> Set `generatedCommitMessage = null`
+-> Skip to Step 10
+
+**Step 9.5.2: Spawn git-message agent**
+
+```
+const gitMessagePrompt = `<task_context>
+**Task Number:** task-${nextNum}
+**Description:** ${DESCRIPTION}
+**Mode:** ${MODE}
+**Plan:** ${JSON.stringify(planData, null, 2)}
+</task_context>
+
+<diff>
+${diffOutput}
+</diff>
+
+<trailer_format>
+Trailer: task-${nextNum}
+</trailer_format>
+
+Generate a commit message following Fuska format:
+- type(scope): description
+- 2-4 bullet points
+- Trailer line: task-${nextNum}
+
+Return ONLY the commit message, nothing else.`
+
+Task(
+  prompt=gitMessagePrompt,
+  subagent_type="fuska-git-message",
+  description="Generate commit message"
+)
+```
+
+**Step 9.5.3: Store generated message**
+
+```
+generatedCommitMessage = agentOutput.trim()
+```
+
+-> Continue to Step 10
 
 ---
 
@@ -838,6 +890,102 @@ If "gaps_found" -> display gaps, continue to Step 11 (don't block completion for
 
 Skip if user chose "Save and exit" at Step 8 and no execution happened.
 
+```
+stateData.tasks_completed = stateData.tasks_completed || []
+stateData.tasks_completed.push({
+  number: nextNum,
+  description: DESCRIPTION,
+  date: new Date().toISOString().split('T')[0],
+  commit: finalCommitHash || null,
+  plan_concept: `task-${nextNum}-${slug}`,
+  mode: MODE
+})
+
+megamemory_update_concept(
+  id=stateId,
+  changes={ summary: JSON.stringify(stateData) }
+)
+```
+
+---
+
+## 11.5. Commit Confirmation
+
+Skip if `generatedCommitMessage` is null (no changes to commit).
+
+**Step 11.5.1: Display generated commit message**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ Generated Commit Message:
+───────────────────────────────────────────────────
+${generatedCommitMessage}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Step 11.5.2: Prompt user for action**
+
+```
+const commitResponse = question(questions=[{
+  header: "Commit",
+  question: "How would you like to proceed with this commit?",
+  options: [
+    { label: "Commit now", description: "Commit with the generated message" },
+    { label: "Edit first", description: "Edit the message before committing" },
+    { label: "Skip", description: "Leave changes uncommitted" }
+  }
+}])
+```
+
+**Step 11.5.3: Handle response**
+
+If "Commit now":
+```
+bash("git add -A && git commit -m '${generatedCommitMessage}'", description="Commit all changes")
+const commitOutput = result
+const commitMatch = commitOutput.match(/\[[\w-]+ ([a-f0-9]+)\]/) || commitOutput.match(/([a-f0-9]{7,})/)
+finalCommitHash = commitMatch ? commitMatch[1] : "committed"
+```
+
+If "Edit first":
+```
+const editResponse = question(questions=[{
+  header: "Edit Message",
+  question: "Enter your commit message (or leave blank to cancel):",
+  options: []
+}])
+if (editResponse[0]?.trim()) {
+  bash("git add -A && git commit -m '${editResponse[0]}'", description="Commit with edited message")
+  finalCommitHash = "committed"
+} else {
+  finalCommitHash = null
+}
+```
+
+If "Skip":
+```
+finalCommitHash = null
+```
+
+---
+
+## 12. Display Completion
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ Fuska > TASK COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ Task ${nextNum}: ${DESCRIPTION}
+ Mode: ${MODE}
+ Plan: task-${nextNum}-${slug}
+ Commit: ${finalCommitHash || "(uncommitted)"}
+ ${verification ? `Verification: ${verificationStatus}` : ''}
+ ${!finalCommitHash ? '\n Note: Changes staged but not committed. Run: git commit' : ''}
+
+───────────────────────────────────────────────────
+ Ready for next task: /fuska-do
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 stateData.tasks_completed = stateData.tasks_completed || []
 stateData.tasks_completed.push({
@@ -909,10 +1057,12 @@ megamemory_update_concept(
 - [ ] Plan displayed before asking for execution decision
 - [ ] Change plan option: feedback collected, planner re-spawned, plan re-displayed
 - [ ] Save and exit option: plan saved with execution command shown
-- [ ] Executor spawns and creates summary concept
-- [ ] Commit hash captured from executor output
+- [ ] Executor spawns and creates summary concept (no commit during execution)
+- [ ] Git-message agent spawned to generate commit message
+- [ ] Commit message displayed with Commit now / Edit first / Skip options
+- [ ] Commit executed only on user confirmation
 - [ ] Verifier spawned for standard mode
-- [ ] State concept updated with task entry
-- [ ] Completion banner displayed with all details
+- [ ] State concept updated with task entry (including commit hash if committed)
+- [ ] Completion banner displayed with commit status
 
 </success_criteria>
