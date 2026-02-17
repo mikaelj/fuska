@@ -13,7 +13,9 @@ tools:
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
+  - megamemory:link
   - megamemory:list_roots
+  - megamemory:remove_concept
 
 ---
 
@@ -473,6 +475,27 @@ megamemory_update_concept(
 )
 ```
 
+### 7.5. Refresh Import Graph
+
+After mapping the codebase at a high level, build the granular import graph so file/symbol-level queries are immediately available.
+
+Display: "Building import graph..."
+
+Execute the full `/fuska-refresh --full` process inline:
+
+1. Get current Git SHA
+2. List all source files via `git ls-files`
+3. For each file: extract imports, exports, symbols using the language patterns from fuska-refresh
+4. Create `file:` concepts with import/export metadata
+5. Create `symbol:` concepts with `defined_in` edges
+6. Create `imports`, `exports`, and `uses` edges
+7. Detect dead code candidates (exported symbols with no incoming `uses` edges)
+8. Update config concept with refresh metadata (`refresh.last_sha`, `refresh.last_refresh`, etc.)
+
+This ensures that after `fuska init` or `/fuska-map-codebase`, commands like `/fuska-ask` and the planner/executor/debugger integrations have import graph data available without requiring a separate `/fuska-refresh` call.
+
+Display: "Import graph built: ${filesScanned} files, ${symbolsIndexed} symbols"
+
 ### 8. Present Summary
 
 Query config for checker_panel settings:
@@ -498,6 +521,7 @@ Conventions: [summary from agent 3]
 Concerns: [summary from agent 4]
 
 5 codebase concepts + N domain concepts created in MegaMemory
+Import graph: ${filesScanned} files, ${symbolsIndexed} symbols indexed
 
 ────────────────────────────────────────────────────────────
 
@@ -541,5 +565,7 @@ ${!stateData.current_phase
 - [ ] Codebase concepts verified
 - [ ] `codebase` root concept created grouping the 4 sub-concepts
 - [ ] State concept updated with mapping status (if project exists)
+- [ ] Import graph built with file/symbol concepts and edges
+- [ ] Config concept updated with refresh metadata
 - [ ] User knows next steps
 </success_criteria>

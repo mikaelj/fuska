@@ -204,6 +204,19 @@ megamemory_create_concept(
 )
 ```
 
+**Step 3.3: Query import graph for related context**
+
+Before spawning debugger, query import graph:
+
+```
+const triggerKeywords = extractKeywords(trigger)
+const fileMatches = await megamemory_understand(query=`file ${triggerKeywords}`, top_k=20)
+const symbolMatches = await megamemory_understand(query=`symbol ${triggerKeywords}`, top_k=20)
+const deadCodeMatches = await megamemory_understand(query=`dead-code ${triggerKeywords}`, top_k=10)
+```
+
+Build import graph context for debugger prompt (see `<import_graph>` section below).
+
 Fill prompt and spawn:
 
 ```markdown
@@ -220,6 +233,30 @@ errors: {errors}
 reproduction: {reproduction}
 timeline: {timeline}
 </symptoms>
+
+<import_graph>
+**Related files from import graph:**
+${fileMatches.matches.slice(0, 10).map(m => {
+  const data = JSON.parse(m.summary);
+  const importCount = m.incoming_edges?.filter(e => e.relation === 'imports').length || 0;
+  return `- ${data.path}: imported by ${importCount} files`;
+}).join('\n') || 'No matching files found'}
+
+**Related symbols:**
+${symbolMatches.matches.slice(0, 10).map(m => {
+  const data = JSON.parse(m.summary);
+  return `- ${data.name} (${data.type}) in ${data.file}`;
+}).join('\n') || 'No matching symbols found'}
+
+**Dead code markers:**
+${deadCodeMatches.matches.length > 0
+  ? deadCodeMatches.matches.map(m => {
+      const data = JSON.parse(m.summary);
+      return `- ${m.name.replace('dead-code:', '')} detected as dead on ${data.detected_at}`;
+    }).join('\n')
+  : 'None'
+}
+</import_graph>
 
 <session_concept>
 ID: {session_id}

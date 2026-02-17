@@ -15,6 +15,7 @@ From this menu you can configure:
 - **Quick settings** — switch model profile (quality/balanced/budget) and workflow mode
 - **Model aliases** — configure which models map to quality/balanced/budget
 - **Git commit strategy** — switch between per-phase / per-plan / per-task
+- **Import graph settings** — auto-refresh mode and staleness threshold
 - **Stage overrides** — set a specific model for planning, execution, or verification
 - **Reset presets** — reconfigure all profiles from scratch
 
@@ -149,7 +150,7 @@ The key difference: `--mode quick` keeps your work organized within the phase st
 
 ## Git Commit Strategy
 
-Controls how often Fuska creates git commits during execution. Set during `/fuska configure`.
+Controls how often Fuska creates git commits during execution. Set during `/fuska-configure-initiative`.
 
 ### Commit Message Format
 
@@ -337,6 +338,50 @@ Project Classification Detected:
   Confidence: high
   Signals: express, JWT, session-based auth
 ```
+
+---
+
+## Import Graph Settings
+
+The import graph stores file and symbol-level dependency data in MegaMemory. It is built automatically during `fuska init` (via `/fuska-map-codebase`) and can be updated incrementally with `/fuska-refresh`.
+
+```bash
+fuska config
+# Select "Import graph settings"
+```
+
+### Refresh Mode
+
+| Mode | Behavior |
+|------|----------|
+| **hybrid** (default) | Auto-refresh when stale (>age_hours) or Git SHA changed. Triggers before plan, execute, and debug. |
+| **manual** | Only refresh when you run `/fuska-refresh` explicitly |
+| **disabled** | Never auto-refresh; commands fall back to grep |
+
+### Staleness Threshold
+
+`age_hours` (default: 24) — how many hours before the graph is considered stale. In hybrid mode, stale graphs are refreshed automatically before planning, execution, and debugging.
+
+### Stored in Config Concept
+
+```json
+{
+  "refresh": {
+    "mode": "hybrid",
+    "age_hours": 24,
+    "auto_before": ["plan-phase", "execute-phase", "debug"],
+    "last_sha": "abc123",
+    "last_refresh": "2026-02-17T10:00:00Z",
+    "files_scanned": 147,
+    "symbols_indexed": 892,
+    "dead_code_count": 3
+  }
+}
+```
+
+### View Status
+
+Select "View status" from the import graph settings menu to see current refresh metadata (last SHA, files scanned, symbols indexed, dead code count).
 
 ---
 

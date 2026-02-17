@@ -17,14 +17,14 @@
 | `fuska migrate-multi-initiative` | Migrate existing initiative to pointer model | -- |
 | `fuska config [dir]` | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view |
 | `fuska export` | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
-| `fuska projects` | List all initiatives with ASCII tree showing milestones and phases | -- |
-| `fuska initiatives` | List all initiatives with current marker and status | -- |
-| `fuska initiative-new [slug]` | Create new initiative | `[slug]` -- optional initiative slug |
+| `fuska initiatives` | List all initiatives with milestones and phases | -- |
 | `fuska initiative-archive` | Archive current initiative | -- |
 | `fuska initiative-switch [slug]` | Switch to another initiative | `[slug]` -- initiative to switch to |
 | `fuska todo` | List completed and pending tasks | -- |
 | `fuska info` | Display codebase and domain mappings from MegaMemory | `--long` for all files, `--verbose` for small domains |
 | `fuska progress` | Check project progress and show next action | `--json` for machine-readable output |
+| `fuska refresh [args...]` | Refresh import graph with file and symbol-level indexing | `--full`, `--dead-code`, `--json`, `--prune` |
+| `fuska ask [args...]` | Ask questions about the codebase using import graph data | `[question]` |
 | `fuska worktree-add <name>` | Create git worktree with shared context | `--no-context`, `-f, --force` |
 | `fuska worktree-merge <name>` | Merge worktree (MM + git) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
 
@@ -46,6 +46,7 @@
 |---------|-------------|-----------|
 | `/fuska-configure-initiative` | Configure existing initiative (run after `fuska init`) | -- |
 | `/fuska-map-codebase` | Map existing codebase structure | `[area]` -- optional area to focus on |
+| `/fuska-map-domains` | Discover business domains in codebase for commit scopes and context | `[area]` -- optional area to focus on |
 | `/fuska-import` | Import existing initiative | -- |
 
 ### Phase Workflow
@@ -84,7 +85,31 @@
 | `/fuska-resume-work` | Restore context and show task position | -- |
 | `/fuska-add-todo` | Add todo item | `[description]` -- auto-extracts from conversation if omitted |
 | `/fuska-check-todos` | View all todos | -- |
-| `/fuska-merge-worktrees` | Merge knowledge databases from git worktrees | `<branch1> [branch2...]` -- worktree subdirectory names |
+
+### Codebase Analysis
+
+| Command | Description | Arguments |
+|---------|-------------|-----------|
+| `/fuska-refresh` | Refresh import graph with file and symbol-level indexing | `[--full] [--dead-code] [--json] [--prune]` |
+| `/fuska-ask` | Ask questions about the codebase using import graph data | `[question]` |
+
+`/fuska-map-codebase` automatically runs a full import graph refresh, so after `fuska init` both the high-level codebase understanding and the granular file/symbol import graph are available.
+
+**`/fuska-refresh` flags:**
+- `--full` -- Force full re-scan (ignore incremental)
+- `--dead-code` -- Only show dead code report, skip refresh
+- `--json` -- Output as JSON for scripts
+- `--prune` -- Remove dead code concepts that are no longer dead
+
+**`/fuska-ask` question types:**
+- `"What imports X?"` -- Find files that import a file
+- `"Who uses Symbol?"` -- Find files that use a symbol
+- `"Is X dead code?"` -- Check if symbol has no usage
+- `"What if I delete X?"` -- Impact analysis
+- `"Where is Symbol defined?"` -- Locate symbol definition
+- `"What does X export?"` -- List exported symbols
+
+Falls back to grep when import graph data is unavailable.
 
 ### Ad-hoc Tasks
 

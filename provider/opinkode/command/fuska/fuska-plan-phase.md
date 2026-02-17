@@ -541,7 +541,68 @@ if (hasGapsFlag) {
 }
 ```
 
-**Step 6.7: Derive computed values**
+**Step 6.7: Check Import Graph Freshness**
+
+**Step 6.7.1: Query config for refresh settings**
+
+Re-use `configData` from Step 1.5:
+```
+const refreshConfig = configData.refresh || { mode: 'disabled' }
+```
+
+**Step 6.7.2: Check if auto-refresh is enabled and stale**
+
+If `refreshConfig.mode === 'hybrid'` AND `refreshConfig.auto_before?.includes('plan-phase')`:
+
+```bash
+currentSha = $(git rev-parse HEAD)
+```
+
+```
+const lastSha = refreshConfig.last_sha
+const lastRefresh = refreshConfig.last_refresh ? new Date(refreshConfig.last_refresh) : null
+const ageHours = lastRefresh ? (Date.now() - lastRefresh.getTime()) / (1000 * 60 * 60) : Infinity
+
+const needsRefresh = !lastSha || lastSha !== currentSha || ageHours > (refreshConfig.age_hours || 24)
+```
+
+If `needsRefresh`:
+```
+Display: "---------------------------------------------------"
+Display: "  Import graph stale, running quick refresh..."
+Display: "---------------------------------------------------"
+
+// Execute refresh logic (abbreviated from fuska-refresh)
+// OR spawn fuska-refresh via Task tool
+
+// After refresh, query config again for updated metadata
+const updatedConfig = await megamemory_understand(query="config", top_k=1)
+```
+
+**Step 6.7.3: Query import graph for phase context**
+
+```
+const phaseKeywords = phaseName.split(/[\s-]+/).join(' ')
+const symbolMatches = await megamemory_understand(query=`symbol ${phaseKeywords}`, top_k=50)
+const fileMatches = await megamemory_understand(query=`file ${phaseKeywords}`, top_k=50)
+```
+
+Add to planner context:
+- `symbolMatches` -- Related symbols for understanding scope
+- `fileMatches` -- Related files for disambiguation
+- Filter out `dead-code:` concepts from planning context
+
+**Step 6.7.4: Derive computed values**
+
+```
+const importGraphAvailable = symbolMatches.matches.length > 0 || fileMatches.matches.length > 0
+```
+
+Use in planning:
+- If `importGraphAvailable`, prefer file paths from matches
+- Skip dead code symbols when creating tasks
+
+**Step 6.8: Derive computed values**
 
 ```
 const modelProfile = configData?.model_profile || "balanced"

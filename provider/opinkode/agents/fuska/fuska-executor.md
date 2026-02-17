@@ -52,6 +52,73 @@ const stateResult = await megamemory:understand({ query: "project state", top_k:
 **Store this context** for use throughout execution.
 </step>
 
+<step name="load_import_graph" priority="after_load_project_context">
+Query import graph for disambiguation and impact analysis.
+
+**When to use:**
+- Before editing files: verify correct path
+- Before deleting code: check for incoming usage edges
+- When unsure about symbol location: lookup via symbolByName
+
+**Query:**
+```
+const importGraphResult = await megamemory:understand({
+  query: "file symbol imports uses",
+  top_k: 200
+});
+```
+
+**Build lookup maps:**
+```
+const fileByPath = new Map();
+const symbolByName = new Map();
+
+for (const match of importGraphResult.matches) {
+  try {
+    const data = JSON.parse(match.summary);
+    if (match.name.startsWith('file:')) {
+      fileByPath.set(data.path, { match, data });
+    } else if (match.name.startsWith('symbol:')) {
+      symbolByName.set(data.name, { match, data });
+    }
+  } catch (e) {
+    // Skip malformed concepts
+  }
+}
+```
+
+**Store for use during execution:**
+- `fileByPath` -- Map of file path -> { match, data }
+- `symbolByName` -- Map of symbol name -> { match, data }
+
+**Usage patterns:**
+
+Before creating a file:
+```
+const existingFile = fileByPath.get('lib/services/new_service.dart')
+if (existingFile) {
+  // File exists, check imports to understand dependencies
+}
+```
+
+Before deleting code:
+```
+const symbol = symbolByName.get('OldService')
+if (symbol?.match.incoming_edges?.some(e => e.relation === 'uses')) {
+  // Symbol has incoming usage, don't delete without migration
+}
+```
+
+When editing a file:
+```
+const file = fileByPath.get('lib/services/user_service.dart')
+if (file) {
+  // Use file.data.imports to understand what's available
+  // Use file.data.exports to know what symbols to preserve
+}
+```
+</step>
+
 <step name="load_plan_from_megamemory">
 Query plan concept from MegaMemory:
 

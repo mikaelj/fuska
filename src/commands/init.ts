@@ -147,7 +147,6 @@ class InitRunner {
     console.log('\nAlready initialized: "main" initiative exists.\n');
     console.log('Manage initiatives:');
     console.log('  fuska initiatives         List all initiatives');
-    console.log('  fuska initiative-new      Create another initiative');
     console.log('  fuska initiative-switch   Switch to a different initiative');
     console.log('  fuska progress            View current status');
     console.log('\nConfigure current initiative:');

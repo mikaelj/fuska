@@ -34,7 +34,7 @@ First, map the codebase so Fuska understands your architecture, then create the 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
 | 1 | `/fuska map` | — | Scans `recipevault/`. Discovers Next.js 14 app router, Prisma schema with `User`, `Recipe`, `Ingredient` models, TailwindCSS, and a `/api` directory with REST endpoints. Creates codebase map in MegaMemory. |
-| 2 | `fuska init "Meal Planner"` then `/fuska configure` | *"Users can plan weekly meals, generate shopping lists from selected recipes, and see nutritional summaries per day."* | Asks clarifying questions about scope. You answer interactively. Creates project **meal-planner** with milestone "Meal Planner v1.0" and 4 phases: (1) Calendar UI & Data Model, (2) Shopping List Generation, (3) Nutritional Summary, (4) Polish & Edge Cases. |
+| 2 | `fuska init "Meal Planner"` then `/fuska-configure-initiative` | *"Users can plan weekly meals, generate shopping lists from selected recipes, and see nutritional summaries per day."* | `fuska init` creates the "main" initiative with description. `/fuska-configure-initiative` asks clarifying questions about scope. You answer interactively. Configures the initiative with milestone "Meal Planner v1.0" and 4 phases: (1) Calendar UI & Data Model, (2) Shopping List Generation, (3) Nutritional Summary, (4) Polish & Edge Cases. |
 | 3 | `/fuska` | — | Shows phase pipeline: Phase 1 of 4, current position at "plan into tasks". You see what to do next. |
 | 4 | `/fuska discuss` | *"Calendar should be a weekly grid, Monday–Sunday. Users drag recipes from a sidebar into day slots. Mobile: vertical stack instead of grid."* | Identifies 6 open questions (drag-and-drop library? max recipes per slot? recurring meals?). You answer each. Saves decisions as phase-1 context. |
 | 5 | `/fuska plan --research` | — | Researcher agent investigates `@dnd-kit` vs `react-beautiful-dnd`, checks Prisma relation patterns for calendar events. Planner creates 14 tasks across 3 waves: DB migration → API routes → UI components. Plan-checker validates task dependencies. |
@@ -87,7 +87,7 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `fuska init "Recipe Import"` then `/fuska configure` | *"Users paste a recipe URL, the app scrapes the title, ingredients, and steps, and creates a new Recipe."* | Creates project **recipe-import** with milestone "Recipe Import v1.0" and 2 phases: (1) URL Scraper & Parser, (2) Import UI & Error Handling. |
+| 1 | `fuska init "Recipe Import"` then `/fuska-configure-initiative` | *"Users paste a recipe URL, the app scrapes the title, ingredients, and steps, and creates a new Recipe."* | `fuska init` creates the "main" initiative with description. `/fuska-configure-initiative` configures it with milestone "Recipe Import v1.0" and 2 phases: (1) URL Scraper & Parser, (2) Import UI & Error Handling. |
 | 2 | `/fuska plan` | — | Plans 8 tasks: URL validator, HTML fetcher, Cheerio-based parser for common recipe sites, ingredient normalizer, step extractor, Prisma integration, tests. |
 | 3 | `/fuska execute` | — | Builds the scraper. Handles AllRecipes, Epicurious, and Food Network formats. 8 atomic commits. |
 | 4 | `/fuska verify` | — | "Scraper extracts title from AllRecipes" → **PASS**. "Scraper extracts ingredients" → **PASS**. "Scraper handles JSON-LD structured data" → **FAIL** — the scraper only parses HTML microdata, but many sites embed recipes as JSON-LD `<script>` tags. |
@@ -161,7 +161,7 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/fuska-merge-worktrees feature-sharing feature-dietary` | — | Verifies all three databases exist. Creates backup: `knowledge.db.backup-20250211-143022`. Starts merge session. |
+| 1 | `fuska worktree-merge feature-sharing feature-dietary` | — | Verifies all three databases exist. Creates backup: `knowledge.db.backup-20250211-143022`. Starts merge session. |
 | 2 | *(merge 1/2: feature-sharing)* | — | Runs `megamemory merge` with main + feature-sharing. 48 clean merges, 2 conflicts detected. |
 | 3 | *(conflict: phase-01 context)* | *Selects "AI verify"* | AI reads referenced files. `src/lib/sharing/permissions.ts` exists, `src/lib/auth/sharing-middleware.ts` was renamed to `src/middleware/sharing.ts`. Resolves with updated file refs. |
 | 4 | *(conflict: req-SOCIAL-01)* | *Selects "Keep right"* | Keeps the feature-sharing version of the social requirement (more detailed after implementation). |
@@ -178,7 +178,7 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 |---|---------|---------|--------------|
 | 1 | `fuska initiatives` | — | Shows all initiatives: `▶ meal-planner` (active, Phase 4/4), `  recipe-import` (Phase 2/2 complete), `  user-profiles` (Phase 1/3). |
 | 2 | `fuska initiative-switch recipe-import` | — | Switches to recipe-import. |
-| 3 | `fuska initiative-archive` | — | Archives recipe-import. Sets `archived_at: 2026-02-15T10:30:00Z` on the initiative concept. Initiative no longer appears in `fuska projects` output but remains in database. |
+| 3 | `fuska initiative-archive` | — | Archives recipe-import. Sets `archived_at: 2026-02-15T10:30:00Z` on the initiative concept. Initiative no longer appears in `fuska initiatives` output but remains in database. |
 | 4 | `fuska initiatives` | — | Now shows: `▶ meal-planner` (active), `  user-profiles` (Phase 1/3). Recipe-import is hidden from active list. |
 | 5 | `fuska initiatives --all` | — | Shows all including archived: `▶ meal-planner`, `  user-profiles`, `  recipe-import [archived]`. |
 | 6 | `fuska initiative-switch recipe-import` | — | Reactivates recipe-import by clearing `archived_at`. Initiative is now active again. |

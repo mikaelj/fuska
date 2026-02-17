@@ -66,6 +66,17 @@ Edges define how concepts relate to each other. Use specific relations for accur
 | `informs` | A → B | Provides knowledge for decisions |
 | `includes` | A → B | Container includes children |
 
+### Import Graph Relations (Fuska Refresh)
+
+| Relation | Direction | Usage |
+|----------|-----------|-------|
+| `imports` | File → File | File A imports from File B |
+| `uses` | File → Symbol | File A uses Symbol B |
+| `defined_in` | Symbol → File | Symbol A is defined in File B |
+| `exports` | File → Symbol | File A exports Symbol B |
+
+These relations are created by `/fuska-refresh` and queried by `/fuska-ask`. Concepts use naming prefixes: `file:path/to/file.ext`, `symbol:SymbolName`, `dead-code:SymbolName`.
+
 ### Embeddings
 
 Every concept summary is indexed with embeddings. This enables semantic search: "authentication" matches "login", "JWT", "token validation" even without exact text matching.

@@ -37,14 +37,14 @@ config concept:
   current_initiative: "slug-of-active-initiative"  <- THE POINTER
 ```
 
-**Initiative lifecycle:** create -> active -> archived -> reactivated
+**Initiative lifecycle:** `fuska init` -> active -> archived -> reactivated
 
 | Command | Description |
 |---------|-------------|
-| `fuska initiative-new [slug]` | Create new initiative |
-| `fuska initiative-archive` | Archive current initiative |
-| `fuska initiative-switch [slug]` | Switch to another initiative |
+| `fuska init [description...]` | Initialize project with "main" initiative |
 | `fuska initiatives` | List all initiatives with status |
+| `fuska initiative-switch [slug]` | Switch to another initiative |
+| `fuska initiative-archive` | Archive current initiative |
 
 Archived initiatives keep their stable names — they're just marked inactive. Switch between initiatives without losing progress on any of them.
 
@@ -64,7 +64,7 @@ A **phase** is a work bucket that groups related requirements into a deliverable
 - Phase 2: iOS implementation (goal: "iOS users receive notifications")
 - Phase 3: Android implementation (goal: "Android users receive notifications")
 
-Phases are created during `/fuska configure` and worked through sequentially: discuss (optional) -> plan -> execute -> verify (optional).
+Phases are created during `/fuska-configure-initiative` and worked through sequentially: discuss (optional) -> plan -> execute -> verify (optional).
 
 ---
 
@@ -84,7 +84,7 @@ Plans are stored as MegaMemory concepts (e.g., `phase-02-plan-01`) and executed 
 
 ## Milestone
 
-A **milestone** groups phases into a release and tracks progress across them. Milestones are **optional** — a default milestone (e.g., "v1.0") is created automatically during `/fuska configure`.
+A **milestone** groups phases into a release and tracks progress across them. Milestones are **optional** — a default milestone (e.g., "v1.0") is created automatically during `/fuska-configure-initiative`.
 
 Use milestones when releasing a version (v1.0, v1.1), grouping related features, or tracking major deliverables.
 
@@ -118,6 +118,24 @@ A **concept** is the fundamental unit of knowledge in MegaMemory. Every piece of
 
 ---
 
+## Import Graph
+
+The **import graph** is a granular, machine-queryable representation of your codebase's file and symbol dependencies stored in MegaMemory. It is built automatically during `fuska init` (via `/fuska-map-codebase`) and updated incrementally by `/fuska-refresh`.
+
+Three concept types make up the import graph:
+
+| Prefix | Kind | Example | Content |
+|--------|------|---------|---------|
+| `file:` | `component` | `file:lib/services/auth.dart` | Path, language, imports list, exports list, symbol count |
+| `symbol:` | `component` | `symbol:AuthService` | Type, name, file, signature, methods, exported flag |
+| `dead-code:` | `component` | `dead-code:OldWidget` | Symbol info, reason, detection date, related dead symbols |
+
+The import graph connects these concepts with four edge relations (see below) and powers `/fuska-ask` queries, dead code detection, and context loading in the planner, executor, and debugger.
+
+**Staleness:** The graph tracks the last indexed Git SHA. Incremental refresh only scans files changed since that SHA. Auto-refresh can be configured via `fuska config` (mode: hybrid/manual/disabled).
+
+---
+
 ## Edge Relations
 
 Concepts are connected by typed edges that describe their relationships:
@@ -137,6 +155,17 @@ Concepts are connected by typed edges that describe their relationships:
 | `informs` | Provides knowledge for decisions | A -> B |
 | `includes` | Container includes children | A -> B |
 
+### Import Graph Relations
+
+These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
+
+| Relation | Usage | Direction |
+|----------|-------|-----------|
+| `imports` | File A imports from File B | File -> File |
+| `uses` | File A uses Symbol B | File -> Symbol |
+| `defined_in` | Symbol A is defined in File B | Symbol -> File |
+| `exports` | File A exports Symbol B | File -> Symbol |
+
 ---
 
 ## Glossary
@@ -147,10 +176,12 @@ Concepts are connected by typed edges that describe their relationships:
 | **Checkpoint** | A structured pause point during execution where user verification is required (e.g., visual review, decision input). **Not the same as pause-work** — task progress is tracked continuously. |
 | **Checker panel** | A role-based plan verification system with three specialized checkers (base, contextual, expert) that verify plans from different perspectives. See [configuration.md](configuration.md#checker-panel). |
 | **Concept** | A unit of knowledge in MegaMemory (e.g., an initiative, requirement, plan, or phase) |
+| **Dead code** | An exported symbol with no incoming `uses` edges in the import graph — detected by `/fuska-refresh --dead-code` |
 | **Deviation** | When execution diverges from the planned tasks — handled automatically by the executor |
 | **Executor** | The agent that implements plan tasks with atomic commits during the execution stage |
 | **Fix complexity** | Assessment of how difficult a bug fix will be (simple/moderate/complex), used to recommend execution mode for debug handoff |
 | **Goal-backward verification** | Checking whether code delivers what a phase *promised* (its goal and success criteria), not just whether tasks were completed |
+| **Import graph** | A granular dependency map of files and symbols stored in MegaMemory. Built by `/fuska-map-codebase` during init, updated by `/fuska-refresh`. Powers `/fuska-ask` queries and dead code detection. |
 | **Integration checker** | An agent that verifies external integrations (APIs, services) work correctly |
 | **Milestone** | An optional grouping of phases into a release (e.g., "v1.0") |
 | **Model profile** | A preset (quality/balanced/budget) that determines which AI model is used at each stage. See [configuration.md](configuration.md#model-profiles). |
@@ -161,7 +192,7 @@ Concepts are connected by typed edges that describe their relationships:
 | **Project classification** | Auto-detected project type (web-api, embedded-constrained, cli-tool, etc.) used to select the contextual checker role |
 | **Requirement** | A specific feature or behavior that needs to be built, assigned to a phase |
 | **Researcher** | An agent that investigates technologies, patterns, and prior art during the planning stage |
-| **Roadmap** | The overall structure of phases and milestones for an initiative, created during `/fuska configure` |
+| **Roadmap** | The overall structure of phases and milestones for an initiative, created during `/fuska-configure-initiative` |
 | **Stage** | A category of work in the Fuska workflow: planning, execution, or verification — each uses different agents |
 | **Success criteria** | Observable behaviors that must be true when a phase completes — used for goal-backward verification |
 | **Verifier** | An agent that performs goal-backward verification after phase execution |

@@ -99,6 +99,11 @@ All `/fuska-*` commands below also work directly.
 
 \* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees.
 
+## Codebase Analysis
+
+\* `/fuska-refresh [--full] [--dead-code] [--json] [--prune]` — Refresh import graph with symbol indexing.
+\* `/fuska-ask [question]` — Ask questions about the codebase using import graph data.
+
 ## Utility Commands
 
 \* `/fuska-help` — Show this command reference.
@@ -420,11 +425,46 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees.
 Usage: `/fuska-do planned fix typo in README`
 Usage: `/fuska-do` (prompts for mode and description)
 
+ ### Codebase Analysis
+
+ **`/fuska-refresh [--full] [--dead-code] [--json] [--prune]`**
+ Refresh the import graph stored in MegaMemory.
+
+ - Scans codebase for imports, exports, and symbols
+ - Creates file and symbol concepts with usage edges
+ - Detects potentially dead code (no incoming usage)
+ - Incremental by default (only changed files)
+
+ Flags:
+ - `--full` -- Force full re-scan
+ - `--dead-code` -- Only show dead code report
+ - `--json` -- Output as JSON
+ - `--prune` -- Remove stale dead code markers
+
+ Usage: `/fuska-refresh`
+ Usage: `/fuska-refresh --dead-code`
+
+ **`/fuska-ask [question]`**
+ Ask questions about the codebase using the import graph.
+
+ Supported questions:
+ - "What imports X?" / "Who imports X?"
+ - "Who uses Symbol?" / "What calls X?"
+ - "Is X dead code?"
+ - "What if I delete X?"
+ - "Where is Symbol defined?"
+ - "What does X export?"
+
+ Falls back to grep if import graph is empty or stale.
+
+ Usage: `/fuska-ask "Who uses AuthService?"`
+ Usage: `/fuska-ask "Is ItemSelectionSheet dead code?"`
+
  ### Utility Commands
- 
+
  **`/fuska-help`**
  Show this command reference.
- 
+
  ## MegaMemory Structure
 
 All project data lives in MegaMemory concepts:

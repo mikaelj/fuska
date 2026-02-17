@@ -81,6 +81,34 @@ parent_id: "[Initiative Name]"
 edges: [{to: "[affected requirement or module]", relation: "configured_by", description: "This decision affects [X]"}]
 ```
 
+### Refresh Config (in config concept)
+
+The `config` concept includes a `refresh` object for import graph settings:
+
+```json
+{
+  "refresh": {
+    "mode": "hybrid",
+    "age_hours": 24,
+    "auto_before": ["plan-phase", "execute-phase", "debug"],
+    "last_sha": null,
+    "last_refresh": null,
+    "files_scanned": 0,
+    "symbols_indexed": 0,
+    "dead_code_count": 0
+  }
+}
+```
+
+**Mode values:**
+- `hybrid` -- Auto-refresh if stale (>age_hours old) OR git SHA changed (default)
+- `manual` -- Only refresh when user runs `/fuska-refresh`
+- `disabled` -- Never auto-refresh
+
+**auto_before:** Commands that trigger auto-refresh when import graph is stale.
+
+**Update via config wizard:** Run `fuska config` and select "Import graph settings" to modify.
+
 </megamemory_schema>
 
 ---

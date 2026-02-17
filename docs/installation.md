@@ -66,8 +66,8 @@ fuska init "My project description"
 # Creates: .git (if needed), .megamemory/, main initiative
 # Runs: codebase mapping (unless --no-map)
 
-# Then in your editor:
-/fuska configure
+# Then in your editor (OpenCode or Claude Code):
+/fuska-configure-initiative
 # Walks through: questioning -> preferences -> requirements -> roadmap
 ```
 

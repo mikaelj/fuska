@@ -18,9 +18,10 @@ import { providerCommand } from './commands/provider';
 import { helpCommand } from './commands/help';
 import { infoCommand } from './commands/info';
 import { migrateMultiInitiativeCommand } from './commands/migrate-multi-initiative';
-import { initiativeNewCommand } from './commands/initiative-new';
 import { initiativeArchiveCommand } from './commands/initiative-archive';
 import { initiativeSwitchCommand } from './commands/initiative-switch';
+import { refreshCommand } from './commands/refresh';
+import { askCommand } from './commands/ask';
 
 const program = new Command();
 
@@ -45,8 +46,9 @@ todoCommand(program);
 progressCommand(program);
 infoCommand(program);
 migrateMultiInitiativeCommand(program);
-initiativeNewCommand(program);
 initiativeArchiveCommand(program);
 initiativeSwitchCommand(program);
+refreshCommand(program);
+askCommand(program);
 
 program.parse(process.argv);

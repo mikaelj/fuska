@@ -322,6 +322,7 @@ class ConfigRunner {
             { name: 'Configure model aliases', value: 'aliases' },
             { name: 'Checker panel settings', value: 'checker_panel' },
             { name: 'Git commit strategy', value: 'git' },
+            { name: 'Import graph settings', value: 'refresh_settings' },
             { name: 'Set stage override', value: 'set_override' },
             { name: 'Clear stage override', value: 'clear_override' },
             { name: 'Reset presets', value: 'reset' },
@@ -342,6 +343,9 @@ class ConfigRunner {
           break;
         case 'git':
           await this.configureGit();
+          break;
+        case 'refresh_settings':
+          await this.configureRefreshSettings();
           break;
         case 'set_override':
           await this.setOverride();
@@ -484,6 +488,80 @@ class ConfigRunner {
 
     await this.saveConfig();
     console.log(`Commit strategy set to ${strategy}`);
+  }
+
+  private async configureRefreshSettings(): Promise<void> {
+    if (!this.config) return;
+
+    const refresh = (this.config as any).refresh || { mode: 'hybrid', age_hours: 24 };
+
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'Import graph refresh settings',
+        choices: [
+          { name: `Toggle mode (current: ${refresh.mode || 'hybrid'})`, value: 'mode' },
+          { name: `Staleness threshold (current: ${refresh.age_hours || 24}h)`, value: 'threshold' },
+          { name: 'View status', value: 'status' },
+          { name: 'Back', value: 'back' }
+        ]
+      }
+    ]);
+
+    if (action === 'back') return;
+
+    if (action === 'mode') {
+      const { mode } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'mode',
+          message: 'Select refresh mode:',
+          choices: [
+            { name: 'hybrid - Auto-refresh if stale or git SHA changed (Recommended)', value: 'hybrid' },
+            { name: 'manual - Only refresh when you run /fuska-refresh', value: 'manual' },
+            { name: 'disabled - Never auto-refresh, use grep fallback', value: 'disabled' }
+          ],
+          default: refresh.mode || 'hybrid'
+        }
+      ]);
+
+      (this.config as any).refresh = { ...refresh, mode };
+      await this.saveConfig();
+      console.log(`Refresh mode set to: ${mode}`);
+    }
+
+    if (action === 'threshold') {
+      const { hours } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'hours',
+          message: 'Enter staleness threshold in hours:',
+          default: String(refresh.age_hours || 24),
+          validate: (input: string) => {
+            const num = parseInt(input);
+            return !isNaN(num) && num > 0 ? true : 'Enter a positive number';
+          }
+        }
+      ]);
+
+      (this.config as any).refresh = { ...refresh, age_hours: parseInt(hours) };
+      await this.saveConfig();
+      console.log(`Staleness threshold set to: ${hours} hours`);
+    }
+
+    if (action === 'status') {
+      console.log('');
+      console.log('Import Graph Status:');
+      console.log(`  Mode: ${refresh.mode || 'not set'}`);
+      console.log(`  Threshold: ${refresh.age_hours || 24} hours`);
+      console.log(`  Last SHA: ${refresh.last_sha || 'never'}`);
+      console.log(`  Last refresh: ${refresh.last_refresh || 'never'}`);
+      console.log(`  Files scanned: ${refresh.files_scanned || 0}`);
+      console.log(`  Symbols indexed: ${refresh.symbols_indexed || 0}`);
+      console.log(`  Dead code count: ${refresh.dead_code_count || 0}`);
+      console.log('');
+    }
   }
 
   private async configureCheckerPanel(): Promise<void> {

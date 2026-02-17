@@ -107,7 +107,7 @@ fuska init [description]
 Creates the project foundation:
 - Initializes git repo (if needed)
 - Creates `.megamemory/` database
-- Creates "main" initiative with all modules
+- Creates a **"main" initiative** automatically (with state, roadmap, milestones, todos, and research modules)
 - Maps codebase structure (optional, default)
 
 **Arguments:**
@@ -127,8 +127,10 @@ fuska init --no-map "My new project"
 
 ### 2. Configure the Initiative
 
-```bash
-/fuska configure
+Launch OpenCode (or Claude Code), then run:
+
+```
+/fuska-configure-initiative
 ```
 
 Walks through initiative configuration:
@@ -145,7 +147,7 @@ Walks through initiative configuration:
 ### 3. Work Through Phases
 
 ```
-fuska init -> /fuska configure -> /fuska plan -> /fuska execute -> repeat
+fuska init -> /fuska-configure-initiative -> /fuska plan -> /fuska execute -> repeat
 ```
 
 | Step | Command | When to Use |
