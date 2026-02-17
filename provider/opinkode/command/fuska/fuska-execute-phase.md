@@ -396,6 +396,7 @@ If `parallelization === true` (default), spawn executors in parallel:
 For each plan in current wave, call all Task calls in one message:
 ```
 Task(
+  variant="execute",
   description=`Execute ${plan.name}`,
   subagent_type="fuska-executor",
   model=executorModel,
@@ -490,6 +491,7 @@ All plan executors staged their files without committing. Now create the single 
 
 ```
 Task(
+  variant="amend",
   description="Generate phase commit message",
   subagent_type="fuska-git-message",
   prompt=`<commit_context>
@@ -519,6 +521,7 @@ Plans/tasks already committed by executors. Only commit if orchestrator made its
 
 ```
 Task(
+  variant="amend",
   description="Generate orchestrator corrections commit",
   subagent_type="fuska-git-message",
   prompt=`<commit_context>
@@ -571,6 +574,7 @@ If shouldVerify === false:
 If shouldVerify === true:
 ```
 Task(
+  variant="validate",
   description=`Verify phase ${phaseNumber}`,
   subagent_type="fuska-verifier",
   model=verifierModel,

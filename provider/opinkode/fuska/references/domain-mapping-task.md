@@ -53,6 +53,7 @@ Task(
   prompt=domainsPrompt,
   subagent_type="fuska-codebase-mapper",
   model="balanced",
+  variant="plan",
   description="Discover business domains"
 )
 ```

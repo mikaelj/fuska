@@ -283,6 +283,7 @@ Return integration report with:
 </output>",
   subagent_type="fuska-integration-checker",
   model="${models.integration_checker}",
+  variant="validate",
   description="Check milestone integration"
 )
 ```

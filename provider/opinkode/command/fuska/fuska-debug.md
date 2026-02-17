@@ -273,6 +273,7 @@ goal: find_and_fix
 Task(
   prompt=filled_prompt,
   subagent_type="fuska-debugger",
+  variant="validate",
   model="{debugger_model}",
   description="Debug {slug}"
 )
@@ -418,6 +419,7 @@ goal: find_and_fix
 Task(
   prompt=continuation_prompt,
   subagent_type="fuska-debugger",
+  variant="validate",
   model="{debugger_model}",
   description="Continue debug {slug}"
 )

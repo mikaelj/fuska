@@ -108,7 +108,7 @@ Creates the project foundation:
 - Initializes git repo (if needed)
 - Creates `.megamemory/` database
 - Creates a **"main" initiative** automatically (with state, roadmap, milestones, todos, and research modules)
-- Maps codebase structure (optional, default)
+- Maps codebase structure, business domains, and import graph (unless `--no-map`)
 
 **Arguments:**
 - `description` — Optional description stored with the initiative
@@ -196,8 +196,8 @@ That's it — repeat for each phase until the milestone is complete.
 | **Storage Backend** | `.planning/` markdown files | **MegaMemory** knowledge graph — 700x faster semantic queries, survives git resets |
 | **Migration** | N/A | **Import existing** `.planning/` directories with `fuska migrate` |
 | **Session continuity** | Requires `/gsd-pause-work` to capture context | **Automatic** — task position tracked after every commit; pause-work optional for mental context only |
-| **Codebase mapping** | Manual exploration | **`/fuska map`** — auto-detects tech, architecture, quality, concerns, and domains |
-| **Domain mapping** | N/A | **`/fuska-map-domains`** — discovers business domains for commit scopes and context |
+| **Codebase mapping** | Manual exploration | **`/fuska map`** — auto-detects tech, architecture, quality, concerns, domains, and import graph |
+| **Import graph** | N/A | **`fuska refresh`** / **`fuska ask`** — file and symbol-level indexing with dead code detection and impact analysis |
 
 ### Expert Panel Checker
 
@@ -244,7 +244,7 @@ Fuska generates better commits through three mechanisms:
 - Max 4 bullets, no implementation details
 - Automatic phase-plan trailer
 
-**2. Domain-Aware Scopes** from `/fuska-map-domains`:
+**2. Domain-Aware Scopes** from `/fuska-map-codebase`:
 - Scopes derived from business domain concepts stored in MegaMemory
 - Example: `feat(pricing):` instead of `feat(lib/data/:)`
 - Falls back to path-based extraction if no domains mapped

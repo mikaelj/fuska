@@ -433,6 +433,7 @@ Task(
   prompt=researcherPrompt,
   subagent_type="fuska-phase-researcher",
   model=models.researcher,
+  variant="plan",
   description="Research: ${DESCRIPTION}"
 )
 ```
@@ -512,6 +513,7 @@ Task(
   prompt=plannerPrompt,
   subagent_type="fuska-planner",
   model=models.planner,
+  variant="plan",
   description="Plan: ${DESCRIPTION}"
 )
 ```
@@ -570,6 +572,7 @@ Task(
   prompt=checkerPrompt,
   subagent_type="fuska-plan-checker",
   model=models.checker,
+  variant="validate",
   description="Check: ${DESCRIPTION}"
 )
 ```
@@ -614,6 +617,7 @@ while iterationCount < 3:
     prompt=revisionPrompt,
     subagent_type="fuska-planner",
     model=models.planner,
+    variant="plan",
     description="Revise: ${DESCRIPTION}"
   )
 
@@ -763,9 +767,10 @@ Return: ## REVISION COMPLETE
       prompt=revisionPrompt,
       subagent_type="fuska-planner",
       model=models.planner,
+      variant="plan",
       description="Revise: ${DESCRIPTION}"
     )
-    
+
     // Re-query and re-display updated plan
     megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
     planData = JSON.parse(response.matches[0].summary)
@@ -832,6 +837,7 @@ Task(
   prompt=executorPrompt,
   subagent_type="fuska-executor",
   model=models.executor,
+  variant="execute",
   description="Execute: ${DESCRIPTION}"
 )
 ```
@@ -889,6 +895,7 @@ Return ONLY the commit message, nothing else.`
 Task(
   prompt=gitMessagePrompt,
   subagent_type="fuska-git-message",
+  variant="amend",
   description="Generate commit message"
 )
 ```
@@ -946,6 +953,7 @@ Task(
   prompt=verifierPrompt,
   subagent_type="fuska-verifier",
   model=models.verifier,
+  variant="validate",
   description="Verify: ${DESCRIPTION}"
 )
 ```

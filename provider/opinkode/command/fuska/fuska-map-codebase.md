@@ -214,6 +214,7 @@ Task(
   prompt=techPrompt,
   subagent_type="fuska-codebase-mapper",
   model="balanced",
+  variant="plan",
   description="Map tech stack and integrations"
 )
 ```
@@ -262,6 +263,7 @@ Task(
   prompt=architecturePrompt,
   subagent_type="fuska-codebase-mapper",
   model="balanced",
+  variant="plan",
   description="Map architecture and structure"
 )
 ```
@@ -310,6 +312,7 @@ Task(
   prompt=qualityPrompt,
   subagent_type="fuska-codebase-mapper",
   model="balanced",
+  variant="plan",
   description="Map conventions and testing"
 )
 ```
@@ -358,6 +361,7 @@ Task(
   prompt=concernsPrompt,
   subagent_type="fuska-codebase-mapper",
   model="balanced",
+  variant="plan",
   description="Map concerns and technical debt"
 )
 ```

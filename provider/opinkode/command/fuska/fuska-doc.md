@@ -419,6 +419,7 @@ Return: "## RESEARCH COMPLETE" or "## RESEARCH BLOCKED"
 Task(
   description=`Research ${SLUG}`,
   subagent_type="fuska-doc-researcher",
+  variant="plan",
   model=researcherModel,
   prompt=researchPrompt
 )
@@ -496,6 +497,7 @@ Return: "## PLANNING COMPLETE" with outline summary
 Task(
   description=`Plan ${SLUG}`,
   subagent_type="fuska-doc-planner",
+  variant="plan",
   model=plannerModel,
   prompt=plannerPrompt
 )
@@ -559,6 +561,7 @@ Return: "## VERIFICATION PASSED" or "## ISSUES FOUND"
 Task(
   description=`Check ${SLUG} outline`,
   subagent_type="fuska-doc-checker",
+  variant="validate",
   model=checkerModel,
   prompt=checkerPrompt
 )
@@ -682,6 +685,7 @@ Return: "## WRITING COMPLETE" with file stats
 Task(
   description=`Write ${SLUG}`,
   subagent_type="fuska-doc-writer",
+  variant="execute",
   model=writerModel,
   prompt=writerPrompt
 )
@@ -745,6 +749,7 @@ If passed, update content concept: review_status = "passed"
 Task(
   description=`Review ${SLUG}`,
   subagent_type="fuska-doc-reviewer",
+  variant="validate",
   model=reviewerModel,
   prompt=reviewerPrompt
 )

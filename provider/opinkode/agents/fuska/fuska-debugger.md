@@ -1056,6 +1056,7 @@ await megamemory:update_concept({
 Task(
   description="Generate debug fix commit message",
   subagent_type="fuska-git-message",
+  variant="amend",
   prompt=`<commit_context>
 **Mode:** debug-fix
 **Debug Session:** debug-session-${slug}

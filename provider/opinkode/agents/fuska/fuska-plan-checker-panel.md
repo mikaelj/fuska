@@ -226,9 +226,9 @@ If no issues found, return: ## VERIFICATION PASSED
 ### Spawn Agents
 
 ```
-Task(description="Quality advocate check", subagent_type="general", prompt=qualityPrompt)
-Task(description="{contextual_role} check", subagent_type="general", prompt=contextualPrompt) // if applicable
-Task(description="{expert_role} check", subagent_type="general", prompt=expertPrompt) // if applicable
+Task(description="Quality advocate check", subagent_type="general", variant="validate", prompt=qualityPrompt)
+Task(description="{contextual_role} check", subagent_type="general", variant="validate", prompt=contextualPrompt) // if applicable
+Task(description="{expert_role} check", subagent_type="general", variant="validate", prompt=expertPrompt) // if applicable
 ```
 
 ## Step 4: Collect and Parse Results

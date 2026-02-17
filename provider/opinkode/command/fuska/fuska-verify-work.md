@@ -341,6 +341,7 @@ const allPassed = uatData.verification_results.every(r => r.status === 'passed')
 Task(
   description="Generate UAT commit message",
   subagent_type="fuska-git-message",
+  variant="amend",
   prompt=`<commit_context>
 **Mode:** uat-commit
 **Phase:** ${phaseSlug}
@@ -395,8 +396,9 @@ For each failed result:
 → Spawn fuska-debugger to investigate root cause:
 ```
 Task(
-  description=`Diagnose issue: ${result.issue}`,
   subagent_type="fuska-debugger",
+  variant="validate",
+  description=`Diagnose issue: ${result.issue}`,
   model="{debugger_model}",
   prompt=`Investigate why this test failed:
 
@@ -422,8 +424,9 @@ const gapDescriptions = uatData.verification_results.filter(r => r.status === 'f
 Spawn fuska-planner in --gaps mode:
 ```
 Task(
-  description=`Plan gap closure for Phase ${phaseNumber}`,
   subagent_type="fuska-planner",
+  variant="plan",
+  description=`Plan gap closure for Phase ${phaseNumber}`,
   model="{planner_model}",
   prompt=`Create additional plans to close these gaps:
 
@@ -460,8 +463,9 @@ const fixPlanConcepts = response.matches.map(match => {
 Spawn fuska-plan-checker:
 ```
 Task(
-  description=`Verify gap closure plans for Phase ${phaseNumber}`,
   subagent_type="fuska-plan-checker",
+  variant="validate",
+  description=`Verify gap closure plans for Phase ${phaseNumber}`,
   model="{checker_model}",
   prompt=`Verify these fix plans will close gaps:
 

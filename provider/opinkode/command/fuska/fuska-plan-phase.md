@@ -417,9 +417,10 @@ Use: PhaseConceptTemplates.createResearch()
 </output>`
 
 Task(
-  description=`Research Phase ${phaseNumber}`,
   subagent_type="fuska-phase-researcher",
   model=researcherModel,
+  variant="plan",
+  description=`Research Phase ${phaseNumber}`,
   prompt=researchPrompt
 )
 ```
@@ -689,6 +690,7 @@ Task(
   prompt=filled_prompt,
   subagent_type="fuska-planner",
   model="{planner_model}",
+  variant="plan",
   description="Plan Phase {phase} with MegaMemory"
 )
 ```
@@ -831,9 +833,10 @@ Project Classification:
 
 ```
 Task(
-  description="Verify Phase ${phaseNumber} plans (panel)",
   subagent_type="fuska-plan-checker-panel",
   model=checkerModel,
+  variant="validate",
+  description="Verify Phase ${phaseNumber} plans (panel)",
   prompt=panelPrompt
 )
 ```
@@ -898,6 +901,7 @@ Task(
   prompt=revision_prompt,
   subagent_type="fuska-planner",
   model="{planner_model}",
+  variant="plan",
   description="Revise Phase {phase} plans"
 )
 ```
@@ -1072,6 +1076,7 @@ Return: ## REVISION COMPLETE
       prompt=revisionPrompt,
       subagent_type="fuska-planner",
       model=models.planner,
+      variant="plan",
       description="Revise: ${selectedPlan.name}"
     )
 
@@ -1122,6 +1127,7 @@ Return: ## REVISION COMPLETE
       prompt=revisionPrompt,
       subagent_type="fuska-planner",
       model=models.planner,
+      variant="plan",
       description="Add task to: ${selectedPlan.name}"
     )
 
@@ -1186,6 +1192,7 @@ Return: ## REVISION COMPLETE
         prompt=revisionPrompt,
         subagent_type="fuska-planner",
         model=models.planner,
+        variant="plan",
         description="Remove task from: ${selectedPlan.name}"
       )
     }

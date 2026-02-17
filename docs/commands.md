@@ -45,9 +45,10 @@
 | Command | Description | Arguments |
 |---------|-------------|-----------|
 | `/fuska-configure-initiative` | Configure existing initiative (run after `fuska init`) | -- |
-| `/fuska-map-codebase` | Map existing codebase structure | `[area]` -- optional area to focus on |
-| `/fuska-map-domains` | Discover business domains in codebase for commit scopes and context | `[area]` -- optional area to focus on |
+| `/fuska-map-codebase` | Map codebase structure, business domains, and import graph | `[area]` -- optional area to focus on |
 | `/fuska-import` | Import existing initiative | -- |
+
+> **Note:** `fuska init` runs `/fuska-map-codebase` automatically (unless `--no-map`), so you only need to run it manually to re-map after significant structural changes.
 
 ### Phase Workflow
 

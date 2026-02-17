@@ -733,6 +733,7 @@ Use Task tool to generate commit message:
 Task(
   description="Generate commit message for task",
   subagent_type="fuska-git-message",
+  variant="amend",
   prompt=`<commit_context>
 **Mode:** task-commit
 **Phase-Plan:** ${phase}-${plan}

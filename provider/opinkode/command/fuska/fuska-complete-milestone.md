@@ -583,6 +583,7 @@ for (const branch of featureBranches) {
   Task(
     description="Generate merge commit message",
     subagent_type="fuska-git-message",
+    variant="amend",
     prompt=`<commit_context>
 **Mode:** branch-merge
 **Milestone:** v${{version}}
@@ -606,6 +607,7 @@ for (const branch of featureBranches) {
   Task(
     description="Generate merge commit message",
     subagent_type="fuska-git-message",
+    variant="amend",
     prompt=`<commit_context>
 **Mode:** branch-merge
 **Milestone:** v${{version}}

@@ -345,7 +345,7 @@ Include specific libraries with versions for NEW capabilities
 Include integration points with existing stack
 Include what NOT to add and why
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", description="Stack research")
+", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Stack research")
 
 Task(prompt="
 <objective>
@@ -366,7 +366,7 @@ Create/update research concept: ${nextVersion}-features-research
 Categorize clearly: table stakes, differentiators, anti-features
 Note complexity and dependencies
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", description="Features research")
+", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Features research")
 
 Task(prompt="
 <objective>
@@ -387,7 +387,7 @@ Include integration points with existing components
 Include new components needed
 Include data flow changes and suggested build order
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", description="Architecture research")
+", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Architecture research")
 
 Task(prompt="
 <objective>
@@ -404,7 +404,7 @@ Focus on common mistakes when ADDING these features to an existing system.
 Create/update research concept: ${nextVersion}-pitfalls-research
 For each pitfall: warning signs, prevention strategy, which phase should address
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", description="Pitfalls research")
+", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Pitfalls research")
 ```
 
 After all 4 agents complete, spawn synthesizer to create summary concept:
@@ -427,7 +427,7 @@ Query these concepts:
 Create/update research concept: ${nextVersion}-research-summary
 Include key findings, stack additions, feature table stakes, watch-outs
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", description="Synthesize research")
+", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="amend", description="Synthesize research")
 ```
 
 Display research complete banner and key findings:
@@ -631,7 +631,7 @@ Start new phases from: ${startPhaseNumber}
 7. Update roadmap concept with new phases
 8. Return ROADMAP CREATED with summary
 </instructions>
-", subagent_type="fuska-planner", model="${models.planner}", description="Create roadmap")
+", subagent_type="fuska-planner", model="${models.planner}", variant="plan", description="Create roadmap")
 ```
 
 **Handle planner return:**
@@ -696,7 +696,7 @@ If "Adjust phases":
   Query roadmap concept and update based on feedback.
   Return ROADMAP REVISED with changes made.
   </revision>
-  ", subagent_type="fuska-planner", model="${models.planner}", description="Revise roadmap")
+  ", subagent_type="fuska-planner", model="${models.planner}", variant="plan", description="Revise roadmap")
   ```
 - Present revised roadmap
 - Loop until user approves

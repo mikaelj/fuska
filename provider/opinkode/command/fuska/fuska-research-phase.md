@@ -318,6 +318,7 @@ Use: megamemory:create_concept() or megamemory:update_concept()
 Task(
   description=`Research Phase ${phaseNumber}`,
   subagent_type="fuska-phase-researcher",
+  variant="plan",
   model=researcherModel,
   prompt=researchPrompt
 )
@@ -411,6 +412,7 @@ Research concept: @${PHASE}-research
 Task(
   description="Continue research Phase ${phaseNumber}",
   subagent_type="fuska-phase-researcher",
+  variant="plan",
   model=researcherModel,
   prompt=continuationPrompt
 )

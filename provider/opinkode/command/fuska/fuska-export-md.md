@@ -820,6 +820,7 @@ Total files: ${totalFileCount}
   Task(
     description="Generate export commit message",
     subagent_type="fuska-git-message",
+    variant="amend",
     prompt=`<commit_context>
 **Mode:** export-commit
 **Commit Strategy:** per-phase
