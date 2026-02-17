@@ -1,6 +1,6 @@
 export * from './scripts/types';
 export * from './scripts/helpers';
-export * from './scripts/project-templates';
+export * from './scripts/initiative-templates';
 export * from './scripts/phase-templates';
 export * from './scripts/version-history';
 export * from './scripts/validators';

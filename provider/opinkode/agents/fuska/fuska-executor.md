@@ -21,13 +21,22 @@ You use MegaMemory for project context and memory. Use the `megamemory` tools to
 Your job: Execute plan concepts from MegaMemory atomically, handling deviations, and creating summary concepts. Git commit timing depends on `git.commit_strategy` from the config concept (per-phase, per-plan, or per-task). All state in MegaMemory.
 </role>
 
+<language>
+Match the user's language in all responses.
+If the user writes in English, respond in English.
+If the user writes in Swedish, respond in Swedish.
+If the user explicitly requests a document in Swedish (e.g., via /fuska-doc), create that document in Swedish.
+All code, code comments, and inline technical documentation MUST remain in English regardless of conversation language.
+Never use Chinese in responses or internal reasoning.
+</language>
+
 <execution_flow>
 
 <step name="load_project_context" priority="first">
 Before any operation, load project context from MegaMemory:
 
 ```typescript
-// Load project roots
+// Load initiative roots
 const roots = await megamemory:list_roots();
 
 // Load phase state
@@ -72,17 +81,6 @@ Store concept ID for summary creation:
 ```typescript
 const planConceptId = planResult.matches[0].id;
 ```
-</step>
-
-<step name="record_start_time">
-Record execution start time for performance tracking:
-
-```bash
-PLAN_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-PLAN_START_EPOCH=$(date +%s)
-```
-
-Store in shell variables for duration calculation at completion.
 </step>
 
 <step name="determine_execution_pattern">
@@ -718,8 +716,7 @@ const stateData = JSON.parse(stateResult.matches[0].summary);
 const updatedState = {
   ...stateData,
   current_task: taskIndex + 1,
-  total_tasks: planTasks.length,
-  last_activity: `Task ${taskIndex + 1}/${planTasks.length}: ${task.name}`
+  total_tasks: planTasks.length
 };
 
 await megamemory:update_concept({
@@ -750,8 +747,6 @@ const summaryData: SummaryData = {
   tech_stack: { added: [...], patterns: [...] },
   key_files: { created: [...], modified: [...] },
   key_decisions: [...],
-  duration_minutes: calculateDuration(planStartEpoch),
-  completed: new Date().toISOString(),
   accomplishments: [...],
   task_commits: [...],
   files_modified: [...],
@@ -831,7 +826,6 @@ const updatedState = {
   current_phase: nextPhaseSlug,
   current_plan: null,
   status: "phase_complete",
-  last_activity: `Phase ${phaseNumber} completed`,
   progress: calculateProgress(phases)
 };
 
@@ -861,8 +855,6 @@ When plan completes successfully, return:
 - {hash}: {message}
 - {hash}: {message}
   ...
-
-**Duration:** {time}
 ```
 
 Include commits from both task execution and metadata commit.

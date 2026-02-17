@@ -1,8 +1,13 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import {
+  findAllInitiatives,
+  InitiativeInfo,
+  NodeData,
+} from './utils/initiative-utils';
 
-interface ProjectNode {
+interface InitiativeNode {
   id: string;
   name: string;
   kind: string;
@@ -10,7 +15,7 @@ interface ProjectNode {
   children?: string[];
 }
 
-class ProjectsRunner {
+class InitiativesRunner {
   private projectDir: string;
   private db: any;
 
@@ -20,7 +25,7 @@ class ProjectsRunner {
 
   async run(): Promise<void> {
     await this.preflightCheck();
-    await this.displayProjects();
+    await this.displayInitiatives();
   }
 
   private async preflightCheck(): Promise<void> {
@@ -29,7 +34,7 @@ class ProjectsRunner {
 
     if (!await fs.pathExists(dbPath)) {
       console.error(`No .megamemory/knowledge.db found at ${resolvedPath}`);
-      console.error('Run /fuska-new-project first.');
+      console.error('Run /fuska-new-initiative first.');
       process.exit(1);
     }
 
@@ -37,178 +42,81 @@ class ProjectsRunner {
     this.db = new KnowledgeDB(dbPath);
   }
 
-  private async displayProjects(): Promise<void> {
+  private async displayInitiatives(): Promise<void> {
     const nodes = this.db.getAllActiveNodes();
     const edges = this.db.getAllEdges ? this.db.getAllEdges() : [];
-    
-    // Find all projects (top-level feature nodes or nodes with milestone/phase children)
-    const projects = this.findProjects(nodes, edges);
-    
-    if (projects.length === 0) {
-      console.log('No projects found in MegaMemory.');
+
+    const initiatives = findAllInitiatives(this.db);
+
+    if (initiatives.length === 0) {
+      console.log('No initiatives found in MegaMemory.');
       console.log('');
-      console.log('To create a new project, run:');
-      console.log('  /fuska-new-project <project-name>');
+      console.log('To create a new initiative, run:');
+      console.log('  /fuska-new-initiative <initiative-name>');
       return;
     }
 
-    console.log('Fuska Projects');
+    console.log('Fuska Initiatives');
     console.log('');
 
-    for (let i = 0; i < projects.length; i++) {
-      const project = projects[i];
-      const isLast = i === projects.length - 1;
-      
-      this.displayProjectTree(project, nodes, edges, '', isLast);
+    for (let i = 0; i < initiatives.length; i++) {
+      const initiative = initiatives[i];
+      const isLast = i === initiatives.length - 1;
+
+      const initiativeNode = nodes.find((n: InitiativeNode) => n.id === initiative.node.id);
+      if (initiativeNode) {
+        this.displayInitiativeTree(initiativeNode, nodes, edges, '', isLast, initiative.isCurrent);
+      }
     }
   }
 
-  private findProjects(nodes: ProjectNode[], edges: any[]): ProjectNode[] {
-    // Projects are feature nodes that are either:
-    // 1. Top-level (no parent or referenced as root)
-    // 2. Have milestone/phase children
-    const nodeMap = new Map<string, ProjectNode>();
-    const childSet = new Set<string>();
-
-    // Build node map and track all children
-    for (const node of nodes) {
-      nodeMap.set(node.id, node);
-      if (node.children && Array.isArray(node.children)) {
-        for (const childId of node.children) {
-          childSet.add(childId);
-        }
-      }
-    }
-
-    // Find root nodes (not children of any other node)
-    const projects: ProjectNode[] = [];
-    
-    for (const node of nodes) {
-      // Skip config, state, and component nodes
-      if (node.kind === 'config' || node.kind === 'component') {
-        continue;
-      }
-      
-      // Skip task concepts
-      if (node.name.startsWith('task-')) {
-        continue;
-      }
-      
-      // Skip command-like concepts (ending with "command" or containing common command terms)
-      if (node.name.toLowerCase().includes('command') ||
-          node.name.toLowerCase().endsWith('-cmd') ||
-          node.name.toLowerCase().includes('cli')) {
-        continue;
-      }
-      
-      // Skip git-message integration (it's a feature but not a project)
-      if (node.name === 'git-message-megamemory-integration') {
-        continue;
-      }
-
-      // Skip if this node is a child of another node
-      if (childSet.has(node.id)) {
-        continue;
-      }
-
-      // This is a potential project - check if it's a feature with children
-      if (node.kind === 'feature') {
-        // Check if it has meaningful project-like children (milestones, phases, codebase analysis)
-        if (node.children && node.children.length > 0) {
-          const hasProjectChildren = node.children.some(childId => {
-            const child = nodeMap.get(childId);
-            if (!child) return false;
-            // Check for milestone-like or phase-like children, or codebase analysis
-            return (child.kind === 'feature' || child.kind === 'decision' || child.kind === 'module') &&
-                   (child.name.includes('milestone') || 
-                    child.name.includes('phase') ||
-                    child.name.includes('codebase') ||
-                    child.name.includes('state') ||
-                    child.name.includes('config'));
-          });
-          
-          if (hasProjectChildren) {
-            projects.push(node);
-          }
-        } else {
-          // Feature without children but is top-level - could be a project
-          // Only include if the name looks like a project (not generic features)
-          if (!this.isGenericFeature(node.name)) {
-            projects.push(node);
-          }
-        }
-      }
-    }
-
-    return projects;
-  }
-
-  private isGenericFeature(name: string): boolean {
-    // Filter out generic feature names that aren't projects
-    const genericPatterns = [
-      /integration$/i,
-      /support$/i,
-      /handler$/i,
-      /helper$/i,
-      /utility$/i,
-      /utils$/i
-    ];
-    
-    return genericPatterns.some(pattern => pattern.test(name));
-  }
-
-  private displayProjectTree(
-    project: ProjectNode, 
-    nodes: ProjectNode[],
+  private displayInitiativeTree(
+    initiative: InitiativeNode,
+    nodes: InitiativeNode[],
     edges: any[],
-    prefix: string, 
-    isLast: boolean
+    prefix: string,
+    isLast: boolean,
+    isCurrent: boolean = false
   ): void {
-    const nodeMap = new Map<string, ProjectNode>();
-    
+    const nodeMap = new Map<string, InitiativeNode>();
+
     for (const node of nodes) {
       nodeMap.set(node.id, node);
     }
 
-    // Display project name
     const connector = isLast ? '└─' : '├─';
-    const projectName = this.getProjectDisplayName(project);
-    
-    console.log(`${prefix}${connector} ${projectName}`);
+    const initiativeName = this.getInitiativeDisplayName(initiative, isCurrent);
 
-    // Find children via edges (since children property may not be populated)
-    // Note: edges go from child to parent (to_id = parent)
-    const childEdges = edges.filter((e: any) => e.to_id === project.id);
+    console.log(`${prefix}${connector} ${initiativeName}`);
+
+    const childEdges = edges.filter((e: any) => e.to_id === initiative.id);
     const children = childEdges
       .map((e: any) => {
         const child = nodeMap.get(e.from_id);
         return child ? { ...child, relation: e.relation } : null;
       })
       .filter((n: any) => n !== undefined);
-    
+
     const newPrefix = prefix + (isLast ? '  ' : '│ ');
-    
+
     if (children.length > 0) {
-      // Separate milestones/phases from other children
-      const milestones = children.filter((c: any) => 
-        c.kind === 'decision' || 
+      const milestones = children.filter((c: any) =>
+        c.kind === 'decision' ||
         c.kind === 'feature' ||
         c.name.toLowerCase().includes('milestone') ||
         c.name.toLowerCase().includes('phase')
       );
 
-      // If we have milestones/phases, show them
       if (milestones.length > 0) {
         for (let i = 0; i < milestones.length; i++) {
-          const milestone = milestones[i] as ProjectNode;
+          const milestone = milestones[i] as InitiativeNode;
           const isLastMilestone = i === milestones.length - 1;
           this.displayMilestoneTree(milestone, nodes, newPrefix, isLastMilestone);
         }
       } else {
-        // Show a summary of what the project contains
         const configChildren = children.filter((c: any) => c.relation === 'configured_by');
         const analysisChildren = children.filter((c: any) => c.relation === 'connects_to');
-        
+
         if (analysisChildren.length > 0) {
           console.log(`${newPrefix}├─ Codebase Analysis`);
           for (let i = 0; i < Math.min(analysisChildren.length, 3); i++) {
@@ -223,7 +131,7 @@ class ProjectsRunner {
             console.log(`${newPrefix}│  └─ ... and ${analysisChildren.length - 3} more`);
           }
         }
-        
+
         if (configChildren.length > 0) {
           console.log(`${newPrefix}└─ Config & State`);
         }
@@ -232,30 +140,29 @@ class ProjectsRunner {
   }
 
   private displayMilestoneTree(
-    milestone: ProjectNode,
-    nodes: ProjectNode[],
+    milestone: InitiativeNode,
+    nodes: InitiativeNode[],
     prefix: string,
     isLast: boolean
   ): void {
-    const nodeMap = new Map<string, ProjectNode>();
+    const nodeMap = new Map<string, InitiativeNode>();
     for (const node of nodes) {
       nodeMap.set(node.id, node);
     }
 
     const connector = isLast ? '└─' : '├─';
     const milestoneName = this.getMilestoneDisplayName(milestone);
-    
+
     console.log(`${prefix}${connector} ${milestoneName}`);
 
-    // Find phases under milestone
     const newPrefix = prefix + (isLast ? '  ' : '│ ');
-    
+
     if (milestone.children && milestone.children.length > 0) {
       const children = milestone.children
         .map(id => nodeMap.get(id))
-        .filter(n => n !== undefined) as ProjectNode[];
+        .filter(n => n !== undefined) as InitiativeNode[];
 
-      const phases = children.filter(c => 
+      const phases = children.filter(c =>
         c.name.toLowerCase().includes('phase') ||
         c.kind === 'module'
       );
@@ -270,36 +177,47 @@ class ProjectsRunner {
     }
   }
 
-  private displayPhaseTree(phase: ProjectNode, prefix: string, isLast: boolean): void {
+  private displayPhaseTree(phase: InitiativeNode, prefix: string, isLast: boolean): void {
     const connector = isLast ? '└─' : '├─';
     const phaseName = this.getPhaseDisplayName(phase);
-    
+
     console.log(`${prefix}${connector} ${phaseName}`);
   }
 
-  private getProjectDisplayName(project: ProjectNode): string {
-    let name = project.name;
-    
-    // Try to extract project name from summary JSON
+  private getInitiativeDisplayName(initiative: InitiativeNode, isCurrent: boolean = false): string {
+    let name = initiative.name;
+    let archivedAt: string | null = null;
+
     try {
-      const summary = JSON.parse(project.summary);
-      if (summary.project_name) {
-        name = summary.project_name;
+      const summary = JSON.parse(initiative.summary);
+      if (summary.initiative_name) {
+        name = summary.initiative_name;
       } else if (summary.name) {
         name = summary.name;
       }
+      if (summary.archived_at) {
+        archivedAt = summary.archived_at;
+      }
     } catch (e) {
-      // Not JSON, use the name as-is
     }
 
-    return name;
+    let suffix = '';
+    if (isCurrent) {
+      suffix = ' (current)';
+    }
+    if (archivedAt) {
+      const date = new Date(archivedAt);
+      const formattedDate = date.toLocaleDateString();
+      suffix += ` [archived: ${formattedDate}]`;
+    }
+
+    return name + suffix;
   }
 
-  private getMilestoneDisplayName(milestone: ProjectNode): string {
+  private getMilestoneDisplayName(milestone: InitiativeNode): string {
     let name = milestone.name;
     let status = '';
 
-    // Try to extract milestone info from summary
     try {
       const summary = JSON.parse(milestone.summary);
       if (summary.name) {
@@ -312,7 +230,6 @@ class ProjectsRunner {
         status = this.getStatusIndicator(summary.status);
       }
     } catch (e) {
-      // Not JSON, check name for milestone pattern
       if (name.includes('milestone')) {
         const match = name.match(/milestone-?(\d+)/i);
         if (match) {
@@ -324,11 +241,10 @@ class ProjectsRunner {
     return status ? `${status} ${name}` : name;
   }
 
-  private getPhaseDisplayName(phase: ProjectNode): string {
+  private getPhaseDisplayName(phase: InitiativeNode): string {
     let name = phase.name;
     let status = '';
 
-    // Try to extract phase info from summary
     try {
       const summary = JSON.parse(phase.summary);
       if (summary.name) {
@@ -341,7 +257,6 @@ class ProjectsRunner {
         status = this.getStatusIndicator(summary.status);
       }
     } catch (e) {
-      // Not JSON, check name for phase pattern
       if (name.toLowerCase().includes('phase')) {
         const match = name.match(/phase-?(\d+)/i);
         if (match) {
@@ -355,7 +270,7 @@ class ProjectsRunner {
 
   private getStatusIndicator(status: string): string {
     const statusLower = status.toLowerCase();
-    
+
     if (statusLower === 'completed' || statusLower === 'done' || statusLower === 'shipped') {
       return '✓';
     } else if (statusLower === 'in_progress' || statusLower === 'in-progress' || statusLower === 'active') {
@@ -366,11 +281,9 @@ class ProjectsRunner {
   }
 
   private formatChildName(name: string): string {
-    // Extract meaningful part from names like "codebase-tech" or "fuska/config"
     const parts = name.split('/');
     const lastPart = parts[parts.length - 1];
-    
-    // Convert kebab-case to Title Case
+
     return lastPart
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -378,12 +291,12 @@ class ProjectsRunner {
   }
 }
 
-export function projectsCommand(program: Command) {
+export function initiativesCommand(program: Command) {
   program
-    .command('projects [project-path]')
-    .description('List all Fuska projects with milestones and phases')
+    .command('initiatives [project-path]')
+    .description('List all Fuska initiatives with milestones and phases')
     .action(async (projectPath?: string) => {
-      const runner = new ProjectsRunner({
+      const runner = new InitiativesRunner({
         projectDir: projectPath || process.cwd()
       });
       await runner.run();

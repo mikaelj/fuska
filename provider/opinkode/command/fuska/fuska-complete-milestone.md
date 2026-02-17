@@ -494,7 +494,6 @@ const updatedStateData = {
   current_plan: null,
   status: "milestone_complete",
   last_completed_milestone: `v${{version}}`,
-  last_activity: `Milestone v${{version}} completed`,
   progress: 100
 }
 
@@ -700,7 +699,7 @@ git push origin v${{version}}
 
 ```
 **Also available:**
-- /fuska-progress — View detailed project progress
+- fuska progress — View detailed project progress
 - /fuska-verify-work — Verify work before starting next milestone
 ────────────────────────────────────────────────────────────
 ```

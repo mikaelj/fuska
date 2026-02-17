@@ -128,10 +128,10 @@ interface NodeWithContext {
 **Examples:**
 
 ```typescript
-// Load project state on resume
-async function loadProjectState(megamemory: MegaMemoryClient, projectSlug: string) {
-  // Get project root
-  const project = await megamemory.understand({ query: projectSlug });
+// Load initiative state on resume
+async function loadInitiativeState(megamemory: MegaMemoryClient, initiativeSlug: string) {
+  // Get initiative root
+  const initiative = await megamemory.understand({ query: initiativeSlug });
 
   // Get state config
   const state = await megamemory.understand({ query: 'state' });
@@ -145,7 +145,7 @@ async function loadProjectState(megamemory: MegaMemoryClient, projectSlug: strin
   const phases = await megamemory.understand({ query: 'phase-', top_k: 100 });
 
   return {
-    project: project.concepts[0],
+    initiative: initiative.concepts[0],
     state: stateData,
     currentPhase: phaseData,
     allPhases: phases.concepts.map(p => JSON.parse(p.summary))
@@ -206,11 +206,11 @@ interface CreateConceptResult {
 **Usage:**
 
 ```typescript
-// Create project root
-const project = await megamemory.create_concept({
-  name: 'my-project',
+// Create initiative root
+const initiative = await megamemory.create_concept({
+  name: 'my-initiative',
   kind: 'feature',
-  summary: 'My Awesome Project',
+  summary: 'My Awesome Initiative',
   why: 'Solves user authentication problem',
   parent_id: null,
   edges: []
@@ -227,7 +227,7 @@ const phase = await megamemory.create_concept({
     goal: 'Implement JWT authentication',
     status: 'planned'
   }),
-  parent_id: 'my-project/roadmap',
+  parent_id: 'my-initiative/roadmap',
   edges: [{ to: 'roadmap', relation: 'part_of' }]
 });
 
@@ -435,7 +435,7 @@ if (pattern.concepts.length > 0) {
 
 ### megamemory:list_roots
 
-List all top-level concepts (concepts without parent_id). Useful for discovering projects or loading initial state.
+List all top-level concepts (concepts without parent_id). Useful for discovering initiatives or loading initial state.
 
 ```typescript
 interface ListRootsResult {
@@ -446,19 +446,19 @@ interface ListRootsResult {
 **Usage:**
 
 ```typescript
-// Get all projects
+// Get all initiatives
 const roots = await megamemory.list_roots();
-const projects = roots.roots.filter(r => r.kind === 'feature');
+const initiatives = roots.roots.filter(r => r.kind === 'feature');
 
-// Load specific project
-const projectRoot = roots.roots.find(r => r.name === 'my-project');
+// Load specific initiative
+const initiativeRoot = roots.roots.find(r => r.name === 'my-initiative');
 
-// Check if project exists
-const projectExists = roots.roots.some(r => r.name === projectSlug);
+// Check if initiative exists
+const initiativeExists = roots.roots.some(r => r.name === initiativeSlug);
 
-// Initialize project if not exists
-if (!projectExists) {
-  await createNewProject(projectSlug);
+// Initialize initiative if not exists
+if (!initiativeExists) {
+  await createNewInitiative(initiativeSlug);
 }
 ```
 
@@ -469,7 +469,7 @@ if (!projectExists) {
 **Load Everything at Start:**
 
 ```typescript
-async function loadFullProjectState(megamemory: MegaMemoryClient) {
+async function loadFullInitiativeState(megamemory: MegaMemoryClient) {
   // Get all concepts in one call
   const allConcepts = await megamemory.understand({ query: '', top_k: 10000 });
 
@@ -477,12 +477,12 @@ async function loadFullProjectState(megamemory: MegaMemoryClient) {
   const conceptMap = new Map(allConcepts.concepts.map(c => [c.id, c]));
   const nameMap = new Map(allConcepts.concepts.map(c => [c.name, c]));
 
-  // Find project root
+  // Find initiative root
   const roots = await megamemory.list_roots();
-  const project = roots.roots[0];
+  const initiative = roots.roots[0];
 
   return {
-    project,
+    initiative,
     concepts: allConcepts.concepts,
     byId: conceptMap,
     byName: nameMap
@@ -614,27 +614,27 @@ Complete
 
 ## Common Patterns
 
-### Load Project State
+### Load Initiative State
 
 ```typescript
-interface ProjectState {
-  project: NodeWithContext;
+interface InitiativeState {
+  initiative: NodeWithContext;
   state: StateData;
   currentPhase: PhaseData | null;
   allPhases: PhaseData[];
   progress: number;
 }
 
-async function loadProjectState(
+async function loadInitiativeState(
   megamemory: MegaMemoryClient,
-  projectSlug: string
-): Promise<ProjectState> {
-  // Get project root
+  initiativeSlug: string
+): Promise<InitiativeState> {
+  // Get initiative root
   const roots = await megamemory.list_roots();
-  const project = roots.roots.find(r => r.name === projectSlug);
+  const initiative = roots.roots.find(r => r.name === initiativeSlug);
 
-  if (!project) {
-    throw new Error(`Project ${projectSlug} not found`);
+  if (!initiative) {
+    throw new Error(`Initiative ${initiativeSlug} not found`);
   }
 
   // Get state config
@@ -665,7 +665,7 @@ async function loadProjectState(
   const progress = Math.round((completedPhases / allPhases.length) * 100);
 
   return {
-    project,
+    initiative,
     state: stateData,
     currentPhase,
     allPhases,
@@ -674,25 +674,25 @@ async function loadProjectState(
 }
 ```
 
-### Create Project Root
+### Create Initiative Root
 
 ```typescript
-interface ProjectConfig {
+interface InitiativeConfig {
   slug: string;
   name: string;
   what_this_is: string;
   core_value: string;
 }
 
-async function createProject(
+async function createInitiative(
   megamemory: MegaMemoryClient,
-  config: ProjectConfig
+  config: InitiativeConfig
 ): Promise<string> {
-  // Create project root
-  const project = await megamemory.create_concept({
+  // Create initiative root
+  const initiative = await megamemory.create_concept({
     name: config.slug,
     kind: 'feature',
-    summary: `Project: ${config.name}\n\n${config.what_this_is}`,
+    summary: `Initiative: ${config.name}\n\n${config.what_this_is}`,
     why: config.core_value,
     parent_id: null,
     edges: []
@@ -729,12 +729,12 @@ async function createProject(
   await megamemory.create_concept({
     name: 'roadmap',
     kind: 'module',
-    summary: 'Project roadmap with phases',
+    summary: 'Initiative roadmap with phases',
     parent_id: config.slug,
     edges: [{ to: config.slug, relation: 'part_of' }]
   });
 
-  return project.id;
+  return initiative.id;
 }
 ```
 
@@ -750,7 +750,7 @@ interface PhaseConfig {
 
 async function createPhase(
   megamemory: MegaMemoryClient,
-  projectSlug: string,
+  initiativeSlug: string,
   config: PhaseConfig
 ): Promise<string> {
   const phaseConcept = await megamemory.create_concept({
@@ -763,7 +763,7 @@ async function createPhase(
       goal: config.goal,
       status: 'planned'
     }),
-    parent_id: `${projectSlug}/roadmap`,
+    parent_id: `${initiativeSlug}/roadmap`,
     edges: [{ to: 'roadmap', relation: 'part_of' }]
   });
 
@@ -1014,7 +1014,7 @@ async function buildDependencyGraph(
     },
 
     getTechStackHistory: () => {
-      return Array.from(traverse('project-root'))
+      return Array.from(traverse('initiative-root'))
         .filter(c => c.kind === 'decision' || c.kind === 'config');
     },
 
@@ -1484,7 +1484,7 @@ MegaMemory provides a persistent, semantic knowledge graph for Fuska projects. B
 
 **Workflow:**
 
-1. `list_roots` - Discover projects
+1. `list_roots` - Discover initiatives
 2. `understand` - Load relevant context
 3. `create_concept` - Add new knowledge
 4. `update_concept` - Modify existing

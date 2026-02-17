@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 
+import { initCommand } from './commands/init';
 import { migrateCommand } from './commands/migrate';
 import { exportCommand } from './commands/export';
 import { installCommand } from './commands/install';
@@ -16,6 +17,10 @@ import { progressCommand } from './commands/progress';
 import { providerCommand } from './commands/provider';
 import { helpCommand } from './commands/help';
 import { infoCommand } from './commands/info';
+import { migrateMultiInitiativeCommand } from './commands/migrate-multi-initiative';
+import { initiativeNewCommand } from './commands/initiative-new';
+import { initiativeArchiveCommand } from './commands/initiative-archive';
+import { initiativeSwitchCommand } from './commands/initiative-switch';
 
 const program = new Command();
 
@@ -24,6 +29,7 @@ program
   .description('Fuska - Get stuff done with MegaMemory: CLI tool for installing, exporting, and migrating')
   .version(require('../package.json').version);
 
+initCommand(program);
 migrateCommand(program);
 exportCommand(program);
 installCommand(program);
@@ -38,5 +44,9 @@ initiativesCommand(program);
 todoCommand(program);
 progressCommand(program);
 infoCommand(program);
+migrateMultiInitiativeCommand(program);
+initiativeNewCommand(program);
+initiativeArchiveCommand(program);
+initiativeSwitchCommand(program);
 
 program.parse(process.argv);

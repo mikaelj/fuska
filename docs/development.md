@@ -1,4 +1,11 @@
-# Fuska Development Guide
+# Development Guide
+
+> Contributing to Fuska — setup, build, and architecture.
+
+**Audience:** Contributors
+**Prerequisites:** [Installation](installation.md) for end-user install
+
+---
 
 ## Installation Architecture
 
@@ -7,6 +14,8 @@ Fuska uses **symlinks** to connect target directories to the npm package. This m
 - Updates to the package are immediately available (no reinstall needed)
 - Development can happen directly in the source directory
 - Both opencode and claude can coexist
+
+For symlink details and target tables, see [installation.md](installation.md#what-fuska-install-does).
 
 ### Directory Structure
 
@@ -114,26 +123,6 @@ for skill in provider/klod/skills/fuska-*; do
 done
 ```
 
-## Symlink Targets
-
-### OpenCode
-
-| Target | Source (in package) |
-|--------|---------------------|
-| `~/.config/opencode/fuska/` | `<pkg>/provider/opinkode/fuska/` |
-| `~/.config/opencode/command/fuska/` | `<pkg>/provider/opinkode/command/fuska/` |
-| `~/.config/opencode/agents/fuska/` | `<pkg>/provider/opinkode/agents/fuska/` |
-
-### Claude
-
-| Target | Source (in package) |
-|--------|---------------------|
-| `~/.claude/fuska/` | `<pkg>/provider/klod/fuska/` |
-| `~/.claude/skills/fuska-*/` | `<pkg>/provider/klod/skills/fuska-*/` (individual symlinks) |
-| `~/.claude/agents/fuska/` | `<pkg>/provider/klod/agents/fuska/` |
-
-Note: Claude requires individual skill symlinks because skills must be directly in `~/.claude/skills/*/` (no nesting).
-
 ## Format Transformations
 
 ### Command → Skill
@@ -183,6 +172,29 @@ description: Creates execution plans
 tools: read, bash, megamemory:understand
 ---
 ```
+
+### Deprecated Commands
+
+Commands marked as `deprecated: true` in frontmatter are skipped during the Claude build:
+
+```yaml
+---
+name: fuska-old-command
+deprecated: true
+deprecation_message: |
+  Use `fuska new-command` instead.
+tools:
+  - read
+  - bash
+---
+```
+
+These commands:
+- Remain in `provider/opinkode/command/fuska/` for backward compatibility
+- Are NOT transformed to `provider/klod/skills/` 
+- Display deprecation notice when invoked
+
+The build script (`scripts/build-claude.ts`) checks for `data.deprecated` and returns `null` to skip transformation.
 
 ## CLI Options
 
@@ -249,3 +261,10 @@ The selected provider is saved to `~/.config/fuska/fuska.jsonc`:
 ```
 
 This allows `fuska install` (without flags) to remember your preference.
+
+---
+
+## See Also
+
+- [installation.md](installation.md) — End-user installation guide
+- [commands.md](commands.md) — Full command reference

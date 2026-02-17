@@ -52,7 +52,7 @@ await megamemory.create_concept({
   kind: "feature",
   summary: `Plan ${planId} for phase ${phaseId}: ${objective}. Wave ${wave}, depends on ${depends_on.join(", ")}. Tasks: ${tasks.length}. Autonomous: ${autonomous}. Must-haves: ${must_haves.truths.length} truths, ${must_haves.artifacts.length} artifacts.`,
   why: "Executes specific portion of phase, can run in parallel with other same-wave plans",
-  parent_id: `project:${projectId}`,
+  parent_id: `initiative:${initiativeId}`,
   edges: [
     {
       to: `phase-context:${phaseId}`,
@@ -289,18 +289,13 @@ Output: [What artifacts will be created]
 @../references/checkpoints.md
 </execution_context>
 
-<context>
-Query MegaMemory for project context:
+# Query MegaMemory for initiative context
 ```
 megamemory:understand({query: "project"})
 megamemory:understand({query: "roadmap"})
 megamemory:understand({query: "state"})
 ```
-
-Parse responses via `.concepts[0]` and `JSON.parse(.summary)` to extract:
-- Project scope and goals (from project concept)
-- Phase structure and dependencies (from roadmap concept)
-- Current position and blockers (from state concept)
+# Parse via .concepts[0] and JSON.parse(.summary) to extract context
 
 # Only reference prior plan SUMMARYs if genuinely needed:
 # - This plan uses types/exports from prior plan
@@ -464,24 +459,14 @@ Wave 3 runs after Waves 1 and 2. Pauses at checkpoint, orchestrator presents to 
 **Parallel-aware context:**
 
 ```markdown
-<context>
-# Query MegaMemory for project context
+# Query MegaMemory for initiative context
+```
 megamemory:understand({query: "project"})
 megamemory:understand({query: "roadmap"})
 megamemory:understand({query: "state"})
-# Parse via .concepts[0] and JSON.parse(.summary) to extract context
-
-# Only include SUMMARY queries if genuinely needed:
-# - This plan imports types from prior plan
-# - Prior plan made decision affecting this plan
-# - Prior plan's output is input to this plan
-#
-# Independent plans need NO prior SUMMARY references.
-# Do NOT reflexively chain: 02 refs 01, 03 refs 02...
-
-@src/relevant/source.ts
-</context>
 ```
+# Parse via .concepts[0] and JSON.parse(.summary) to extract context
+</context>
 
 **Bad pattern (creates false dependencies):**
 ```markdown

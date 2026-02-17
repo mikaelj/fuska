@@ -65,7 +65,7 @@ await megamemory.create_concept({
   kind: "module",
   summary: `${researchSummary}. Domain: ${domain}. Confidence: ${confidence}. Standard stack: ${standardStack.core.map(s => s.name).join(", ")}. Key insight: ${dontHandRoll.keyInsight}. Primary sources: ${sources.primary.length}.`,
   why: "Documents expert knowledge for phase implementation - not just which library, but how experts build this",
-  parent_id: `project:${projectId}`,
+  parent_id: `initiative:${initiativeId}`,
   edges: [
     {
       to: `phase-context:${phaseId}`,

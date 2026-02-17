@@ -66,7 +66,7 @@ export interface MegaMemoryClient {
   list_roots(): Promise<ListRootsResult>;
 }
 
-export interface ProjectData {
+export interface InitiativeData {
   slug: string;
   name: string;
   what_this_is: string;

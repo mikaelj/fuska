@@ -683,12 +683,12 @@ const singleFeaturePlan = await megamemory_create_concept({
 });
 ```
 
-## Example 8: Querying All TDD Work in Project
+## Example 8: Querying All TDD Work in Initiative
 
 ```typescript
 // Get overview of all TDD work
-const tddOverview = await megamemory_understand({
-  query: "all TDD plans and phases in current project",
+const tddOverview = await megamemory.understand({
+  query: "all TDD plans and phases in current initiative",
   top_k: 50
 });
 
@@ -708,8 +708,8 @@ const fullPlan = await megamemory_understand({
 // Returns plan + all linked phase concepts with full details
 
 // Query patterns used across all TDD work
-const patternsUsed = await megamemory_understand({
-  query: "all TDD patterns implemented in current project including test quality and commit patterns"
+const patternsUsed = await megamemory.understand({
+  query: "all TDD patterns implemented in current initiative including test quality and commit patterns"
 });
 // Returns: red-green-refactor-cycle, descriptive-test-names, test-behavior-not-implementation
 ```
@@ -768,9 +768,9 @@ Output: [Working, tested feature]
 </objective>
 
 <context>
-# Query MegaMemory for project context before creating TDD plan
+# Query MegaMemory for initiative context before creating TDD plan
 await megamemory_understand({
-  query: "project architecture and related components for email validation feature"
+  query: "initiative architecture and related components for email validation feature"
 });
 
 # Load relevant source files

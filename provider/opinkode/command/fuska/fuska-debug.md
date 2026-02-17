@@ -79,16 +79,15 @@ if (input.trim().toLowerCase().startsWith("help")) {
     1. Gather symptoms → expected, actual, errors, reproduction, timeline
     2. Investigate → spawn fuska-debugger agent to find root cause
     3. Root cause → identify the underlying issue
-    4. Select mode → choose fix complexity: quick|fast|balanced|thorough|standard|manual
+    4. Select mode → choose fix complexity: planned|checked|researched|verified|manual
     5. Fix → spawn fuska-do with debug context to apply fix
 
   Modes (based on fix complexity):
-    quick     - Simple fixes, trusted patterns
-    fast      - Plan validation, familiar territory
-    balanced  - Research + execution, moderate uncertainty
-    thorough  - Research + validation, new territory
-    standard  - Full chain + verification, critical systems
-    manual    - Display findings, I'll fix it myself
+    planned    - Planner → Executor, auto-execute
+    checked    - + Plan Checker, ask before execution
+    researched - + Researcher, ask before execution
+    verified   - Full pipeline with Verifier, auto-execute
+    manual     - Display findings, I'll fix it myself
 
   -> Stop
 }
@@ -256,11 +255,11 @@ Parse debugger output for:
 **Map complexity to recommended mode:**
 ```
 const modeRecommendation = {
-  simple: "quick",
-  moderate: "balanced",
-  complex: "thorough"
+  simple: "planned",
+  moderate: "checked",
+  complex: "researched"
 }
-const recommendedMode = modeRecommendation[fix_complexity] || "balanced"
+const recommendedMode = modeRecommendation[fix_complexity] || "checked"
 ```
 
 **Present mode selection:**
@@ -270,11 +269,10 @@ question(questions=[{
   question: "Root cause found. Select mode to proceed with fix:",
   options: [
     { label: "{recommendedMode} (Recommended)", description: "Based on {fix_complexity} fix complexity." },
-    { label: "Quick", description: "Direct execution, minimal overhead." },
-    { label: "Fast", description: "Plan validation only." },
-    { label: "Balanced", description: "Research + execution." },
-    { label: "Thorough", description: "Research + validation." },
-    { label: "Standard", description: "Full chain with verification." },
+    { label: "Planned", description: "Planner → Executor. Auto-execute." },
+    { label: "Checked", description: "Planner → Plan Checker → Executor. Ask first." },
+    { label: "Researched", description: "Researcher → Planner → Plan Checker → Executor. Ask first." },
+    { label: "Verified", description: "Full pipeline with Verifier. Auto-execute." },
     { label: "Manual", description: "I'll fix it myself." }
   ]
 }])

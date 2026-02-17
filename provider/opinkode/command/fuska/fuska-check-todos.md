@@ -72,8 +72,8 @@ megamemory_list_roots()
 **Step 1.2: Check for roots**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to start a new project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to start a new initiative"
 → Stop
 
 ---
@@ -113,7 +113,7 @@ Todos are captured during work sessions with /fuska-add-todo.
 
 Would you like to:
 
-1. Continue with current phase (/fuska-progress)
+1. Continue with current phase (fuska progress)
 2. Add a todo now (/fuska-add-todo)
 ```
 
@@ -402,8 +402,7 @@ const stateData = JSON.parse(stateSummaryString)
 
 const updatedStateData = {
   ...stateData,
-  pending_todos_count: pendingTodos.length - 1,
-  last_activity: `Completed todo: ${selectedTodo.title}`
+  pending_todos_count: pendingTodos.length - 1
 }
 
 megamemory_update_concept(

@@ -54,8 +54,8 @@ The important field is **`summary`** — it's a JSON string containing the conce
 Check for state concept in MegaMemory - loads context if project already initialized
 
 **This command runs:**
-- Before /fuska-new-project (brownfield codebases) - creates codebase concepts first
-- After /fuska-new-project (greenfield codebases) - updates codebase concepts as code evolves
+- Before fuska init (brownfield codebases) - creates codebase concepts first
+- After fuska init (greenfield codebases) - updates codebase concepts as code evolves
 - Anytime to refresh codebase understanding
 
 **For faster domain discovery only**, use `fuska map --domains-only`
@@ -459,8 +459,7 @@ const stateId = stateResponse.matches[0].id
 const updatedStateData = {
   ...stateData,
   codebase_mapped: true,
-  codebase_mapped_at: new Date().toISOString(),
-  last_activity: `Codebase mapped (focus: ${ARGUMENTS || 'full'})`
+  codebase_mapped_at: new Date().toISOString()
 }
 ```
 
@@ -518,8 +517,8 @@ Use `fuska config` to view or override the contextual checker role.
 ${!stateData.current_phase ? 'Initialize project' : 'Continue with project planning'}
 
 ${!stateData.current_phase
-  ? '/fuska-new-project — Initialize project with this codebase understanding'
-  : '/fuska-plan-phase ' + stateData.current_phase + ' — Plan next phase'
+   ? 'fuska init — Initialize project foundation with this codebase understanding'
+   : '/fuska-plan-phase ' + stateData.current_phase + ' — Plan next phase'
 }
 
 ────────────────────────────────────────────────────────────

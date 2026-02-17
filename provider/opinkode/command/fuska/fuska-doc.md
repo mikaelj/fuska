@@ -1,7 +1,7 @@
 ---
 name: fuska-doc
 description: Create documentation as deliverables with research, planning, and review
-argument-hint: "[standard|quick] <topic> [--type TYPE] [--audience AUD] [--depth DEPTH] [--output PATH]"
+argument-hint: "[mode] <topic> [--type TYPE] [--audience AUD] [--depth DEPTH] [--output PATH]"
 tools:
   - read
   - bash
@@ -17,9 +17,11 @@ tools:
 
 Create documents as deliverables — architecture docs, implementation guides, design specs, story breakdowns, etc. The final output is a markdown file, with intermediate planning/research stored as MegaMemory concepts.
 
-**Default mode:** quick (Plan → Write only)
-
-**Standard mode:** Research → Plan → Check → Write → Review
+**Modes:**
+- **planned** (default) — Plan → Write
+- **checked** — Plan → Check → Write
+- **researched** — Research → Plan → Check → Write
+- **verified** — Research → Plan → Check → Write → Review
 
 **Orchestrator role:** Parse arguments, detect project context, generate doc number, create doc plan concept, chain agents, finalize with git commit option.
 
@@ -102,8 +104,10 @@ if (firstWord === "help") {
   Usage: /fuska-doc [mode] <topic> [--type TYPE] [--audience AUD] [--depth DEPTH] [--output PATH]
 
   Modes:
-    quick    - Plan → Write only (default)
-    standard - Research → Plan → Check → Write → Review
+    planned    - Plan → Write (default)
+    checked    - Plan → Check → Write
+    researched - Research → Plan → Check → Write
+    verified   - Research → Plan → Check → Write → Review
 
   Flags:
     --type      Document type: architecture, implementation, story-breakdown, design, migration, guide
@@ -179,10 +183,11 @@ const input = "$ARGUMENTS".trim()
 const words = input.split(/\s+/)
 const firstWord = words[0]?.toLowerCase()
 
-let MODE = "quick"  // DEFAULT
+let MODE = "planned"  // DEFAULT
 let topicWords = words
+const validDocModes = ["planned", "checked", "researched", "verified"]
 
-if (firstWord === "standard" || firstWord === "quick") {
+if (validDocModes.includes(firstWord)) {
   MODE = firstWord
   topicWords = words.slice(1)
 }
@@ -362,9 +367,9 @@ const docPlanName = `doc-${NUMBER}-${SLUG}`
 
 ---
 
-## 5. Research (standard mode only)
+## 5. Research (researched/verified modes only)
 
-**If MODE === "quick": Skip to Step 6**
+**If MODE === "planned" || MODE === "checked": Skip to Step 6**
 
 Display:
 ```
@@ -373,7 +378,7 @@ Display:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
  Document: doc-${NUMBER}-${SLUG}
- Mode: standard
+ Mode: ${MODE}
 
  [IN_PROGRESS] Spawning researcher...
 ```
@@ -472,7 +477,7 @@ Depth: ${DEPTH}
 
 Doc plan concept: doc-${NUMBER}-${SLUG}
 
-${research concept data if standard mode}
+${research concept data if researched/verified mode}
 </context>
 
 <planning_guidelines>
@@ -500,14 +505,14 @@ Task(
 
 → Query updated plan concept
 → Display outline summary
-→ If MODE === "standard": Continue to Step 7
-→ If MODE === "quick": Skip to Step 8
+→ If MODE === "checked" || MODE === "researched" || MODE === "verified": Continue to Step 7
+→ If MODE === "planned": Skip to Step 8
 
 ---
 
-## 7. Check (standard mode only)
+## 7. Check (checked/researched/verified modes only)
 
-**If MODE === "quick": Skip to Step 8**
+**If MODE === "planned": Skip to Step 8**
 
 Display:
 ```
@@ -530,7 +535,7 @@ Audience: ${AUDIENCE}
 Depth: ${DEPTH}
 
 Outline: ${outline from plan concept}
-Research: ${research findings if available}
+Research: ${research findings if researched/verified mode}
 </verification_context>
 
 <check_dimensions>
@@ -633,7 +638,7 @@ Document type: ${TYPE}
 Audience: ${AUDIENCE}
 
 Outline: ${outline from plan concept}
-Research: ${research findings if available}
+Research: ${research findings if researched/verified mode}
 
 Doc plan concept: doc-${NUMBER}-${SLUG}
 </context>
@@ -685,14 +690,14 @@ Task(
 **Handle Writer Return:**
 
 → Display: file path, word count
-→ If MODE === "standard": Continue to Step 9
-→ If MODE === "quick": Skip to Step 10
+→ If MODE === "verified": Continue to Step 9
+→ Otherwise: Skip to Step 10
 
 ---
 
-## 9. Review (standard mode only)
+## 9. Review (verified mode only)
 
-**If MODE === "quick": Skip to Step 10**
+**If MODE !== "verified": Skip to Step 10**
 
 Display:
 ```
@@ -857,11 +862,11 @@ Output this markdown directly (replacing variables with actual values):
  Words: ${WORD_COUNT} | Sections: ${SECTION_COUNT}
 
  Mode: ${MODE}
- ${MODE === "standard" ? "Research: ✓ | Check: ✓ | Review: ✓" : "Research: ✗ | Check: ✗ | Review: ✗"}
+ Research: ${["researched","verified"].includes(MODE) ? "✓" : "✗"} | Check: ${["checked","researched","verified"].includes(MODE) ? "✓" : "✗"} | Review: ${MODE === "verified" ? "✓" : "✗"}
 
  MegaMemory:
  - doc-${NUMBER}-${SLUG} (plan)
- ${MODE === "standard" ? "- doc-${NUMBER}-${SLUG}-research (research)" : ""}
+ ${["researched","verified"].includes(MODE) ? "- doc-${NUMBER}-${SLUG}-research (research)" : ""}
  - doc-${NUMBER}-${SLUG}-content (content)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -876,9 +881,9 @@ Output this markdown directly (replacing variables with actual values):
 // Track word count and sections for summary
 let WORD_COUNT = 0
 let SECTION_COUNT = 0
-let RESEARCH_DONE = MODE === "standard"
-let CHECK_DONE = MODE === "standard"
-let REVIEW_DONE = MODE === "standard"
+let RESEARCH_DONE = ["researched", "verified"].includes(MODE)
+let CHECK_DONE = ["checked", "researched", "verified"].includes(MODE)
+let REVIEW_DONE = MODE === "verified"
 ```
 
 </offer_next>
@@ -1022,7 +1027,7 @@ response = question({
 
 ## Command Structure
 
-- [ ] Mode parsed from first word (standard|quick), default=quick
+- [ ] Mode parsed from first word (planned|checked|researched|verified), default=planned
 - [ ] Topic, type, audience prompted if missing
 - [ ] Invalid type/audience shows valid options and re-prompts
 
@@ -1033,19 +1038,19 @@ response = question({
 - [ ] Doc plan concept created with correct parent_id (null for standalone)
 - [ ] Number generation queries existing doc-* concepts
 - [ ] File conflict handled before concept creation
-- [ ] Research concept created with correct edges (standard mode)
+- [ ] Research concept created with correct edges (researched/verified modes)
 - [ ] Content concept created with file_refs
 
 ## Agent Flow
 
-- [ ] Research phase runs in standard mode (skipped in quick)
+- [ ] Research phase runs in researched/verified modes (skipped in planned/checked)
 - [ ] Research blocked handled with skip/abort options
 - [ ] Planner creates outline, updates concept
-- [ ] Checker validates with expert panel (standard mode)
+- [ ] Checker validates with expert panel (checked/researched/verified modes)
 - [ ] Revision loops work for planner ← checker (max 3 iterations)
 - [ ] Writer creates markdown with frontmatter
 - [ ] Writer ensures directory exists before write
-- [ ] Reviewer checks quality (standard mode)
+- [ ] Reviewer checks quality (verified mode)
 - [ ] Revision loops work for writer ← reviewer (max 3 iterations)
 
 ## Output Quality

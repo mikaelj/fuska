@@ -1,6 +1,6 @@
-# PROJECT.md Template (MegaMemory-Backed)
+# INITIATIVE.md Template (MegaMemory-Backed)
 
-Template for MegaMemory-based project context. **For @-reference only by agents — data stored in MegaMemory, never on disk.**
+Template for MegaMemory-based initiative context. **For @-reference only by agents — data stored in MegaMemory, never on disk.**
 
 ---
 
@@ -9,7 +9,7 @@ Template for MegaMemory-based project context. **For @-reference only by agents 
 ## Concept Structure
 
 ```typescript
-interface ProjectConcept {
+interface InitiativeConcept {
   name: string;
   kind: "feature" | "module" | "decision" | "config";
   summary: string;
@@ -29,7 +29,7 @@ interface ConceptEdge {
 ## Root Concept
 
 ```
-name: "[Project Name]"
+name: "[Initiative Name]"
 kind: "feature"
 summary: "Current accurate description — 2-3 sentences. What does this product do and who it's for? Use the user's language and framing. Update whenever reality drifts from this description."
 why: "Core value statement — the ONE thing that matters most. If everything else fails, this must work. One sentence that drives prioritization when tradeoffs arise."
@@ -42,17 +42,17 @@ why: "Core value statement — the ONE thing that matters most. If everything el
 name: "Validated Requirements"
 kind: "config"
 summary: "Requirements that shipped and proved valuable. Format: '- [OK] [Requirement] — [version/phase]'. These are locked — changing them requires explicit discussion."
-parent_id: "[Project Name]"
+parent_id: "[Initiative Name]"
 
 name: "Active Requirements"
 kind: "config"
 summary: "Current scope being built toward. These are hypotheses until shipped and validated. Move to Validated when shipped, Out of Scope if invalidated."
-parent_id: "[Project Name]"
+parent_id: "[Initiative Name]"
 
 name: "Out of Scope"
 kind: "config"
 summary: "Explicit boundaries on what we're not building. Always include reasoning (prevents re-adding later). Includes: considered and rejected, deferred to future, explicitly excluded."
-parent_id: "[Project Name]"
+parent_id: "[Initiative Name]"
 ```
 
 ### Context Concept
@@ -60,7 +60,7 @@ parent_id: "[Project Name]"
 name: "Context"
 kind: "config"
 summary: "Background information that informs implementation: Technical environment or ecosystem, Relevant prior work or experience, User research or feedback themes, Known issues to address."
-parent_id: "[Project Name]"
+parent_id: "[Initiative Name]"
 ```
 
 ### Constraint Concepts
@@ -68,7 +68,7 @@ parent_id: "[Project Name]"
 name: "Constraints"
 kind: "config"
 summary: "Hard limits on implementation choices. Tech stack, timeline, budget, compatibility, dependencies. Include the 'why' — constraints without rationale get questioned."
-parent_id: "[Project Name]"
+parent_id: "[Initiative Name]"
 ```
 
 ### Decision Concepts
@@ -77,7 +77,7 @@ name: "Key Decision: [Decision Name]"
 kind: "decision"
 summary: "[Choice made] — [Why it was made]"
 why: "Significant choice that affects future work. Track outcome when known: [OK] Good (proved correct), [WARN] Revisit (may need reconsideration), — Pending (too early to evaluate)"
-parent_id: "[Project Name]"
+parent_id: "[Initiative Name]"
 edges: [{to: "[affected requirement or module]", relation: "configured_by", description: "This decision affects [X]"}]
 ```
 
@@ -87,7 +87,7 @@ edges: [{to: "[affected requirement or module]", relation: "configured_by", desc
 
 <megamemory_operations>
 
-## Create Project
+## Create Initiative
 
 ```typescript
 await megamemory.create_concept({
@@ -138,12 +138,12 @@ await megamemory.create_concept({
 });
 ```
 
-## Query Project Context
+## Query Initiative Context
 
 ```typescript
-// Get full project context
-const project = await megamemory.understand({
-  query: "CommunityApp project context requirements constraints"
+// Get full initiative context
+const initiative = await megamemory.understand({
+  query: "CommunityApp initiative context requirements constraints"
 });
 
 // Get only active requirements
@@ -157,7 +157,7 @@ const decisions = await megamemory.understand({
 });
 ```
 
-## Update Project
+## Update Initiative
 
 ```typescript
 await megamemory.update_concept({
@@ -205,11 +205,11 @@ await megamemory.link({
 
 <megamemory_examples>
 
-## Full Project Initialization Example
+## Full Initiative Initialization Example
 
 ```typescript
-// 1. Create root project concept
-const project = await megamemory.create_concept({
+// 1. Create root initiative concept
+const initiative = await megamemory.create_concept({
   name: "CommunityApp",
   kind: "feature",
   summary: "Users can share and discuss content with people who share their interests. Web-based social platform with profiles, posts, follows, and activity feeds.",
@@ -221,21 +221,21 @@ await megamemory.create_concept({
   name: "Validated Requirements",
   kind: "config",
   summary: "None yet — ship to validate",
-  parent_id: project.id
+  parent_id: initiative.id
 });
 
 await megamemory.create_concept({
   name: "Active Requirements",
   kind: "config",
   summary: "- [ ] User can sign up with email and password\n- [ ] User receives email verification after signup\n- [ ] User can reset password via email link",
-  parent_id: project.id
+  parent_id: initiative.id
 });
 
 await megamemory.create_concept({
   name: "Out of Scope",
   kind: "config",
   summary: "Real-time chat — High complexity, not core to community value\nVideo posts — Storage/bandwidth costs, defer to v2+",
-  parent_id: project.id
+  parent_id: initiative.id
 });
 
 // 3. Add context
@@ -243,7 +243,7 @@ await megamemory.create_concept({
   name: "Context",
   kind: "config",
   summary: "Technical environment: Node.js + PostgreSQL on AWS. Prior work: Prototype shows basic CRUD patterns work. User feedback: Users want simple onboarding, not complex permissions.",
-  parent_id: project.id
+  parent_id: initiative.id
 });
 
 // 4. Add constraints
@@ -251,8 +251,8 @@ await megamemory.create_concept({
   name: "Tech Stack Constraint",
   kind: "config",
   summary: "React + TypeScript + TailwindCSS — Team has existing expertise",
-  why: "Hard limit — changing mid-project would require significant retraining",
-  parent_id: project.id
+  why: "Hard limit — changing mid-initiative would require significant retraining",
+  parent_id: initiative.id
 });
 
 await megamemory.create_concept({
@@ -260,7 +260,7 @@ await megamemory.create_concept({
   kind: "config",
   summary: "MVP launch in 3 months — Drives scope decisions",
   why: "Funding milestone requires demo by Q2",
-  parent_id: project.id
+  parent_id: initiative.id
 });
 
 // 5. Log first key decision
@@ -269,7 +269,7 @@ const authDecision = await megamemory.create_concept({
   kind: "decision",
   summary: "Use Auth0 for authentication — Handles password security, social logins, and session management",
   why: "Avoid building security-critical code in-house. Proven reliability, good documentation.",
-  parent_id: project.id
+  parent_id: initiative.id
 });
 
 // 6. Link decision to requirements
@@ -331,7 +331,7 @@ await megamemory.create_concept({
 **Original guidance preserved for reference:**
 
 ```markdown
-# [Project Name]
+# [Initiative Name]
 
 ## What This Is
 
@@ -454,7 +454,7 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 
 <evolution>
 
-PROJECT.md evolves throughout the project lifecycle.
+INITIATIVE.md evolves throughout the initiative lifecycle.
 
 **After each phase transition:**
 1. Requirements invalidated? → Move to Out of Scope with reason
@@ -496,23 +496,23 @@ For existing codebases:
 
 <state_reference>
 
- STATE.md references PROJECT.md:
+ STATE.md references INITIATIVE.md:
 
 ```markdown
-## Project Reference
+## Initiative Reference
 
-See: MegaMemory concept "Project Name" (updated [date])
+See: MegaMemory concept "Initiative Name" (updated [date])
 
 Query via:
 ```typescript
-const project = await megamemory.understand({ query: "Project Name" });
-const context = JSON.parse(project.concepts[0].summary);
+const initiative = await megamemory.understand({ query: "Initiative Name" });
+const context = JSON.parse(initiative.concepts[0].summary);
 ```
 
 **Core value:** [One-liner from Core Value section]
 **Current focus:** [Current phase name]
 ```
 
-This ensures OpenCode reads current PROJECT.md context from MegaMemory.
+This ensures OpenCode reads current INITIATIVE.md context from MegaMemory.
 
 </state_reference>

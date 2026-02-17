@@ -31,7 +31,7 @@ megamemory:list_roots
 ```
 
 **If project concepts exist:** Proceed to load_state
-**If no project concepts exist:** This is a new project - route to /fuska-new-project
+**If no project concepts exist:** This is a new project - route to fuska init
 </step>
 
 <step name="load_state">

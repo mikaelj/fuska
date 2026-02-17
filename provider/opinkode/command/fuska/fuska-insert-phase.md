@@ -66,8 +66,8 @@ megamemory_list_roots()
 **Step 2: Check for empty results**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 3: Query state concept**
@@ -78,8 +78,8 @@ megamemory_understand(query="state", top_k=5)
 **Step 4: Check state exists**
 
 If response.matches.length === 0:
-→ Display: "Project state not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "Initiative state not found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 5: Extract state data**
@@ -284,8 +284,7 @@ const updatedStateData = {
   roadmap_evolution: [
     ...(stateData.roadmap_evolution || []),
     `Phase ${decimal_phase} inserted after Phase ${after_phase}: ${description} (URGENT)`
-  ],
-  last_activity: `Inserted urgent phase ${decimal_phase}`
+  ]
 }
 ```
 

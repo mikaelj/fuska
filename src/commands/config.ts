@@ -9,6 +9,7 @@ import {
   detectInstalledProviders,
   ProviderType
 } from './utils/provider-config';
+import { getCurrentInitiativeSlug } from './utils/initiative-utils';
 
 type WorkflowMode = 'standard' | 'thorough' | 'balanced' | 'fast' | 'quick' | 'direct';
 type ProfileType = 'quality' | 'balanced' | 'budget';
@@ -96,7 +97,7 @@ class ConfigRunner {
   private db: any;
   private config: FuskaConfig | null = null;
   private configConceptId: string | null = null;
-  private projectSlug: string = 'project';
+  private initiativeSlug: string = 'initiative';
 
   constructor(options: ConfigOptions) {
     this.projectDir = options.projectDir;
@@ -132,7 +133,11 @@ class ConfigRunner {
 
   private async loadConfig(): Promise<boolean> {
     const nodes = this.db.getAllActiveNodes();
-    const configNode = nodes.find((node: any) => node.name === 'config' && node.kind === 'config');
+    const configNode = nodes.find((node: any) => 
+      node.name === 'config' && 
+      node.kind === 'config' && 
+      !node.parent_id
+    );
 
     if (!configNode) {
       return false;
@@ -147,9 +152,9 @@ class ConfigRunner {
       return false;
     }
 
-    const projectNode = nodes.find((node: any) => node.kind === 'feature' && node.name !== 'config');
-    if (projectNode) {
-      this.projectSlug = projectNode.name;
+    const currentSlug = getCurrentInitiativeSlug(this.db);
+    if (currentSlug) {
+      this.initiativeSlug = currentSlug;
     }
     
     return true;
@@ -185,7 +190,7 @@ class ConfigRunner {
     const modeConfig = MODE_CONFIG[this.config.workflow.mode];
     const activeProfile = this.config.profiles.active_profile;
 
-    console.log(`Fuska Config: ${this.config.project_name || this.projectSlug}`);
+    console.log(`Fuska Config: ${this.config.project_name || this.initiativeSlug}`);
     console.log('│');
     console.log('├─ Model Aliases');
     console.log(`│  ├─ quality_model: ${this.config.model_aliases?.quality_model || '(not set)'}`);
@@ -912,13 +917,13 @@ export function configCommand(program: Command) {
           return;
         }
         
-        console.log(`No Fuska project config found in ${path.resolve(candidatePath)}`);
+        console.log(`No Fuska initiative config found in ${path.resolve(candidatePath)}`);
         console.log('Falling back to global config mode.\n');
       }
 
       if (projectPath && !hasMegamemory) {
         console.error(`No .megamemory/knowledge.db found at ${path.resolve(projectPath)}`);
-        console.error('Run /fuska-new-project first.');
+        console.error('Run /fuska-new-initiative first.');
         process.exit(1);
       }
 

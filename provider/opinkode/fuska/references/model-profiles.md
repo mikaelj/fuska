@@ -67,7 +67,7 @@ const STAGE_AGENTS: StageAgentMapping = {
     'fuska-plan-checker',
     'fuska-phase-researcher',
     'fuska-roadmapper',
-    'fuska-project-researcher',
+    'fuska-initiative-researcher',
     'fuska-research-synthesizer',
     'fuska-codebase-mapper'
   ],
@@ -414,7 +414,7 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 
 | Stage | Agents |
 |-------|--------|
-| Planning | fuska-planner, fuska-plan-checker, fuska-phase-researcher, fuska-roadmapper, fuska-project-researcher, fuska-research-synthesizer, fuska-codebase-mapper |
+| Planning | fuska-planner, fuska-plan-checker, fuska-phase-researcher, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer, fuska-codebase-mapper |
 | Execution | fuska-executor, fuska-debugger, fuska-git-message |
 | Verification | fuska-verifier, fuska-integration-checker, fuska-commit-checker |
 

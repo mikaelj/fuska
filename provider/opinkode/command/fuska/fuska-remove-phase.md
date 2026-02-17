@@ -97,8 +97,8 @@ megamemory_list_roots()
 **Step 2.2: Check for empty results**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 ---
@@ -115,7 +115,7 @@ megamemory_understand(query="state", top_k=5)
 
 If response.matches.length === 0:
 → Display: "State concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 3.3: Extract state data**
@@ -138,7 +138,7 @@ megamemory_understand(query="roadmap", top_k=5)
 
 If response.matches.length === 0:
 → Display: "Roadmap concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 3.6: Extract roadmap data**
@@ -327,8 +327,7 @@ megamemory_update_concept(
 ```
 const updatedStateData = {
   ...stateData,
-  total_phases: updatedPhases.length,
-  last_activity: `Removed Phase ${phaseNumber}`
+  total_phases: updatedPhases.length
 }
 
 // Recalculate progress percentage if needed
@@ -368,7 +367,7 @@ Current position: Phase {currentPhaseNumber} of {new-total}
 ## What's Next
 
 Would you like to:
-- /fuska-progress — see updated roadmap status
+- fuska progress — see updated roadmap status
 - Continue with current phase
 - Review roadmap
 

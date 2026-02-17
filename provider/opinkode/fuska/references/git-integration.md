@@ -17,7 +17,7 @@ The git log should read like a changelog of what shipped, not a diary of plannin
 
 **MegaMemory is persistent outside git.**
 
-MegaMemory concepts for all planning data (project, roadmap, state, plan, summary, etc.) are stored in MegaMemory and persist outside of git version control. This means:
+MegaMemory concepts for all planning data (initiative, roadmap, state, plan, summary, etc.) are stored in MegaMemory and persist outside of git version control. This means:
 
 - **No planning file git operations:** Never run `git add` on planning artifacts or commit planning data
 - **MM data survives git resets:** MegaMemory concepts are unaffected by `git reset`, `git revert`, etc.
@@ -110,27 +110,27 @@ interface TaskCompletionConcept {
 
 ## MegaMemory Operations for Git Integration
 
-### 1. Initialize Project in MegaMemory
+### 1. Initialize Initiative in MegaMemory
 
-When starting a new project, record initialization:
+When starting a new initiative, record initialization:
 
 ```typescript
 const initCommitId = await megamemory.create_concept({
   name: "commit-history:initialization",
   kind: "decision",
-  summary: "Commit a1b2c3d: 'docs: initialize ecommerce-app (5 phases)'. Established project scaffolding with 5 phases: Foundation, Auth, Products, Checkout, Deployment. Project context stored in MegaMemory.",
-  why: "Project initialization commit marks start of development",
+  summary: "Commit a1b2c3d: 'docs: initialize ecommerce-app (5 phases)'. Established initiative scaffolding with 5 phases: Foundation, Auth, Products, Checkout, Deployment. Initiative context stored in MegaMemory.",
+  why: "Initiative initialization commit marks start of development",
   file_refs: [
     "package.json"
   ],
   edges: [
     {
-      to: "project:ecommerce-app",
+      to: "initiative:ecommerce-app",
       relation: "implements",
-      description: "Initializes project structure"
+      description: "Initializes initiative structure"
     }
   ],
-  created_by_task: "git:init-project"
+  created_by_task: "git:init-initiative"
 });
 ```
 
@@ -413,7 +413,7 @@ console.log("File history:", versions);
 
 ## Complete Git Integration Workflow Example
 
-### Example 1: Project Initialization
+### Example 1: Initiative Initialization
 
 ```typescript
 // After running git init and initial commit
@@ -422,8 +422,8 @@ const commitHash = await bash("git rev-parse HEAD");
 await megamemory.create_concept({
   name: "commit-history:initialization",
   kind: "decision",
-  summary: `Commit ${commitHash}: 'docs: initialize ecommerce-app (5 phases)'. Created project scaffold with Next.js 15, Prisma, Tailwind. Phases: 01-Foundation, 02-Auth, 03-Products, 04-Checkout, 05-Deployment.`,
-  why: "Project start",
+  summary: `Commit ${commitHash}: 'docs: initialize ecommerce-app (5 phases)'. Created initiative scaffold with Next.js 15, Prisma, Tailwind. Phases: 01-Foundation, 02-Auth, 03-Products, 04-Checkout, 05-Deployment.`,
+  why: "Initiative start",
   file_refs: [
     "package.json",
     "tsconfig.json",
@@ -431,17 +431,17 @@ await megamemory.create_concept({
     "tailwind.config.ts"
   ],
   edges: [
-    { to: "project:ecommerce-app", relation: "implements", description: "Initializes project" }
+    { to: "initiative:ecommerce-app", relation: "implements", description: "Initializes initiative" }
   ],
   created_by_task: "git:init"
 });
 
-// Create project concept
+// Create initiative concept
 await megamemory.create_concept({
-  name: "project:ecommerce-app",
+  name: "initiative:ecommerce-app",
   kind: "feature",
   summary: "E-commerce web application with product catalog, shopping cart, user authentication, and Stripe payments. Tech stack: Next.js 15, Prisma, PostgreSQL, Tailwind CSS, Stripe.",
-  why: "Main project deliverable",
+  why: "Main initiative deliverable",
   edges: [
     { to: "commit-history:initialization", relation: "configured_by", description: "Initialized by this commit" }
   ]
@@ -664,10 +664,10 @@ const buggyTask = await megamemory.understand({
 console.log("Task implementation:", buggyTask[0].summary);
 ```
 
-### Example 6: Querying Project Status
+### Example 6: Querying Initiative Status
 
 ```typescript
-// Get overall project state
+// Get overall initiative state
 const allPlans = await megamemory.understand({
   query: "plan-state completed paused phase"
 });
@@ -686,7 +686,7 @@ allPlans.forEach(concept => {
   }
 });
 
-console.log("Project Status:", status);
+console.log("Initiative Status:", status);
 // Output: {
 //   completed: ["plan-state:01-01:completed", "plan-state:02-01:completed", "plan-state:04-01:completed"],
 //   in_progress: ["plan-state:04-02:paused"]
@@ -804,12 +804,12 @@ Two bullets. High-level. The diff shows the rest. Phase/plan in the trailer.
 </commit_message_rules>
 
 <format name="initialization">
-## Project Initialization
+## Initiative Initialization
 
 ```
-docs: initialize [project-name] ([N] phases)
+docs: initialize [initiative-name] ([N] phases)
 
-[One-liner project description]
+[One-liner initiative description]
 ```
 
 ```bash

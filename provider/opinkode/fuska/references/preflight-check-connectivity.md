@@ -1,6 +1,6 @@
 ## MegaMemory Connectivity Preflight Check
 
-For commands that create the database (/fuska-new-project, /fuska-map-codebase).
+For commands that create the database (fuska init, /fuska-map-codebase).
 
 **Purpose:** Verify MCP server is running (empty database is OK).
 

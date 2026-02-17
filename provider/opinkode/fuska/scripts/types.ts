@@ -66,7 +66,7 @@ export interface MegaMemoryClient {
   list_roots(): Promise<ListRootsResult>;
 }
 
-export interface ProjectData {
+export interface InitiativeData {
   slug: string;
   name: string;
   what_this_is: string;
@@ -133,8 +133,6 @@ export interface SummaryData {
     modified: string[];
   };
   key_decisions: string[];
-  duration_minutes: number;
-  completed: string;
   accomplishments: string[];
   task_commits: {task: string; commit: string}[];
   files_modified: string[];
@@ -165,7 +163,6 @@ export interface StateData {
   current_plan: string | null;
   status: string;
   progress: number;
-  last_activity: string;
   current_task?: number;
   total_tasks?: number;
   blockers?: string[];
@@ -175,6 +172,7 @@ export interface ConfigData {
   depth: string;
   autonomous_mode: boolean;
   parallelization?: boolean;
+  current_initiative?: string | null;
   git?: {
     branching_strategy?: 'none' | 'phase' | 'milestone';
     phase_branch_template?: string;

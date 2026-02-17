@@ -28,12 +28,21 @@ Output ONLY the reference content below. Do NOT add:
 ## Quick Start
 
 ```
-/fuska-new-project → /fuska-plan-phase → /fuska-execute-phase → repeat
+fuska init → /fuska configure → /fuska plan → /fuska execute → repeat
 ```
+
+**`/fuska`** is the universal entry point. Run it bare to see where you are, or with a verb to act:
+\* `/fuska` — show current position and what to do next
+\* `/fuska plan` — plan the current phase (auto-detects phase number)
+\* `/fuska execute` — build the current phase
+\* `/fuska do [mode] [desc]` — quick ad-hoc task
+
+All `/fuska-*` commands below also work directly.
 
 ## Project Initialization
 
-\* `/fuska-new-project` — Initialize new project through unified flow.
+\* `fuska init` — Initialize project foundation (then `/fuska-configure-initiative`).
+\* `/fuska-configure-initiative` — Configure initiative through unified flow.
 \* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
 
 ## Phase Planning
@@ -60,7 +69,7 @@ Output ONLY the reference content below. Do NOT add:
 
 ## Progress Tracking
 
-\* `/fuska-progress` — Check project status and intelligently route to next action.
+\* `fuska progress` — Check project status and intelligently route to next action.
 \* `/fuska-resume-work` — Resume work from previous session with full context restoration.
 \* `/fuska-pause-work` — Capture mental context when pausing work mid-phase.
 
@@ -96,7 +105,8 @@ Output ONLY the reference content below. Do NOT add:
 
 ## Getting Help
 
-\* Run `/fuska-progress` to check where you're up to
+\* Run `/fuska` to see where you are and what to do next
+\* Run `fuska progress` for detailed project status
 \* Query `state` concept for current context
 \* Query `roadmap` concept for phase status
 
@@ -110,20 +120,33 @@ Output ONLY the reference content below. Do NOT add:
 
 ## Quick Start
 
-1. `/fuska-new-project` - Initialize project (includes research, requirements, roadmap)
-2. `/fuska-plan-phase 1` - Create detailed plan for first phase
-3. `/fuska-execute-phase 1` - Execute the phase
+1. `fuska init "My Project"` - Initialize project foundation (git, .megamemory/)
+2. `/fuska` - See what to do next (or `/fuska configure` directly)
+3. `/fuska plan` - Plan the current phase (auto-detects phase number)
+4. `/fuska execute` - Build the current phase
 
 ## Core Workflow
 
 ```
-/fuska-new-project → /fuska-plan-phase → /fuska-execute-phase → repeat
+fuska init → /fuska configure → /fuska plan → /fuska execute → repeat
 ```
+
+**`/fuska`** is the universal entry point. Run bare to navigate, or with a verb to act. All `/fuska-*` commands also work directly.
 
 ### Project Initialization
 
-**`/fuska-new-project`**
-Initialize new project through unified flow.
+**`fuska init [name]`**
+Initialize project foundation.
+
+Creates:
+- `.megamemory/` directory for knowledge graph
+- Main initiative concept in MegaMemory
+- Git repository (if not already initialized)
+
+Usage: `fuska init "My Project Name"`
+
+**`/fuska-configure-initiative`**
+Configure existing initiative through unified flow.
 
 One command takes you from idea to ready-for-planning:
 - Deep questioning to understand what you're building
@@ -139,7 +162,7 @@ Creates all MegaMemory concepts:
 - `roadmap` — phases mapped to requirements
 - `state` — project memory and context
 
-Usage: `/fuska-new-project`
+Usage: `/fuska-configure-initiative`
 
 **`/fuska-map-codebase`**
 Map an existing codebase for brownfield projects.
@@ -147,7 +170,7 @@ Map an existing codebase for brownfield projects.
 - Analyzes codebase with parallel Explore agents
 - Creates MegaMemory codebase concepts with 7 focused documents
 - Covers stack, architecture, structure, conventions, testing, integrations, concerns
-- Use before `/fuska-new-project` on existing codebases
+- Use before `/fuska-configure-initiative` on existing codebases
 
 Usage: `/fuska-map-codebase`
 
@@ -246,7 +269,7 @@ Start a new milestone through unified flow.
 - Requirements definition with scoping
 - Roadmap creation with phase breakdown
 
-Mirrors `/fuska-new-project` flow for brownfield projects (existing project concept).
+Similar to `/fuska-configure-initiative` flow for brownfield projects (existing initiative concept).
 
 Usage: `/fuska-new-milestone "v2.0 Features"`
 
@@ -262,7 +285,7 @@ Usage: `/fuska-complete-milestone 1.0.0`
 
 ### Progress Tracking
 
-**`/fuska-progress`**
+**`fuska progress`** (CLI command)
 Check project status and intelligently route to next action.
 
 - Shows visual progress bar and completion percentage
@@ -272,7 +295,7 @@ Check project status and intelligently route to next action.
 - Offers to execute next plan or create it if missing
 - Detects 100% milestone completion
 
-Usage: `/fuska-progress`
+Usage: `fuska progress`
 
 ### Session Management
 
@@ -389,12 +412,12 @@ Usage: `fuska config --view` (non-interactive display)
 **`/fuska-do [mode] [description]`**
 Execute unplanned, ad-hoc tasks with Fuska guarantees.
 
-- Flexible mode selection: direct | quick | fast | balanced | thorough | standard
-- Auto-executes for quick/fast/standard; asks before executing for direct/balanced/thorough
+- Flexible mode selection: planned | checked | researched | verified
+- Auto-executes for planned/verified; asks before executing for checked/researched
+- Override with --ask or --auto flag
 - Creates standalone task concepts (not tied to roadmap)
-- Uses project's configured workflow mode by default
 
-Usage: `/fuska-do quick fix typo in README`
+Usage: `/fuska-do planned fix typo in README`
 Usage: `/fuska-do` (prompts for mode and description)
 
  ### Utility Commands
@@ -407,7 +430,7 @@ Usage: `/fuska-do` (prompts for mode and description)
 All project data lives in MegaMemory concepts:
 
 ```
-project (root)
+initiative (root)
 ├── config              # Workflow mode & gates
 ├── state               # Project memory & context
 ├── roadmap             # Current phase breakdown
@@ -433,7 +456,7 @@ project (root)
 
 ## Workflow Modes
 
-Set during `/fuska-new-project`:
+Set during `/fuska-configure-initiative`:
 
 **Interactive Mode**
 
@@ -451,62 +474,67 @@ Change anytime with `fuska config`.
 
 ## Common Workflows
 
-**Starting a new project:**
+**Starting a new initiative:**
 
 ```
-/fuska-new-project      # Unified flow: questioning → research → requirements → roadmap
+fuska init "My Project"    # Initialize project foundation
+/fuska configure           # Questioning, research, requirements, roadmap
 /new
-/fuska-plan-phase 1     # Create plans for first phase
+/fuska plan                # Plan current phase (auto-detects phase 1)
 /new
-/fuska-execute-phase 1  # Execute all plans in phase
+/fuska execute             # Build the current phase
 ```
+
+Or just `/fuska` at any point to see where you are.
 
 **Resuming work after a break:**
 
 ```
-/fuska-progress  # See where you left off and continue
+/fuska                     # See where you are and what to do next
+/fuska resume              # Full context restoration from previous session
 ```
 
 **Adding urgent mid-milestone work:**
 
 ```
-/fuska-insert-phase 5 "Critical security fix"
-/fuska-plan-phase 5.1
-/fuska-execute-phase 5.1
+/fuska insert 5 "Critical security fix"
+/fuska plan 5.1
+/fuska execute 5.1
 ```
 
 **Completing a milestone:**
 
 ```
-/fuska-complete-milestone 1.0.0
+/fuska complete 1.0.0
 /new
-/fuska-new-milestone  # Start next milestone (questioning → research → requirements → roadmap)
+/fuska milestone           # Start next milestone
 ```
 
 **Capturing ideas during work:**
 
 ```
-/fuska-add-todo                    # Capture from conversation context
-/fuska-add-todo Fix modal z-index  # Capture with explicit description
-/fuska-check-todos                 # Review and work on todos
-/fuska-check-todos api             # Filter by area
+/fuska todo                        # Capture from conversation context
+/fuska todo Fix modal z-index      # Capture with explicit description
+/fuska todos                       # Review and work on todos
+/fuska todos api                   # Filter by area
 ```
 
 **Debugging an issue:**
 
 ```
-/fuska-debug "form submission fails silently"  # Start debug session
+/fuska debug "form submission fails silently"  # Start debug session
 # ... investigation happens, context fills up ...
 /new
-/fuska-debug                                    # Resume from where you left off
+/fuska debug                                    # Resume from where you left off
 ```
 
 ## Getting Help
 
-- Query project concept for project vision
+- `/fuska` — see where you are and what to do next
+- Query initiative concept for initiative vision
 - Query state concept for current context
 - Query roadmap concept for phase status
-- Run `/fuska-progress` to check where you're up to
+- Run `fuska progress` to check where you're up to
 
 ## MegaMemory Query Examples
 

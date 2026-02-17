@@ -79,13 +79,13 @@ megamemory_list_roots()
 **Step 1.2: Check for empty results**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 ---
 
-## 2. Load Project Context
+## 2. Load Initiative Context
 
 **Step 2.1: Query project concept**
 
@@ -254,7 +254,7 @@ const updatedProjectData = {
 Call:
 ```
 megamemory_update_concept(
-  id=projectId,
+  id=initiativeId,
   changes={
     summary: JSON.stringify(updatedProjectData)
   }
@@ -273,7 +273,6 @@ const updatedStateData = {
   current_phase: null,
   current_plan: null,
   status: 'defining_requirements',
-  last_activity: `Milestone ${nextVersion} started`,
   milestone_version: nextVersion
 }
 ```

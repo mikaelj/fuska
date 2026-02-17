@@ -183,17 +183,6 @@ Wait for confirmation before proceeding.
 </if>
 </step>
 
-<step name="record_start_time">
-Record execution start time for performance tracking:
-
-```bash
-PLAN_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-PLAN_START_EPOCH=$(date +%s)
-```
-
-Store in shell variables for duration calculation at completion.
-</step>
-
 <step name="parse_segments">
 **Intelligent segmentation: Parse plan into execution segments.**
 
@@ -1398,28 +1387,6 @@ Wait for user decision.
 If user chose "Skip", note it in Summary concept under "Issues Encountered".
 </step>
 
-<step name="record_completion_time">
-Record execution end time and calculate duration:
-
-```bash
-PLAN_END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-PLAN_END_EPOCH=$(date +%s)
-
-DURATION_SEC=$(( PLAN_END_EPOCH - PLAN_START_EPOCH ))
-DURATION_MIN=$(( DURATION_SEC / 60 ))
-
-if [[ $DURATION_MIN -ge 60 ]]; then
-  HRS=$(( DURATION_MIN / 60 ))
-  MIN=$(( DURATION_MIN % 60 ))
-  DURATION="${HRS}h ${MIN}m"
-else
-  DURATION="${DURATION_MIN} min"
-fi
-```
-
-Pass timing data to Summary concept creation.
-</step>
-
 <step name="generate_user_setup">
 **Generate USER-SETUP concept if plan has user_setup in frontmatter.**
 
@@ -1542,14 +1509,9 @@ megamemory:create_concept({
       "Refresh token with rotation",
       "Protected route middleware"
     ],
-    files_modified_count: 5,
     deviations: [
       {rule: "Rule 1", description: "Added token expiry validation", files: ["src/auth/jwt.ts"], commit: "abc123f"}
     ],
-    duration: "$DURATION",
-    started: "$PLAN_START_TIME",
-    completed: "$PLAN_END_TIME",
-    tasks_completed: 3,
     issues_encountered: "None",
     next_phase_readiness: "Complete - all authentication primitives ready",
     next_step: "Ready for {phase}-{next-plan}-Plan"
@@ -1587,14 +1549,10 @@ Populate summary JSON fields from execution context:
    - key-files.created: From "Files Created/Modified" section
    - key-files.modified: From "Files Created/Modified" section
 
-5. **Decisions:**
-   - key-decisions: Extract from "Decisions Made" section
+ 5. **Decisions:**
+    - key-decisions: Extract from "Decisions Made" section
 
-6. **Metrics:**
-   - duration: From $DURATION variable
-   - completed: From $PLAN_END_TIME (date only, format YYYY-MM-DD)
-
-Note: If subsystem/affects are unclear, use best judgment based on phase name and accomplishments. Can be refined later.
+ Note: If subsystem/affects are unclear, use best judgment based on phase name and accomplishments. Can be refined later.
 
 **Title format:** `# Phase [X] Plan [Y]: [Name] Summary`
 
@@ -1602,14 +1560,6 @@ The one-liner must be SUBSTANTIVE:
 
 - Good: "JWT auth with refresh rotation using jose library"
 - Bad: "Authentication implemented"
-
-**Include performance data:**
-
-- Duration: `$DURATION`
-- Started: `$PLAN_START_TIME`
-- Completed: `$PLAN_END_TIME`
-- Tasks completed: (count from execution)
-- Files modified: (count from execution)
 
 **Next Step section:**
 
@@ -1640,7 +1590,6 @@ megamemory:update_concept({
       current_plan: "{just completed}",
       current_plan_of_total: "{N} of {total in current phase}",
       status: "In progress", // or "Phase complete"
-      last_activity: "{today} - Completed {phase}-{plan}-Plan",
       progress_percent: {calculate percentage}
       // Keep decisions, blockers, alignment arrays from existing state
     })
@@ -1666,7 +1615,6 @@ Before state:
   "current_plan": "0",
   "current_plan_of_total": "0 of 2",
   "status": "Ready to execute",
-  "last_activity": "2025-01-18 - Phase 1 complete",
   "progress_percent": 40,
   "progress_bar": "██████░░░░",
   "decisions": [...],
@@ -1684,7 +1632,6 @@ After state:
   "current_plan": "1",
   "current_plan_of_total": "1 of 2",
   "status": "In progress",
-  "last_activity": "2025-01-19 - Completed 02-01-Plan",
   "progress_percent": 50,
   "progress_bar": "███████░░░",
   "decisions": [...],
@@ -1698,7 +1645,6 @@ After state:
 - [ ] Phase number shows current phase (X of total)
 - [ ] Plan number shows plans complete in current phase (N of total-in-phase)
 - [ ] Status reflects current state (In progress / Phase complete)
-- [ ] Last activity shows today's date and the plan just completed
 - [ ] Progress bar calculated correctly from total completed plans
       </step>
 

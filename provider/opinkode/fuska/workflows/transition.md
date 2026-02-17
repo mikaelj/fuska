@@ -364,7 +364,6 @@ Update current_position in STATE concept.summary to reflect phase completion and
     "phase_name": "Authentication",
     "plan": "2 of 2",
     "status": "Phase complete",
-    "last_activity": "2025-01-20 — Completed 02-02-PLAN.md",
     "progress_percent": 60
   },
   "updated": "..."
@@ -376,7 +375,6 @@ Update current_position in STATE concept.summary to reflect phase completion and
 - Increment phase number to next phase
 - Reset plan to "Not started"
 - Set status to "Ready to plan"
-- Update last_activity to describe transition
 - Recalculate progress_percent based on completed plans
 
 **Example — transitioning from Phase 2 to Phase 3:**
@@ -390,7 +388,6 @@ Before:
     "phase_name": "Authentication",
     "plan": "2 of 2",
     "status": "Phase complete",
-    "last_activity": "2025-01-20 — Completed 02-02-PLAN.md",
     "progress_percent": 60
   }
 }
@@ -405,7 +402,6 @@ After:
     "phase_name": "Core Features",
     "plan": "Not started",
     "status": "Ready to plan",
-    "last_activity": "2025-01-20 — Phase 2 complete, transitioned to Phase 3",
     "progress_percent": 60
   }
 }
@@ -424,7 +420,6 @@ megamemory:update_concept(
 - [ ] Phase number incremented to next phase
 - [ ] Plan status reset to "Not started"
 - [ ] Status shows "Ready to plan"
-- [ ] Last activity describes the transition
 - [ ] Progress percent reflects total completed plans
 
 </step>

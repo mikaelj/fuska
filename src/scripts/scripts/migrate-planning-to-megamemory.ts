@@ -4,8 +4,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import { ProjectData } from '../types';
-import { ProjectConceptTemplates } from '../project-templates';
+import { InitiativeData } from '../types';
+import { InitiativeConceptTemplates } from '../initiative-templates';
 import { PhaseConceptTemplates as PhaseTemplates } from '../phase-templates';
 import { extractJson } from '../helpers';
 import { KnowledgeDB } from 'megamemory/dist/db.js';
@@ -493,16 +493,16 @@ class PlanningToMegaMemoryMigration {
 
     const projectData = this.parseProjectFile(files.project, files.config);
 
-    const projectRoot = ProjectConceptTemplates.createProjectRoot(projectData);
+    const projectRoot = InitiativeConceptTemplates.createInitiativeRoot(projectData);
     await this.createConcept(projectRoot);
 
-    const requirementsModule = ProjectConceptTemplates.createRequirementsModule(projectData.slug);
+    const requirementsModule = InitiativeConceptTemplates.createRequirementsModule(projectData.slug);
     await this.createConcept(requirementsModule);
 
     if (files.requirements) {
       const requirements = this.parseRequirementsFile(files.requirements);
       for (const req of requirements) {
-        const concept = ProjectConceptTemplates.createRequirement(
+        const concept = InitiativeConceptTemplates.createRequirement(
           projectData.slug,
           req.id,
           req.description,
@@ -512,7 +512,7 @@ class PlanningToMegaMemoryMigration {
       }
     }
 
-    const roadmapModule = ProjectConceptTemplates.createRoadmapModule(projectData.slug);
+    const roadmapModule = InitiativeConceptTemplates.createRoadmapModule(projectData.slug);
     await this.createConcept(roadmapModule);
 
     const allPhases = new Map<number, any>();
@@ -534,7 +534,7 @@ class PlanningToMegaMemoryMigration {
     }
 
     for (const phase of allPhases.values()) {
-      const concept = ProjectConceptTemplates.createPhase(
+      const concept = InitiativeConceptTemplates.createPhase(
         projectData.slug,
         phase.number,
         phase.slug,
@@ -546,28 +546,28 @@ class PlanningToMegaMemoryMigration {
 
     if (files.state) {
       const state = this.parseStateFile(files.state);
-      const concept = ProjectConceptTemplates.createState(projectData.slug, state);
+      const concept = InitiativeConceptTemplates.createState(projectData.slug, state);
       await this.createConcept(concept);
     }
 
-    const config = ProjectConceptTemplates.createConfig(projectData.slug, files.config);
+    const config = InitiativeConceptTemplates.createConfig(files.config);
     await this.createConcept(config);
 
     if (files.milestones) {
-      const milestonesModule = ProjectConceptTemplates.createMilestonesModule(projectData.slug);
+      const milestonesModule = InitiativeConceptTemplates.createMilestonesModule(projectData.slug);
       await this.createConcept(milestonesModule);
 
       const milestones = this.parseMilestonesFile(files.milestones);
       for (const milestone of milestones) {
-        const concept = ProjectConceptTemplates.createMilestone(projectData.slug, milestone.name, milestone);
+        const concept = InitiativeConceptTemplates.createMilestone(projectData.slug, milestone.name, milestone);
         await this.createConcept(concept);
       }
     }
 
-    const todosModule = ProjectConceptTemplates.createTodosModule(projectData.slug);
+    const todosModule = InitiativeConceptTemplates.createTodosModule(projectData.slug);
     await this.createConcept(todosModule);
 
-    const researchModule = ProjectConceptTemplates.createResearchModule(projectData.slug);
+    const researchModule = InitiativeConceptTemplates.createResearchModule(projectData.slug);
     await this.createConcept(researchModule);
 
     console.log('Project-level concepts migrated.\n');
@@ -711,7 +711,7 @@ class PlanningToMegaMemoryMigration {
       const phaseRefMatch = todoContent.match(/Phase:\s+(.+)$/m);
       const phaseRef = phaseRefMatch ? phaseRefMatch[1] : undefined;
 
-      const concept = ProjectConceptTemplates.createTodo(projectData.slug, (i + 1).toString(), description, phaseRef);
+      const concept = InitiativeConceptTemplates.createTodo(projectData.slug, (i + 1).toString(), description, phaseRef);
       await this.createConcept(concept);
     }
 
@@ -796,7 +796,7 @@ class PlanningToMegaMemoryMigration {
     return phaseDir.toLowerCase().replace(/\s+/g, '-');
   }
 
-  private parseProjectFile(content: string | null, config: any): ProjectData {
+  private parseProjectFile(content: string | null, config: any): InitiativeData {
     if (!content) {
       return {
         slug: 'project',
@@ -809,7 +809,7 @@ class PlanningToMegaMemoryMigration {
     }
 
     const lines = content.split('\n');
-    const data: ProjectData = {
+    const data: InitiativeData = {
       slug: 'project',
       name: 'Project',
       what_this_is: '',

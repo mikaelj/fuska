@@ -68,8 +68,8 @@ megamemory_list_roots()
 **Step 1.2: Check for empty results**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 ---

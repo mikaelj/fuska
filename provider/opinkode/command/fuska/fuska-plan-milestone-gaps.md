@@ -380,8 +380,7 @@ const stateData = JSON.parse(stateSummaryString)
 const updatedStateData = {
   ...stateData,
   gap_closure_phases_created: true,
-  gap_closure_phase_count: newPhases.length,
-  last_activity: `Created ${newPhases.length} gap closure phases`
+  gap_closure_phase_count: newPhases.length
 }
 ```
 

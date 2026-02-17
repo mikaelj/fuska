@@ -104,7 +104,7 @@ issue:
 
 ---
 
-## Contextual Roles (Project-Derived)
+## Contextual Roles (Initiative-Derived)
 
 ### Security Auditor (Web/API Projects)
 
@@ -463,10 +463,10 @@ until it doesn't.
 
 ## Role Selection Logic
 
-### Project Classification to Contextual Role
+### Initiative Classification to Contextual Role
 
-| Project Type | Contextual Role | Detection Confidence |
-|--------------|-----------------|---------------------|
+| Initiative Type | Contextual Role | Detection Confidence |
+|-----------------|-----------------|---------------------|
 | embedded-constrained | resource-guardian | high |
 | web-api | security-auditor | high |
 | flutter-app-with-backend | security-auditor | high |

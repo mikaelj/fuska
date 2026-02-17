@@ -79,8 +79,8 @@ megamemory_list_roots()
 ```
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 1.2: Determine output directory**
@@ -111,7 +111,7 @@ megamemory_understand(query="project-root", top_k=1)
 ```
 
 If response.matches.length === 0:
-→ Display: "Project root concept not found"
+→ Display: "Initiative root concept not found"
 → Stop
 
 **Step 2.2: Extract project data**
@@ -120,7 +120,7 @@ If response.matches.length === 0:
 const projectSummaryString = response.matches[0].summary
 const projectData = JSON.parse(projectSummaryString)
 
-const projectName = projectData.name
+const initiativeName = projectData.name
 const whatThisIs = projectData.what_this_is
 const coreValue = projectData.core_value
 ```
@@ -130,7 +130,7 @@ const coreValue = projectData.core_value
 Write to `$outputDir/PROJECT.md`:
 
 ```markdown
-# ${projectName}
+# ${initiativeName}
 
 ## What This Is
 
@@ -308,7 +308,7 @@ const stateData = JSON.parse(stateSummaryString)
 Write to `$outputDir/STATE.md`:
 
 ```markdown
-# Project State
+# Initiative State
 
 ## Current Position
 
@@ -316,7 +316,6 @@ Write to `$outputDir/STATE.md`:
 **Current Plan:** ${stateData.current_plan || 'None'}
 **Status:** ${stateData.status || 'unknown'}
 **Progress:** ${stateData.progress || 0}%
-**Last Activity:** ${stateData.last_activity || 'Never'}
 
 ## Session Continuity
 

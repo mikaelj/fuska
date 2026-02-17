@@ -518,8 +518,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
           current_phase: 'phase-01',
           current_plan: 'phase-01-plan-1',
           status: 'in_progress',
-          progress: 25,
-          last_activity: 'Phase 1 execution started'
+          progress: 25
         }),
         parent_id: 'test-project',
         edges: []

@@ -44,8 +44,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
           current_phase: 'phase-01',
           current_plan: null,
           status: 'ready_to_plan',
-          progress: 0,
-          last_activity: 'Project initialized'
+          progress: 0
         }),
         parent_id: 'test-lifecycle-project',
         edges: [{ to: 'test-lifecycle-project', relation: 'configured_by' }]

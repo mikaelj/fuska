@@ -103,7 +103,7 @@ const phaseBranchTemplate = configData?.git?.phase_branch_template || 'phase-${p
 const milestoneBranchTemplate = configData?.git?.milestone_branch_template || 'milestone-v${phaseNumber}'
 ```
 
-If config, state, or phase not found, project may not be initialized — tell the user to run `/fuska-new-project`.
+If config, state, or phase not found, project may not be initialized — tell the user to run `fuska init`.
 
 </context>
 
@@ -170,7 +170,7 @@ megamemory_understand(query="config", top_k=5)
 
 If response.matches.length === 0:
 → Display: "Config concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 0.3: Extract and parse config**
@@ -715,7 +715,6 @@ if (isLastPhaseInProject) {
     current_phase: null,
     current_plan: null,
     status: "milestone_complete",
-    last_activity: `All phases complete - milestone ready for completion`,
     progress: 100
   }
 } else if (phaseExists) {
@@ -725,7 +724,6 @@ if (isLastPhaseInProject) {
     current_phase: nextPhaseSlug,
     current_plan: null,
     status: "phase_complete",
-    last_activity: `Phase ${phaseNumber} completed and verified`,
     progress: calculateProgress(phases)
   }
 } else if (isLastPhaseInMilestone) {
@@ -735,7 +733,6 @@ if (isLastPhaseInProject) {
     current_phase: null,
     current_plan: null,
     status: "milestone_complete",
-    last_activity: `Milestone complete - ${currentMilestone.version}`,
     progress: calculateProgress(phases)
   }
 } else {
@@ -743,7 +740,6 @@ if (isLastPhaseInProject) {
   updatedStateData = {
     ...stateData,
     status: "phase_complete",
-    last_activity: `Phase ${phaseNumber} completed and verified`,
     progress: calculateProgress(phases)
   }
 }

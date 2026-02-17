@@ -15,10 +15,14 @@ function sanitizeYamlFrontMatter(raw: string): string {
   return raw.replace(/^(\s*agent:\s*)(@[^\n]*)$/gm, '$1"$2"');
 }
 
-function transformCommandToSkill(sourcePath: string): { name: string; content: string } {
+function transformCommandToSkill(sourcePath: string): { name: string; content: string } | null {
   let raw = fs.readFileSync(sourcePath, 'utf-8');
   raw = sanitizeYamlFrontMatter(raw);
   const { data, content } = matter(raw);
+  
+  if (data.deprecated) {
+    return null;
+  }
   
   const tools = (data.tools || []) as string[];
   const allowedTools = tools
@@ -85,6 +89,10 @@ async function buildClaude(): Promise<void> {
   for (const file of commandFiles) {
     const sourcePath = path.join(commandsDir, file);
     const transformed = transformCommandToSkill(sourcePath);
+    
+    if (!transformed) {
+      continue;
+    }
     
     const skillDir = path.join(CLAUDE_DIR, 'skills', transformed.name);
     await fs.ensureDir(skillDir);

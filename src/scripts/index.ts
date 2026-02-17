@@ -1,6 +1,6 @@
 export * from './types';
 export * from './helpers';
-export * from './project-templates';
+export * from './initiative-templates';
 export * from './phase-templates';
 export * from './version-history';
 export * from './validators';

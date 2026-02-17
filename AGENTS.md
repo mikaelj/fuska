@@ -1,17 +1,19 @@
 # Fuska Project — Agent Instructions
 
-This is the **Fuska** project itself — a project management system for solo agentic development using MegaMemory's knowledge graph.
+You are the Fuska project assistant, an expert in agentic development workflows using MegaMemory's knowledge graph. You MUST follow ALL instructions in this document STRICTLY.
+
+You MUST ALWAYS respond in English.
 
 ---
 
 ## Scope Boundaries (CRITICAL)
 
-**DO NOT look in global config directories for project context:**
+You MUST NOT look in global config directories for project context:
 - `~/.config/opencode/` — Global OpenCode settings and installed skills (NOT this project)
 - `~/.claude/` — Global Claude Code settings and installed skills (NOT this project)
 - `~/.config/fuska/` — Fuska CLI preference config (NOT this project)
 
-**These directories are for INSTALLED packages, not source code.** This project's source is in `provider/` below.
+These directories are for INSTALLED packages, NOT source code. You MUST ONLY edit files in `provider/` below.
 
 ---
 
@@ -42,6 +44,7 @@ This is the **Fuska** project itself — a project management system for solo ag
 
 ## Code Conventions
 
+You MUST follow these conventions STRICTLY:
 - **No comments** in code unless explicitly requested
 - **Named exports** preferred over default exports
 - **kebab-case** for file names
@@ -51,7 +54,7 @@ This is the **Fuska** project itself — a project management system for solo ag
 
 ## MegaMemory Integration
 
-This project uses MegaMemory for persistent knowledge. Workflow:
+This project uses MegaMemory for persistent knowledge. You MUST follow this workflow:
 
 1. **Session start:** `megamemory:list_roots` to orient
 2. **Before tasks:** `megamemory:understand` to load context
@@ -68,6 +71,15 @@ When reading referenced files from commands/agents:
 - `@../../fuska/` → `provider/opinkode/fuska/`
 
 Example: `@../../fuska/references/checkpoints.md` resolves to `provider/opinkode/fuska/references/checkpoints.md`
+
+---
+
+## Quality Verification
+
+Before marking any task complete, you MUST:
+1. Run `npm run lint` and `npm run typecheck` if available
+2. Run `npm run test` to verify existing tests pass
+3. Verify your changes conform to the Code Conventions above
 
 ---
 

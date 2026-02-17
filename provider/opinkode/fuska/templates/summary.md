@@ -29,9 +29,6 @@ Template for phase completion documentation stored as MegaMemory concept.
   - `modified` (array) - Important files modified
 - `key_decisions` (array) - Major decisions made
 - `patterns_established` (array) - Patterns future phases should maintain
-- `metrics` (object)
-  - `duration` (string) - Time taken (e.g., "28 min")
-  - `completed` (string) - ISO timestamp
 - `deviations` (array) - Auto-fixed issues (if any)
 - `issues_encountered` (array) - Problems during planned work
 - `next_readiness` (object) - What's ready, blockers, concerns
@@ -56,7 +53,7 @@ await megamemory.create_concept({
   kind: "feature",
   summary: `${oneLiner}. Duration: ${duration}. Files: ${filesModified.length}. Decisions: ${keyDecisions.length}. Tech stack added: ${techStack.added.join(", ")}. Subsystem: ${subsystem}. Tags: ${tags.join(", ")}.`,
   why: "Documents actual execution results, enables automatic context assembly via dependency graph",
-  parent_id: `project:${projectId}`,
+  parent_id: `initiative:${initiativeId}`,
   edges: [
     {
       to: `phase-plan:${phaseId}-${planId}`,
@@ -234,23 +231,11 @@ key-decisions:
 patterns-established:
   - "Pattern 1: description"
   - "Pattern 2: description"
-
-# Metrics
-duration: Xmin
-completed: YYYY-MM-DD
 ---
 
 # Phase [X]: [Name] Summary
 
 **[Substantive one-liner describing outcome - NOT "phase complete" or "implementation finished"]**
-
-## Performance
-
-- **Duration:** [time] (e.g., 23 min, 1h 15m)
-- **Started:** [ISO timestamp]
-- **Completed:** [ISO timestamp]
-- **Tasks:** [count completed]
-- **Files modified:** [count]
 
 ## Accomplishments
 - [Most important outcome]
@@ -365,14 +350,6 @@ The one-liner should tell someone what actually shipped.
 
 **JWT auth with refresh rotation using jose library, Prisma User model, and protected API middleware**
 
-## Performance
-
-- **Duration:** 28 min
-- **Started:** 2025-01-15T14:22:10Z
-- **Completed:** 2025-01-15T14:50:33Z
-- **Tasks:** 5
-- **Files modified:** 8
-
 ## Accomplishments
 - User model with email/password auth
 - Login/logout endpoints with httpOnly JWT cookies
@@ -444,10 +421,6 @@ The one-liner should tell someone what actually shipped.
 - Must be substantive (describe what shipped, not "phase complete")
 - Should tell someone what was accomplished
 - Examples: "JWT auth with refresh rotation using jose library" not "Authentication implemented"
-
-**Performance tracking:**
-- Include duration, start/end timestamps
-- Used for velocity metrics in STATE.md
 
 **Deviations section:**
 - Documents unplanned work handled via deviation rules

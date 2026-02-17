@@ -461,19 +461,19 @@ class PlanningToMegaMemoryMigration {
   private async migrateProject(files: PlanningFiles): Promise<void> {
     console.log('Migrating project-level concepts...');
 
-    const { ProjectConceptTemplates } = await import('../scripts/project-templates');
+    const { InitiativeConceptTemplates } = await import('../scripts/initiative-templates');
     const projectData = this.parseProjectFile(files.project, files.config);
 
-    const projectRoot = ProjectConceptTemplates.createProjectRoot(projectData);
+    const projectRoot = InitiativeConceptTemplates.createInitiativeRoot(projectData);
     await this.createConcept(projectRoot);
 
-    const requirementsModule = ProjectConceptTemplates.createRequirementsModule(projectData.slug);
+    const requirementsModule = InitiativeConceptTemplates.createRequirementsModule(projectData.slug);
     await this.createConcept(requirementsModule);
 
     if (files.requirements) {
       const requirements = this.parseRequirementsFile(files.requirements);
       for (const req of requirements) {
-        const concept = ProjectConceptTemplates.createRequirement(
+        const concept = InitiativeConceptTemplates.createRequirement(
           projectData.slug,
           req.id,
           req.description,
@@ -483,7 +483,7 @@ class PlanningToMegaMemoryMigration {
       }
     }
 
-    const roadmapModule = ProjectConceptTemplates.createRoadmapModule(projectData.slug);
+    const roadmapModule = InitiativeConceptTemplates.createRoadmapModule(projectData.slug);
     await this.createConcept(roadmapModule);
 
     const allPhases = new Map<number, any>();
@@ -505,7 +505,7 @@ class PlanningToMegaMemoryMigration {
     }
 
     for (const phase of allPhases.values()) {
-      const concept = ProjectConceptTemplates.createPhase(
+      const concept = InitiativeConceptTemplates.createPhase(
         projectData.slug,
         phase.number,
         phase.slug,
@@ -517,37 +517,37 @@ class PlanningToMegaMemoryMigration {
 
     if (files.state) {
       const state = this.parseStateFile(files.state);
-      const concept = ProjectConceptTemplates.createState(projectData.slug, state);
+      const concept = InitiativeConceptTemplates.createState(projectData.slug, state);
       await this.createConcept(concept);
     }
 
-    const config = ProjectConceptTemplates.createConfig(projectData.slug, files.config);
+    const config = InitiativeConceptTemplates.createConfig(files.config);
     await this.createConcept(config);
 
     if (files.milestones) {
-      const milestonesModule = ProjectConceptTemplates.createMilestonesModule(projectData.slug);
+      const milestonesModule = InitiativeConceptTemplates.createMilestonesModule(projectData.slug);
       await this.createConcept(milestonesModule);
 
       const milestones = this.parseMilestonesFile(files.milestones);
       for (const milestone of milestones) {
-        const concept = ProjectConceptTemplates.createMilestone(projectData.slug, milestone.name, milestone);
+        const concept = InitiativeConceptTemplates.createMilestone(projectData.slug, milestone.name, milestone);
         await this.createConcept(concept);
       }
     }
 
-    const todosModule = ProjectConceptTemplates.createTodosModule(projectData.slug);
+    const todosModule = InitiativeConceptTemplates.createTodosModule(projectData.slug);
     await this.createConcept(todosModule);
 
-    const researchModule = ProjectConceptTemplates.createResearchModule(projectData.slug);
+    const researchModule = InitiativeConceptTemplates.createResearchModule(projectData.slug);
     await this.createConcept(researchModule);
 
-    console.log('Project-level concepts migrated.\n');
+    console.log('Initiative-level concepts migrated.\n');
   }
 
   private async migratePhases(files: PlanningFiles): Promise<void> {
     console.log('Migrating phase-level concepts...');
 
-    const { ProjectConceptTemplates } = await import('../scripts/project-templates');
+    const { InitiativeConceptTemplates } = await import('../scripts/initiative-templates');
     const { PhaseConceptTemplates } = await import('../scripts/phase-templates');
     const { makeId } = await import('megamemory/dist/tools.js');
 
@@ -635,7 +635,7 @@ class PlanningToMegaMemoryMigration {
   private async migrateResearch(files: PlanningFiles): Promise<void> {
     console.log('Migrating research documents...');
 
-    const { ProjectConceptTemplates } = await import('../scripts/project-templates');
+    const { InitiativeConceptTemplates } = await import('../scripts/initiative-templates');
     const { makeId } = await import('megamemory/dist/tools.js');
 
     const projectData = this.parseProjectFile(files.project, files.config);
@@ -659,7 +659,7 @@ class PlanningToMegaMemoryMigration {
   private async migrateTodos(files: PlanningFiles): Promise<void> {
     console.log('Migrating todos...');
 
-    const { ProjectConceptTemplates } = await import('../scripts/project-templates');
+    const { InitiativeConceptTemplates } = await import('../scripts/initiative-templates');
 
     const projectData = this.parseProjectFile(files.project, files.config);
 
@@ -685,7 +685,7 @@ class PlanningToMegaMemoryMigration {
       const phaseRefMatch = todoContent.match(/Phase:\s+(.+)$/m);
       const phaseRef = phaseRefMatch ? phaseRefMatch[1] : undefined;
 
-      const concept = ProjectConceptTemplates.createTodo(projectData.slug, (i + 1).toString(), description, phaseRef);
+      const concept = InitiativeConceptTemplates.createTodo(projectData.slug, (i + 1).toString(), description, phaseRef);
       await this.createConcept(concept);
     }
 

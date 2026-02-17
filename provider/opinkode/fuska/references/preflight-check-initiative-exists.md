@@ -1,8 +1,8 @@
-## MegaMemory Project Exists Preflight Check
+## MegaMemory Initiative Exists Preflight Check
 
-For all commands that require an existing project (25 commands total).
+For all commands that require an existing initiative (25 commands total).
 
-**Purpose:** Verify MCP server is running AND database has project data.
+**Purpose:** Verify MCP server is running AND database has initiative data.
 
 **Step 1:** Call `megamemory:list_roots()` to confirm connectivity and check for data.
 
@@ -18,8 +18,8 @@ For all commands that require an existing project (25 commands total).
 
 **Success criteria:**
 - If `roots` is empty:
-  → Display: "No project found. Run /fuska-new-project first"
-  → Stop execution
+   → Display: "No initiative found. Run fuska init first"
+   → Stop execution
 - If `roots` has content → Proceed normally
 
 **When tool call fails or `MEGAMEMORY_ERROR:` is detected:**

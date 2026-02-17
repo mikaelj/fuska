@@ -68,7 +68,7 @@ megamemory_understand(query="state", top_k=5)
 
 If response.matches.length === 0:
 → Display: "State concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 1.3: Extract state data**
@@ -81,7 +81,6 @@ const stateData = JSON.parse(stateSummaryString)
 const currentPhase = stateData.current_phase
 const currentPlan = stateData.current_plan
 const status = stateData.status
-const lastActivity = stateData.last_activity
 ```
 
 **Step 1.4: Validate work in progress**

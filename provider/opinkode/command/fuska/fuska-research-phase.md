@@ -78,8 +78,8 @@ megamemory_list_roots()
 **Step 0.2: Check for empty results**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 0.3: Query config concept**
@@ -282,7 +282,6 @@ ${requirements.map(r => `- ${r.description} (${r.status})`).join('\n') || 'No re
 Current Phase: ${stateData.current_phase || 'None'}
 Status: ${stateData.status || 'Unknown'}
 Progress: ${stateData.progress || 0}%
-Last Activity: ${stateData.last_activity || 'Never'}
 
 **Phase context (if any):**
 ${contextData ? JSON.stringify(contextData, null, 2) : 'No context found'}
@@ -335,7 +334,6 @@ Task(
 ```
 const updatedStateData = {
   ...stateData,
-  last_activity: `Phase ${phaseNumber} research completed`,
   research_completed: true
 }
 

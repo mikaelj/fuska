@@ -108,7 +108,7 @@ megamemory_understand(query="roadmap", top_k=5)
 
 If response.matches.length === 0:
 → Display: "Roadmap concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 1.4: Extract roadmap data**

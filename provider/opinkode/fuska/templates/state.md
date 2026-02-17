@@ -33,23 +33,7 @@ summary: "Project state tracking: Phase [X] of [Y] ([Phase name]), Plan [A] of [
 ```
 name: "Current Position"
 kind: "config"
-summary: "Phase: [X] of [Y] ([Phase name])\nPlan: [A] of [B] in current phase\nStatus: [Ready to plan / Planning / Ready to execute / In progress / Phase complete]\nLast activity: [YYYY-MM-DD] — [What happened]\nProgress: [░░░░░░░░░░] 0%"
-parent_id: "[Project Name] State"
-```
-
-### Performance Metrics
-```
-name: "Performance Metrics"
-kind: "config"
-summary: "Total plans completed: [N]\nAverage duration: [X] min\nTotal execution time: [X.X] hours\nRecent trend: [Improving / Stable / Degrading]"
-parent_id: "[Project Name] State"
-```
-
-### Phase Metrics
-```
-name: "Phase Metrics: [Phase Name]"
-kind: "config"
-summary: "Plans: [X], Total time: [Y] hours, Avg/plan: [Z] min"
+summary: "Phase: [X] of [Y] ([Phase name])\nPlan: [A] of [B] in current phase\nStatus: [Ready to plan / Planning / Ready to execute / In progress / Phase complete]\nProgress: [░░░░░░░░░░] 0%"
 parent_id: "[Project Name] State"
 ```
 
@@ -104,14 +88,7 @@ const state = await megamemory.create_concept({
 await megamemory.create_concept({
   name: "Current Position",
   kind: "config",
-  summary: "Phase: 1 of 4 (Authentication)\nPlan: 0 of 3 in current phase\nTask: 0 of 0 (none in progress)\nStatus: Ready to plan\nLast activity: 2025-01-20 — State initialized\nProgress: ░░░░░░░░░░ 0%",
-  parent_id: state.id
-});
-
-await megamemory.create_concept({
-  name: "Performance Metrics",
-  kind: "config",
-  summary: "Total plans completed: 0\nAverage duration: 0 min\nTotal execution time: 0 hours\nRecent trend: Stable",
+  summary: "Phase: 1 of 4 (Authentication)\nPlan: 0 of 3 in current phase\nTask: 0 of 0 (none in progress)\nStatus: Ready to plan\nProgress: ░░░░░░░░░░ 0%",
   parent_id: state.id
 });
 
@@ -157,7 +134,6 @@ await megamemory.update_concept({
 Plan: ${planNum} of ${totalPlansInPhase} in current phase
 Task: ${taskNum} of ${totalTasks} (in progress)
 Status: In progress
-Last activity: ${new Date().toISOString().split('T')[0]} — Task ${taskNum}: ${taskName}
 Progress: [${progressBars}] ${progress}%`
   }
 });
@@ -170,24 +146,8 @@ Progress: [${progressBars}] ${progress}%`
 await megamemory.update_concept({
   id: "Current Position",
   changes: {
-    summary: "Phase: 1 of 4 (Authentication)\nPlan: 1 of 3 in current phase\nTask: 7 of 7 (complete)\nStatus: Ready to plan\nLast activity: 2025-01-20 — Completed 01-01: User sign-up flow\nProgress: ██░░░░░░░░ 20%"
+    summary: "Phase: 1 of 4 (Authentication)\nPlan: 1 of 3 in current phase\nTask: 7 of 7 (complete)\nStatus: Ready to plan\nProgress: ██░░░░░░░░ 20%"
   }
-});
-
-// Update performance metrics
-await megamemory.update_concept({
-  id: "Performance Metrics",
-  changes: {
-    summary: "Total plans completed: 1\nAverage duration: 45 min\nTotal execution time: 0.75 hours\nRecent trend: Stable"
-  }
-});
-
-// Add phase metric
-await megamemory.create_concept({
-  name: "Phase Metrics: Phase 1",
-  kind: "config",
-  summary: "Plans: 1, Total time: 0.75 hours, Avg/plan: 45 min",
-  parent_id: "CommunityApp State"
 });
 
 // Note decision
@@ -206,7 +166,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Current Position",
   changes: {
-    summary: "Phase: 2 of 4 (Profiles)\nPlan: 0 of 2 in current phase\nStatus: Ready to plan\nLast activity: 2025-01-22 — Phase 1 complete\nProgress: ███░░░░░░░ 30%"
+    summary: "Phase: 2 of 4 (Profiles)\nPlan: 0 of 2 in current phase\nStatus: Ready to plan\nProgress: ███░░░░░░░ 30%"
   }
 });
 
@@ -274,24 +234,17 @@ const metrics = await megamemory.understand({
 ## Initial State Creation
 
 ```typescript
-async function initializeProjectState(projectName: string, totalPhases: number) {
+async function initializeInitiativeState(initiativeName: string, totalPhases: number) {
   const state = await megamemory.create_concept({
-    name: `${projectName} State`,
+    name: `${initiativeName} State`,
     kind: "config",
-    summary: `Project state tracking: Phase 1 of ${totalPhases}, Plan 0 of TBD, Status: Ready to plan. Last activity: ${new Date().toISOString().split('T')[0]} — State initialized. Progress: ░░░░░░░░░░ 0%`
+    summary: `Initiative state tracking: Phase 1 of ${totalPhases}, Plan 0 of TBD, Status: Ready to plan. Progress: ░░░░░░░░░░ 0%`
   });
 
   await megamemory.create_concept({
     name: "Current Position",
     kind: "config",
-    summary: `Phase: 1 of ${totalPhases}\nPlan: 0 of TBD in current phase\nStatus: Ready to plan\nLast activity: ${new Date().toISOString().split('T')[0]} — State initialized\nProgress: ░░░░░░░░░░ 0%`,
-    parent_id: state.id
-  });
-
-  await megamemory.create_concept({
-    name: "Performance Metrics",
-    kind: "config",
-    summary: "Total plans completed: 0\nAverage duration: 0 min\nTotal execution time: 0 hours\nRecent trend: Stable",
+    summary: `Phase: 1 of ${totalPhases}\nPlan: 0 of TBD in current phase\nStatus: Ready to plan\nProgress: ░░░░░░░░░░ 0%`,
     parent_id: state.id
   });
 
@@ -327,27 +280,20 @@ async function initializeProjectState(projectName: string, totalPhases: number) 
 }
 
 // Usage
-const stateId = await initializeProjectState("CommunityApp", 4);
+const stateId = await initializeInitiativeState("CommunityApp", 4);
 ```
 
 ## State Query Helper
 
 ```typescript
-interface ProjectState {
+interface InitiativeState {
   currentPosition: {
     phase: number;
     totalPhases: number;
     plan: number;
     totalPlans: number;
     status: string;
-    lastActivity: string;
     progress: number;
-  };
-  performance: {
-    plansCompleted: number;
-    avgDuration: number;
-    totalTime: number;
-    trend: string;
   };
   decisions: string[];
   todos: {
@@ -361,9 +307,9 @@ interface ProjectState {
   };
 }
 
-async function getProjectState(projectName: string): Promise<ProjectState> {
+async function getInitiativeState(initiativeName: string): Promise<InitiativeState> {
   const stateConcepts = await megamemory.understand({
-    query: `${projectName} State`
+    query: `${initiativeName} State`
   });
 
   const state: ProjectState = {
@@ -373,14 +319,7 @@ async function getProjectState(projectName: string): Promise<ProjectState> {
       plan: 0,
       totalPlans: 0,
       status: "Ready to plan",
-      lastActivity: "",
       progress: 0
-    },
-    performance: {
-      plansCompleted: 0,
-      avgDuration: 0,
-      totalTime: 0,
-      trend: "Stable"
     },
     decisions: [],
     todos: { count: 0 },
@@ -392,20 +331,11 @@ async function getProjectState(projectName: string): Promise<ProjectState> {
     switch (concept.name) {
       case "Current Position":
         const lines = concept.summary.split('\n');
-        state.currentPosition.lastActivity = lines.find(l => l.startsWith('Last activity'))?.split(': ').slice(1).join(': ') || "";
         const progressLine = lines.find(l => l.includes('Progress'));
         if (progressLine) {
           const match = progressLine.match(/Progress: \[█]+([░]+)?\] (\d+)%/);
           if (match) state.currentPosition.progress = parseInt(match[2]);
         }
-        break;
-
-      case "Performance Metrics":
-        const perfLines = concept.summary.split('\n');
-        state.performance.plansCompleted = parseInt(perfLines.find(l => l.includes('Total plans'))?.split(': ')[1] || "0");
-        state.performance.avgDuration = parseInt(perfLines.find(l => l.includes('Average'))?.split(': ')[1]?.replace(' min', '') || "0");
-        state.performance.totalTime = parseFloat(perfLines.find(l => l.includes('Total execution'))?.split(': ')[1]?.replace(' hours', '') || "0");
-        state.performance.trend = perfLines.find(l => l.includes('Recent trend'))?.split(': ')[1] || "Stable";
         break;
 
       case "Recent Decisions":
@@ -449,7 +379,6 @@ async function updateStateAfterPlan(
   totalPlansInPhase: number,
   totalPlansOverall: number,
   completedPlans: number,
-  executionTimeMinutes: number,
   decisions: string[]
 ) {
   const progress = Math.round((completedPlans / totalPlansOverall) * 100);
@@ -458,31 +387,9 @@ async function updateStateAfterPlan(
   await megamemory.update_concept({
     id: "Current Position",
     changes: {
-      summary: `Phase: ${phaseNum} of 4\nPlan: ${planNum} of ${totalPlansInPhase} in current phase\nTask: ${totalTasks} of ${totalTasks} (complete)\nStatus: Ready to plan\nLast activity: ${new Date().toISOString().split('T')[0]} — Completed 0${phaseNum}-0${planNum}\nProgress: [${progressBars}] ${progress}%`
+      summary: `Phase: ${phaseNum} of 4\nPlan: ${planNum} of ${totalPlansInPhase} in current phase\nTask: ${totalTasks} of ${totalTasks} (complete)\nStatus: Ready to plan\nProgress: [${progressBars}] ${progress}%`
     }
   });
-
-  // Update performance metrics
-  const currentMetrics = await megamemory.understand({
-    query: "Performance Metrics"
-  });
-
-  if (currentMetrics.length > 0) {
-    const metric = currentMetrics[0];
-    const lines = metric.summary.split('\n');
-    const oldCompleted = parseInt(lines.find(l => l.includes('Total plans'))?.split(': ')[1] || "0");
-    const oldTotalTime = parseFloat(lines.find(l => l.includes('Total execution'))?.split(': ')[1]?.replace(' hours', '') || "0");
-    const newCompleted = oldCompleted + 1;
-    const newTotalTime = oldTotalTime + (executionTimeMinutes / 60);
-    const newAvg = Math.round((newTotalTime * 60) / newCompleted);
-
-    await megamemory.update_concept({
-      id: "Performance Metrics",
-      changes: {
-        summary: `Total plans completed: ${newCompleted}\nAverage duration: ${newAvg} min\nTotal execution time: ${newTotalTime.toFixed(1)} hours\nRecent trend: Stable`
-      }
-    });
-  }
 
   // Update decisions
   if (decisions.length > 0) {
@@ -499,7 +406,7 @@ async function updateStateAfterPlan(
 await updateStateAfterPlan(
   "CommunityApp",
   1, 1, 3, 10,
-  1, 45,
+  1,
   ["Use React Hook Form", "Client-side validation"]
 );
 ```
@@ -554,19 +461,9 @@ Where we are right now:
 - Phase X of Y — which phase
 - Plan A of B — which plan within phase
 - Status — current state
-- Last activity — what happened most recently
 - Progress bar — visual indicator of overall completion
 
 Progress calculation: (completed plans) / (total plans across all phases) × 100%
-
-### Performance Metrics
-Track velocity to understand execution patterns:
-- Total plans completed
-- Average duration per plan
-- Per-phase breakdown
-- Recent trend (improving/stable/degrading)
-
-Updated after each plan completion.
 
 ### Accumulated Context
 
@@ -624,7 +521,6 @@ The goal is "read once, know where we are" — if it's too long, that fails.
 
 **Concepts:**
 - Current Position: Where we are now (phase, plan, status)
-- Performance Metrics: Velocity tracking
 - Recent Decisions: Decision summaries
 - Pending Todos: Todo count
 - Blockers/Concerns: Active issues

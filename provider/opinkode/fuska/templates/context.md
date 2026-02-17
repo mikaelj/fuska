@@ -50,7 +50,7 @@ await megamemory.create_concept({
   kind: "feature",
   summary: `Phase ${phaseId} context: ${phaseBoundary}. Decisions on ${decisions.map(d => d.area).join(", ")}.`,
   why: "Captures implementation decisions for downstream agents (researcher, planner)",
-  parent_id: `project:${projectId}`,
+  parent_id: `initiative:${initiativeId}`,
   edges: [
     {
       to: `roadmap:${phaseId}`,

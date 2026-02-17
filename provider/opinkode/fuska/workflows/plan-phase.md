@@ -58,7 +58,7 @@ Normalize phase input in step 2 before any MegaMemory lookups.
 megamemory list_roots
 ```
 
-**If not found:** Error - user should run `/fuska-new-project-megamemory` first.
+**If not found:** Error - user should run `fuska init` first.
 
 **Resolve model profile for agent spawning:**
 

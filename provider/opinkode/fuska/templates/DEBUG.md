@@ -29,7 +29,6 @@ expected: [what should happen]
 actual: [what actually happens]
 errors: [error messages if any]
 reproduction: [how to trigger]
-started: [when it broke / always broken]
 
 ## Eliminated
 <!-- APPEND only - prevents re-investigating after /new -->
@@ -177,7 +176,6 @@ const updateSymptoms = async (sessionId: string, symptoms: {
   actual: string;
   errors: string;
   reproduction: string;
-  started: string;
 }) => {
   const now = new Date().toISOString();
 
@@ -195,8 +193,7 @@ const updateSymptoms = async (sessionId: string, symptoms: {
                                `Expected: ${symptoms.expected}\n` +
                                `Actual: ${symptoms.actual}\n` +
                                `Errors: ${symptoms.errors}\n` +
-                               `Reproduction: ${symptoms.reproduction}\n` +
-                               `Started: ${symptoms.started}`;
+                               `Reproduction: ${symptoms.reproduction}`;
 
         return updated.replace(/CURRENT FOCUS:/, `${symptomsSection}\n\nCURRENT FOCUS:`);
       }
@@ -363,7 +360,6 @@ const resumeDebugSession = async (slug: string) => {
         result.actual = content.match(/Actual: ([^\n]+)/)?.[1] || '';
         result.errors = content.match(/Errors: ([^\n]+)/)?.[1] || '';
         result.reproduction = content.match(/Reproduction: ([^\n]+)/)?.[1] || '';
-        result.started = content.match(/Started: ([^\n]+)/)?.[1] || '';
       } else if (sectionName === 'CURRENT FOCUS') {
         result.hypothesis = content.match(/Hypothesis: ([^\n]+)/)?.[1] || '';
         result.test = content.match(/Test: ([^\n]+)/)?.[1] || '';

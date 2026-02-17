@@ -28,7 +28,6 @@ export function advancePlan(stateData: StateData, plans: string[]): StateData {
       ...stateData,
       current_plan: plans[nextIndex],
       status: 'executing',
-      last_activity: `Advanced to plan ${plans[nextIndex]}`,
     };
   }
 
@@ -36,7 +35,6 @@ export function advancePlan(stateData: StateData, plans: string[]): StateData {
     ...stateData,
     current_plan: null,
     status: 'phase_complete',
-    last_activity: `All plans complete for ${stateData.current_phase}`,
   };
 }
 
@@ -52,7 +50,6 @@ export function recordMetric(
   return {
     ...stateData,
     metrics: [...metrics, metric],
-    last_activity: `Completed ${metric.plan}: ${metric.tasks} tasks, ${metric.files} files in ${metric.duration}`,
   };
 }
 
@@ -67,7 +64,6 @@ export function addDecision(
   return {
     ...stateData,
     decisions: [...decisions, decision],
-    last_activity: `Decision: ${decision.summary}`,
   };
 }
 

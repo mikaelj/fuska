@@ -407,15 +407,15 @@ interface RequirementConfig {
 }
 
 async function initializeRequirements(
-  projectName: string,
+  initiativeName: string,
   coreValue: string,
   requirements: RequirementConfig[],
   outOfScope: Array<{ feature: string; reason: string }>
 ) {
   const reqConcept = await megamemory.create_concept({
-    name: `${projectName} Requirements`,
+    name: `${initiativeName} Requirements`,
     kind: "config",
-    summary: `Requirements for ${projectName}. Core Value: ${coreValue}. v1 requirements: ${requirements.filter(r => r.version === "v1").length} total. v2 requirements: ${requirements.filter(r => r.version === "v2").length} total. Out of scope: ${outOfScope.length} features.`
+    summary: `Requirements for ${initiativeName}. Core Value: ${coreValue}. v1 requirements: ${requirements.filter(r => r.version === "v1").length} total. v2 requirements: ${requirements.filter(r => r.version === "v2").length} total. Out of scope: ${outOfScope.length} features.`
   });
 
   // Group by category
@@ -522,7 +522,7 @@ interface TraceabilityEntry {
 }
 
 async function mapRequirementToPhase(
-  projectName: string,
+  initiativeName: string,
   requirementId: string,
   phaseName: string
 ) {
@@ -568,7 +568,7 @@ async function mapRequirementToPhase(
 }
 
 async function updateRequirementStatus(
-  projectName: string,
+  initiativeName: string,
   requirementId: string,
   status: "In Progress" | "Complete" | "Blocked"
 ) {
@@ -606,14 +606,14 @@ await updateRequirementStatus("CommunityApp", "AUTH-01", "Complete");
 ## Requirements Query Helper
 
 ```typescript
-async function getRequirements(projectName: string): Promise<{
+async function getRequirements(initiativeName: string): Promise<{
   v1: TraceabilityEntry[];
   v2: string[];
   outOfScope: Array<{ feature: string; reason: string }>;
   coverage: { total: number; mapped: number; unmapped: number };
 }> {
   const concepts = await megamemory.understand({
-    query: `${projectName} Requirements`
+    query: `${initiativeName} Requirements`
   });
 
   const result = {
@@ -624,7 +624,7 @@ async function getRequirements(projectName: string): Promise<{
   };
 
   for (const concept of concepts) {
-    if (concept.name.includes("Requirements") && !concept.name.includes(projectName)) {
+    if (concept.name.includes("Requirements") && !concept.name.includes(initiativeName)) {
       // Category concept, skip
       continue;
     } else if (concept.name === "Out of Scope Features") {
@@ -686,7 +686,7 @@ console.log(`V1 Complete: ${reqs.v1.filter(r => r.status === "Complete").length}
 **Original template structure preserved for reference:**
 
 ```markdown
-# Requirements: [Project Name]
+# Requirements: [Initiative Name]
 
 **Defined:** [date]
 **Core Value:** [from PROJECT.md]

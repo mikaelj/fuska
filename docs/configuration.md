@@ -1,6 +1,11 @@
 # Settings & Configuration
 
-> **Back to:** [README.md](../README.md)
+> All the knobs — model profiles, workflow modes, git strategy, and checker panel.
+
+**Audience:** Daily users, anyone tuning their setup
+**Prerequisites:** [Installation](installation.md), [Key Concepts](concepts.md)
+
+---
 
 ```bash
 fuska config [project-dir]
@@ -60,30 +65,27 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 
 **Workflow modes** provide preconfigured combinations of agents that balance speed vs. quality. Choose a mode based on your needs.
 
-| Mode | Workflow | What You Lose | What You Keep | Time Saved | Use When |
-|------|-----------|----------------|----------------|-------------|-----------|
-| **Direct** (0%) | Planner → Executor | Tech research, plan validation, code verification | Task breakdown, atomic commits, MegaMemory state | ~80% | You already know exactly what to do and need quick execution. This is essentially "give me a todo list and I'll do it." |
-| **Quick** (15%) | Planner → Executor | Tech research, plan validation, code verification | Task breakdown, atomic commits, deviation handling, state tracking | ~70% | Small tasks with known solutions. For unplanned ad-hoc tasks, use `/fuska-do` instead. |
-| **Fast** (30%) | Planner → Plan Checker → Executor | Tech research, code verification | Requirement coverage, task completeness, dependency validation, wiring checks, atomic commits | ~50% | You know the tech stack but want validated plans. Good for features in familiar stacks, CRUD operations, UI components |
-| **Balanced** (50%) | Researcher → Planner → Executor | Plan validation, code verification | Ecosystem research, standard patterns, pitfall avoidance, task breakdown, atomic commits | ~35% | Moderate tech uncertainty, want to avoid wrong library choices. Good for adding new library, exploring unfamiliar framework area, integration work |
-| **Thorough** (70%) | Researcher → Planner → Plan Checker → Executor | Code verification | Full plan validation, tech research, ecosystem patterns, atomic commits | ~20% | New domains, unfamiliar tech, need verified plans but will manually verify. Good for new feature areas, greenfield projects, learning new tech |
-| **Standard** (100%) | Researcher → Planner → Plan Checker → Executor → Verifier | Nothing | Full goal-backward chain, code-level verification, gap detection | ~0% | Critical architecture, production systems, high stakes. Good for payment systems, auth systems, data migrations, core infrastructure |
+| Mode | Pipeline | Auto-Execute | What You Get | Use When |
+|------|----------|-------------|--------------|----------|
+| **Planned** | Planner → Executor | Auto | Task breakdown, atomic commits, MegaMemory state | You have a plan, just execute it. Small tasks, trusted patterns. |
+| **Checked** | Planner → Plan Checker → Executor | Ask | + Requirement coverage, task completeness, dependency validation | Want validated plans before execution. Familiar tech, need confidence. |
+| **Researched** | Researcher → Planner → Plan Checker → Executor | Ask | + Ecosystem research, standard patterns, pitfall avoidance | Need research context. New libraries, unfamiliar domains, integration work. |
+| **Verified** | Researcher → Planner → Plan Checker → Executor → Verifier | Auto | + Code-level verification, gap detection | Full pipeline. Critical systems, production code, high stakes. |
 
 **Key concepts:**
-- **Time saved** compared to Standard mode (100% advantages)
-- **Advantages preserved** relative to full Standard workflow
-- Use `fuska config` to change workflow mode
+- **Auto-execute** can be overridden with `--ask` (force review) or `--auto` (skip review) on any mode
+- Use `fuska config` to change default workflow mode
 - Per-phase flags (`--research`, `--skip-verify`) augment your selected mode but never reduce it
 
 ---
 
-## Phase Planning with `--mode quick` vs Standalone `/fuska-do`
+## Phase Planning with `--mode quick` vs Standalone `/fuska do`
 
 Both options use the same lightweight agent chain (Planner → Executor), but they differ in **scope** and **state management**.
 
 ### What is `--mode quick`?
 
-Quick mode is one of the six [workflow modes](#workflow-modes) you can pass to `/fuska-plan-phase`. It skips research and plan checking, running only:
+Quick mode is one of the [workflow modes](#workflow-modes) you can pass to `/fuska plan`. It skips research and plan checking, running only:
 
 ```
 Planner → Executor
@@ -93,14 +95,14 @@ This is useful when you're already in a phase and want faster execution without 
 
 ### Comparison
 
-| Aspect | `--mode quick` (on `/fuska-plan-phase`) | `/fuska-do` |
+| Aspect | `--mode quick` (on `/fuska plan`) | `/fuska do` |
 |--------|----------------------------------------|-------------|
 | **Scope** | Work within an existing phase | Standalone work outside phase structure |
 | **Agent flow** | Planner → Executor | Planner → Executor |
 | **Concept storage** | Phase-based: `phase-02-plan-003` | Standalone: `task-001-fix-typo` |
-| **Roadmap ties** | ✅ Updates phase status and roadmap | ❌ Separate from roadmap |
+| **Roadmap ties** | Updates phase status and roadmap | Separate from roadmap |
 | **Commit strategy** | Follows project's git strategy | Per-task commits |
-| **Example** | `/fuska-plan-phase 2 --mode quick` | `/fuska-do quick fix footer alignment` |
+| **Example** | `/fuska plan 2 --mode quick` | `/fuska do planned fix footer alignment` |
 
 ### Decision Guide
 
@@ -111,18 +113,18 @@ This is useful when you're already in a phase and want faster execution without 
 
 ```bash
 # You're in phase 2 (auth) and need to add a simple endpoint
-/fuska-plan-phase 2 --mode quick
+/fuska plan 2 --mode quick
 # → Creates phase-02-plan-003, tracks progress in roadmap
 ```
 
-**Use `/fuska-do` when:**
+**Use `/fuska do` when:**
 - The task is unplanned and doesn't fit any phase
 - It's a one-off: bug fix, typo, minor refactoring, quick polish
 - You don't want to expand the roadmap for minor work
 
 ```bash
 # Ad-hoc task that doesn't belong to any phase
-/fuska-do quick fix the footer alignment on mobile
+/fuska do planned fix the footer alignment on mobile
 # → Creates task-001-fix-footer-alignment, tracked separately
 ```
 
@@ -135,19 +137,19 @@ phase-02-plan-003:
   status: completed
   tasks: [done, done, done]
 
-# With /fuska-do (standalone):
+# With /fuska do (standalone):
 task-001-fix-footer-alignment:
   summary: "Fix footer alignment on mobile breakpoints"
   status: completed
 ```
 
-The key difference: `--mode quick` keeps your work organized within the phase structure, while `/fuska-do` creates isolated task concepts for unplanned work.
+The key difference: `--mode quick` keeps your work organized within the phase structure, while `/fuska do` creates isolated task concepts for unplanned work.
 
 ---
 
 ## Git Commit Strategy
 
-Controls how often Fuska creates git commits during execution. Set during `/fuska-new-project`.
+Controls how often Fuska creates git commits during execution. Set during `/fuska configure`.
 
 ### Commit Message Format
 
@@ -262,13 +264,13 @@ fuska config
 
 Where `<stage>` is one of: `planning`, `execution`, or `verification`.
 
-You can also override per-phase with flags on `/fuska-plan-phase`:
+You can also override per-phase with flags on `/fuska plan`:
 - `--mode <MODE>` — Override workflow mode for this phase only (one-off, doesn't persist)
 - `--research` — Enable researcher (augments the selected mode)
 - `--skip-research` — Skip researcher
 - `--skip-verify` — Skip plan verification
 
-You can override per-phase with flags on `/fuska-execute-phase`:
+You can override per-phase with flags on `/fuska execute`:
 - `--mode <MODE>` — Override workflow mode for this phase only (one-off, doesn't persist)
 - `--verify` — Force verifier to run (even in modes that normally skip it)
 
@@ -276,7 +278,7 @@ You can override per-phase with flags on `/fuska-execute-phase`:
 
 ## Checker Panel
 
-The **checker panel** is a role-based plan verification system that runs during `/fuska-plan-phase`. Instead of a single plan checker, it uses a panel of specialized checkers that provide different perspectives:
+The **checker panel** is a role-based plan verification system that runs during `/fuska plan`. Instead of a single plan checker, it uses a panel of specialized checkers that provide different perspectives:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -324,7 +326,7 @@ This shows:
 - Options to override the contextual role or reset to auto-detect
 
 **When detection happens:**
-- `/fuska-map-codebase` detects project type and stores `checker_panel` settings in the config concept
+- `/fuska map` detects project type and stores `checker_panel` settings in the config concept
 - Detection looks for: embedded signals (ISR, STM32, etc.), web frameworks, CLI binaries, desktop frameworks (Electron, Tauri), Flutter
 
 **Example detection output:**
@@ -355,14 +357,14 @@ The executor updates the state concept after **every task commit**:
 | `last_activity` | `Task 3/7: Add form validation` | After each task commit |
 | `status` | `in_progress` | State changes |
 
-This means `/fuska-resume-work` always knows exactly where you are — **even if you never ran pause-work**.
+This means `/fuska resume` always knows exactly where you are — **even if you never paused**.
 
-### When to Use `/fuska-pause-work`
+### When to Use `/fuska pause`
 
-Since progress is tracked automatically, pause-work is now **optional**. Use it only when you want to capture **mental context**:
+Since progress is tracked automatically, pause is now **optional**. Use it only when you want to capture **mental context**:
 
 ```
-/fuska-pause-work
+/fuska pause
 ```
 
 **Captures:**
@@ -377,10 +379,10 @@ Since progress is tracked automatically, pause-work is now **optional**. Use it 
 ### When Resume Works Without Pause
 
 ```bash
-# End session mid-execution (no pause-work)
+# End session mid-execution (no pause)
 # ... next day ...
 
-/fuska-resume-work
+/fuska resume
 # → "Phase 2 — Shopping List. Task 3 of 7."
 # → "No mental context (no pause recorded)"
 # → Continues from task 3
@@ -388,16 +390,18 @@ Since progress is tracked automatically, pause-work is now **optional**. Use it 
 
 Resume always works because task position is tracked continuously.
 
+You can also run `/fuska` (bare) at any time to see where you are in the phase pipeline — it always knows your current position and shows you the exact command to continue.
+
 ### When Resume Shows Extra Context
 
 ```bash
 # Pause with mental context
-/fuska-pause-work
+/fuska pause
 # → "What's the context?" → "Was about to refactor grouping logic to use Map"
 
 # ... next day ...
 
-/fuska-resume-work
+/fuska resume
 # → "Phase 2 — Shopping List. Task 3 of 7."
 # → "Context: Was about to refactor grouping logic to use Map"
 # → Continues from task 3 with your notes
@@ -405,9 +409,17 @@ Resume always works because task position is tracked continuously.
 
 ### Key Insight
 
-**Checkpoint** ≠ **pause-work**:
+**Checkpoint** ≠ **pause**:
 
 - **Checkpoint** — A structured pause point during execution where user verification is required (e.g., visual review, decision input). Defined in plans with `type="checkpoint:human-verify"`.
-- **pause-work** — Optional command to capture mental context before ending a session. Task progress is already saved.
+- **pause** — Optional command to capture mental context before ending a session. Task progress is already saved.
 
-You can run `/fuska-resume-work` at any time — it will show your exact position whether or not you paused.
+You can run `/fuska resume` (or just `/fuska`) at any time — it will show your exact position whether or not you paused.
+
+---
+
+## See Also
+
+- [workflow-examples.md](workflow-examples.md) — See modes and settings in action
+- [commands.md](commands.md) — Full command reference
+- [concepts.md](concepts.md) — Mental model and glossary

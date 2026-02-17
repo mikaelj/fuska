@@ -95,9 +95,6 @@ export function validateStateConcept(data: unknown): ValidationResult {
   if (typeof d.progress !== 'number') {
     errors.push('Missing or invalid "progress" (number required)');
   }
-  if (!d.last_activity || typeof d.last_activity !== 'string') {
-    errors.push('Missing or invalid "last_activity" (string required)');
-  }
 
   return { valid: errors.length === 0, errors };
 }

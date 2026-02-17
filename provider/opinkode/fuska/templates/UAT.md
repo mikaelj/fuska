@@ -16,7 +16,6 @@ Template for UAT session tracking using MegaMemory concepts — persistent test 
 - `phase_id` (string) - Phase identifier
 - `status` (string) - "testing", "complete", or "diagnosed"
 - `source` (array) - SUMMARY.md files being tested
-- `started` (string) - ISO timestamp when session started
 - `updated` (string) - ISO timestamp of last update
 - `current_test` (object)
   - `number` (number) - Test number currently being executed
@@ -65,7 +64,7 @@ await megamemory.create_concept({
   kind: "feature",
   summary: `UAT session for phase ${phaseId}. Status: testing. ${tests.length} tests from ${source.length} summaries. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending.`,
   why: "Persistent UAT session tracking across /new invocations, supports resumable testing and gap diagnosis",
-  parent_id: `project:${projectId}`,
+  parent_id: `initiative:${initiativeId}`,
   edges: [
     ...source.map((sum, i) => ({
       to: `phase-summary:${sum}`,
@@ -238,7 +237,6 @@ const result = await megamemory.understand({
 status: testing | complete | diagnosed
 phase: XX-name
 source: [list of SUMMARY.md files tested]
-started: [ISO timestamp]
 updated: [ISO timestamp]
 ---
 
@@ -304,7 +302,6 @@ skipped: [N]
 - `status`: OVERWRITE - "testing" or "complete"
 - `phase`: IMMUTABLE - set on creation
 - `source`: IMMUTABLE - SUMMARY files being tested
-- `started`: IMMUTABLE - set on creation
 - `updated`: OVERWRITE - update on every change
 
 **Current Test:**
@@ -412,7 +409,6 @@ Default: **major** (safe default, user can clarify if wrong)
 status: diagnosed
 phase: 04-comments
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md
-started: 2025-01-15T10:30:00Z
 updated: 2025-01-15T10:45:00Z
 ---
 

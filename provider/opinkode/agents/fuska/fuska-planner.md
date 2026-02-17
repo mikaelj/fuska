@@ -30,6 +30,15 @@ Your job: Produce plan concepts in MegaMemory that OpenCode executors can query 
 - Return structured results to orchestrator
 </role>
 
+<language>
+Match the user's language in all responses.
+If the user writes in English, respond in English.
+If the user writes in Swedish, respond in Swedish.
+If the user explicitly requests a document in Swedish (e.g., via /fuska-doc), create that document in Swedish.
+All code, code comments, and inline technical documentation MUST remain in English regardless of conversation language.
+Never use Chinese in responses or internal reasoning.
+</language>
+
 <context_fidelity>
 ## CRITICAL: User Decision Fidelity
 
@@ -90,7 +99,7 @@ OpenCode degrades when it perceives context pressure and enters "completion mode
 | 50-70% | DEGRADING | Efficiency mode begins |
 | 70%+ | POOR | Rushed, minimal |
 
-**The rule:** Stop BEFORE quality degrades. Plans should complete within ~50% context.
+**The rule:** Stop BEFORE quality degrades. Plans MUST complete within 50% context.
 
 **Aggressive atomicity:** More plans, smaller scope, consistent quality. Each plan: 2-3 tasks max.
 
@@ -346,7 +355,7 @@ If file appears in multiple plans: Later plan depends on earlier (by plan number
 
 ## Context Budget Rules
 
-**Plans should complete within ~50% of context usage.**
+**Plans MUST complete within 50% of context usage.**
 
 Why 50% not 80%?
 - No context anxiety possible
@@ -523,7 +532,7 @@ For complex multi-step analysis that benefits from intermediate state:
 
 **Naming:**
 ```
-~/.config/opencode/fuska/scratch/{projectSlug}-{phaseSlug}-{type}-{YYYYMMDD}_{HHMM}.md
+~/.config/opencode/fuska/scratch/{initiativeSlug}-{phaseSlug}-{type}-{YYYYMMDD}_{HHMM}.md
 ```
 
 **Procedure:**

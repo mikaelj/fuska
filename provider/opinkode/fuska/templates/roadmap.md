@@ -332,11 +332,11 @@ const progress = await megamemory.understand({
 ## Complete Roadmap Initialization
 
 ```typescript
-async function createRoadmap(projectName: string, phases: PhaseConfig[]) {
+async function createRoadmap(initiativeName: string, phases: PhaseConfig[]) {
   const roadmap = await megamemory.create_concept({
-    name: `${projectName} Roadmap`,
+    name: `${initiativeName} Roadmap`,
     kind: "feature",
-    summary: `Roadmap for ${projectName}: ${phases.map((p, i) => p.name).join(' → ')}. Deliver MVP in ${phases.length} phases.`
+    summary: `Roadmap for ${initiativeName}: ${phases.map((p, i) => p.name).join(' → ')}. Deliver MVP in ${phases.length} phases.`
   });
 
   let prevPhaseId: string | null = null;
@@ -480,9 +480,9 @@ interface Plan {
   description: string;
 }
 
-async function getRoadmap(projectName: string): Promise<RoadmapPhase[]> {
+async function getRoadmap(initiativeName: string): Promise<RoadmapPhase[]> {
   const concepts = await megamemory.understand({
-    query: `${projectName} Roadmap Phase plans`
+    query: `${initiativeName} Roadmap Phase plans`
   });
 
   const phases: Map<string, RoadmapPhase> = new Map();
@@ -557,9 +557,9 @@ console.log(roadmap.map(p => `${p.name}: ${p.status}`));
 ## Update Progress After Plan Completion
 
 ```typescript
-async function updatePlanProgress(projectName: string, phaseNum: number, planNum: number) {
+async function updatePlanProgress(initiativeName: string, phaseNum: number, planNum: number) {
   const progress = await megamemory.understand({
-    query: `${projectName} Roadmap Progress`
+    query: `${initiativeName} Roadmap Progress`
   });
 
   if (progress.length > 0) {
@@ -597,7 +597,7 @@ await updatePlanProgress("CommunityApp", 1, 1);
 **Original template structure preserved for reference:**
 
 ```markdown
-# Roadmap: [Project Name]
+# Roadmap: [Initiative Name]
 
 ## Overview
 

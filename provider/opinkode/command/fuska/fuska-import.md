@@ -185,32 +185,32 @@ Parse content to extract:
 - "What This Is" section
 - "Core Value" section
 
-**Step 2.2: Generate project slug**
+**Step 2.2: Generate initiative slug**
 
 ```
-const projectSlug = projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+const initiativeSlug = initiativeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 ```
 
-**Step 2.3: Create project-root concept**
+**Step 2.3: Create initiative-root concept**
 
 If conflictMode === "create" or concept doesn't exist:
 
 ```
 megamemory_create_concept({
-  name: projectSlug,
+  name: initiativeSlug,
   kind: "feature",
   summary: JSON.stringify({
-    name: projectName,
+    name: initiativeName,
     what_this_is: whatThisIs,
     core_value: coreValue
   }),
-  why: "Project root — imported from .planning/ files"
+  why: "Initiative root — imported from .planning/ files"
 })
 ```
 
-Store returned `id` as `projectId`.
+Store returned `id` as `initiativeId`.
 
-Confirm: ">> Project root created: ${projectSlug}"
+Confirm: ">> Initiative root created: ${initiativeSlug}"
 
 ---
 
@@ -231,8 +231,8 @@ megamemory_create_concept({
   name: "config",
   kind: "config",
   summary: JSON.stringify(configData),
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "configured_by" }]
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "configured_by" }]
 })
 ```
 
@@ -267,8 +267,8 @@ megamemory_create_concept({
     progress: progress,
     last_activity: lastActivity
   }),
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "configured_by" }]
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "configured_by" }]
 })
 ```
 
@@ -295,11 +295,10 @@ Parse each requirement section (## headings) to extract:
 megamemory_create_concept({
   name: "requirements",
   kind: "module",
-  summary: "Project requirements list",
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "connects_to" }]
+  summary: "Initiative requirements list",
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "connects_to" }]
 })
-```
 
 Store returned `id` as `requirementsModuleId`.
 
@@ -355,8 +354,8 @@ megamemory_create_concept({
       depends_on: p.depends_on
     }))
   }),
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "connects_to" }]
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "connects_to" }]
 })
 ```
 
@@ -377,9 +376,9 @@ megamemory_create_concept({
     status: phase.status || "not_started",
     depends_on: phase.depends_on || []
   }),
-  parent_id: projectId,
+  parent_id: initiativeId,
   edges: [
-    { to: projectId, relation: "connects_to" },
+    { to: initiativeId, relation: "connects_to" },
     { to: "roadmap", relation: "connects_to" }
   ]
 })
@@ -553,8 +552,8 @@ megamemory_create_concept({
   name: researchName,
   kind: "component",
   summary: JSON.stringify(researchData),
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "connects_to" }]
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "connects_to" }]
 })
 ```
 
@@ -589,7 +588,7 @@ megamemory_create_concept({
   name: codebaseName,
   kind: "component",
   summary: JSON.stringify(codebaseData),
-  edges: [{ to: projectId, relation: "connects_to" }]
+  edges: [{ to: initiativeId, relation: "connects_to" }]
 })
 ```
 
@@ -605,11 +604,10 @@ Confirm: ">> Codebase concepts imported (${count} concepts)"
 megamemory_create_concept({
   name: "todos",
   kind: "module",
-  summary: "Project todos tracking",
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "connects_to" }]
+  summary: "Initiative todos tracking",
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "connects_to" }]
 })
-```
 
 Store returned `id` as `todosModuleId`.
 
@@ -697,8 +695,8 @@ megamemory_create_concept({
     phases: phases,
     notes: notes
   }),
-  parent_id: projectId,
-  edges: [{ to: projectId, relation: "connects_to" }]
+  parent_id: initiativeId,
+  edges: [{ to: initiativeId, relation: "connects_to" }]
 })
 ```
 
@@ -752,7 +750,7 @@ Total concepts: ${totalCount}
 ## >> Next Actions
 
 **Check project status:**
-  /fuska-progress
+  fuska progress
 
 **Verify imported data:**
   /fuska-export-md .planning.verify/

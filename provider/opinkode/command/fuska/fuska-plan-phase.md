@@ -1,12 +1,13 @@
 ---
 name: fuska-plan-phase
 description: Create detailed execution plan for a phase with MegaMemory and verification loop
-argument-hint: "[phase] [--research] [--skip-research] [--gaps] [--skip-verify]"
+argument-hint: "[phase] [--research] [--skip-research] [--gaps] [--skip-verify] [--no-review]"
 agent: @../../agents/fuska/fuska-planner.md
 tools:
   - read
   - bash
-
+  - question
+  - task
   - webfetch
   - megamemory:understand
   - megamemory:create_concept
@@ -89,8 +90,8 @@ megamemory_list_roots()
 **Step 1.2: Check for empty results**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 1.3: Query config concept**
@@ -104,7 +105,7 @@ megamemory_understand(query="config", top_k=5)
 
 If response.matches.length === 0:
 → Display: "Config concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 1.5: Extract and parse config**
@@ -181,6 +182,7 @@ const hasResearchFlag = input.includes("--research")
 const hasSkipResearchFlag = input.includes("--skip-research")
 const hasGapsFlag = input.includes("--gaps")
 const hasSkipVerifyFlag = input.includes("--skip-verify")
+const hasNoReviewFlag = input.includes("--no-review")
 
 // Extract --mode flag for one-off override
 const modeMatch = input.match(/--mode\s+(\S+)/)
@@ -384,7 +386,12 @@ if (response.matches.length > 0) {
 **Step 4.8: Build and spawn researcher**
 
 ```
-const researchPrompt = `<objective>
+const researchPrompt = `<critical_constraints>
+Return: ## RESEARCH COMPLETE or ## RESEARCH BLOCKED
+Create/update research concept: ${phaseSlug}-research
+</critical_constraints>
+
+<objective>
 Research how to implement Phase ${phaseNumber}: ${phaseName}
 
 Answer: "What do I need to know to PLAN this phase well?"
@@ -406,7 +413,6 @@ ${stateData ? JSON.stringify(stateData, null, 2) : 'No state data'}
 </context>
 
 <output>
-Create/update research concept: ${phaseSlug}-research
 Use: PhaseConceptTemplates.createResearch()
 </output>`
 
@@ -558,6 +564,13 @@ Display stage banner:
 Build the planner prompt by inlining the concept data gathered in step 6. Replace each section below with the actual summary content from the corresponding MegaMemory query:
 
 ```markdown
+<critical_constraints>
+Return: ## PLANNING COMPLETE or ## CHECKPOINT REACHED or ## PLANNING INCONCLUSIVE
+Create plan concepts in MegaMemory using PhaseConceptTemplates.createPlan()
+Plans MUST complete within 50% context usage
+Each plan: 2-3 tasks maximum
+</critical_constraints>
+
 <planning_context>
 
 **Phase:** {phase_number}
@@ -715,6 +728,12 @@ All extracted data is used to build the checker prompt in step 10.
 Use the data extracted in step 9 (planConcepts and requirementConcepts), phaseData from step 3, and checker_panel from step 1:
 
 ```markdown
+<critical_constraints>
+Return one of:
+- ## VERIFICATION PASSED — all checks pass
+- ## ISSUES FOUND — structured issue list with cross-validation badges
+</critical_constraints>
+
 <verification_context>
 
 **Phase:** ${phaseNumber}
@@ -745,12 +764,6 @@ Project Classification:
 - Confidence: ${projectClassification.confidence}
 - Signals: ${projectClassification.signals.join(', ')}
 </checker_panel>
-
-<expected_output>
-Return one of:
-- ## VERIFICATION PASSED — all checks pass
-- ## ISSUES FOUND — structured issue list with cross-validation badges
-</expected_output>
 ```
 
 **Step 10.3: Spawn panel orchestrator**
@@ -791,6 +804,12 @@ Collect all plan summaries so the planner can see what needs revision.
 Build the revision prompt by inlining the plans and checker issues:
 
 ```markdown
+<critical_constraints>
+Return what changed
+Do NOT replan from scratch unless issues are fundamental
+Update plan concepts in MegaMemory
+</critical_constraints>
+
 <revision_context>
 
 **Phase:** {phase_number}
@@ -806,13 +825,10 @@ Include the structured issues from the checker's output here so the planner know
 
 <instructions>
 Make targeted updates to address checker issues.
-Do NOT replan from scratch unless issues are fundamental.
 
 Use MegaMemory:
 - Update plan concepts: megamemory:update_concept()
 - Reference patterns from MegaMemory for solutions
-
-Return what changed.
 </instructions>
 ```
 
@@ -841,7 +857,287 @@ Offer options:
 
 Wait for user response.
 
-## 13. Update State Concept
+## 13. Interactive Review Loop
+
+**Step 13.1: Check review mode**
+
+```
+const skipReview = hasNoReviewFlag || configData?.workflow?.interactive_review === false
+
+if (skipReview) {
+  // Skip to Step 14 (Update State Concept)
+  Continue to Step 14
+}
+```
+
+**Step 13.2: Display all plans for phase**
+
+```
+megamemory_understand(query=`${phaseSlug}-plan`, top_k=20)
+
+const planConcepts = response.matches.map(match => {
+  const planData = JSON.parse(match.summary)
+  return {
+    id: match.id,
+    name: match.name,
+    data: planData
+  }
+}).sort((a, b) => {
+  const numA = parseInt(a.name.match(/plan-(\d+)/)?.[1] || '0')
+  const numB = parseInt(b.name.match(/plan-(\d+)/)?.[1] || '0')
+  return numA - numB
+})
+```
+
+Display format:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PHASE ${phaseNumber}: ${phaseName} - Plans
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${planConcepts.map((plan, idx) => `
+## Plan ${idx + 1}: ${plan.data.objective || plan.name}
+
+**Wave:** ${plan.data.wave || 'N/A'}
+**Depends on:** ${plan.data.depends_on?.join(', ') || 'None'}
+**Autonomous:** ${plan.data.autonomous !== false ? 'Yes' : 'No'}
+**Purpose:** ${plan.data.purpose || 'N/A'}
+**Output:** ${plan.data.output || 'N/A'}
+
+### Must Haves
+${plan.data.must_haves?.map(m => `- ${m}`).join('\n') || 'None defined'}
+
+### Files to Modify
+${plan.data.files_modified?.map(f => `- ${f}`).join('\n') || 'TBD'}
+
+### Tasks (${plan.data.tasks?.length || 0})
+${plan.data.tasks?.map((t, i) => `
+#### Task ${i+1}: ${t.name || 'Task ' + (i+1)}
+- **Files:** ${(Array.isArray(t.files) ? t.files : [t.files]).join(', ') || 'TBD'}
+- **Action:** ${t.action || t.description || 'N/A'}
+- **Verify:** ${t.verify || 'N/A'}
+- **Done:** ${t.done || 'N/A'}
+`).join('\n') || 'No tasks defined'}
+`).join('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Step 13.3: Review Loop**
+
+```
+const reviewOptions = [
+  { label: "Looks good, proceed", description: "Save plans and continue" },
+  { label: "Ask a question", description: "Discuss the plans" },
+  { label: "Modify a task", description: "Change a specific task" },
+  { label: "Add a task", description: "Add new task to a plan" },
+  { label: "Remove a task", description: "Remove a task from a plan" }
+]
+
+while (true) {
+  const actionResponse = question(questions=[{
+    header: "Plan Review",
+    question: "What would you like to do with these plans?",
+    options: reviewOptions
+  }])
+
+  if (actionResponse[0] === "Looks good, proceed") {
+    break  // Continue to Step 14 (Update State)
+  }
+
+  if (actionResponse[0] === "Ask a question") {
+    const questionResponse = question(questions=[{
+      header: "Question",
+      question: "What would you like to know about these plans?",
+      options: []
+    }])
+
+    // Answer based on plan concepts context
+    // Re-display and continue loop
+    continue
+  }
+
+  if (actionResponse[0] === "Modify a task") {
+    // First, ask which plan
+    const planOptions = planConcepts.map(p => ({
+      label: p.name,
+      description: p.data.objective || 'No objective'
+    }))
+
+    const planChoice = question(questions=[{
+      header: "Select Plan",
+      question: "Which plan contains the task to modify?",
+      options: planOptions
+    }])
+
+    // Then ask which task
+    const selectedPlan = planConcepts.find(p => p.name === planChoice[0])
+    const taskOptions = selectedPlan.data.tasks?.map((t, i) => ({
+      label: `Task ${i+1}: ${t.name || 'Task ' + (i+1)}`,
+      description: t.action?.substring(0, 50) + '...' || 'No description'
+    })) || []
+
+    const taskChoice = question(questions=[{
+      header: "Select Task",
+      question: "Which task to modify?",
+      options: taskOptions
+    }])
+
+    // Get modification details
+    const modResponse = question(questions=[{
+      header: "Modification",
+      question: "What changes do you want to make to this task?",
+      options: []
+    }])
+
+    // Spawn planner for revision
+    const feedback = modResponse[0]
+    const revisionPrompt = `<revision_context>
+**Mode:** revision
+**Phase:** ${phaseNumber}
+**Plan Concept ID:** ${selectedPlan.id}
+**Current plan:** ${JSON.stringify(selectedPlan.data, null, 2)}
+**User feedback:** ${feedback}
+</revision_context>
+
+<instructions>
+Update the plan to address user feedback.
+Use: megamemory_update_concept(id="${selectedPlan.id}", changes={summary: JSON.stringify(updatedPlan)})
+Return: ## REVISION COMPLETE
+</instructions>`
+
+    Task(
+      prompt=revisionPrompt,
+      subagent_type="fuska-planner",
+      model=models.planner,
+      description="Revise: ${selectedPlan.name}"
+    )
+
+    // Re-query and re-display
+    megamemory_understand(query=`${phaseSlug}-plan`, top_k=20)
+    // Update planConcepts and re-display from Step 13.2
+    continue
+  }
+
+  if (actionResponse[0] === "Add a task") {
+    // Select plan
+    const planOptions = planConcepts.map(p => ({
+      label: p.name,
+      description: p.data.objective || 'No objective'
+    }))
+
+    const planChoice = question(questions=[{
+      header: "Select Plan",
+      question: "Which plan to add a task to?",
+      options: planOptions
+    }])
+
+    // Get task details
+    const taskResponse = question(questions=[{
+      header: "New Task",
+      question: "Describe the task to add:",
+      options: []
+    }])
+
+    const selectedPlan = planConcepts.find(p => p.name === planChoice[0])
+    const feedback = taskResponse[0]
+
+    const revisionPrompt = `<revision_context>
+**Mode:** add_task
+**Phase:** ${phaseNumber}
+**Plan Concept ID:** ${selectedPlan.id}
+**Current plan:** ${JSON.stringify(selectedPlan.data, null, 2)}
+**New task to add:** ${feedback}
+</revision_context>
+
+<instructions>
+Add the new task to the plan.
+Use: megamemory_update_concept(id="${selectedPlan.id}", changes={summary: JSON.stringify(updatedPlan)})
+Return: ## REVISION COMPLETE
+</instructions>`
+
+    Task(
+      prompt=revisionPrompt,
+      subagent_type="fuska-planner",
+      model=models.planner,
+      description="Add task to: ${selectedPlan.name}"
+    )
+
+    // Re-query and re-display
+    continue
+  }
+
+  if (actionResponse[0] === "Remove a task") {
+    // Select plan
+    const planOptions = planConcepts.map(p => ({
+      label: p.name,
+      description: p.data.objective || 'No objective'
+    }))
+
+    const planChoice = question(questions=[{
+      header: "Select Plan",
+      question: "Which plan contains the task to remove?",
+      options: planOptions
+    }])
+
+    // Select task
+    const selectedPlan = planConcepts.find(p => p.name === planChoice[0])
+    const taskOptions = selectedPlan.data.tasks?.map((t, i) => ({
+      label: `Task ${i+1}: ${t.name || 'Task ' + (i+1)}`,
+      description: t.action?.substring(0, 50) + '...' || 'No description'
+    })) || []
+
+    const taskChoice = question(questions=[{
+      header: "Select Task",
+      question: "Which task to remove?",
+      options: taskOptions
+    }])
+
+    // Confirm removal
+    const confirmResponse = question(questions=[{
+      header: "Confirm",
+      question: `Remove ${taskChoice[0]}?`,
+      options: [
+        { label: "Yes, remove it", description: "Remove the task" },
+        { label: "Cancel", description: "Keep the task" }
+      ]
+    }])
+
+    if (confirmResponse[0] === "Yes, remove it") {
+      const taskIndex = parseInt(taskChoice[0].match(/Task (\d+)/)?.[1] || '0') - 1
+
+      const revisionPrompt = `<revision_context>
+**Mode:** remove_task
+**Phase:** ${phaseNumber}
+**Plan Concept ID:** ${selectedPlan.id}
+**Current plan:** ${JSON.stringify(selectedPlan.data, null, 2)}
+**Task to remove:** Task ${taskIndex + 1}
+</revision_context>
+
+<instructions>
+Remove the specified task from the plan.
+Use: megamemory_update_concept(id="${selectedPlan.id}", changes={summary: JSON.stringify(updatedPlan)})
+Return: ## REVISION COMPLETE
+</instructions>`
+
+      Task(
+        prompt=revisionPrompt,
+        subagent_type="fuska-planner",
+        model=models.planner,
+        description="Remove task from: ${selectedPlan.name}"
+      )
+    }
+
+    // Re-query and re-display
+    continue
+  }
+}
+
+// After loop exits, continue to Step 14 (Update State Concept)
+```
+
+## 14. Update State Concept
 
 **Step 13.1: Query state concept**
 
@@ -854,7 +1150,7 @@ megamemory_understand(query="state", top_k=5)
 
 If response.matches.length === 0:
 → Display: "State concept not found in MegaMemory"
-→ Suggest: "Run /fuska-new-project to initialize project"
+→ Suggest: "Run fuska init to initialize initiative"
 → Stop
 
 **Step 13.3: Extract state data**
@@ -872,8 +1168,7 @@ const stateData = JSON.parse(stateSummaryString)
 const updatedStateData = {
   ...stateData,
   current_phase: phaseSlug,
-  status: "ready_to_execute",
-  last_activity: `Phase ${phaseNumber} planned`
+  status: "ready_to_execute"
 }
 ```
 
@@ -891,7 +1186,7 @@ megamemory_update_concept(
 
 Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kind`, `why`, `file_refs` — do NOT pass `parent_id` or `edges`.
 
-## 14. Present Final Status
+## 15. Present Final Status
 
 Route to `<offer_next>`.
 
@@ -947,6 +1242,10 @@ Verification: {Passed | Passed with override | Skipped}
 - [ ] fuska-plan-checker spawned (unless --skip-verify)
 - [ ] Verification passed OR user override OR max iterations with user decision
 - [ ] User sees status between agent spawns
+- [ ] Interactive review loop displayed (unless --no-review or config disables)
+- [ ] All plans displayed with full details in review
+- [ ] Review options work: Ask question, Modify task, Add task, Remove task, Proceed
+- [ ] Plan modifications trigger planner revision and re-display
 - [ ] State concept updated with planning status
 - [ ] User knows next steps (execute or review)
 

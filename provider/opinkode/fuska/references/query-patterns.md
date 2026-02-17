@@ -36,13 +36,13 @@ interface ConceptMatch {
 
 ## Common Queries
 
-### Project Root
+### Initiative Root
 
 ```typescript
-// Get project root concept
-megamemory_understand({ query: "project-root", top_k: 1 })
+// Get initiative root concept
+megamemory_understand({ query: "initiative-root", top_k: 1 })
 
-// Or use list_roots to find all projects
+// Or use list_roots to find all initiatives
 megamemory_list_roots()
 ```
 
@@ -51,18 +51,18 @@ megamemory_list_roots()
 ### Config
 
 ```typescript
-// Get project configuration
+// Get initiative configuration
 megamemory_understand({ query: "config", top_k: 1 })
 ```
 
-**Parse:** `JSON.parse(match.summary)` → `{ mode, depth, parallelization, workflow: {...} }`
+**Parse:** `JSON.parse(match.summary)` → `{ name, what_this_is, core_value }`
 
-**Note:** Created as `config` by mm-new-project. Some agents reference it as `fuska-config` — use semantic query to find either.
+**Note:** Created as `config` by fuska init. Some agents reference it as `fuska-config` — use semantic query to find either.
 
 ### State
 
 ```typescript
-// Get project state (current phase, progress)
+// Get initiative state (current phase, progress)
 megamemory_understand({ query: "state", top_k: 1 })
 ```
 
@@ -193,7 +193,7 @@ megamemory_understand({ query: "phase", top_k: 50 })
 |----------|-------------------|
 | Single concept lookup | 1-3 |
 | All items in a category | 20-50 |
-| Full project scan | 100+ |
+| Full initiative scan | 100+ |
 | Dependency graph building | 10000 (helpers.ts uses this) |
 
 ### Parse Summary Safely
@@ -219,15 +219,15 @@ try {
 `understand` results include `children` arrays — use them to navigate the tree without extra queries:
 
 ```typescript
-const project = matches[0]
-// project.children = [{id: "requirements", ...}, {id: "roadmap", ...}, {id: "todos", ...}]
+const initiative = matches[0]
+// initiative.children = [{id: "requirements", ...}, {id: "roadmap", ...}, {id: "todos", ...}]
 ```
 
 ### Traverse Edges for Relationships
 
 ```typescript
 const phase = matches[0]
-// phase.edges = [{to: "project-slug", relation: "connects_to"}, ...]
+// phase.edges = [{to: "initiative-slug", relation: "connects_to"}, ...]
 // phase.incoming_edges = [{from: "phase-01-plan-1", relation: "connects_to"}, ...]
 ```
 
@@ -235,7 +235,7 @@ const phase = matches[0]
 
 | Kind | Used For | Examples |
 |------|----------|---------|
-| `feature` | Project root, phases, requirements, todos | `my-project`, `phase-01`, `req-AUTH-01` |
+| `feature` | Initiative root, phases, requirements, todos | `my-initiative`, `phase-01`, `req-AUTH-01` |
 | `module` | Grouping containers | `requirements`, `roadmap`, `todos` |
 | `pattern` | Research findings | `research-stack`, `research-pitfalls` |
 | `component` | Phase artifacts | `phase-01-plan-1`, `phase-01-summary-1`, `phase-01-context` |
@@ -246,7 +246,7 @@ const phase = matches[0]
 
 | Relation | Meaning | Common Usage |
 |----------|---------|-------------|
-| `connects_to` | General association | Phase → project, plan → phase |
+| `connects_to` | General association | Phase → initiative, plan → phase |
 | `depends_on` | Prerequisite | Phase → phase, plan → plan |
 | `implements` | Delivers/builds | Requirement → phase |
 | `calls` | Runtime invocation | Service → service |

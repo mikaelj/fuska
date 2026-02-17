@@ -22,8 +22,9 @@ tools:
 
 Execute unplanned, ad-hoc tasks with Fuska guarantees (atomic commits, state tracking) using a mode-aware agent chain.
 
-- Flexible mode selection: direct | quick | fast | balanced | thorough | standard
-- Auto-executes for quick/fast/standard; asks before executing for direct/balanced/thorough
+- Flexible mode selection: planned | checked | researched | verified
+- Auto-executes for planned/verified; asks before executing for checked/researched
+- Override auto-execute behavior with --ask or --auto flag
 - Suggests project creation if no project exists
 
 </objective>
@@ -84,12 +85,14 @@ if (input.trim().toLowerCase().startsWith("help")) {
   Usage: /fuska-do [mode] [description]
 
   Modes:
-    direct    - Planner → Executor | Ask first | You know exactly what to do
-    quick     - Planner → Executor | Yes | Small tasks, trusted patterns
-    fast      - + Plan Checker | Yes | Familiar tech, validated plans
-    balanced  - + Researcher | Ask first | Some uncertainty, need guidance
-    thorough  - Research + Check | Ask first | New domains, high stakes
-    standard  - Full chain + Verifier | Yes | Critical systems, production code
+    planned    - Planner → Executor | Auto | You have a plan, just execute it
+    checked    - Planner → Plan Checker → Executor | Ask | Plan gets validated, you review before execution
+    researched - Researcher → Planner → Plan Checker → Executor | Ask | Research adds context, review before committing
+    verified   - Researcher → Planner → Plan Checker → Executor → Verifier | Auto | Full pipeline with post-execution verification
+
+  Flags:
+    --ask      Override to ask before executing (any mode)
+    --auto     Override to auto-execute (any mode)
 
   -> Stop
 }
@@ -165,18 +168,23 @@ All context now cached. No re-querying in later steps.
 
 ```
 const input = "$ARGUMENTS" || ""
-const validModes = ["direct", "quick", "fast", "balanced", "thorough", "standard"]
+const validModes = ["planned", "checked", "researched", "verified"]
 const words = input.trim().split(/\s+/)
 
 let MODE = null
 let DESCRIPTION = null
 
+const hasNoReviewFlag = input.includes("--no-review")
+const hasAskFlag = input.includes("--ask")
+const hasAutoFlag = input.includes("--auto")
+const flagPattern = /--(?:no-review|ask|auto)/gi
+
 if (validModes.includes(words[0]?.toLowerCase())) {
   MODE = words[0].toLowerCase()
-  DESCRIPTION = words.slice(1).join(" ") || null
+  DESCRIPTION = words.slice(1).join(" ").replace(flagPattern, '').trim() || null
 } else {
   // No mode specified - entire argument is description
-  DESCRIPTION = input.trim() || null
+  DESCRIPTION = input.replace(flagPattern, '').trim() || null
 }
 ```
 
@@ -190,12 +198,10 @@ if (!MODE) {
     header: "Mode",
     question: "Select workflow mode:",
     options: [
-      { label: "Direct", description: "Planner → Executor only. ~80% faster. Best when you know exactly what to do." },
-      { label: "Quick", description: "Planner → Executor with deviation handling. ~70% faster. Small tasks with known solutions." },
-      { label: "Fast", description: "+Plan Checker. ~50% faster. Validated plans for familiar tech stacks." },
-      { label: "Balanced", description: "+Researcher. ~35% faster. Moderate tech uncertainty, avoid wrong library choices." },
-      { label: "Thorough", description: "Research + Plan Check. ~20% faster. New domains, need verified plans but will manually verify." },
-      { label: "Standard", description: "Full chain with Verifier. 0% saved. Critical systems, high stakes, production code." }
+      { label: "Planned", description: "Planner → Executor. Auto-execute. You have a plan, just execute it." },
+      { label: "Checked", description: "Planner → Plan Checker → Executor. Ask first. Plan gets validated before execution." },
+      { label: "Researched", description: "Researcher → Planner → Plan Checker → Executor. Ask first. Research adds context." },
+      { label: "Verified", description: "Full pipeline with Verifier. Auto-execute. Critical systems, production code." }
     ]
   }])
   MODE = modeResponse[0].toLowerCase()
@@ -218,13 +224,18 @@ DESCRIPTION = taskResponse[0]
 
 ```
 let modeConfig = {
-  direct:   { research: false, planCheck: false, verifier: false, autoExecute: false },
-  quick:    { research: false, planCheck: false, verifier: false, autoExecute: true },
-  fast:     { research: false, planCheck: true,  verifier: false, autoExecute: true },
-  balanced: { research: true,  planCheck: false, verifier: false, autoExecute: false },
-  thorough: { research: true,  planCheck: true,  verifier: false, autoExecute: false },
-  standard: { research: true,  planCheck: true,  verifier: true,  autoExecute: true }
+  planned:    { research: false, planCheck: false, verifier: false, autoExecute: true },
+  checked:    { research: false, planCheck: true,  verifier: false, autoExecute: false },
+  researched: { research: true,  planCheck: true,  verifier: false, autoExecute: false },
+  verified:   { research: true,  planCheck: true,  verifier: true,  autoExecute: true }
 }[MODE]
+
+// Override autoExecute if --ask or --auto flag provided
+if (hasAskFlag) {
+  modeConfig.autoExecute = false
+} else if (hasAutoFlag) {
+  modeConfig.autoExecute = true
+}
 
 // Override if debug context present (investigation already done)
 if (hasDebugContext) {
@@ -375,7 +386,7 @@ const planConceptId = planResult.id
 
 ## 5. Spawn Researcher (if modeConfig.research)
 
-Only for balanced, thorough, standard modes.
+Only for researched, verified modes.
 
 Display: `Researching...`
 
@@ -519,7 +530,7 @@ If error:
 
 ## 7. Spawn Plan-Checker + Revision Loop (if modeConfig.planCheck)
 
-Only for fast, thorough, standard modes.
+Only for checked, researched, verified modes.
 
 Display: `Validating plan...`
 
@@ -628,89 +639,149 @@ const proceedResponse = question(questions=[{
 
 ---
 
-## 8. Determine Execution
+## 8. Plan Review
 
-**Step 8.1: Query plan for display**
+**Step 8.1: Query and display plan (ALWAYS)**
 
 ```
 megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
 const planData = JSON.parse(response.matches[0].summary)
 ```
 
-**Step 8.2: Display plan**
+Display format:
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  TASK ${nextNum}: ${DESCRIPTION}
  Mode: ${MODE}
-───────────────────────────────────────────────────
- Files: ${planData.files_modified?.join(', ') || 'TBD'}
-───────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-${planData.tasks.map((t, i) => `TASK ${i+1}: ${t.name || t.action || t.description || 'Task ' + (i+1)}
-   Files: ${Array.isArray(t.files) ? t.files.join(', ') : (t.files || 'TBD')}
-   Action: ${t.action || t.description || 'N/A'}
-   Verify: ${t.verify || 'N/A'}
-   Done: ${t.done || 'N/A'}
-`).join('\n')}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## Objective
+${planData.objective || DESCRIPTION}
+
+## Purpose
+${planData.purpose || 'N/A'}
+
+## Output
+${planData.output || 'N/A'}
+
+## Files to Modify
+${planData.files_modified?.map(f => `- ${f}`).join('\n') || 'TBD'}
+
+## Tasks (${planData.tasks?.length || 0})
+
+${planData.tasks?.map((t, i) => `
+### Task ${i+1}: ${t.name || 'Task ' + (i+1)}
+
+**Files:**
+- ${(Array.isArray(t.files) ? t.files : [t.files]).join('\n- ') || 'TBD'}
+
+**Action:**
+${t.action || t.description || 'N/A'}
+
+**Verify:**
+${t.verify || 'N/A'}
+
+**Done:**
+${t.done || 'N/A'}
+`).join('\n') || 'No tasks defined'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Step 8.3: Branch by mode**
+**Step 8.2: Check review mode**
 
-If `modeConfig.autoExecute` (quick, fast, standard):
--> Continue to Step 9
-
-If `!modeConfig.autoExecute` (direct, balanced, thorough):
 ```
-const actionResponse = question(questions=[{
-  header: "Next",
-  question: "What would you like to do?",
-  options: [
-    { label: "Execute now", description: "Run the plan immediately" },
-    { label: "Change plan", description: "Provide feedback to revise the plan" },
-    { label: "Save and exit", description: "Save the plan for later execution" }
-  ]
-}])
+const skipReview = hasNoReviewFlag || configData?.workflow?.interactive_review === false
 
-if (actionResponse[0] === "Execute now") {
-  // Continue to Step 9
-} else if (actionResponse[0] === "Change plan") {
-  // Get feedback, re-spawn planner, loop back
-  const feedbackResponse = question(questions=[{
-    header: "Feedback",
-    question: "What changes do you want to make to the plan?",
-    options: []
-  }])
-  const feedback = feedbackResponse[0]
-  
-  // Build revision prompt
-  const revisionPrompt = `<revision_context>
-  **Mode:** revision
-  **Task:** ${DESCRIPTION}
-  **Plan Concept ID:** ${planConceptId}
-  **Current plan:** ${JSON.stringify(planData, null, 2)}
-  **User feedback:** ${feedback}
-  </revision_context>
-
-  <instructions>
-  Update the plan to address user feedback.
-  Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlan)})
-  Return: ## REVISION COMPLETE
-  </instructions>`
-
-  Task(
-    prompt=revisionPrompt,
-    subagent_type="fuska-planner",
-    model=models.planner,
-    description="Revise: ${DESCRIPTION}"
-  )
-  
-  // Loop back to Step 8.1 to display updated plan
-} else {
-  // Save and exit
-  Display: "Plan saved as task-${nextNum}-${slug}. Run `/fuska-execute-phase task-${nextNum}` to execute later."
-  -> Skip to Step 12 (display only, no state update)
+if (skipReview) {
+  // Skip to Step 9 (execution)
+  Continue to Step 9
 }
+```
+
+**Step 8.3: Review Loop**
+
+```
+const reviewOptions = [
+  { label: "Execute now", description: "Run the plan immediately" },
+  { label: "Ask a question", description: "Discuss the plan before executing" },
+  { label: "Modify the plan", description: "Make changes to tasks" },
+  { label: "Save and exit", description: "Save for later execution" }
+]
+
+while (true) {
+  const actionResponse = question(questions=[{
+    header: "Plan Review",
+    question: "What would you like to do with this plan?",
+    options: reviewOptions
+  }])
+
+  if (actionResponse[0] === "Execute now") {
+    break  // Continue to Step 9
+  }
+
+  if (actionResponse[0] === "Ask a question") {
+    const questionResponse = question(questions=[{
+      header: "Question",
+      question: "What would you like to know about this plan?",
+      options: []
+    }])
+    
+    // Answer based on planData context
+    // The LLM should answer the question using planData context
+    
+    // Re-display plan and re-enter loop
+    continue
+  }
+
+  if (actionResponse[0] === "Modify the plan") {
+    const modResponse = question(questions=[{
+      header: "Modify",
+      question: "What changes do you want to make?",
+      options: []
+    }])
+    
+    const feedback = modResponse[0]
+    
+    // Spawn planner with revision context
+    const revisionPrompt = `<revision_context>
+**Mode:** revision
+**Task:** ${DESCRIPTION}
+**Plan Concept ID:** ${planConceptId}
+**Current plan:** ${JSON.stringify(planData, null, 2)}
+**User feedback:** ${feedback}
+</revision_context>
+
+<instructions>
+Update the plan to address user feedback.
+Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlan)})
+Return: ## REVISION COMPLETE
+</instructions>`
+
+    Task(
+      prompt=revisionPrompt,
+      subagent_type="fuska-planner",
+      model=models.planner,
+      description="Revise: ${DESCRIPTION}"
+    )
+    
+    // Re-query and re-display updated plan
+    megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
+    planData = JSON.parse(response.matches[0].summary)
+    Re-display plan from Step 8.1
+    continue
+  }
+
+  if (actionResponse[0] === "Save and exit") {
+    Display: "Plan saved as task-${nextNum}-${slug}"
+    Display: "Run `/fuska-do task-${nextNum}` to execute later."
+    Skip to Step 12 (display only, no execution)
+    return  // Exit process
+  }
+}
+
+// After loop exits, continue to Step 9
 ```
 
 ---
@@ -834,7 +905,7 @@ generatedCommitMessage = agentOutput.trim()
 
 ## 10. Spawn Verifier (if modeConfig.verifier)
 
-Only for standard mode.
+Only for verified mode.
 
 Display: `Verifying...`
 
@@ -1026,7 +1097,7 @@ megamemory_update_concept(
  Fuska > TASK COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
- Quick Task ${nextNum}: ${DESCRIPTION}
+ Task ${nextNum}: ${DESCRIPTION}
  Mode: ${MODE}
  Plan: task-${nextNum}-${slug}
  Commit: ${commitHash}
@@ -1047,13 +1118,13 @@ megamemory_update_concept(
 - [ ] Slug generated (lowercase, hyphens, max 40 chars)
 - [ ] Task number calculated (001, 002, ...)
 - [ ] Plan concept created with mode
-- [ ] Researcher spawned for research modes (balanced/thorough/standard)
+- [ ] Researcher spawned for research modes (researched/verified)
 - [ ] Research concept created (kind: pattern) if researched
 - [ ] Planner spawns with mode-appropriate constraints
-- [ ] Plan-checker spawned for check modes (fast/thorough/standard)
+- [ ] Plan-checker spawned for check modes (checked/researched/verified)
 - [ ] Revision loop works (max 3 iterations)
-- [ ] Auto-execute for quick/fast/standard modes
-- [ ] Ask-before-execute for direct/balanced/thorough modes
+- [ ] Auto-execute for planned/verified modes (overridable with --ask)
+- [ ] Ask-before-execute for checked/researched modes (overridable with --auto)
 - [ ] Plan displayed before asking for execution decision
 - [ ] Change plan option: feedback collected, planner re-spawned, plan re-displayed
 - [ ] Save and exit option: plan saved with execution command shown
@@ -1061,7 +1132,7 @@ megamemory_update_concept(
 - [ ] Git-message agent spawned to generate commit message
 - [ ] Commit message displayed with Commit now / Edit first / Skip options
 - [ ] Commit executed only on user confirmation
-- [ ] Verifier spawned for standard mode
+- [ ] Verifier spawned for verified mode
 - [ ] State concept updated with task entry (including commit hash if committed)
 - [ ] Completion banner displayed with commit status
 

@@ -116,8 +116,7 @@ describe('ProjectConceptTemplates', () => {
         current_phase: 'phase-01',
         current_plan: 'phase-01-plan-1',
         status: 'in_progress',
-        progress: 25,
-        last_activity: 'Phase 1 execution'
+        progress: 25
       };
 
       const concept = ProjectConceptTemplates.createState('my-project', state);
@@ -128,7 +127,6 @@ describe('ProjectConceptTemplates', () => {
       expect(concept.summary).toContain('"current_plan":"phase-01-plan-1"');
       expect(concept.summary).toContain('"status":"in_progress"');
       expect(concept.summary).toContain('"progress":25');
-      expect(concept.summary).toContain('"last_activity":"Phase 1 execution"');
       expect(concept.parent_id).toBe('my-project');
       expect(concept.edges).toEqual([{ to: 'my-project', relation: 'configured_by' }]);
     });

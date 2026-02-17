@@ -72,8 +72,8 @@ megamemory_list_roots()
 **Step 1.2: Check for roots**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
-→ Suggest: "/fuska-new-project to start a new project"
+→ Display: "No initiatives found in MegaMemory"
+→ Suggest: "fuska init to start a new initiative"
 → Stop
 
 **Step 1.3: Check for multiple roots and no project specified**
@@ -104,7 +104,7 @@ const projectResponse = question(questions=[{
 
 **Step 1.4: Store selected project**
 
-After user selection, store `projectId` and `projectName` for use in subsequent steps.
+After user selection, store `initiativeId` and `initiativeName` for use in subsequent steps.
 
 ---
 
@@ -120,8 +120,8 @@ megamemory_understand(query="state", top_k=5)
 **Step 2.2: Check state exists**
 
 If response.matches.length === 0:
-→ Display: "Project state not found. Project may not be properly initialized."
-→ Suggest: "Reinitialize with /fuska-new-project or select different project"
+→ Display: "Initiative state not found. Initiative may not be properly initialized."
+→ Suggest: "Reinitialize with fuska init or select different initiative"
 → Stop
 
 **Step 2.3: Extract state data**
@@ -136,7 +136,6 @@ const currentPhase = stateData.current_phase
 const currentPlan = stateData.current_plan
 const status = stateData.status
 const progress = stateData.progress
-const lastActivity = stateData.last_activity
 
 const currentTask = stateData.current_task
 const totalTasks = stateData.total_tasks
@@ -149,7 +148,7 @@ const totalTasks = stateData.total_tasks
  Fuska: PROJECT STATE
 ----------------------------------------------------
 
-**${projectName || 'Project'}**
+ **${initiativeName || 'Initiative'}**
 
 Current Phase: ${currentPhase || 'None'}
 Current Plan: ${currentPlan || 'None'}
@@ -377,13 +376,10 @@ If status === "phase_complete":
 
 Re-use stateId and stateData from step 2.3:
 ```
-const updatedStateData = {
-  ...stateData,
-  last_activity: `Session resumed at ${new Date().toISOString()}`
-}
+// No state changes needed - state already reflects current position
 ```
 
-Call:
+Call (optional - only if state needs update):
 ```
 megamemory_update_concept(
   id=stateId,
@@ -406,9 +402,9 @@ Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kin
   Fuska: Session restored
 -----------------------------------------------
 
-**${projectName || 'Project'}**
+ **${initiativeName || 'Initiative'}**
 
-${status === 'ready_to_plan' ? 'Ready to plan next phase' : ''}
+ ${status === 'ready_to_plan' ? 'Ready to plan next phase' : ''}
 ${status === 'ready_to_execute' ? 'Plans ready to execute' : ''}
 ${status === 'in_progress' ? 'Work in progress' : ''}
 ${status === 'phase_complete' ? 'Phase complete, ready for next' : ''}
@@ -445,7 +441,7 @@ ${status === 'ready_to_plan' && contextExists === true
 
 All Available Commands:
 
-- /fuska-progress — View detailed project progress
+- fuska progress — View detailed project progress
 - /fuska-discuss-phase {N} — Discuss a phase
 - /fuska-plan-phase {N} — Plan a phase
 - /fuska-execute-phase {N} — Execute a phase
@@ -474,7 +470,7 @@ All Available Commands:
 
 **All Available Commands:**
 
-- /fuska-progress — View detailed project progress
+- fuska progress — View detailed project progress
 - /fuska-discuss-phase {N} — Discuss a phase
 - /fuska-plan-phase {N} — Plan a phase
 - /fuska-execute-phase {N} — Execute a phase
