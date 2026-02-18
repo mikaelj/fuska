@@ -323,9 +323,9 @@ class InitiativesRunner {
   }
 }
 
-export function initiativesCommand(program: Command) {
+export function initiativeListCommand(program: Command) {
   program
-    .command('initiatives [project-path]')
+    .command('list [project-path]')
     .description('List all Fuska initiatives with milestones and phases')
     .action(async (projectPath?: string) => {
       const runner = new InitiativesRunner({

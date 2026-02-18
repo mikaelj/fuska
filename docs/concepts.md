@@ -41,9 +41,9 @@ config concept:
 
 | Command | Description |
 |---------|-------------|
-| `fuska init [description...]` | Initialize project with "main" initiative |
-| `fuska initiatives` | List all initiatives sorted by recent activity |
-| `fuska initiative-switch [slug]` | Switch to another initiative |
+| <nobr>`fuska init [description...]`</nobr> | Initialize project with "main" initiative |
+| <nobr>`fuska initiative list`</nobr> | List all initiatives sorted by recent activity |
+| <nobr>`fuska initiative switch [slug]`</nobr> | Switch to another initiative |
 
 Switch between initiatives without losing progress on any of them. Initiatives are sorted by last activity so the most relevant ones appear first.
 

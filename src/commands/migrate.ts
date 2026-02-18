@@ -964,7 +964,7 @@ class PlanningToMegaMemoryMigration {
 
 export function migrateCommand(program: Command) {
   program
-    .command('migrate <project-dir>')
+    .command('planning <project-dir>')
     .description('Migrate .planning/ directory to MegaMemory knowledge graph')
     .option('--clean', 'Delete existing database before migration')
     .action(async (projectDir, options) => {

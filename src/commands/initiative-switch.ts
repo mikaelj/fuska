@@ -80,7 +80,7 @@ class InitiativeSwitchRunner {
 
 export function initiativeSwitchCommand(program: Command) {
   program
-    .command('initiative-switch [slug]')
+    .command('switch [slug]')
     .description('Switch to a different initiative')
     .action(async (slug?: string) => {
       const runner = new InitiativeSwitchRunner({

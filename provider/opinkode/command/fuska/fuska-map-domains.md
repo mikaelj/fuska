@@ -123,7 +123,7 @@ Domains discovered:
 
 N domain concepts created in MegaMemory
 
-Use `fuska git-message <commit>` to get domain-aware scopes.
+Use `fuska git message <commit>` to get domain-aware scopes.
 ────────────────────────────────────────────────────────────
 ```
 

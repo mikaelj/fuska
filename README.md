@@ -149,6 +149,23 @@ Walks through initiative configuration:
 
 **If no description:** Full interactive questioning.
 
+### CLI Quick Reference
+
+Outside the AI tool, `fuska` gives you project-level control:
+
+```bash
+fuska progress                        # Current status and next action
+fuska initiative list                 # All initiatives, sorted by activity
+fuska initiative switch <slug>        # Switch active initiative
+fuska todo                            # Pending and completed tasks
+fuska git message                     # Preview commit message for current changes
+fuska git worktree add <name>         # Create git worktree with shared context
+fuska git worktree merge <name>       # Merge worktree back (MegaMemory + git)
+fuska migrate planning <project-dir>  # Import .planning/ into MegaMemory
+```
+
+See [commands.md](docs/commands.md) for the full reference.
+
 ### Work Through Phases
 
 ```
@@ -196,10 +213,10 @@ That's it — repeat for each phase until the milestone is complete.
 | **Commit Messages** | Path-based scope extraction, manual formatting | **Domain-aware scopes** from MegaMemory mapping + commit checker agent validates format, content, and quality |
 | **Model Selection** | Claude models only (via profiles) | **Any OpenCode-supported model** — configure aliases for quality/balanced/budget tiers |
 | **Commit Strategy** | Per-task (fixed) | **Configurable** — per-phase / per-plan / per-task, with smarter commits via checker panel + domain knowledge |
-| **Worktree Support** | None | **Full integration** — `fuska worktree-add` copies MegaMemory context, `fuska worktree-merge` syncs knowledge back |
+| **Worktree Support** | None | **Full integration** — `fuska git worktree add` copies MegaMemory context, `fuska git worktree merge` syncs knowledge back |
 | **CLI Tool** | None (all via opencode commands) | **`fuska` CLI** — install, config, migrate, export, projects, todo, worktree management |
 | **Storage Backend** | `.planning/` markdown files | **MegaMemory** knowledge graph — 700x faster semantic queries, survives git resets |
-| **Migration** | N/A | **Import existing** `.planning/` directories with `fuska migrate` |
+| **Migration** | N/A | **Import existing** `.planning/` directories with `fuska migrate planning` |
 | **Session continuity** | Requires `/gsd-pause-work` to capture context | **Automatic** — task position tracked after every commit; pause-work optional for mental context only |
 | **Codebase mapping** | Manual exploration | **`/fuska map`** — auto-detects tech, architecture, quality, concerns, domains, and import graph |
 | **Import graph** | N/A | **`fuska refresh`** / **`fuska ask`** — file and symbol-level indexing with dead code detection and impact analysis |
@@ -262,7 +279,7 @@ If you have an existing project using the `.planning/` directory format, run the
 **Prerequisites:** MegaMemory >= 1.3.1 installed in the target project's `node_modules`.
 
 ```bash
-fuska migrate [project-dir]
+fuska migrate planning [project-dir]
 ```
 
 The script:
@@ -274,7 +291,7 @@ The script:
 Use `--clean` to delete existing database before migration:
 
 ```bash
-fuska migrate [project-dir] --clean
+fuska migrate planning [project-dir] --clean
 ```
 
 To rollback, restore from `.planning.backup` and remove `.megamemory/knowledge.db`.

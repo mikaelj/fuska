@@ -64,7 +64,7 @@ class WorktreeAddRunner {
   async run(name: string, options: WorktreeAddOptions): Promise<void> {
     if (!name || name.trim() === '') {
       console.error('Error: Worktree name is required');
-      console.error('Usage: fuska worktree-add <name>');
+      console.error('Usage: fuska git worktree add <name>');
       process.exit(1);
     }
 
@@ -382,14 +382,14 @@ class WorktreeAddRunner {
     console.log('  # Work on your feature');
     console.log('  # When done:');
     console.log(`  cd ${path.relative(worktreeDir, this.projectDir) || '..'}`);
-    console.log(`  fuska worktree-merge ${name}`);
+    console.log(`  fuska git worktree merge ${name}`);
     console.log();
   }
 }
 
 export function worktreeAddCommand(program: Command) {
   program
-    .command('worktree-add <name>')
+    .command('add <name>')
     .description('Create git worktree with shared MegaMemory context')
     .option('-p, --project-dir <path>', 'Main worktree path (default: cwd)')
     .option('--no-context', 'Skip copying shared context')

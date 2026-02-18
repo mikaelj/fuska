@@ -208,8 +208,8 @@ class WorktreeMergeRunner {
 
   async run(branch: string, options: WorktreeMergeOptions): Promise<void> {
     if (!branch) {
-      console.error('Usage: fuska worktree-merge <name>');
-      console.error('Example: fuska worktree-merge feature-auth');
+      console.error('Usage: fuska git worktree merge <name>');
+      console.error('Example: fuska git worktree merge feature-auth');
       process.exit(1);
     }
 
@@ -1204,7 +1204,7 @@ class WorktreeMergeRunner {
     console.log(`Session: ${this.sessionPath}`);
     console.log();
     console.log('The merge session file is preserved for debugging.');
-    console.log(`To retry: fuska worktree-merge ${this.session!.branch}`);
+    console.log(`To retry: fuska git worktree merge ${this.session!.branch}`);
 
     process.exit(1);
   }
@@ -1212,7 +1212,7 @@ class WorktreeMergeRunner {
 
 export function worktreeMergeCommand(program: Command) {
   program
-    .command('worktree-merge <name>')
+    .command('merge <name>')
     .description('Merge a single worktree branch into main (both MegaMemory knowledge and git)')
     .option('-p, --project-dir <path>', 'Main worktree path (default: cwd)')
     .option('--resume', 'Resume from merge-session.json if exists')

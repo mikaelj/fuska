@@ -238,16 +238,16 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/fuska map` | — | Scans `recipevault/`. Discovers Next.js 14 app router, Prisma schema with `User`, `Recipe`, `Ingredient` models, TailwindCSS, and a `/api` directory with REST endpoints. Creates codebase map in MegaMemory. |
-| 2 | `fuska init "Meal Planner"` then `/fuska-configure-initiative` | *"Users can plan weekly meals, generate shopping lists from selected recipes, and see nutritional summaries per day."* | `fuska init` creates the "main" initiative with description. `/fuska-configure-initiative` asks clarifying questions about scope. You answer interactively. Configures the initiative with milestone "Meal Planner v1.0" and 4 phases: (1) Calendar UI & Data Model, (2) Shopping List Generation, (3) Nutritional Summary, (4) Polish & Edge Cases. |
-| 3 | `/fuska` | — | Shows phase pipeline: Phase 1 of 4, current position at "plan into tasks". You see what to do next. |
-| 4 | `/fuska design` | *"Calendar should be a weekly grid, Monday–Sunday. Users drag recipes from a sidebar into day slots. Mobile: vertical stack instead of grid."* | Identifies 6 open questions (drag-and-drop library? max recipes per slot? recurring meals?). You answer each. Saves decisions as phase-1 context. |
-| 5 | `/fuska plan --research` | — | Researcher agent investigates `@dnd-kit` vs `react-beautiful-dnd`, checks Prisma relation patterns for calendar events. Planner creates 14 tasks across 3 waves: DB migration -> API routes -> UI components. Plan-checker validates task dependencies. |
-| 6 | `/fuska build` | — | Builder starts Wave 1: creates `MealSlot` model in Prisma, runs migration, adds API routes. Wave 2: builds `<WeekGrid>`, `<DayColumn>`, `<RecipeDragCard>` components. Wave 3: wires drag-and-drop, adds optimistic updates. 14 atomic commits total. |
-| 7 | `/fuska review` | — | Reviewer checks success criteria: "Users can drag recipes onto a weekly calendar" -> **PASS**. "Calendar persists across page reloads" -> **PASS**. "Mobile layout stacks vertically" -> **PASS**. Phase 1 marked complete. |
-| 8 | `/fuska` | — | Shows: 1/4 phases complete. Phase 2 pipeline at "plan into tasks". |
-| 9 | `/fuska plan` | — | Plans the Shopping List phase. 11 tasks across 2 waves: ingredient aggregation logic -> shopping list UI with grouping by aisle. |
-| 10 | `/fuska build` | — | Builds shopping list. Aggregates ingredients across selected meals, deduplicates, groups by category. Adds print-friendly view. |
+| 1 | <nobr>`/fuska map`</nobr> | — | Scans `recipevault/`. Discovers Next.js 14 app router, Prisma schema with `User`, `Recipe`, `Ingredient` models, TailwindCSS, and a `/api` directory with REST endpoints. Creates codebase map in MegaMemory. |
+| 2 | <nobr>`fuska init "Meal Planner"` then `/fuska-configure-initiative`</nobr> | *"Users can plan weekly meals, generate shopping lists from selected recipes, and see nutritional summaries per day."* | `fuska init` creates the "main" initiative with description. `/fuska-configure-initiative` asks clarifying questions about scope. You answer interactively. Configures the initiative with milestone "Meal Planner v1.0" and 4 phases: (1) Calendar UI & Data Model, (2) Shopping List Generation, (3) Nutritional Summary, (4) Polish & Edge Cases. |
+| 3 | <nobr>`/fuska`</nobr> | — | Shows phase pipeline: Phase 1 of 4, current position at "plan into tasks". You see what to do next. |
+| 4 | <nobr>`/fuska design`</nobr> | *"Calendar should be a weekly grid, Monday–Sunday. Users drag recipes from a sidebar into day slots. Mobile: vertical stack instead of grid."* | Identifies 6 open questions (drag-and-drop library? max recipes per slot? recurring meals?). You answer each. Saves decisions as phase-1 context. |
+| 5 | <nobr>`/fuska plan --research`</nobr> | — | Researcher agent investigates `@dnd-kit` vs `react-beautiful-dnd`, checks Prisma relation patterns for calendar events. Planner creates 14 tasks across 3 waves: DB migration -> API routes -> UI components. Plan-checker validates task dependencies. |
+| 6 | <nobr>`/fuska build`</nobr> | — | Builder starts Wave 1: creates `MealSlot` model in Prisma, runs migration, adds API routes. Wave 2: builds `<WeekGrid>`, `<DayColumn>`, `<RecipeDragCard>` components. Wave 3: wires drag-and-drop, adds optimistic updates. 14 atomic commits total. |
+| 7 | <nobr>`/fuska review`</nobr> | — | Reviewer checks success criteria: "Users can drag recipes onto a weekly calendar" -> **PASS**. "Calendar persists across page reloads" -> **PASS**. "Mobile layout stacks vertically" -> **PASS**. Phase 1 marked complete. |
+| 8 | <nobr>`/fuska`</nobr> | — | Shows: 1/4 phases complete. Phase 2 pipeline at "plan into tasks". |
+| 9 | <nobr>`/fuska plan`</nobr> | — | Plans the Shopping List phase. 11 tasks across 2 waves: ingredient aggregation logic -> shopping list UI with grouping by aisle. |
+| 10 | <nobr>`/fuska build`</nobr> | — | Builds shopping list. Aggregates ingredients across selected meals, deduplicates, groups by category. Adds print-friendly view. |
 
 ### Pausing and Resuming Across Sessions
 
@@ -255,18 +255,18 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/fuska build` | — | Builder starts. Completes Wave 1 (ingredient aggregation logic, 5 tasks). Begins Wave 2 (shopping list UI)... |
-| 2 | `/fuska pause` | *"Was about to refactor the grouping logic to use a Map instead of object for O(1) lookups"* | Captures mental context. Task position already tracked in state (Task 3 of 6). Saves handoff with context. |
+| 1 | <nobr>`/fuska build`</nobr> | — | Builder starts. Completes Wave 1 (ingredient aggregation logic, 5 tasks). Begins Wave 2 (shopping list UI)... |
+| 2 | <nobr>`/fuska pause`</nobr> | *"Was about to refactor the grouping logic to use a Map instead of object for O(1) lookups"* | Captures mental context. Task position already tracked in state (Task 3 of 6). Saves handoff with context. |
 
 *Next morning, new session:*
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 3 | `/fuska` | — | Shows: "Fuska: Meal Planner — paused. You left off at Phase 2: Shopping List Generation." Points to `/fuska resume`. |
-| 4 | `/fuska resume` | — | Shows: "Phase 2 — Shopping List Generation. Task 3 of 6." Displays your context: "Was about to refactor grouping logic to use Map." Continues from task 3. |
-| 5 | `/fuska todo` | *"Look into Instacart API for direct-to-cart shopping list export"* | Creates todo tagged `integration`: "Investigate Instacart API for shopping list export." Doesn't interrupt current work. |
+| 3 | <nobr>`/fuska`</nobr> | — | Shows: "Fuska: Meal Planner — paused. You left off at Phase 2: Shopping List Generation." Points to `/fuska resume`. |
+| 4 | <nobr>`/fuska resume`</nobr> | — | Shows: "Phase 2 — Shopping List Generation. Task 3 of 6." Displays your context: "Was about to refactor grouping logic to use Map." Continues from task 3. |
+| 5 | <nobr>`/fuska todo`</nobr> | *"Look into Instacart API for direct-to-cart shopping list export"* | Creates todo tagged `integration`: "Investigate Instacart API for shopping list export." Doesn't interrupt current work. |
 | 6 | *(execution completes)* | — | Remaining 3 tasks complete. 4 more atomic commits. Phase 2 execution finished. |
-| 7 | `/fuska review` | — | "Shopping list aggregates ingredients from weekly plan" -> **PASS**. "Items grouped by aisle" -> **PASS**. "Print view renders cleanly" -> **PASS**. Phase 2 complete. |
+| 7 | <nobr>`/fuska review`</nobr> | — | "Shopping list aggregates ingredients from weekly plan" -> **PASS**. "Items grouped by aisle" -> **PASS**. "Print view renders cleanly" -> **PASS**. Phase 2 complete. |
 
 ### Discovering Unplanned Work
 
@@ -274,11 +274,11 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/fuska build` | — | Builder starts Wave 1. While implementing the nutrition data fetcher, flags a deviation: "USDA FoodData Central API requires API key registration and OAuth2 token flow. This was not in the plan." |
-| 2 | `/fuska add "USDA API OAuth2 integration"` | — | Creates Phase 5: "USDA API OAuth2 Integration" with auto-generated requirements: token management, refresh flow, secure key storage. Added after Phase 4 in the roadmap. |
-| 3 | `/fuska insert 3 "USDA API OAuth2 integration"` | — | Inserts the OAuth2 phase *before* Phase 3 (now renumbered to Phase 4) so the auth is ready before the nutritional summary needs it. Existing phases renumber automatically. |
-| 4 | `/fuska plan` | — | Plans the new OAuth2 phase: 6 tasks — environment variable setup, token fetcher service, refresh middleware, Prisma model for token storage, integration tests. |
-| 5 | `/fuska build` | — | Builds the OAuth2 integration. 6 atomic commits. Token refresh tested against USDA sandbox. Now Phase 4 (Nutritional Summary) can proceed with auth in place. |
+| 1 | <nobr>`/fuska build`</nobr> | — | Builder starts Wave 1. While implementing the nutrition data fetcher, flags a deviation: "USDA FoodData Central API requires API key registration and OAuth2 token flow. This was not in the plan." |
+| 2 | <nobr>`/fuska add "USDA API OAuth2 integration"`</nobr> | — | Creates Phase 5: "USDA API OAuth2 Integration" with auto-generated requirements: token management, refresh flow, secure key storage. Added after Phase 4 in the roadmap. |
+| 3 | <nobr>`/fuska insert 3 "USDA API OAuth2 integration"`</nobr> | — | Inserts the OAuth2 phase *before* Phase 3 (now renumbered to Phase 4) so the auth is ready before the nutritional summary needs it. Existing phases renumber automatically. |
+| 4 | <nobr>`/fuska plan`</nobr> | — | Plans the new OAuth2 phase: 6 tasks — environment variable setup, token fetcher service, refresh middleware, Prisma model for token storage, integration tests. |
+| 5 | <nobr>`/fuska build`</nobr> | — | Builds the OAuth2 integration. 6 atomic commits. Token refresh tested against USDA sandbox. Now Phase 4 (Nutritional Summary) can proceed with auth in place. |
 
 ### Verification Failure and Recovery
 
@@ -286,12 +286,12 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `fuska init "Recipe Import"` then `/fuska-configure-initiative` | *"Users paste a recipe URL, the app scrapes the title, ingredients, and steps, and creates a new Recipe."* | `fuska init` creates the "main" initiative with description. `/fuska-configure-initiative` configures it with milestone "Recipe Import v1.0" and 2 phases: (1) URL Scraper & Parser, (2) Import UI & Error Handling. |
-| 2 | `/fuska plan` | — | Plans 8 tasks: URL validator, HTML fetcher, Cheerio-based parser for common recipe sites, ingredient normalizer, step extractor, Prisma integration, tests. |
-| 3 | `/fuska build` | — | Builds the scraper. Handles AllRecipes, Epicurious, and Food Network formats. 8 atomic commits. |
-| 4 | `/fuska review` | — | "Scraper extracts title from AllRecipes" -> **PASS**. "Scraper extracts ingredients" -> **PASS**. "Scraper handles JSON-LD structured data" -> **FAIL** — the scraper only parses HTML microdata, but many sites embed recipes as JSON-LD `<script>` tags. |
-| 5 | `/fuska build` | — | Re-executes with verification feedback. Adds JSON-LD parser that extracts `Recipe` schema from `<script type="application/ld+json">` tags. Falls back to HTML scraping when JSON-LD is absent. 2 additional commits. |
-| 6 | `/fuska review` | — | Re-verifies. "JSON-LD structured data" -> **PASS**. "Fallback to HTML scraping" -> **PASS**. All criteria met. Phase 1 complete. |
+| 1 | <nobr>`fuska init "Recipe Import"` then `/fuska-configure-initiative`</nobr> | *"Users paste a recipe URL, the app scrapes the title, ingredients, and steps, and creates a new Recipe."* | `fuska init` creates the "main" initiative with description. `/fuska-configure-initiative` configures it with milestone "Recipe Import v1.0" and 2 phases: (1) URL Scraper & Parser, (2) Import UI & Error Handling. |
+| 2 | <nobr>`/fuska plan`</nobr> | — | Plans 8 tasks: URL validator, HTML fetcher, Cheerio-based parser for common recipe sites, ingredient normalizer, step extractor, Prisma integration, tests. |
+| 3 | <nobr>`/fuska build`</nobr> | — | Builds the scraper. Handles AllRecipes, Epicurious, and Food Network formats. 8 atomic commits. |
+| 4 | <nobr>`/fuska review`</nobr> | — | "Scraper extracts title from AllRecipes" -> **PASS**. "Scraper extracts ingredients" -> **PASS**. "Scraper handles JSON-LD structured data" -> **FAIL** — the scraper only parses HTML microdata, but many sites embed recipes as JSON-LD `<script>` tags. |
+| 5 | <nobr>`/fuska build`</nobr> | — | Re-executes with verification feedback. Adds JSON-LD parser that extracts `Recipe` schema from `<script type="application/ld+json">` tags. Falls back to HTML scraping when JSON-LD is absent. 2 additional commits. |
+| 6 | <nobr>`/fuska review`</nobr> | — | Re-verifies. "JSON-LD structured data" -> **PASS**. "Fallback to HTML scraping" -> **PASS**. All criteria met. Phase 1 complete. |
 
 ### Quick Fix for a Production Bug
 
@@ -299,8 +299,8 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/fuska do planned "The recipe scraper crashes when the URL contains query parameters like ?ref=share. The URL validator rejects anything after ?. Need to strip or preserve query params before validation."` | — | Spawns planner + executor directly. Plans 2 tasks: fix URL validator regex to allow query strings, add test cases for URLs with `?`, `#`, and `&`. Executes immediately. 1 atomic commit. Task logged separately from the roadmap. |
-| 2 | `/fuska todos` | — | Shows 1 open todo: "Investigate Instacart API for shopping list export" (from earlier). No new todos from the fix. |
+| 1 | <nobr>`/fuska do planned "The recipe scraper crashes when the URL contains query parameters like ?ref=share. The URL validator rejects anything after ?. Need to strip or preserve query params before validation."`</nobr> | — | Spawns planner + executor directly. Plans 2 tasks: fix URL validator regex to allow query strings, add test cases for URLs with `?`, `#`, and `&`. Executes immediately. 1 atomic commit. Task logged separately from the roadmap. |
+| 2 | <nobr>`/fuska todos`</nobr> | — | Shows 1 open todo: "Investigate Instacart API for shopping list export" (from earlier). No new todos from the fix. |
 
 ### Multiple Initiatives in One Codebase
 
@@ -308,16 +308,16 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `fuska initiatives` | — | Lists all initiatives with current marker: `> meal-planner` (active), `  recipe-import`, `  user-profiles`. Shows status and phase progress for each. |
-| 2 | `fuska initiative-switch recipe-import` | — | Switches to recipe-import. The pointer in config updates: `current_initiative: "recipe-import"`. |
-| 3 | `/fuska` | — | Shows: Phase 2 of 2 for Recipe Import, pipeline at "plan into tasks". |
-| 4 | `/fuska plan` | — | Plans Phase 2 for Recipe Import: import modal UI, URL input with preview, error states, loading skeleton. 9 tasks. |
-| 5 | `/fuska build` | — | Builds the import UI for recipe-import. Modal with URL paste, live preview of scraped recipe, confirm/edit before saving. 9 commits. |
-| 6 | `/fuska review` | — | Recipe Import Phase 2 verified. All criteria pass. |
-| 7 | `fuska initiative-switch meal-planner` | — | Switches back to Meal Planner. The pointer updates: `current_initiative: "meal-planner"`. |
-| 8 | `/fuska` | — | Shows: 3/4 phases complete for Meal Planner. Phase 4 pipeline at "plan into tasks". |
-| 9 | `/fuska plan` | — | Plans Phase 4 (Polish & Edge Cases): empty states, error boundaries, loading skeletons, keyboard navigation. 7 tasks. |
-| 10 | `/fuska build` | — | Builds polish phase for meal-planner. 7 commits. Project continues independently from recipe-import. |
+| 1 | <nobr>`fuska initiative list`</nobr> | — | Lists all initiatives with current marker: `> meal-planner` (active), `  recipe-import`, `  user-profiles`. Shows status and phase progress for each. |
+| 2 | <nobr>`fuska initiative switch recipe-import`</nobr> | — | Switches to recipe-import. The pointer in config updates: `current_initiative: "recipe-import"`. |
+| 3 | <nobr>`/fuska`</nobr> | — | Shows: Phase 2 of 2 for Recipe Import, pipeline at "plan into tasks". |
+| 4 | <nobr>`/fuska plan`</nobr> | — | Plans Phase 2 for Recipe Import: import modal UI, URL input with preview, error states, loading skeleton. 9 tasks. |
+| 5 | <nobr>`/fuska build`</nobr> | — | Builds the import UI for recipe-import. Modal with URL paste, live preview of scraped recipe, confirm/edit before saving. 9 commits. |
+| 6 | <nobr>`/fuska review`</nobr> | — | Recipe Import Phase 2 verified. All criteria pass. |
+| 7 | <nobr>`fuska initiative switch meal-planner`</nobr> | — | Switches back to Meal Planner. The pointer updates: `current_initiative: "meal-planner"`. |
+| 8 | <nobr>`/fuska`</nobr> | — | Shows: 3/4 phases complete for Meal Planner. Phase 4 pipeline at "plan into tasks". |
+| 9 | <nobr>`/fuska plan`</nobr> | — | Plans Phase 4 (Polish & Edge Cases): empty states, error boundaries, loading skeletons, keyboard navigation. 7 tasks. |
+| 10 | <nobr>`/fuska build`</nobr> | — | Builds polish phase for meal-planner. 7 commits. Project continues independently from recipe-import. |
 
 ### Milestones and Releases
 
@@ -325,12 +325,12 @@ First, map the codebase so Fuska understands your architecture, then create the 
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `/fuska complete` | *Selects project: meal-planner* | Marks "Meal Planner v1.0" as complete. Summary: 4 phases completed, 45 tasks executed, 45 atomic commits. |
-| 2 | `/fuska milestone "Meal Planner v1.1"` | *"Two features: (1) share weekly meal plans with other users, (2) dietary preset filters (vegetarian, keto, gluten-free) that restrict recipe suggestions."* | Creates milestone "Meal Planner v1.1" with 3 phases: (1) Sharing Backend & Permissions, (2) Dietary Presets & Filtering, (3) Integration & Polish. |
-| 3 | `/fuska plan` | — | Plans the sharing phase: permission model, share-link generation, recipient view, Prisma relations for shared plans. 12 tasks. |
-| 4 | `/fuska build` | — | Builds sharing backend. 12 commits. |
-| 5 | `/fuska audit` | — | Audit shows: Phase 1 complete, Phases 2-3 pending. Estimates ~20 tasks remaining. No blockers detected. |
-| 6 | `/fuska complete` | — | *(After completing all phases)* Marks "Meal Planner v1.1" complete. Summary: 3 phases, 28 tasks, 28 commits. Both milestones visible in project history. |
+| 1 | <nobr>`/fuska complete`</nobr> | *Selects project: meal-planner* | Marks "Meal Planner v1.0" as complete. Summary: 4 phases completed, 45 tasks executed, 45 atomic commits. |
+| 2 | <nobr>`/fuska milestone "Meal Planner v1.1"`</nobr> | *"Two features: (1) share weekly meal plans with other users, (2) dietary preset filters (vegetarian, keto, gluten-free) that restrict recipe suggestions."* | Creates milestone "Meal Planner v1.1" with 3 phases: (1) Sharing Backend & Permissions, (2) Dietary Presets & Filtering, (3) Integration & Polish. |
+| 3 | <nobr>`/fuska plan`</nobr> | — | Plans the sharing phase: permission model, share-link generation, recipient view, Prisma relations for shared plans. 12 tasks. |
+| 4 | <nobr>`/fuska build`</nobr> | — | Builds sharing backend. 12 commits. |
+| 5 | <nobr>`/fuska audit`</nobr> | — | Audit shows: Phase 1 complete, Phases 2-3 pending. Estimates ~20 tasks remaining. No blockers detected. |
+| 6 | <nobr>`/fuska complete`</nobr> | — | *(After completing all phases)* Marks "Meal Planner v1.1" complete. Summary: 3 phases, 28 tasks, 28 commits. Both milestones visible in project history. |
 
 ### Merging Knowledge from Git Worktrees
 
@@ -352,7 +352,7 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `fuska worktree-merge feature-sharing feature-dietary` | — | Verifies all three databases exist. Creates backup: `knowledge.db.backup-20250211-143022`. Starts merge session. |
+| 1 | <nobr>`fuska git worktree merge feature-sharing` then `fuska git worktree merge feature-dietary`</nobr> | — | Verifies all three databases exist. Creates backup: `knowledge.db.backup-20250211-143022`. Starts merge session. |
 | 2 | *(merge 1/2: feature-sharing)* | — | Runs `megamemory merge` with main + feature-sharing. 48 clean merges, 2 conflicts detected. |
 | 3 | *(conflict: phase-01 context)* | *Selects "AI verify"* | AI reads referenced files. `src/lib/sharing/permissions.ts` exists, `src/lib/auth/sharing-middleware.ts` was renamed to `src/middleware/sharing.ts`. Resolves with updated file refs. |
 | 4 | *(conflict: req-SOCIAL-01)* | *Selects "Keep right"* | Keeps the feature-sharing version of the social requirement (more detailed after implementation). |
@@ -365,10 +365,10 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
-| 1 | `fuska initiatives` | — | Shows all initiatives sorted by last activity: `> meal-planner (current)  2 hours ago`, `  user-profiles  3 days ago`, `  recipe-import  2 months ago`. Least-active initiatives naturally sink to the bottom. |
-| 2 | `fuska initiative-switch recipe-import` | — | Switches to recipe-import. The pointer updates. |
-| 3 | `/fuska milestone "Recipe Import v2.0"` | — | Continues work on recipe-import with new milestone for v2.0 features. |
-| 4 | `fuska initiatives` | — | recipe-import is now at the top (most recent activity), with `(current)` marker. |
+| 1 | <nobr>`fuska initiative list`</nobr> | — | Shows all initiatives sorted by last activity: `> meal-planner (current)  2 hours ago`, `  user-profiles  3 days ago`, `  recipe-import  2 months ago`. Least-active initiatives naturally sink to the bottom. |
+| 2 | <nobr>`fuska initiative switch recipe-import`</nobr> | — | Switches to recipe-import. The pointer updates. |
+| 3 | <nobr>`/fuska milestone "Recipe Import v2.0"`</nobr> | — | Continues work on recipe-import with new milestone for v2.0 features. |
+| 4 | <nobr>`fuska initiative list`</nobr> | — | recipe-import is now at the top (most recent activity), with `(current)` marker. |
 
 **Key points:**
 - No archiving needed — inactive initiatives naturally sort to the bottom by last activity

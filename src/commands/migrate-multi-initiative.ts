@@ -100,7 +100,7 @@ class MigrateMultiInitiativeRunner {
 
 export function migrateMultiInitiativeCommand(program: Command) {
   program
-    .command('migrate-multi-initiative [project-path]')
+    .command('multi-initiative [project-path]')
     .description('Migrate existing initiative to multi-initiative support (adds current_initiative to config)')
     .action(async (projectPath?: string) => {
       const runner = new MigrateMultiInitiativeRunner({

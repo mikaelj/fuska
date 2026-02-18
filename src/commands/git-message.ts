@@ -3,7 +3,7 @@ import { runOpenCodeJson } from './utils/json-output';
 
 export function gitMessageCommand(program: Command) {
   program
-    .command('git-message [args...]')
+    .command('message [args...]')
     .description('Test and preview commit messages using Fuska commit message rules')
     .action(async (args: string[]) => {
       try {
