@@ -47,6 +47,7 @@ interface FuskaConfig {
     quality_model?: string;
     balanced_model?: string;
     budget_model?: string;
+    explore_model?: string;
   };
   profiles: {
     active_profile: ProfileType;
@@ -195,7 +196,8 @@ class ConfigRunner {
     console.log('├─ Model Aliases');
     console.log(`│  ├─ quality_model: ${this.config.model_aliases?.quality_model || '(not set)'}`);
     console.log(`│  ├─ balanced_model: ${this.config.model_aliases?.balanced_model || '(not set)'}`);
-    console.log(`│  └─ budget_model: ${this.config.model_aliases?.budget_model || '(not set)'}`);
+    console.log(`│  ├─ budget_model: ${this.config.model_aliases?.budget_model || '(not set)'}`);
+    console.log(`│  └─ explore_model: ${this.config.model_aliases?.explore_model || '(not set)'}`);
     console.log('│');
     console.log(`├─ Active Profile: ${activeProfile}`);
     const preset = this.config.profiles.presets[activeProfile];
@@ -246,6 +248,7 @@ class ConfigRunner {
     console.log(`| quality_model  | ${this.config.model_aliases?.quality_model || 'not set'.padEnd(38)} |`);
     console.log(`| balanced_model | ${this.config.model_aliases?.balanced_model || 'not set'.padEnd(38)} |`);
     console.log(`| budget_model   | ${this.config.model_aliases?.budget_model || 'not set'.padEnd(38)} |`);
+    console.log(`| explore_model  | ${this.config.model_aliases?.explore_model || 'not set'.padEnd(38)} |`);
     console.log('');
 
     console.log(`Active profile: ${this.config.profiles.active_profile}`);
@@ -406,7 +409,7 @@ class ConfigRunner {
   private async configureAliases(): Promise<void> {
     if (!this.config) return;
 
-    const aliases = ['quality_model', 'balanced_model', 'budget_model'] as const;
+    const aliases = ['quality_model', 'balanced_model', 'budget_model', 'explore_model'] as const;
     
     for (const alias of aliases) {
       const current = this.config.model_aliases?.[alias] || '';
@@ -756,7 +759,7 @@ class ConfigRunner {
     const profiles: ProfileType[] = ['quality', 'balanced', 'budget'];
     const stages: (keyof ProfilePreset)[] = ['planning', 'execution', 'verification'];
 
-    for (const alias of ['quality_model', 'balanced_model', 'budget_model'] as const) {
+    for (const alias of ['quality_model', 'balanced_model', 'budget_model', 'explore_model'] as const) {
       const current = this.config.model_aliases?.[alias] || '';
       const { modelName } = await inquirer.prompt([
         {
@@ -839,8 +842,9 @@ class ConfigRunner {
     if (!this.config) return;
 
     const effective = this.getEffectiveModels();
+    const exploreModel = this.config.model_aliases?.explore_model;
     const opencodePath = path.join(this.projectDir, 'opencode.json');
-    
+
     let existing: any = {};
     if (await fs.pathExists(opencodePath)) {
       try {
@@ -850,22 +854,28 @@ class ConfigRunner {
       }
     }
 
+    const agentConfig: Record<string, { model: string }> = {
+      "fuska-planner": { "model": effective.planning },
+      "fuska-plan-checker": { "model": effective.planning },
+      "fuska-phase-researcher": { "model": effective.planning },
+      "fuska-roadmapper": { "model": effective.planning },
+      "fuska-project-researcher": { "model": effective.planning },
+      "fuska-research-synthesizer": { "model": effective.planning },
+      "fuska-codebase-mapper": { "model": effective.planning },
+      "fuska-executor": { "model": effective.execution },
+      "fuska-debugger": { "model": effective.execution },
+      "fuska-verifier": { "model": effective.verification },
+      "fuska-integration-checker": { "model": effective.verification }
+    };
+
+    if (exploreModel) {
+      agentConfig["explore"] = { "model": exploreModel };
+    }
+
     const updated = {
       ...existing,
       "$schema": "https://opencode.ai/config.json",
-      "agent": {
-        "fuska-planner": { "model": effective.planning },
-        "fuska-plan-checker": { "model": effective.planning },
-        "fuska-phase-researcher": { "model": effective.planning },
-        "fuska-roadmapper": { "model": effective.planning },
-        "fuska-project-researcher": { "model": effective.planning },
-        "fuska-research-synthesizer": { "model": effective.planning },
-        "fuska-codebase-mapper": { "model": effective.planning },
-        "fuska-executor": { "model": effective.execution },
-        "fuska-debugger": { "model": effective.execution },
-        "fuska-verifier": { "model": effective.verification },
-        "fuska-integration-checker": { "model": effective.verification }
-      }
+      "agent": agentConfig
     };
 
     await fs.writeJson(opencodePath, updated, { spaces: 2 });

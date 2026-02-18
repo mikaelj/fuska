@@ -5,9 +5,7 @@ import inquirer from 'inquirer';
 import {
   findAllInitiatives,
   setCurrentInitiative,
-  extractInitiativeName,
   InitiativeInfo,
-  NodeData,
 } from './utils/initiative-utils';
 
 class InitiativeSwitchRunner {
@@ -40,24 +38,6 @@ class InitiativeSwitchRunner {
       return;
     }
 
-    const current = initiatives.find(i => i.isCurrent);
-    if (current && current.slug !== targetSlug && !current.isArchived) {
-      const { archive } = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'archive',
-        message: `Archive current initiative '${current.name}' first?`,
-        default: false
-      }]);
-
-      if (archive) {
-        await this.archiveInitiative(current.node);
-      }
-    }
-
-    if (target.isArchived) {
-      await this.unarchiveInitiative(target.node);
-    }
-
     await setCurrentInitiative(this.db, targetSlug);
 
     console.log(`\nSwitched to initiative: ${target.name} (${targetSlug})`);
@@ -79,13 +59,10 @@ class InitiativeSwitchRunner {
 
   private async selectInitiative(initiatives: InitiativeInfo[]): Promise<string | null> {
     const choices = initiatives.map(i => {
-      const markers = [];
-      if (i.isCurrent) markers.push('current');
-      if (i.isArchived) markers.push('archived');
-      const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
+      const marker = i.isCurrent ? ' [current]' : '';
 
       return {
-        name: `${i.name} (${i.slug})${markerStr}`,
+        name: `${i.name} (${i.slug})${marker}`,
         value: i.slug
       };
     });
@@ -98,42 +75,6 @@ class InitiativeSwitchRunner {
     }]);
 
     return slug;
-  }
-
-  private async archiveInitiative(node: NodeData): Promise<void> {
-    const { updateConcept } = await import('megamemory/dist/tools.js');
-
-    let summaryData: any = {};
-    try {
-      summaryData = JSON.parse(node.summary);
-    } catch {}
-
-    summaryData.archived_at = new Date().toISOString();
-
-    await updateConcept(this.db, {
-      id: node.id,
-      changes: { summary: JSON.stringify(summaryData) }
-    });
-
-    console.log(`Archived initiative: ${extractInitiativeName(node)}`);
-  }
-
-  private async unarchiveInitiative(node: NodeData): Promise<void> {
-    const { updateConcept } = await import('megamemory/dist/tools.js');
-
-    let summaryData: any = {};
-    try {
-      summaryData = JSON.parse(node.summary);
-    } catch {}
-
-    delete summaryData.archived_at;
-
-    await updateConcept(this.db, {
-      id: node.id,
-      changes: { summary: JSON.stringify(summaryData) }
-    });
-
-    console.log(`Unarchived initiative: ${extractInitiativeName(node)}`);
   }
 }
 

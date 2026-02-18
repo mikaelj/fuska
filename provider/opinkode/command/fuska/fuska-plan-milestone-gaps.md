@@ -415,7 +415,7 @@ megamemory_update_concept(
 ---
 
 **Also available:**
-- /fuska-execute-phase ${newPhases[0].number} — if plans already exist
+- /fuska-build-phase ${newPhases[0].number} — if plans already exist
 - Query roadmap: megamemory:understand(query='roadmap') — see updated roadmap
 
 ---

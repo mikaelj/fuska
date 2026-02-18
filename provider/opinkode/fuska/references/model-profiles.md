@@ -31,6 +31,7 @@ interface ModelProfilesData {
     quality_model: string;   // e.g., "opencode/claude-opus-4"
     balanced_model: string;  // e.g., "opencode/claude-sonnet-4"
     budget_model: string;    // e.g., "opencode/claude-haiku-4"
+    explore_model?: string;  // e.g., "opencode/claude-haiku-4" — profile-independent
   };
   active_profile: 'quality' | 'balanced' | 'budget';
   presets: {
@@ -415,8 +416,8 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 | Stage | Agents |
 |-------|--------|
 | Planning | fuska-planner, fuska-plan-checker, fuska-phase-researcher, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer, fuska-codebase-mapper |
-| Execution | fuska-executor, fuska-debugger, fuska-git-message |
-| Verification | fuska-verifier, fuska-integration-checker, fuska-commit-checker |
+| Build | fuska-executor, fuska-debugger, fuska-git-message |
+| Review | fuska-verifier, fuska-integration-checker, fuska-commit-checker |
 
 ## Model Aliases
 
@@ -427,6 +428,9 @@ Model aliases provide an indirection layer between lookup tables and actual mode
 | `quality_model` | Strongest model for quality profile | `opencode/claude-opus-4` |
 | `balanced_model` | Mid-tier model for balanced profile | `opencode/claude-sonnet-4` |
 | `budget_model` | Lightweight model for budget profile | `opencode/claude-haiku-4` |
+| `explore_model` | Fast/cheap model for OpenCode's explore subagent (profile-independent) | `opencode/claude-haiku-4` |
+
+**Note:** `explore_model` is profile-independent — it does not appear in the presets table and does not change when switching profiles. Even in quality mode, codebase exploration should use a fast/cheap model.
 
 **Lookup tables use aliases:**
 
@@ -470,7 +474,8 @@ Configuration structure (stored in MegaMemory concept summary):
   "model_aliases": {
     "quality_model": "opencode/claude-opus-4",
     "balanced_model": "opencode/claude-sonnet-4",
-    "budget_model": "opencode/claude-haiku-4"
+    "budget_model": "opencode/claude-haiku-4",
+    "explore_model": "opencode/claude-haiku-4"
   },
   "active_profile": "balanced",
   "presets": {
@@ -527,6 +532,7 @@ const aliases = configData.model_aliases || {
   quality_model: "opencode/claude-opus-4",
   balanced_model: "opencode/claude-sonnet-4",
   budget_model: "opencode/claude-haiku-4"
+  // explore_model is optional; if set, written to opencode.json as agent.explore.model
 };
 
 const modelLookup = {
@@ -554,6 +560,12 @@ const modelLookup = {
 };
 
 const models = modelLookup[modelProfile];
+
+// explore_model is written directly to opencode.json as agent.explore.model
+// It is profile-independent and does not go through the lookup table.
+if (aliases.explore_model) {
+  agentConfig["explore"] = { model: aliases.explore_model };
+}
 ```
 
 Query pattern:

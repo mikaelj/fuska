@@ -31,7 +31,7 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 - `roadmap` and `phase-N` — phase structure
 - Updates `state` — initiative memory
 
-**After this command:** Run `/fuska-discuss-phase 1` to start execution.
+**After this command:** Run `/fuska-design-phase 1` to start execution.
 
 </objective>
 
@@ -264,8 +264,8 @@ questions: [
     ]
   },
   {
-    header: "Verifier",
-    question: "Verify work satisfies requirements after each phase? (adds tokens/time)",
+    header: "Reviewer",
+    question: "Review work satisfies requirements after each phase? (adds tokens/time)",
     multiSelect: false,
     options: [
       { label: "Yes (Recommended)", description: "Confirm deliverables match phase goals" },
@@ -572,7 +572,7 @@ All v1 requirements mapped to phases [OK]
 
 **Phase 1: [Phase Name]** — [Goal]
 
-/fuska-discuss-phase 1 — gather context and clarify approach
+/fuska-design-phase 1 — gather context and clarify approach
 
 */new first → fresh context window*
 
@@ -606,6 +606,6 @@ All concepts updated/created in MegaMemory knowledge graph:
 - [ ] fuska-roadmapper spawned
 - [ ] Phase concepts created
 - [ ] State concept updated
-- [ ] User knows next step is `/fuska-discuss-phase 1`
+- [ ] User knows next step is `/fuska-design-phase 1`
 
 </success_criteria>

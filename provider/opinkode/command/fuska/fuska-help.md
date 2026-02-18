@@ -28,33 +28,33 @@ Output ONLY the reference content below. Do NOT add:
 ## Quick Start
 
 ```
-fuska init → /fuska configure → /fuska plan → /fuska execute → repeat
+fuska init → /fuska configure → /fuska plan → /fuska build → repeat
 ```
 
 **`/fuska`** is the universal entry point. Run it bare to see where you are, or with a verb to act:
 \* `/fuska` — show current position and what to do next
 \* `/fuska plan` — plan the current phase (auto-detects phase number)
-\* `/fuska execute` — build the current phase
+\* `/fuska build` — build the current phase
 \* `/fuska do [mode] [desc]` — quick ad-hoc task
 
 All `/fuska-*` commands below also work directly.
 
 ## Project Initialization
 
-\* `fuska init` — Initialize project foundation (then `/fuska-configure-initiative`).
+\* `fuska init` — Initialize project foundation: git, .megamemory/, MCP registration (then `/fuska-configure-initiative`).
 \* `/fuska-configure-initiative` — Configure initiative through unified flow.
 \* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
 
 ## Phase Planning
 
-\* `/fuska-discuss-phase <number>` — Articulate your vision for a phase before planning.
+\* `/fuska-design-phase <number>` — Articulate your vision for a phase before planning.
 \* `/fuska-research-phase <number>` — Ecosystem research for niche/complex domains.
 \* `/fuska-list-phase-assumptions <number>` — See what's planned before execution.
 \* `/fuska-plan-phase <number>` — Create detailed execution plan.
 
 ## Execution
 
-\* `/fuska-execute-phase <phase-number>` — Execute all plans in a phase with wave-based parallelization.
+\* `/fuska-build-phase <phase-number>` — Execute all plans in a phase with wave-based parallelization.
 
 ## Roadmap Management
 
@@ -84,7 +84,7 @@ All `/fuska-*` commands below also work directly.
 
 ## User Acceptance Testing
 
-\* `/fuska-verify-work [phase]` — Validate built features through conversational UAT.
+\* `/fuska-review-phase [phase]` — Validate built features through conversational UAT.
 
 ## Milestone Auditing
 
@@ -108,6 +108,17 @@ All `/fuska-*` commands below also work directly.
 
 \* `/fuska-help` — Show this command reference.
 
+## Thinking Variants
+
+Fuska agents use named thinking variants to control reasoning budget per step:
+
+\* `plan` — 32k thinking, ~33k output (researchers, planners, mappers)
+\* `validate` — 24k thinking, ~41k output (checkers, verifiers, debuggers)
+\* `execute` — 8k thinking, ~57k output (executors, writers)
+\* `amend` — 16k thinking, balanced (git messages, follow-ups)
+
+Configure in your OpenCode model definition under `"variants"`. See `fuska config --view` or docs/configuration.md.
+
 ## Getting Help
 
 \* Run `/fuska` to see where you are and what to do next
@@ -128,12 +139,12 @@ All `/fuska-*` commands below also work directly.
 1. `fuska init "My Project"` - Initialize project foundation (git, .megamemory/)
 2. `/fuska` - See what to do next (or `/fuska configure` directly)
 3. `/fuska plan` - Plan the current phase (auto-detects phase number)
-4. `/fuska execute` - Build the current phase
+4. `/fuska build` - Build the current phase
 
 ## Core Workflow
 
 ```
-fuska init → /fuska configure → /fuska plan → /fuska execute → repeat
+fuska init → /fuska configure → /fuska plan → /fuska build → repeat
 ```
 
 **`/fuska`** is the universal entry point. Run bare to navigate, or with a verb to act. All `/fuska-*` commands also work directly.
@@ -147,6 +158,8 @@ Creates:
 - `.megamemory/` directory for knowledge graph
 - Main initiative concept in MegaMemory
 - Git repository (if not already initialized)
+
+Also registers MegaMemory as an MCP server (`megamemory install --target <target>`). For Claude Code, writes `.claude/settings.local.json` with `mcp__megamemory` permission. Requires a provider configured via `fuska install`; if missing, run `megamemory install --target claudecode|opencode` manually.
 
 Usage: `fuska init "My Project Name"`
 
@@ -181,14 +194,14 @@ Usage: `/fuska-map-codebase`
 
 ### Phase Planning
 
-**`/fuska-discuss-phase <number>`**
+**`/fuska-design-phase <number>`**
 Help articulate your vision for a phase before planning.
 
 - Captures how you imagine this phase working
 - Creates context concept with your vision, essentials, and boundaries
 - Use when you have ideas about how something should look/feel
 
-Usage: `/fuska-discuss-phase 2`
+Usage: `/fuska-design-phase 2`
 
 **`/fuska-research-phase <number>`**
 Comprehensive ecosystem research for niche/complex domains.
@@ -222,7 +235,7 @@ Result: Creates plan concepts like `phase-01-01-plan`, `phase-01-02-plan`
 
 ### Execution
 
-**`/fuska-execute-phase <phase-number>`**
+**`/fuska-build-phase <phase-number>`**
 Execute all plans in a phase.
 
 - Groups plans by wave (from concept data), executes waves sequentially
@@ -230,7 +243,7 @@ Execute all plans in a phase.
 - Verifies phase goal after all plans complete
 - Updates requirements, roadmap, and state concepts
 
-Usage: `/fuska-execute-phase 5`
+Usage: `/fuska-build-phase 5`
 
 ### Roadmap Management
 
@@ -366,7 +379,7 @@ Usage: `/fuska-check-todos api`
 
 ### User Acceptance Testing
 
-**`/fuska-verify-work [phase]`**
+**`/fuska-review-phase [phase]`**
 Validate built features through conversational UAT.
 
 - Extracts testable deliverables from summary concepts
@@ -374,7 +387,7 @@ Validate built features through conversational UAT.
 - Automatically diagnoses failures and creates fix plans
 - Ready for re-execution if issues found
 
-Usage: `/fuska-verify-work 3`
+Usage: `/fuska-review-phase 3`
 
 ### Milestone Auditing
 
@@ -404,7 +417,7 @@ Usage: `/fuska-plan-milestone-gaps`
 Manage Fuska settings interactively.
 
 - Quick settings: switch model profile + workflow mode
-- Configure model aliases (quality/balanced/budget)
+- Configure model aliases (quality/balanced/budget/explore)
 - Git commit strategy (per-phase/per-plan/per-task)
 - Set/clear stage model overrides
 - Reset presets (full wizard)
@@ -419,10 +432,12 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees.
 
 - Flexible mode selection: planned | checked | researched | verified
 - Auto-executes for planned/verified; asks before executing for checked/researched
-- Override with --ask or --auto flag
+- Override plan review with --review (force) or --no-review (skip)
+- Override commit with --auto-commit to skip the prompt and commit automatically
 - Creates standalone task concepts (not tied to roadmap)
 
 Usage: `/fuska-do planned fix typo in README`
+Usage: `/fuska-do planned "fix typo in README" --no-review --auto-commit`
 Usage: `/fuska-do` (prompts for mode and description)
 
  ### Codebase Analysis
@@ -512,6 +527,30 @@ Set during `/fuska-configure-initiative`:
 
 Change anytime with `fuska config`.
 
+## Thinking Variants
+
+Fuska agents use named thinking variants to control reasoning budget per step type:
+
+| Variant | Thinking | Output | Used By |
+|---------|----------|--------|---------|
+| `plan` | 32k | ~33k | Researchers, planners, codebase mappers |
+| `validate` | 24k | ~41k | Checkers, verifiers, debuggers |
+| `execute` | 8k | ~57k | Executors, doc writers |
+| `amend` | 16k | balanced | Git message generators, follow-ups |
+
+Configure in your OpenCode model definition (`opencode.jsonc`):
+
+```jsonc
+"variants": {
+  "plan": { "thinking": { "type": "enabled", "budgetTokens": 32000 } },
+  "validate": { "thinking": { "type": "enabled", "budgetTokens": 24000 } },
+  "execute": { "thinking": { "type": "enabled", "budgetTokens": 8000 } },
+  "amend": { "thinking": { "type": "enabled", "budgetTokens": 16000 } }
+}
+```
+
+Without variants, all agents use the model's default thinking budget.
+
 ## Common Workflows
 
 **Starting a new initiative:**
@@ -522,7 +561,7 @@ fuska init "My Project"    # Initialize project foundation
 /new
 /fuska plan                # Plan current phase (auto-detects phase 1)
 /new
-/fuska execute             # Build the current phase
+/fuska build               # Build the current phase
 ```
 
 Or just `/fuska` at any point to see where you are.
@@ -539,7 +578,7 @@ Or just `/fuska` at any point to see where you are.
 ```
 /fuska insert 5 "Critical security fix"
 /fuska plan 5.1
-/fuska execute 5.1
+/fuska build 5.1
 ```
 
 **Completing a milestone:**

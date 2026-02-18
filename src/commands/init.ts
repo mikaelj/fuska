@@ -4,6 +4,7 @@ import * as fs from 'fs-extra';
 import { execSync } from 'child_process';
 import { runOpenCodeJson } from './utils/json-output';
 import { findInitiativeBySlug } from './utils/initiative-utils';
+import { readProviderConfig } from './utils/provider-config';
 
 class InitRunner {
   private projectDir: string;
@@ -22,6 +23,7 @@ class InitRunner {
     await this.ensureGitRepo();
     await this.createMegaMemory();
     await this.createInitiative(description);
+    await this.ensureMegaMemoryMcp();
 
     if (!options.noMap) {
       await this.runCodeMapping();
@@ -131,6 +133,56 @@ class InitRunner {
     });
   }
 
+  private async ensureMegaMemoryMcp(): Promise<void> {
+    const config = await readProviderConfig();
+    if (!config) {
+      console.log('  Hint: Run `fuska install` first to configure a provider, then `megamemory install --target <claudecode|opencode>` to register MegaMemory as an MCP server.');
+      return;
+    }
+
+    const target = config.provider === 'claude' ? 'claudecode' : 'opencode';
+
+    try {
+      execSync(`megamemory install --target ${target}`, { cwd: this.projectDir, stdio: 'pipe' });
+      console.log(`MegaMemory MCP configured for ${config.provider}`);
+    } catch {
+      console.warn(`Warning: Failed to run megamemory install --target ${target}. Run it manually to enable MCP integration.`);
+    }
+
+    if (config.provider === 'claude') {
+      await this.ensureClaudePermissions();
+    }
+  }
+
+  private async ensureClaudePermissions(): Promise<void> {
+    const settingsPath = path.join(this.projectDir, '.claude', 'settings.local.json');
+    let settings: any = {};
+
+    if (await fs.pathExists(settingsPath)) {
+      try {
+        const content = await fs.readFile(settingsPath, 'utf-8');
+        settings = JSON.parse(content);
+      } catch {
+        settings = {};
+      }
+    }
+
+    if (!settings.permissions) {
+      settings.permissions = {};
+    }
+    if (!Array.isArray(settings.permissions.allow)) {
+      settings.permissions.allow = [];
+    }
+
+    const rule = 'mcp__megamemory';
+    if (!settings.permissions.allow.includes(rule)) {
+      settings.permissions.allow.push(rule);
+    }
+
+    await fs.ensureDir(path.dirname(settingsPath));
+    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+  }
+
   private async runCodeMapping(): Promise<void> {
     try {
       await runOpenCodeJson({
@@ -158,7 +210,8 @@ class InitRunner {
     if (noMap) {
       console.log('  fuska map                 Run codebase analysis later');
     }
-    console.log('\nNext: Run `opencode` then `/fuska-configure-initiative` to complete setup.');
+    console.log('\nMegaMemory MCP: registered automatically (or run `megamemory install --target claudecode|opencode` manually).');
+    console.log('Next: Run `opencode` then `/fuska-configure-initiative` to complete setup.');
   }
 }
 

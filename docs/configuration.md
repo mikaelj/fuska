@@ -1,11 +1,13 @@
-# Settings & Configuration
+# Configuration
 
-> All the knobs — model profiles, workflow modes, git strategy, and checker panel.
+> All the knobs — model profiles, git strategy, checker panel, and import graph settings.
 
 **Audience:** Daily users, anyone tuning their setup
-**Prerequisites:** [Installation](installation.md), [Key Concepts](concepts.md)
+**Prerequisites:** [Getting Started](getting-started.md), [Key Concepts](concepts.md)
 
 ---
+
+## Using fuska config
 
 ```bash
 fuska config [project-dir]
@@ -13,7 +15,7 @@ fuska config [project-dir]
 
 From this menu you can configure:
 - **Quick settings** — switch model profile (quality/balanced/budget) and workflow mode
-- **Model aliases** — configure which models map to quality/balanced/budget
+- **Model aliases** — configure which models map to quality/balanced/budget/explore
 - **Git commit strategy** — switch between per-phase / per-plan / per-task
 - **Import graph settings** — auto-refresh mode and staleness threshold
 - **Stage overrides** — set a specific model for planning, execution, or verification
@@ -27,7 +29,7 @@ Use `fuska config --view` to view current settings non-interactively.
 
 A **model profile** controls which AI model is used for each stage. Three presets are available:
 
-| Profile | Planning | Execution | Verification | Best For |
+| Profile | Planning | Build | Review | Best For |
 |---------|----------|-----------|--------------|----------|
 | **quality** | Strongest | Strongest | Strongest | Critical architecture, quota available |
 | **balanced** (default) | Strong | Mid-tier | Mid-tier | Normal development |
@@ -37,13 +39,33 @@ Switch profiles:
 
 ```bash
 fuska config
-# Select "Quick settings" → choose profile
+# Select "Quick settings" -> choose profile
 ```
 
 Or view current settings:
 
 ```bash
 fuska config --view
+```
+
+### Model Aliases
+
+Model aliases are named slots that map to actual model IDs. They provide an indirection layer so you can change an underlying model in one place.
+
+| Alias | Purpose | Profile-dependent? |
+|-------|---------|-------------------|
+| `quality_model` | Strongest model — used in quality profile stages | Yes |
+| `balanced_model` | Mid-tier model — used in balanced profile stages | Yes |
+| `budget_model` | Lightweight model — used in budget profile stages | Yes |
+| `explore_model` | Fast model for OpenCode's explore subagent | **No** |
+
+`explore_model` is profile-independent: it controls OpenCode's built-in `@explore` subagent and does not change when switching between quality/balanced/budget profiles. Even in quality mode you want codebase searches to use a fast, cheap model.
+
+Configure aliases:
+
+```bash
+fuska config
+# Select "Model aliases"
 ```
 
 ---
@@ -55,96 +77,10 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 | Stage | Agents | Purpose |
 |-------|--------|---------|
 | **Planning** | planner, plan-checker, researcher, roadmapper, project-researcher, research-synthesizer, codebase-mapper | Phase decomposition, dependency analysis, goal-backward verification |
-| **Execution** | executor, debugger | Implementing plan tasks with atomic commits, deviation handling |
-| **Verification** | verifier, integration-checker | Goal-backward verification, quality assurance |
+| **Build** | builder, debugger | Implementing plan tasks with atomic commits, deviation handling |
+| **Review** | reviewer, integration-checker | Goal-backward verification, quality assurance |
 
 **Why planning gets the strongest models:** Planning involves architecture decisions, goal decomposition, and task design — where model quality has the highest impact. Execution follows the plan's explicit instructions, so mid-tier models suffice.
-
----
-
-## Workflow Modes
-
-**Workflow modes** provide preconfigured combinations of agents that balance speed vs. quality. Choose a mode based on your needs.
-
-| Mode | Pipeline | Auto-Execute | What You Get | Use When |
-|------|----------|-------------|--------------|----------|
-| **Planned** | Planner → Executor | Auto | Task breakdown, atomic commits, MegaMemory state | You have a plan, just execute it. Small tasks, trusted patterns. |
-| **Checked** | Planner → Plan Checker → Executor | Ask | + Requirement coverage, task completeness, dependency validation | Want validated plans before execution. Familiar tech, need confidence. |
-| **Researched** | Researcher → Planner → Plan Checker → Executor | Ask | + Ecosystem research, standard patterns, pitfall avoidance | Need research context. New libraries, unfamiliar domains, integration work. |
-| **Verified** | Researcher → Planner → Plan Checker → Executor → Verifier | Auto | + Code-level verification, gap detection | Full pipeline. Critical systems, production code, high stakes. |
-
-**Key concepts:**
-- **Auto-execute** can be overridden with `--ask` (force review) or `--auto` (skip review) on any mode
-- Use `fuska config` to change default workflow mode
-- Per-phase flags (`--research`, `--skip-verify`) augment your selected mode but never reduce it
-
----
-
-## Phase Planning with `--mode quick` vs Standalone `/fuska do`
-
-Both options use the same lightweight agent chain (Planner → Executor), but they differ in **scope** and **state management**.
-
-### What is `--mode quick`?
-
-Quick mode is one of the [workflow modes](#workflow-modes) you can pass to `/fuska plan`. It skips research and plan checking, running only:
-
-```
-Planner → Executor
-```
-
-This is useful when you're already in a phase and want faster execution without giving up Fuska's guarantees (atomic commits, deviation handling, state tracking).
-
-### Comparison
-
-| Aspect | `--mode quick` (on `/fuska plan`) | `/fuska do` |
-|--------|----------------------------------------|-------------|
-| **Scope** | Work within an existing phase | Standalone work outside phase structure |
-| **Agent flow** | Planner → Executor | Planner → Executor |
-| **Concept storage** | Phase-based: `phase-02-plan-003` | Standalone: `task-001-fix-typo` |
-| **Roadmap ties** | Updates phase status and roadmap | Separate from roadmap |
-| **Commit strategy** | Follows project's git strategy | Per-task commits |
-| **Example** | `/fuska plan 2 --mode quick` | `/fuska do planned fix footer alignment` |
-
-### Decision Guide
-
-**Use `--mode quick` when:**
-- The work belongs to an existing phase (e.g., "phase 2: authentication")
-- You want state tracking and atomic commits tied to your roadmap
-- The solution is straightforward but still needs proper task breakdown
-
-```bash
-# You're in phase 2 (auth) and need to add a simple endpoint
-/fuska plan 2 --mode quick
-# → Creates phase-02-plan-003, tracks progress in roadmap
-```
-
-**Use `/fuska do` when:**
-- The task is unplanned and doesn't fit any phase
-- It's a one-off: bug fix, typo, minor refactoring, quick polish
-- You don't want to expand the roadmap for minor work
-
-```bash
-# Ad-hoc task that doesn't belong to any phase
-/fuska do planned fix the footer alignment on mobile
-# → Creates task-001-fix-footer-alignment, tracked separately
-```
-
-### Concept Storage Example
-
-```yaml
-# With --mode quick (tied to phase 02):
-phase-02-plan-003:
-  summary: "Add password reset endpoint"
-  status: completed
-  tasks: [done, done, done]
-
-# With /fuska do (standalone):
-task-001-fix-footer-alignment:
-  summary: "Fix footer alignment on mobile breakpoints"
-  status: completed
-```
-
-The key difference: `--mode quick` keeps your work organized within the phase structure, while `/fuska do` creates isolated task concepts for unplanned work.
 
 ---
 
@@ -240,17 +176,61 @@ feat(middleware): protect routes with auth middleware
 | **per-plan** | `{phase}-{plan}` | `02-01` |
 | **per-task** | `{phase}-{plan}` | `02-01` |
 
-### Config Storage
+**Why per-phase is the default:** For solo dev + AI workflows, MegaMemory already tracks granular task completion. Per-phase gives the cleanest git history while MegaMemory handles the detailed context. Use per-task if you need fine-grained `git bisect` or work with other developers who rely on git log.
 
-```json
-{
-  "git": {
-    "commit_strategy": "per-phase"
+---
+
+## Thinking Variants
+
+Fuska uses **thinking variants** to control how much reasoning budget the model gets per step type. Each Task call specifies a `variant` parameter that maps to a named thinking configuration in your model definition.
+
+| Variant | Thinking Budget | Output Budget | Used By |
+|---------|----------------|---------------|---------|
+| `plan` | 32k | ~33k | Researchers, planners, codebase mappers, roadmappers |
+| `validate` | 24k | ~41k | Plan checkers, verifiers, debuggers, integration checker |
+| `execute` | 8k | ~57k | Executors, doc writers |
+| `amend` | 16k | balanced | Git message generators, research synthesizers |
+
+**Why it matters:** Planning and research benefit from deep reasoning (32k thinking), while code execution benefits from maximum output space (57k for writing files). Validation needs thorough analysis but less output. Amend tasks are short conversational interactions.
+
+### OpenCode Configuration
+
+Define variants in your `opencode.jsonc` model configuration. The variant names must match exactly (`plan`, `validate`, `execute`, `amend`):
+
+```jsonc
+"glm-5": {
+  "reasoning": true,
+  "interleaved": true,
+  "limit": {
+    "context": 135000,
+    "output": 65000
+  },
+  "options": {
+    "temperature": 1,
+    "top_p": 0.95,
+    "maxOutputTokens": 65000,
+    "thinking": {
+      "type": "enabled",
+      "budgetTokens": 32000
+    }
+  },
+  "variants": {
+    // Deep architectural logic; leaves ~33k tokens for plan documents.
+    "plan": { "thinking": { "type": "enabled", "budgetTokens": 32000 } },
+
+    // Critical review; leaves ~41k tokens for validation notes.
+    "validate": { "thinking": { "type": "enabled", "budgetTokens": 24000 } },
+
+    // Minimal thinking; reserves ~57k tokens purely for writing code.
+    "execute": { "thinking": { "type": "enabled", "budgetTokens": 8000 } },
+
+    // Balanced logic for conversational tweaks and follow-up.
+    "amend": { "thinking": { "type": "enabled", "budgetTokens": 16000 } }
   }
 }
 ```
 
-**Why per-phase is the default:** For solo dev + AI workflows, MegaMemory already tracks granular task completion. Per-phase gives the cleanest git history while MegaMemory handles the detailed context. Use per-task if you need fine-grained `git bisect` or work with other developers who rely on git log.
+Without variants defined, all agents use the model's default thinking budget. With variants, each agent type gets a budget tuned to its role.
 
 ---
 
@@ -260,7 +240,7 @@ Override the model for a specific stage without changing the profile:
 
 ```bash
 fuska config
-# Select "Set stage override" → choose stage and model
+# Select "Set stage override" -> choose stage and model
 ```
 
 Where `<stage>` is one of: `planning`, `execution`, or `verification`.
@@ -271,7 +251,7 @@ You can also override per-phase with flags on `/fuska plan`:
 - `--skip-research` — Skip researcher
 - `--skip-verify` — Skip plan verification
 
-You can override per-phase with flags on `/fuska execute`:
+You can override per-phase with flags on `/fuska build`:
 - `--mode <MODE>` — Override workflow mode for this phase only (one-off, doesn't persist)
 - `--verify` — Force verifier to run (even in modes that normally skip it)
 
@@ -282,20 +262,20 @@ You can override per-phase with flags on `/fuska execute`:
 The **checker panel** is a role-based plan verification system that runs during `/fuska plan`. Instead of a single plan checker, it uses a panel of specialized checkers that provide different perspectives:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    PLAN CHECKER PANEL                         │
-├─────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │   QUALITY     │  │  CONTEXTUAL    │  │   EXPERT      │    │
-│  │  ADVOCATE     │  │  (derived)     │  │  (dynamic)    │    │
-│  │               │  │                │  │               │    │
-│  │  Always       │  │ Project-       │  │ Plan-         │    │
-│  │  runs         │  │ derived        │  │ specific      │    │
-│  └──────────────┘  └──────────────┘  └──────────────┘    │
-└─────────────────────────────────────────────────────────┘
++----------------------------------------------------------+
+|                    PLAN CHECKER PANEL                     |
++----------------------------------------------------------+
+|  +---------------+  +---------------+  +---------------+ |
+|  |   QUALITY     |  |  CONTEXTUAL   |  |   EXPERT      | |
+|  |  ADVOCATE     |  |  (derived)    |  |  (dynamic)    | |
+|  |               |  |               |  |               | |
+|  |  Always       |  | Project-      |  | Plan-         | |
+|  |  runs         |  | derived       |  | specific      | |
+|  +---------------+  +---------------+  +---------------+ |
++----------------------------------------------------------+
 ```
 
-**Panel composition:**
+### Panel Composition
 
 1. **Base (always):** `quality-advocate` — Checks task completeness, testability, error handling, maintainability, observability, performance, and documentation
 
@@ -312,9 +292,11 @@ The **checker panel** is a role-based plan verification system that runs during 
    - `data-architect` — Database, schema, migration, model, Prisma, SQL
    - `performance-engineer` — Performance, cache, optimize, latency, throughput
 
-**Cross-validation:** When 2+ checkers flag the same issue, it gets a `cross_validated` badge and severity boost (low → medium → high → critical). Cross-validated issues appear first in the output.
+### Cross-Validation
 
-**Viewing/overriding configuration:**
+When 2+ checkers flag the same issue, it gets a `cross_validated` badge and severity boost (low -> medium -> high -> critical). Cross-validated issues appear first in the output.
+
+### Viewing and Overriding
 
 ```bash
 fuska config
@@ -362,7 +344,7 @@ fuska config
 
 `age_hours` (default: 24) — how many hours before the graph is considered stale. In hybrid mode, stale graphs are refreshed automatically before planning, execution, and debugging.
 
-### Stored in Config Concept
+### Config Storage
 
 ```json
 {
@@ -385,86 +367,8 @@ Select "View status" from the import graph settings menu to see current refresh 
 
 ---
 
-## Session Continuity
-
-Fuska tracks your progress **continuously** — you don't need to explicitly save state before ending a session.
-
-### What's Tracked Automatically
-
-The executor updates the state concept after **every task commit**:
-
-| Field | Example | Updated When |
-|-------|---------|--------------|
-| `current_phase` | `phase-02` | Phase transitions |
-| `current_plan` | `phase-02-plan-03` | Plan starts/completes |
-| `current_task` | `3` | After each task commit |
-| `total_tasks` | `7` | When plan loads |
-| `last_activity` | `Task 3/7: Add form validation` | After each task commit |
-| `status` | `in_progress` | State changes |
-
-This means `/fuska resume` always knows exactly where you are — **even if you never paused**.
-
-### When to Use `/fuska pause`
-
-Since progress is tracked automatically, pause is now **optional**. Use it only when you want to capture **mental context**:
-
-```
-/fuska pause
-```
-
-**Captures:**
-- Your mental context ("Was about to refactor to use a Map for O(1) lookups")
-- Modified files (optional WIP commit)
-
-**Does NOT need to capture:**
-- Task position (already in state)
-- Completed work (already in summaries)
-- Decisions (already in decision concepts)
-
-### When Resume Works Without Pause
-
-```bash
-# End session mid-execution (no pause)
-# ... next day ...
-
-/fuska resume
-# → "Phase 2 — Shopping List. Task 3 of 7."
-# → "No mental context (no pause recorded)"
-# → Continues from task 3
-```
-
-Resume always works because task position is tracked continuously.
-
-You can also run `/fuska` (bare) at any time to see where you are in the phase pipeline — it always knows your current position and shows you the exact command to continue.
-
-### When Resume Shows Extra Context
-
-```bash
-# Pause with mental context
-/fuska pause
-# → "What's the context?" → "Was about to refactor grouping logic to use Map"
-
-# ... next day ...
-
-/fuska resume
-# → "Phase 2 — Shopping List. Task 3 of 7."
-# → "Context: Was about to refactor grouping logic to use Map"
-# → Continues from task 3 with your notes
-```
-
-### Key Insight
-
-**Checkpoint** ≠ **pause**:
-
-- **Checkpoint** — A structured pause point during execution where user verification is required (e.g., visual review, decision input). Defined in plans with `type="checkpoint:human-verify"`.
-- **pause** — Optional command to capture mental context before ending a session. Task progress is already saved.
-
-You can run `/fuska resume` (or just `/fuska`) at any time — it will show your exact position whether or not you paused.
-
----
-
 ## See Also
 
-- [workflow-examples.md](workflow-examples.md) — See modes and settings in action
+- [workflow.md](workflow.md) — See modes and settings in action
 - [commands.md](commands.md) — Full command reference
 - [concepts.md](concepts.md) — Mental model and glossary

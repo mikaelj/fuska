@@ -731,14 +731,14 @@ Present completion with next steps:
 
 **Phase [N]: [Phase Name]** — [Goal from roadmap]
 
-/fuska-discuss-phase [N]
+/fuska-design-phase [N]
 
 */new first → fresh context window*
 
 ---
 
 **Also available:**
-- /fuska-plan-phase [N] — skip discussion, plan directly
+- /fuska-plan-phase [N] — skip design, plan directly
 
 ──────────────────────────────────────────────────────────────
 ```
@@ -779,7 +779,7 @@ Present completion summary from step 10.
 - [ ] Phase concepts created in MegaMemory
 - [ ] Roadmap concept updated with phases continuing from previous milestone
 - [ ] User feedback incorporated (if any)
-- [ ] User knows next step is `/fuska-discuss-phase [N]`
+- [ ] User knows next step is `/fuska-design-phase [N]`
 
 **Atomic persistence:** All concepts are created/updated immediately. If context is lost, artifacts persist in MegaMemory.
 

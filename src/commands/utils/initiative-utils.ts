@@ -27,7 +27,6 @@ export interface InitiativeInfo {
   node: NodeData;
   slug: string;
   name: string;
-  isArchived: boolean;
   isCurrent: boolean;
 }
 
@@ -60,7 +59,6 @@ export function findAllInitiatives(db: any): InitiativeInfo[] {
       node: root,
       slug: root.name,
       name: extractInitiativeName(root),
-      isArchived: isNodeArchived(root),
       isCurrent: root.name === currentSlug,
     });
   }
@@ -169,14 +167,5 @@ export function extractInitiativeName(node: NodeData): string {
     return summary.name || summary.initiative_name || node.name;
   } catch {
     return node.name;
-  }
-}
-
-function isNodeArchived(node: NodeData): boolean {
-  try {
-    const summary = JSON.parse(node.summary);
-    return !!summary.archived_at;
-  } catch {
-    return false;
   }
 }

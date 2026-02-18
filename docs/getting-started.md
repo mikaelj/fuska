@@ -1,13 +1,22 @@
-# Installation
+# Getting Started
 
-> Full setup guide for Fuska.
+> Full setup guide for Fuska — installation, first project, and troubleshooting.
 
 **Audience:** New users
 **Prerequisites:** Node.js 18+, git
 
 ---
 
-## Quick Install
+## Prerequisites
+
+- **Node.js 18+** — required for the CLI and MegaMemory
+- **git** — Fuska initializes git repos and uses git for codebase mapping
+
+---
+
+## Installation
+
+### Quick Install
 
 ```bash
 npm install -g fuska
@@ -25,20 +34,11 @@ On first run, Fuska prompts you to select a provider:
 
 Your choice is saved to `~/.config/fuska/fuska.jsonc` for future installs.
 
-**Options:**
-- `--opencode` — Install to `~/.config/opencode/`
-- `--claude` — Install to `~/.claude/`
-- `--both` — Install to both locations
-- `--force` — Replace existing directories without prompting
-- `--dry-run` — Preview changes without making them
-
----
-
-## What `fuska install` Does
+### What fuska install Does
 
 Fuska creates **symlinks** from your config directories to the npm package:
 
-### OpenCode Symlinks
+#### OpenCode Symlinks
 
 | Global Target | Points To |
 |---------------|-----------|
@@ -46,7 +46,7 @@ Fuska creates **symlinks** from your config directories to the npm package:
 | `~/.config/opencode/command/fuska/` | `provider/opinkode/command/fuska/` |
 | `~/.config/opencode/agents/fuska/` | `provider/opinkode/agents/fuska/` |
 
-### Claude Code Symlinks
+#### Claude Code Symlinks
 
 | Global Target | Points To |
 |---------------|-----------|
@@ -56,20 +56,77 @@ Fuska creates **symlinks** from your config directories to the npm package:
 
 Because these are symlinks, package updates are immediately available — no reinstall needed.
 
+### Install Options
+
+| Flag | Description |
+|------|-------------|
+| `--opencode` | Install to `~/.config/opencode/` |
+| `--claude` | Install to `~/.claude/` |
+| `--both` | Install to both locations |
+| `--force` | Replace existing directories without prompting |
+| `--dry-run` | Preview changes without making them |
+
 ---
 
-## First Run
+## First Project
+
+### Initialize
 
 ```bash
 # In your project directory
 fuska init "My project description"
 # Creates: .git (if needed), .megamemory/, main initiative
+# Registers: MegaMemory as MCP server (requires provider configured via fuska install)
 # Runs: codebase mapping (unless --no-map)
-
-# Then in your editor (OpenCode or Claude Code):
-/fuska-configure-initiative
-# Walks through: questioning -> preferences -> requirements -> roadmap
 ```
+
+**Arguments:**
+- `description` — Optional description stored with the initiative
+
+**Options:**
+- `--no-map` — Skip codebase mapping (run `fuska map` later)
+
+### MegaMemory MCP Setup
+
+MegaMemory must be registered as an MCP server so the AI tool can access the knowledge graph. `fuska init` handles this automatically when a provider is configured:
+
+- Runs `megamemory install --target <target>` to register the MCP server
+- For Claude Code, also creates `.claude/settings.local.json` with MegaMemory permissions so tool calls proceed without prompts
+
+If the provider was not configured at init time, or you need to re-run setup manually:
+
+```bash
+# For Claude Code
+megamemory install --target claudecode
+
+# For OpenCode
+megamemory install --target opencode
+```
+
+### Configure the Initiative
+
+Launch OpenCode (or Claude Code), then run:
+
+```
+/fuska-configure-initiative
+```
+
+Walks through initiative configuration:
+- Deep questioning (or uses stored description if provided)
+- Workflow preferences (mode, depth, parallelization, commits)
+- Research domain ecosystem (optional)
+- Define requirements
+- Create roadmap with phases
+
+### Map the Codebase
+
+`fuska init` runs `/fuska-map-codebase` automatically (unless `--no-map`). To re-map after significant structural changes:
+
+```
+/fuska map
+```
+
+Scans your project and discovers tech stack, architecture patterns, business domains, and builds the import graph. Results are stored in MegaMemory.
 
 At any point, run `/fuska` (bare) to see where you are and what to do next.
 
@@ -156,6 +213,7 @@ If installation fails mid-way, all changes are automatically rolled back. No par
 
 ## See Also
 
-- [development.md](development.md) — Development installation and contributing
-- [configuration.md](configuration.md) — Post-install configuration
 - [concepts.md](concepts.md) — Understand Fuska's mental model
+- [workflow.md](workflow.md) — How to work with Fuska
+- [configuration.md](configuration.md) — Post-install configuration
+- [development.md](development.md) — Development installation and contributing

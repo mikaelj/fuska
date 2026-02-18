@@ -37,16 +37,15 @@ config concept:
   current_initiative: "slug-of-active-initiative"  <- THE POINTER
 ```
 
-**Initiative lifecycle:** `fuska init` -> active -> archived -> reactivated
+**Initiative lifecycle:** `fuska init` -> active -> switch between initiatives as needed
 
 | Command | Description |
 |---------|-------------|
 | `fuska init [description...]` | Initialize project with "main" initiative |
-| `fuska initiatives` | List all initiatives with status |
+| `fuska initiatives` | List all initiatives sorted by recent activity |
 | `fuska initiative-switch [slug]` | Switch to another initiative |
-| `fuska initiative-archive` | Archive current initiative |
 
-Archived initiatives keep their stable names — they're just marked inactive. Switch between initiatives without losing progress on any of them.
+Switch between initiatives without losing progress on any of them. Initiatives are sorted by last activity so the most relevant ones appear first.
 
 ---
 
@@ -64,7 +63,7 @@ A **phase** is a work bucket that groups related requirements into a deliverable
 - Phase 2: iOS implementation (goal: "iOS users receive notifications")
 - Phase 3: Android implementation (goal: "Android users receive notifications")
 
-Phases are created during `/fuska-configure-initiative` and worked through sequentially: discuss (optional) -> plan -> execute -> verify (optional).
+Phases are created during `/fuska-configure-initiative` and worked through sequentially: design (optional) -> plan -> build -> review (optional).
 
 ---
 
@@ -102,7 +101,7 @@ MegaMemory is the persistent knowledge graph that stores all project data as int
 
 Every piece of project state — initiatives, requirements, roadmaps, phases, plans, research, summaries, decisions — is a concept in the knowledge graph.
 
-See [docs/BENCHMARK.md](BENCHMARK.md) for detailed performance analysis.
+See [development.md](development.md#performance-benchmarks) for detailed performance analysis.
 
 ---
 
@@ -155,6 +154,10 @@ Concepts are connected by typed edges that describe their relationships:
 | `informs` | Provides knowledge for decisions | A -> B |
 | `includes` | Container includes children | A -> B |
 
+### Project Relations
+
+The relations above are used to connect project-level concepts: initiatives, phases, plans, requirements, research, decisions, and summaries.
+
 ### Import Graph Relations
 
 These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
@@ -177,8 +180,8 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | **Checker panel** | A role-based plan verification system with three specialized checkers (base, contextual, expert) that verify plans from different perspectives. See [configuration.md](configuration.md#checker-panel). |
 | **Concept** | A unit of knowledge in MegaMemory (e.g., an initiative, requirement, plan, or phase) |
 | **Dead code** | An exported symbol with no incoming `uses` edges in the import graph — detected by `/fuska-refresh --dead-code` |
-| **Deviation** | When execution diverges from the planned tasks — handled automatically by the executor |
-| **Executor** | The agent that implements plan tasks with atomic commits during the execution stage |
+| **Deviation** | When execution diverges from the planned tasks — handled automatically by the builder |
+| **Builder** | The agent that implements plan tasks with atomic commits during the build stage |
 | **Fix complexity** | Assessment of how difficult a bug fix will be (simple/moderate/complex), used to recommend execution mode for debug handoff |
 | **Goal-backward verification** | Checking whether code delivers what a phase *promised* (its goal and success criteria), not just whether tasks were completed |
 | **Import graph** | A granular dependency map of files and symbols stored in MegaMemory. Built by `/fuska-map-codebase` during init, updated by `/fuska-refresh`. Powers `/fuska-ask` queries and dead code detection. |
@@ -195,15 +198,15 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | **Roadmap** | The overall structure of phases and milestones for an initiative, created during `/fuska-configure-initiative` |
 | **Stage** | A category of work in the Fuska workflow: planning, execution, or verification — each uses different agents |
 | **Success criteria** | Observable behaviors that must be true when a phase completes — used for goal-backward verification |
-| **Verifier** | An agent that performs goal-backward verification after phase execution |
+| **Reviewer** | An agent that performs goal-backward verification after a phase is built |
 | **Wave** | A group of tasks within a plan that can be executed in parallel (tasks in the same wave have no dependencies on each other) |
-| **Workflow mode** | A preconfigured combination of agents (planned, checked, researched, verified) that balances speed vs. quality. See [configuration.md](configuration.md#workflow-modes). |
+| **Workflow mode** | A preconfigured combination of agents (planned, checked, researched, verified) that balances speed vs. quality. See [workflow.md](workflow.md#workflow-modes). |
 | **Worktree merge** | The process of merging independent `.megamemory/knowledge.db` files from git worktree feature branches back into the main worktree's database |
 
 ---
 
 ## See Also
 
-- [workflow-examples.md](workflow-examples.md) — See these concepts in action
+- [workflow.md](workflow.md) — See these concepts in action with scenarios
 - [configuration.md](configuration.md) — Configure workflow modes, model profiles, and checker panel
 - [commands.md](commands.md) — Full command reference

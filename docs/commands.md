@@ -3,7 +3,7 @@
 > Every CLI command and slash command in Fuska.
 
 **Audience:** Daily users
-**Prerequisites:** [Installation](installation.md), [Key Concepts](concepts.md)
+**Prerequisites:** [Getting Started](getting-started.md), [Key Concepts](concepts.md)
 
 ---
 
@@ -17,8 +17,7 @@
 | `fuska migrate-multi-initiative` | Migrate existing initiative to pointer model | -- |
 | `fuska config [dir]` | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view |
 | `fuska export` | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
-| `fuska initiatives` | List all initiatives with milestones and phases | -- |
-| `fuska initiative-archive` | Archive current initiative | -- |
+| `fuska initiatives` | List all initiatives sorted by recent activity | -- |
 | `fuska initiative-switch [slug]` | Switch to another initiative | `[slug]` -- initiative to switch to |
 | `fuska todo` | List completed and pending tasks | -- |
 | `fuska info` | Display codebase and domain mappings from MegaMemory | `--long` for all files, `--verbose` for small domains |
@@ -38,7 +37,7 @@
 |---------|-------------|-----------|
 | `/fuska` | Universal entry point -- navigate, plan, execute, and more | `[verb] [args]` -- see below; bare invocation shows current position and next step |
 
-`/fuska` routes to all other commands. Run it bare to see where you are, or with a verb: `/fuska plan`, `/fuska execute`, `/fuska do fix the bug`, etc. Phase numbers are auto-detected.
+`/fuska` routes to all other commands. Run it bare to see where you are, or with a verb: `/fuska plan`, `/fuska build`, `/fuska do fix the bug`, etc. Phase numbers are auto-detected.
 
 ### Initiative Setup
 
@@ -54,11 +53,11 @@
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `/fuska-discuss-phase` | Discuss phase details before planning | `<N>` -- phase number |
+| `/fuska-design-phase` | Design phase details before planning | `<N>` -- phase number |
 | `/fuska-plan-phase` | Create detailed phase plan | `<N>` `[--research \| --skip-research \| --skip-verify \| --mode <MODE>]` |
 | `/fuska-research-phase` | Research phase requirements | `<N>` -- phase number |
-| `/fuska-execute-phase` | Execute phase tasks | `<N>` `[--mode <MODE>]` -- phase number and optional mode override |
-| `/fuska-verify-work` | Verify phase completion | `<N>` -- phase number |
+| `/fuska-build-phase` | Build phase tasks | `<N>` `[--mode <MODE>]` -- phase number and optional mode override |
+| `/fuska-review-phase` | Review phase completion | `<N>` -- phase number |
 
 ### Phase Management
 
@@ -116,7 +115,7 @@ Falls back to grep when import graph data is unavailable.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| `/fuska-do` | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` -- mode: planned/checked/researched/verified, flags: --ask/--auto |
+| `/fuska-do` | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` -- mode: planned/checked/researched/verified, flags: --review/--no-review/--auto-commit |
 | `/fuska-help` | Show all available commands | -- |
 
 ### Documentation
@@ -181,6 +180,6 @@ Falls back to grep when import graph data is unavailable.
 
 ## See Also
 
-- [workflow-examples.md](workflow-examples.md) — See commands in context
+- [workflow.md](workflow.md) — See commands in context with scenarios
 - [configuration.md](configuration.md) — Configure workflow modes and model profiles
 - [concepts.md](concepts.md) — Understand the mental model behind commands

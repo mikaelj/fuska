@@ -376,7 +376,7 @@ const feedbackResponse = question(questions=[{
 
 → Ask which assumptions are wrong
 → Provide corrected context
-→ Ask if they want to discuss phase first: `/fuska-discuss-phase {X}`
+→ Ask if they want to design phase first: `/fuska-design-phase {X}`
 → Re-prompt for feedback
 
 **Step 8.4: "Add more detail"**

@@ -56,16 +56,34 @@ class InitiativesRunner {
       return;
     }
 
+    // Find each initiative's state concept updated_at for sorting
+    const withActivity = initiatives.map(initiative => {
+      const stateNode = nodes.find((n: InitiativeNode) =>
+        n.name === 'state' && n.kind === 'config' &&
+        (n as any).parent_id === initiative.node.name
+      );
+      const updatedAt = (stateNode as any)?.updated_at || (initiative.node as any).updated_at || null;
+      return { initiative, updatedAt };
+    });
+
+    // Sort by updated_at descending (most recent first), nulls last
+    withActivity.sort((a, b) => {
+      if (!a.updatedAt && !b.updatedAt) return 0;
+      if (!a.updatedAt) return 1;
+      if (!b.updatedAt) return -1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+
     console.log('Fuska Initiatives');
     console.log('');
 
-    for (let i = 0; i < initiatives.length; i++) {
-      const initiative = initiatives[i];
-      const isLast = i === initiatives.length - 1;
+    for (let i = 0; i < withActivity.length; i++) {
+      const { initiative, updatedAt } = withActivity[i];
+      const isLast = i === withActivity.length - 1;
 
       const initiativeNode = nodes.find((n: InitiativeNode) => n.id === initiative.node.id);
       if (initiativeNode) {
-        this.displayInitiativeTree(initiativeNode, nodes, edges, '', isLast, initiative.isCurrent);
+        this.displayInitiativeTree(initiativeNode, nodes, edges, '', isLast, initiative.isCurrent, updatedAt);
       }
     }
   }
@@ -76,7 +94,8 @@ class InitiativesRunner {
     edges: any[],
     prefix: string,
     isLast: boolean,
-    isCurrent: boolean = false
+    isCurrent: boolean = false,
+    updatedAt: string | null = null
   ): void {
     const nodeMap = new Map<string, InitiativeNode>();
 
@@ -86,8 +105,10 @@ class InitiativesRunner {
 
     const connector = isLast ? '└─' : '├─';
     const initiativeName = this.getInitiativeDisplayName(initiative, isCurrent);
+    const timeAgo = updatedAt ? this.formatRelativeTime(updatedAt) : '';
+    const padding = timeAgo ? '  ' : '';
 
-    console.log(`${prefix}${connector} ${initiativeName}`);
+    console.log(`${prefix}${connector} ${initiativeName}${padding}${timeAgo}`);
 
     const childEdges = edges.filter((e: any) => e.to_id === initiative.id);
     const children = childEdges
@@ -186,7 +207,6 @@ class InitiativesRunner {
 
   private getInitiativeDisplayName(initiative: InitiativeNode, isCurrent: boolean = false): string {
     let name = initiative.name;
-    let archivedAt: string | null = null;
 
     try {
       const summary = JSON.parse(initiative.summary);
@@ -195,23 +215,35 @@ class InitiativesRunner {
       } else if (summary.name) {
         name = summary.name;
       }
-      if (summary.archived_at) {
-        archivedAt = summary.archived_at;
-      }
     } catch (e) {
     }
 
-    let suffix = '';
     if (isCurrent) {
-      suffix = ' (current)';
-    }
-    if (archivedAt) {
-      const date = new Date(archivedAt);
-      const formattedDate = date.toLocaleDateString();
-      suffix += ` [archived: ${formattedDate}]`;
+      name += ' (current)';
     }
 
-    return name + suffix;
+    return name;
+  }
+
+  private formatRelativeTime(isoDate: string): string {
+    const now = Date.now();
+    const then = new Date(isoDate).getTime();
+    const diffMs = now - then;
+
+    if (diffMs < 0) return '';
+
+    const minutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMs / 3600000);
+    const days = Math.floor(diffMs / 86400000);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
+
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+    if (weeks < 5) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+    return `${months} month${months === 1 ? '' : 's'} ago`;
   }
 
   private getMilestoneDisplayName(milestone: InitiativeNode): string {

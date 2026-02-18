@@ -1,5 +1,5 @@
 ---
-name: fuska-verify-work
+name: fuska-review-phase
 description: Validate built features through conversational UAT using MegaMemory
 argument-hint: "[phase number, e.g., '4']"
 tools:
@@ -18,7 +18,7 @@ Validate built features through conversational testing with persistent state usi
 
 Purpose: Confirm what OpenCode built actually works from user's perspective. One test at a time, plain text responses, no interrogation. When issues are found, automatically diagnose, plan fixes, and prepare for execution.
 
-Output: {phase}-uat concept — tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /fuska-execute-phase.
+Output: {phase}-uat concept — tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /fuska-build-phase.
 
 </objective>
 
@@ -81,7 +81,7 @@ The variable `input` contains the raw argument string provided by the user.
 const phaseNumber = input.match(/\d+/)?.[0]
 if (!phaseNumber) {
   Display: "Phase number is required"
-  Display: "Usage: /fuska-verify-work <phase>"
+  Display: "Usage: /fuska-review-phase <phase>"
   Stop
 }
 
@@ -487,7 +487,7 @@ If plans pass, verification is complete. If issues remain, iterate.
 When all issues resolved and verification complete:
 
 → Display: "Gap closure plans verified. Ready for execution."
-→ Suggest: `/fuska-execute-phase ${phaseNumber}`
+→ Suggest: `/fuska-build-phase ${phaseNumber}`
 
 </process>
 
@@ -531,15 +531,15 @@ UAT complete [OK]
 ## > Next Up
 
 **Phase {Z+1}: {Name}** — {Goal from phase concept}
-/fuska-discuss-phase {Z+1} — gather context and clarify approach
+/fuska-design-phase {Z+1} — gather context and clarify approach
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-plan-phase {Z+1} — skip discussion, plan directly
-- /fuska-execute-phase {Z+1} — skip to execution (if already planned)
+- /fuska-plan-phase {Z+1} — skip design, plan directly
+- /fuska-build-phase {Z+1} — skip to execution (if already planned)
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -597,7 +597,7 @@ Fix plans verified [OK]
 ## > Next Up
 
 **Execute fix plans** — run diagnosed fixes
-/fuska-execute-phase {Z} --gaps-only
+/fuska-build-phase {Z} --gaps-only
 
 */new first → fresh context window*
 
@@ -642,7 +642,7 @@ Review the issues above and either:
 
 **Options:**
 - /fuska-plan-phase {Z} --gaps — retry fix planning with guidance
-- /fuska-discuss-phase {Z} — gather more context before replanning
+- /fuska-design-phase {Z} — gather more context before replanning
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -659,6 +659,6 @@ Review the issues above and either:
 - [ ] If issues: Parallel debug agents diagnose root causes
 - [ ] If issues: fuska-planner creates fix plans from diagnosed gaps
 - [ ] If issues: fuska-plan-checker verifies fix plans (max 3 iterations)
-- [ ] Ready for `/fuska-execute-phase` when complete
+- [ ] Ready for `/fuska-build-phase` when complete
 
 </success_criteria>

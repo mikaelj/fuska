@@ -329,7 +329,7 @@ Output this markdown directly (not as a code block):
 
 **Also available:**
 - /fuska-add-phase <description> — add another phase
-- /fuska-discuss-phase {N} — gather context first
+- /fuska-design-phase {N} — gather context first
 
 ──────────────────────────────────────────────────────────────
 ```

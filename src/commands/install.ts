@@ -31,6 +31,7 @@ interface SymlinkMapping {
   targetRel: string;
   sourceRel: string;
   isGlob?: boolean;
+  globPattern?: string;
 }
 
 const OPENCODE_SYMLINKS: SymlinkMapping[] = [
@@ -41,7 +42,7 @@ const OPENCODE_SYMLINKS: SymlinkMapping[] = [
 
 const CLAUDE_SYMLINKS: SymlinkMapping[] = [
   { targetRel: 'fuska', sourceRel: 'provider/klod/fuska' },
-  { targetRel: 'skills', sourceRel: 'provider/klod/skills', isGlob: true },
+  { targetRel: 'skills', sourceRel: 'provider/klod/skills', isGlob: true, globPattern: 'fuska*' },
   { targetRel: 'agents/fuska', sourceRel: 'provider/klod/agents/fuska' },
 ];
 
@@ -150,7 +151,7 @@ async function installToProvider(
       const { created, skipped } = await createIndividualSymlinks(
         source,
         target,
-        'fuska-*',
+        mapping.globPattern || 'fuska-*',
         options
       );
       totalCreated += created;

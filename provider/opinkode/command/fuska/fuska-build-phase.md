@@ -1,5 +1,5 @@
 ---
-name: fuska-execute-phase
+name: fuska-build-phase
 description: Execute all plans in a phase with wave-based parallelization using MegaMemory
 argument-hint: "<phase-number> [--gaps-only]"
 tools:
@@ -559,17 +559,17 @@ const configData = JSON.parse(response.matches[0].summary)
 // Extract mode (with --mode flag override for one-off changes)
 const mode = modeOverride || configData.workflow?.mode || "standard"
 
-// Verifier only runs in standard mode, or if explicitly requested
+// Reviewer only runs in standard mode, or if explicitly requested
 const shouldVerify = mode === "standard" || input.includes("--verify")
 ```
 
-**Step 7.3: Skip if verifier disabled**
+**Step 7.3: Skip if reviewer disabled**
 
 If shouldVerify === false:
-→ Display: "Verifier disabled — treating phase as passed"
+→ Display: "Reviewer disabled — treating phase as passed"
 → Continue to step 8
 
-**Step 7.4: Spawn verifier**
+**Step 7.4: Spawn reviewer**
 
 If shouldVerify === true:
 ```
@@ -796,15 +796,15 @@ Goal verified [OK]
 ## > Next Up
 
 **Phase {Z+1}: {Name}** — {Goal from phase concept}
-/fuska-discuss-phase {Z+1} — gather context and clarify approach
+/fuska-design-phase {Z+1} — gather context and clarify approach
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-plan-phase {Z+1} — skip discussion, plan directly
-- /fuska-verify-work {Z} — manual acceptance testing before continuing
+- /fuska-plan-phase {Z+1} — skip design, plan directly
+- /fuska-review-phase {Z} — manual acceptance testing before continuing
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -834,7 +834,7 @@ All phase goals verified [OK]
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-verify-work — manual acceptance testing
+- /fuska-review-phase — manual acceptance testing
 - /fuska-complete-milestone — skip audit, archive directly
 ──────────────────────────────────────────────────────────────
 ```
@@ -866,7 +866,7 @@ All phase goals verified [OK]
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-verify-work — manual acceptance testing before completing milestone
+- /fuska-review-phase — manual acceptance testing before completing milestone
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -901,16 +901,16 @@ Report: UAT concept {phase}-uat
 
 **Also available:**
 - Query UAT details: use megamemory:understand to search for the phase's UAT concept
-- /fuska-verify-work {Z} — manual testing before planning
+- /fuska-review-phase {Z} — manual testing before planning
 ──────────────────────────────────────────────────────────────
 ```
 
 After user runs `/fuska-plan-phase {Z} --gaps`:
 1. Planner reads UAT concept gaps
 2. Creates additional plans (04, 05, etc.) to close gaps
-3. User runs `/fuska-execute-phase {Z}` again
-4. Execute-phase runs incomplete plans (04, 05...)
-5. Verifier runs again → loop until passed
+3. User runs `/fuska-build-phase {Z}` again
+4. Build-phase runs incomplete plans (04, 05...)
+5. Reviewer runs again → loop until passed
 
 </offer_next>
 

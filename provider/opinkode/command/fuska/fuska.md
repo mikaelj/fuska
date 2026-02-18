@@ -26,7 +26,7 @@ Universal dispatch for Fuska. One command for everything.
 
 - `/fuska` — show where you are and what to do next
 - `/fuska plan` — plan the current phase (auto-detects phase number)
-- `/fuska execute` — build the current phase
+- `/fuska build` — build the current phase
 - `/fuska do fix the bug` — quick ad-hoc task
 - `/fuska [verb] [args]` — any Fuska action
 
@@ -225,10 +225,10 @@ Fuska: ${projectName}${completedPhases > 0 ? ' -- ' + completedPhases + '/' + to
 
 Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
 
-    share your vision    /fuska discuss    (optional, helps me plan better)
+    share your vision    /fuska design    (optional, helps me plan better)
   > plan into tasks      /fuska plan
-    build it             /fuska execute
-    check it works       /fuska verify
+    build it             /fuska build
+    check it works       /fuska review
 
 You can tell me how you imagine this phase working, or I'll plan
 directly from the requirements. Either way, planning is next.
@@ -245,8 +245,8 @@ Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
 
     share your vision    done
   > plan into tasks      /fuska plan
-    build it             /fuska execute
-    check it works       /fuska verify
+    build it             /fuska build
+    check it works       /fuska review
 
 Your thinking is captured. Next: I'll break this into concrete tasks.
 ```
@@ -264,8 +264,8 @@ Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
 
     share your vision    ${contextExists ? 'done' : 'skipped'}
     plan into tasks      done -- ${planCount} tasks${waveCount > 1 ? ' in ' + waveCount + ' waves' : ''}
-  > build it             /fuska execute
-    check it works       /fuska verify
+  > build it             /fuska build
+    check it works       /fuska review
 
 Ready to build.${waveCount > 1 ? ' Tasks run grouped by wave.' : ''}
 ```
@@ -284,7 +284,7 @@ Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
     share your vision    ${contextExists ? 'done' : 'skipped'}
     plan into tasks      done
     build it             done
-  > check it works       /fuska verify
+  > check it works       /fuska review
 
 Built. Walk through what was created and verify it works.
 
@@ -317,9 +317,9 @@ Or audit first:
 | Verb | Target file | Auto-detect phase |
 |------|------------|-------------------|
 | plan | fuska-plan-phase.md | yes |
-| discuss | fuska-discuss-phase.md | yes |
-| execute | fuska-execute-phase.md | yes |
-| verify | fuska-verify-work.md | yes |
+| design | fuska-design-phase.md | yes |
+| build | fuska-build-phase.md | yes |
+| review | fuska-review-phase.md | yes |
 | research | fuska-research-phase.md | yes |
 | assumptions | fuska-list-phase-assumptions.md | yes |
 | do | fuska-do.md | no |
@@ -389,7 +389,7 @@ The `@` reference content serves as execution context — the same role it would
 
 If verb does not match any entry in the dispatch table:
 
-Known verbs: plan, discuss, execute, verify, research, assumptions, do, debug, pause, resume, todo, todos, configure, map, help, add, insert, remove, complete, milestone, audit, gaps, doc, export, import, refresh, ask.
+Known verbs: plan, design, build, review, research, assumptions, do, debug, pause, resume, todo, todos, configure, map, help, add, insert, remove, complete, milestone, audit, gaps, doc, export, import, refresh, ask.
 
 Find the verb with smallest edit distance (simple character comparison is fine — no need for full Levenshtein).
 

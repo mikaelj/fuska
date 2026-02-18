@@ -83,10 +83,10 @@ if (input.trim().toLowerCase().startsWith("help")) {
     5. Fix → spawn fuska-do with debug context to apply fix
 
   Modes (based on fix complexity):
-    planned    - Planner → Executor, auto-execute
-    checked    - + Plan Checker, ask before execution
-    researched - + Researcher, ask before execution
-    verified   - Full pipeline with Verifier, auto-execute
+    planned    - Planner → Builder, auto-build
+    checked    - + Plan Checker, ask before building
+    researched - + Researcher, ask before building
+    verified   - Full pipeline with Reviewer, auto-build
     manual     - Display findings, I'll fix it myself
 
   -> Stop
@@ -307,10 +307,10 @@ question(questions=[{
   question: "Root cause found. Select mode to proceed with fix:",
   options: [
     { label: "{recommendedMode} (Recommended)", description: "Based on {fix_complexity} fix complexity." },
-    { label: "Planned", description: "Planner → Executor. Auto-execute." },
-    { label: "Checked", description: "Planner → Plan Checker → Executor. Ask first." },
-    { label: "Researched", description: "Researcher → Planner → Plan Checker → Executor. Ask first." },
-    { label: "Verified", description: "Full pipeline with Verifier. Auto-execute." },
+    { label: "Planned", description: "Planner → Builder. Auto-build." },
+    { label: "Checked", description: "Planner → Plan Checker → Builder. Ask first." },
+    { label: "Researched", description: "Researcher → Planner → Plan Checker → Builder. Ask first." },
+    { label: "Verified", description: "Full pipeline with Reviewer. Auto-build." },
     { label: "Manual", description: "I'll fix it myself." }
   ]
 }])

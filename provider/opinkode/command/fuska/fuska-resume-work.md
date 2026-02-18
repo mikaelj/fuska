@@ -252,7 +252,7 @@ If currentTask is undefined:
 megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
 const completedCount = response.matches.length
 const inferredTask = completedCount + 1
-Display: "Task ${inferredTask} (inferred) - legacy project, run execute to update tracking"
+Display: "Task ${inferredTask} (inferred) - legacy project, run build to update tracking"
 ```
 
 ---
@@ -284,7 +284,7 @@ If contextExists === true:
 → Mark: "Context available — can plan directly"
 
 If contextExists === false:
-→ Mark: "Context missing — should discuss phase first"
+→ Mark: "Context missing — should design phase first"
 
 ## 5. Present Context-Aware Next Actions
 
@@ -298,7 +298,7 @@ If status === "ready_to_plan":
 
 **Options:**
 1. Discuss phase first — Gather context, clarify approach
-   /fuska-discuss-phase {currentPhase}
+   /fuska-design-phase {currentPhase}
 
 2. Plan directly — Skip discussion, create plans
    /fuska-plan-phase {currentPhase}
@@ -317,7 +317,7 @@ If status === "ready_to_execute":
 
 **Options:**
 1. Execute phase — Run all plans for this phase
-   /fuska-execute-phase {currentPhase}
+   /fuska-build-phase {currentPhase}
 
 2. Review plans — See what's planned before executing
    (Query plan concepts and display)
@@ -342,10 +342,10 @@ ${checkpointPlans.length > 0 ? `Checkpoint detected: ${checkpointPlans.map(p => 
 → Display options:
 ```
 1. Resume execution — Continue where left off
-   /fuska-execute-phase {currentPhase}
+   /fuska-build-phase {currentPhase}
 
 2. Verify work — Manual acceptance testing
-   /fuska-verify-work {currentPhase}
+   /fuska-review-phase {currentPhase}
 
 3. View status — See detailed status of current work
    (Display phase concepts in detail)
@@ -361,10 +361,10 @@ If status === "phase_complete":
 
 **Options:**
 1. Next phase — Move to next phase in roadmap
-   /fuska-discuss-phase {next_phase}
+   /fuska-design-phase {next_phase}
 
 2. Verify phase — Manual acceptance testing before proceeding
-   /fuska-verify-work {currentPhase}
+   /fuska-review-phase {currentPhase}
 
 3. Audit milestone — If this was last phase
    /fuska-audit-milestone
@@ -405,7 +405,7 @@ Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kin
  **${initiativeName || 'Initiative'}**
 
  ${status === 'ready_to_plan' ? 'Ready to plan next phase' : ''}
-${status === 'ready_to_execute' ? 'Plans ready to execute' : ''}
+${status === 'ready_to_execute' ? 'Plans ready to build' : ''}
 ${status === 'in_progress' ? 'Work in progress' : ''}
 ${status === 'phase_complete' ? 'Phase complete, ready for next' : ''}
 ${incompletePlans.length > 0 ? `${incompletePlans.length} incomplete plan(s) remaining` : ''}
@@ -430,7 +430,7 @@ ${status === 'ready_to_plan' && contextExists === true
   : status === 'in_progress'
   ? 'Execute Phase ' + currentPhase + ' (continue from ' + (checkpointPlans.length > 0 ? 'checkpoint' : 'current position'))
   : status === 'phase_complete'
-  ? 'Move to next phase or verify milestone'
+  ? 'Move to next phase or review milestone'
   : 'Check status and determine next action'}
 ```
 
@@ -442,10 +442,10 @@ ${status === 'ready_to_plan' && contextExists === true
 All Available Commands:
 
 - fuska progress — View detailed project progress
-- /fuska-discuss-phase {N} — Discuss a phase
+- /fuska-design-phase {N} — Discuss a phase
 - /fuska-plan-phase {N} — Plan a phase
-- /fuska-execute-phase {N} — Execute a phase
-- /fuska-verify-work {N} — Verify work
+- /fuska-build-phase {N} — Execute a phase
+- /fuska-review-phase {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
 ─────────────────────────────────────────────────────────────
@@ -471,10 +471,10 @@ All Available Commands:
 **All Available Commands:**
 
 - fuska progress — View detailed project progress
-- /fuska-discuss-phase {N} — Discuss a phase
+- /fuska-design-phase {N} — Discuss a phase
 - /fuska-plan-phase {N} — Plan a phase
-- /fuska-execute-phase {N} — Execute a phase
-- /fuska-verify-work {N} — Verify work
+- /fuska-build-phase {N} — Execute a phase
+- /fuska-review-phase {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
 ──────────────────────────────────────────────────────────────
@@ -504,8 +504,8 @@ Based on the status and detection results from step 5, output the appropriate ro
 
 ──────────────────────────────────────────────────────────────
 
-**Or discuss first:**
-/fuska-discuss-phase {X}
+**Or design first:**
+/fuska-design-phase {X}
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -525,7 +525,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 ## > Next Up
 
 **Execute Phase {X}**
-/fuska-execute-phase {X}
+/fuska-build-phase {X}
 
 */new first → fresh context window*
 
@@ -550,14 +550,14 @@ Incomplete:
 ## > Next Up
 
 **Resume Execution**
-/fuska-execute-phase {X}
+/fuska-build-phase {X}
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
-**Or verify first:**
-/fuska-verify-work {X}
+**Or review first:**
+/fuska-review-phase {X}
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -575,14 +575,14 @@ Incomplete:
 ## > Next Up
 
 **Next Phase**
-/fuska-discuss-phase {X+1}
+/fuska-design-phase {X+1}
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
-**Or verify first:**
-/fuska-verify-work {X}
+**Or review first:**
+/fuska-review-phase {X}
 ──────────────────────────────────────────────────────────────
 
 **Or audit milestone:**

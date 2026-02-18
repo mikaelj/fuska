@@ -531,7 +531,7 @@ class ProgressRunner {
         this.out('');
         this.out(`**${action.planName}** — ${action.objective}`);
         this.out('');
-        this.out(`/fuska-execute-phase ${action.phaseNumber}`);
+        this.out(`/fuska-build-phase ${action.phaseNumber}`);
         this.out('');
         this.out('*/new first → fresh context window*');
         break;
@@ -552,7 +552,7 @@ class ProgressRunner {
         this.out('');
         this.out(`**Phase ${action.phaseNumber}: ${ctx.currentPhase?.name}** — ${ctx.currentPhase?.goal}`);
         this.out('');
-        this.out(`/fuska-discuss-phase ${action.phaseNumber} — gather context and clarify approach`);
+        this.out(`/fuska-design-phase ${action.phaseNumber} — gather context and clarify approach`);
         this.out('');
         this.out('*/new first → fresh context window*');
         this.out('');
@@ -580,7 +580,7 @@ class ProgressRunner {
         this.out('');
         this.out(`**Phase ${action.phaseNumber}: ${nextPhase?.name}** — ${nextPhase?.goal}`);
         this.out('');
-        this.out(`/fuska-discuss-phase ${action.phaseNumber}`);
+        this.out(`/fuska-design-phase ${action.phaseNumber}`);
         this.out('');
         this.out('*/new first → fresh context window*');
         break;

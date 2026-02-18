@@ -24,7 +24,8 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees (atomic commits, state tra
 
 - Flexible mode selection: planned | checked | researched | verified
 - Auto-executes for planned/verified; asks before executing for checked/researched
-- Override auto-execute behavior with --ask or --auto flag
+- Override plan review with --review (force) or --no-review (skip)
+- Override commit behavior with --auto-commit (skip prompt and auto-commit)
 - Suggests project creation if no project exists
 
 </objective>
@@ -85,14 +86,16 @@ if (input.trim().toLowerCase().startsWith("help")) {
   Usage: /fuska-do [mode] [description]
 
   Modes:
-    planned    - Planner → Executor | Auto | You have a plan, just execute it
-    checked    - Planner → Plan Checker → Executor | Ask | Plan gets validated, you review before execution
-    researched - Researcher → Planner → Plan Checker → Executor | Ask | Research adds context, review before committing
-    verified   - Researcher → Planner → Plan Checker → Executor → Verifier | Auto | Full pipeline with post-execution verification
+    planned    - Planner → Builder | Review: Skipped | You have a plan, just build it
+    checked    - Planner → Plan Checker → Builder | Review: Prompted | Plan gets validated, you review before building
+    researched - Researcher → Planner → Plan Checker → Builder | Review: Prompted | Research adds context, review before committing
+    verified   - Researcher → Planner → Plan Checker → Builder → Reviewer | Review: Skipped | Full pipeline with post-build review
 
   Flags:
-    --ask      Override to ask before executing (any mode)
-    --auto     Override to auto-execute (any mode)
+    --review       Force plan review before executing (any mode)
+    --no-review    Skip plan review (any mode)
+    --auto-commit  Auto-commit with generated message (no prompt)
+
 
   -> Stop
 }
@@ -174,10 +177,10 @@ const words = input.trim().split(/\s+/)
 let MODE = null
 let DESCRIPTION = null
 
+const hasReviewFlag = input.includes("--review") && !input.includes("--no-review")
 const hasNoReviewFlag = input.includes("--no-review")
-const hasAskFlag = input.includes("--ask")
-const hasAutoFlag = input.includes("--auto")
-const flagPattern = /--(?:no-review|ask|auto)/gi
+const hasAutoCommitFlag = input.includes("--auto-commit")
+const flagPattern = /--(?:no-review|review|auto-commit)/gi
 
 if (validModes.includes(words[0]?.toLowerCase())) {
   MODE = words[0].toLowerCase()
@@ -198,10 +201,10 @@ if (!MODE) {
     header: "Mode",
     question: "Select workflow mode:",
     options: [
-      { label: "Planned", description: "Planner → Executor. Auto-execute. You have a plan, just execute it." },
-      { label: "Checked", description: "Planner → Plan Checker → Executor. Ask first. Plan gets validated before execution." },
-      { label: "Researched", description: "Researcher → Planner → Plan Checker → Executor. Ask first. Research adds context." },
-      { label: "Verified", description: "Full pipeline with Verifier. Auto-execute. Critical systems, production code." }
+      { label: "Planned", description: "Planner → Builder. Auto-build. You have a plan, just build it." },
+      { label: "Checked", description: "Planner → Plan Checker → Builder. Ask first. Plan gets validated before building." },
+      { label: "Researched", description: "Researcher → Planner → Plan Checker → Builder. Ask first. Research adds context." },
+      { label: "Verified", description: "Full pipeline with Reviewer. Auto-build. Critical systems, production code." }
     ]
   }])
   MODE = modeResponse[0].toLowerCase()
@@ -230,10 +233,10 @@ let modeConfig = {
   verified:   { research: true,  planCheck: true,  verifier: true,  autoExecute: true }
 }[MODE]
 
-// Override autoExecute if --ask or --auto flag provided
-if (hasAskFlag) {
+// Override autoExecute based on review flags
+if (hasReviewFlag) {
   modeConfig.autoExecute = false
-} else if (hasAutoFlag) {
+} else if (hasNoReviewFlag) {
   modeConfig.autoExecute = true
 }
 
@@ -696,7 +699,7 @@ ${t.done || 'N/A'}
 **Step 8.2: Check review mode**
 
 ```
-const skipReview = hasNoReviewFlag || configData?.workflow?.interactive_review === false
+const skipReview = hasNoReviewFlag || modeConfig.autoExecute || configData?.workflow?.interactive_review === false
 
 if (skipReview) {
   // Skip to Step 9 (execution)
@@ -791,7 +794,7 @@ Return: ## REVISION COMPLETE
 
 ---
 
-## 9. Spawn Executor
+## 9. Spawn Builder
 
 Display: `Executing...`
 
@@ -910,22 +913,22 @@ generatedCommitMessage = agentOutput.trim()
 
 ---
 
-## 10. Spawn Verifier (if modeConfig.verifier)
+## 10. Spawn Reviewer (if modeConfig.verifier)
 
 Only for verified mode.
 
-Display: `Verifying...`
+Display: `Reviewing...`
 
-**Step 10.1: Build verifier prompt (adapted for quick task)**
+**Step 10.1: Build reviewer prompt (adapted for quick task)**
 
 ```
 const verifierPrompt = `<critical_constraints>
-Return: ## Verification Complete with status: passed | gaps_found
+Return: ## Review Complete with status: passed | gaps_found
 Create concept named: task-${nextNum}-${slug}-verification
 </critical_constraints>
 
 <verification_context>
-Verify task ${nextNum}: ${DESCRIPTION}
+Review task ${nextNum}: ${DESCRIPTION}
 
 **Plan concept:** task-${nextNum}-${slug}
 **Summary concept:** task-${nextNum}-${slug}-summary
@@ -1004,6 +1007,17 @@ ${generatedCommitMessage}
 
 **Step 11.5.2: Prompt user for action**
 
+If `hasAutoCommitFlag`:
+```
+// Auto-commit without asking
+bash("git add -A && git commit -m '${generatedCommitMessage}'", description="Auto-commit (--auto-commit flag)")
+const commitOutput = result
+const commitMatch = commitOutput.match(/\[[\w-]+ ([a-f0-9]+)\]/) || commitOutput.match(/([a-f0-9]{7,})/)
+finalCommitHash = commitMatch ? commitMatch[1] : "committed"
+// Skip to Step 12
+```
+
+Otherwise:
 ```
 const commitResponse = question(questions=[{
   header: "Commit",
@@ -1012,7 +1026,7 @@ const commitResponse = question(questions=[{
     { label: "Commit now", description: "Commit with the generated message" },
     { label: "Edit first", description: "Edit the message before committing" },
     { label: "Skip", description: "Leave changes uncommitted" }
-  }
+  ]
 }])
 ```
 
@@ -1131,16 +1145,17 @@ megamemory_update_concept(
 - [ ] Planner spawns with mode-appropriate constraints
 - [ ] Plan-checker spawned for check modes (checked/researched/verified)
 - [ ] Revision loop works (max 3 iterations)
-- [ ] Auto-execute for planned/verified modes (overridable with --ask)
-- [ ] Ask-before-execute for checked/researched modes (overridable with --auto)
+- [ ] Auto-execute for planned/verified modes (overridable with --review)
+- [ ] Ask-before-execute for checked/researched modes (overridable with --no-review)
+- [ ] --auto-commit flag: auto-commits without prompt
 - [ ] Plan displayed before asking for execution decision
 - [ ] Change plan option: feedback collected, planner re-spawned, plan re-displayed
 - [ ] Save and exit option: plan saved with execution command shown
-- [ ] Executor spawns and creates summary concept (no commit during execution)
+- [ ] Builder spawns and creates summary concept (no commit during build)
 - [ ] Git-message agent spawned to generate commit message
 - [ ] Commit message displayed with Commit now / Edit first / Skip options
 - [ ] Commit executed only on user confirmation
-- [ ] Verifier spawned for verified mode
+- [ ] Reviewer spawned for verified mode
 - [ ] State concept updated with task entry (including commit hash if committed)
 - [ ] Completion banner displayed with commit status
 

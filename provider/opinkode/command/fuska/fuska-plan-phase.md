@@ -659,7 +659,7 @@ Include the UAT concept's summary here (gaps and findings). Omit entirely if not
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /fuska-execute-phase
+Output consumed by /fuska-build-phase
 
 Plans must be executable prompts with:
 - Frontmatter (wave, depends_on, files_modified, autonomous)
@@ -1284,7 +1284,7 @@ Verification: {Passed | Passed with override | Skipped}
 ## > Next Up
 
 **Execute Phase {X}** — run all {N} plans
-/fuska-execute-phase {X}
+/fuska-build-phase {X}
 
 */new first → fresh context window*
 

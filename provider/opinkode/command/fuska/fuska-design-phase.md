@@ -1,5 +1,5 @@
 ---
-name: fuska-discuss-phase
+name: fuska-design-phase
 description: Gather phase context through adaptive questioning before planning using MegaMemory
 argument-hint: "<phase>"
 tools:
@@ -92,7 +92,7 @@ The variable `input` contains the raw argument string provided by the user.
 const phaseNumber = input.match(/\d+/)?.[0]
 if (!phaseNumber) {
   Display: "Phase number is required"
-  Display: "Usage: /fuska-discuss-phase <phase>"
+  Display: "Usage: /fuska-design-phase <phase>"
   Stop
 }
 ```

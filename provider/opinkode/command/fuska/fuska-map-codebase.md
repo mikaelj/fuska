@@ -553,7 +553,7 @@ ${!stateData.current_phase
 
 **Also available:**
 - Query codebase concepts: megamemory:understand(query='codebase')
-- /fuska-discuss-phase {N} — Discuss a phase
+- /fuska-design-phase {N} — Discuss a phase
 - /fuska-plan-phase {N} — Plan a phase
 - fuska config — View/change checker panel settings
 ────────────────────────────────────────────────────────────
