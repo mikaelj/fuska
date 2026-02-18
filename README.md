@@ -10,6 +10,8 @@ Works with **OpenCode** and (*probably, maybe, very little testing*) **Claude Co
 
 Based on [gsd-opencode](https://github.com/rokicool/gsd-opencode) and [Get Shit Done](https://github.com/gsd-build/get-shit-done).
 
+> *"Fuska is like having three navigators, each a specialist in different types of road — who raise the alarm if they independently spot the same hazard ahead."* — [Read the full pitch](PITCH.md)
+
 **THE AUTHOR TAKES NO RESPONSIBILITY FOR DATA LOSS IN EXISTING PROJECTS. USE AT YOUR OWN PERIL.**
 
 ---
