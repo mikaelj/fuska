@@ -25,7 +25,7 @@ One command creates all fix phases — no manual `/fuska-add-phase` per gap.
 </objective>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 <!-- Spawns fuska-planner agent which has all planning expertise baked in -->
 </execution_context>
 
@@ -70,7 +70,7 @@ megamemory_understand(query="state", top_k=5)
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 1. Load Audit Results from MegaMemory
 

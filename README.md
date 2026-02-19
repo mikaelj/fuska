@@ -265,6 +265,8 @@ fuska config
 # Select "Model aliases" -> configure quality_model, balanced_model, budget_model, explore_model
 ```
 
+When selecting models, the full list is shown immediately. Type to filter — matching is fuzzy (e.g., "glm5" matches "zai-coding-plan/glm-5").
+
 **Example configurations:**
 - Quality: `opencode/claude-opus-4`, Balanced: `opencode/claude-sonnet-4`, Budget: `opencode/claude-haiku-4`
 - Quality: `openai/gpt-4o`, Balanced: `openai/gpt-4o-mini`, Budget: `openai/gpt-3.5-turbo`

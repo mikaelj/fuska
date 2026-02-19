@@ -23,7 +23,7 @@ Purpose: Add planned work discovered during execution that belongs at the end of
 </objective>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/phase-templates.ts
 </execution_context>
@@ -57,7 +57,7 @@ Phase description: `$ARGUMENTS` (required)
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 1. Validate Environment
 

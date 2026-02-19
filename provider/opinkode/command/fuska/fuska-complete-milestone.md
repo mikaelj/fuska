@@ -24,7 +24,7 @@ Output: Milestone archived in MegaMemory, requirements archived, state concept u
 </objective>
 
  <execution_context>
- @../../fuska/references/preflight-check-project-exists.md
+ @../../fuska/references/preflight-check-initiative-exists.md
  @../../fuska/scripts/types.ts
  @../../fuska/scripts/helpers.ts
  
@@ -65,7 +65,7 @@ The important field is **`summary`** — it's a JSON string containing the conce
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 0. Check for Audit
 
@@ -122,7 +122,7 @@ megamemory_list_roots()
 **Step 1.2: Check for roots**
 
 If response.roots.length === 0:
-→ Display: "No projects found in MegaMemory"
+→ Display: "No initiatives found in MegaMemory"
 → Stop
 
 ---

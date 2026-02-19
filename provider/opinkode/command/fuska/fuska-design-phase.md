@@ -27,7 +27,7 @@ Extract implementation decisions that downstream agents need — researcher and 
 </objective>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/phase-templates.ts
 @../../fuska/scripts/helpers.ts
@@ -80,7 +80,7 @@ Look for any previously captured decisions, architectural choices, or constraint
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 1. Validate Phase Number
 

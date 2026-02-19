@@ -109,3 +109,61 @@ export async function createIndividualSymlinks(
 
   return { created, skipped };
 }
+
+export async function removeSymlink(
+  target: string,
+  options: SymlinkOptions
+): Promise<{ removed: boolean; skipped: boolean }> {
+  if (options.dryRun) {
+    if (await fs.pathExists(target)) {
+      console.log(`  [DRY-RUN] Would remove: ${target}`);
+      return { removed: true, skipped: false };
+    }
+    return { removed: false, skipped: true };
+  }
+
+  if (!await fs.pathExists(target)) {
+    return { removed: false, skipped: true };
+  }
+
+  const stats = fs.lstatSync(target);
+  if (!stats.isSymbolicLink()) {
+    console.log(`  [SKIP] Not a symlink: ${target}`);
+    return { removed: false, skipped: true };
+  }
+
+  const currentTarget = await fs.readlink(target);
+  if (!currentTarget.includes('fuska') && !currentTarget.includes('gsd-mm') && !currentTarget.includes('megamory')) {
+    console.log(`  [SKIP] Not a fuska symlink: ${target} → ${currentTarget}`);
+    return { removed: false, skipped: true };
+  }
+
+  await fs.remove(target);
+  console.log(`  [REMOVED] ${target}`);
+  return { removed: true, skipped: false };
+}
+
+export async function removeGlobSymlinks(
+  dir: string,
+  pattern: string,
+  options: SymlinkOptions
+): Promise<{ removed: number; skipped: number }> {
+  if (!await fs.pathExists(dir)) {
+    return { removed: 0, skipped: 0 };
+  }
+
+  const { glob: globFn } = await import('glob');
+  const items = await globFn(pattern, { cwd: dir, absolute: false });
+
+  let removed = 0;
+  let skipped = 0;
+
+  for (const item of items) {
+    const target = path.join(dir, item);
+    const result = await removeSymlink(target, options);
+    if (result.removed) removed++;
+    if (result.skipped) skipped++;
+  }
+
+  return { removed, skipped };
+}

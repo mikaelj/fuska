@@ -1,7 +1,12 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import * as os from 'os';
 import inquirer from 'inquirer';
+import inquirerAutocomplete from 'inquirer-autocomplete-prompt';
+import { search } from 'fast-fuzzy';
+
+inquirer.registerPrompt('autocomplete', inquirerAutocomplete);
 import { execSync } from 'child_process';
 import {
   readProviderConfig,
@@ -17,9 +22,10 @@ type CommitStrategy = 'per-phase' | 'per-plan' | 'per-task';
 type ContextualCheckerRole = 'security-auditor' | 'resource-guardian' | 'portability-watcher' | null;
 
 interface ProfilePreset {
-  planning: string;
-  execution: string;
-  verification: string;
+  design: string;
+  plan: string;
+  build: string;
+  review: string;
 }
 
 interface ProfileOverrides {
@@ -132,6 +138,113 @@ class ConfigRunner {
     return true;
   }
 
+  private validateConfigSchema(config: any): { valid: boolean; missing: string[] } {
+    const requiredFields = ['profiles'];
+    const missing: string[] = [];
+
+    for (const field of requiredFields) {
+      if (!config[field]) {
+        missing.push(field);
+      }
+    }
+
+    if (config.profiles) {
+      if (!config.profiles.active_profile) {
+        missing.push('profiles.active_profile');
+      }
+      if (!config.profiles.presets) {
+        missing.push('profiles.presets');
+      }
+    }
+
+    const validModes = ['standard', 'thorough', 'balanced', 'fast', 'quick', 'direct'];
+    if (!config.workflow) {
+      missing.push('workflow');
+    } else if (!config.workflow.mode || !validModes.includes(config.workflow.mode)) {
+      missing.push('workflow.mode');
+    }
+
+    return { valid: missing.length === 0, missing };
+  }
+
+  private async fixSchema(missing: string[]): Promise<void> {
+    if (!this.config) return;
+
+    console.log('');
+    console.log('Setting up missing configuration...');
+
+    const models = this.getAllModels();
+    const discoveredDefault = this.getDiscoveredDefaultModel();
+    const defaultModel = discoveredDefault || models[0] || '';
+    
+    if (discoveredDefault) {
+      console.log(`Discovered model: ${discoveredDefault}`);
+    } else if (models.length === 0) {
+      console.log('Could not fetch models. Using placeholder values.');
+      console.log('Run "Set profile stages" from the menu to configure models later.');
+    }
+
+    if (missing.includes('profiles')) {
+      this.config.profiles = {
+        active_profile: 'balanced',
+        presets: {
+          quality: { design: defaultModel, plan: defaultModel, build: defaultModel, review: defaultModel },
+          balanced: { design: defaultModel, plan: defaultModel, build: defaultModel, review: defaultModel },
+          budget: { design: defaultModel, plan: defaultModel, build: defaultModel, review: defaultModel }
+        },
+        custom_overrides: { quality: {}, balanced: {}, budget: {} }
+      };
+    } else {
+      if (missing.includes('profiles.active_profile')) {
+        this.config.profiles.active_profile = 'balanced';
+      }
+      if (missing.includes('profiles.presets')) {
+        this.config.profiles.presets = {
+          quality: { design: defaultModel, plan: defaultModel, build: defaultModel, review: defaultModel },
+          balanced: { design: defaultModel, plan: defaultModel, build: defaultModel, review: defaultModel },
+          budget: { design: defaultModel, plan: defaultModel, build: defaultModel, review: defaultModel }
+        };
+      }
+      if (!this.config.profiles.custom_overrides) {
+        this.config.profiles.custom_overrides = { quality: {}, balanced: {}, budget: {} };
+      }
+    }
+
+    if (missing.includes('workflow')) {
+      this.config.workflow = {
+        mode: 'standard',
+        research: true,
+        plan_check: true,
+        verifier: true
+      };
+    } else if (missing.includes('workflow.mode')) {
+      this.config.workflow.mode = 'standard';
+      this.config.workflow.research = true;
+      this.config.workflow.plan_check = true;
+      this.config.workflow.verifier = true;
+    }
+
+    await this.saveConfig();
+    console.log('');
+    console.log('Configuration updated with defaults.');
+    console.log('');
+
+    const { runWizard } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'runWizard',
+        message: 'Would you like to configure model presets now?',
+        default: true
+      }
+    ]);
+
+    if (runWizard) {
+      await this.configureProfileStages();
+    } else {
+      console.log('You can configure models later via "Set profile stages" in the menu.');
+    }
+  }
+
   private async loadConfig(): Promise<boolean> {
     const nodes = this.db.getAllActiveNodes();
     const configNode = nodes.find((node: any) => 
@@ -153,6 +266,43 @@ class ConfigRunner {
       return false;
     }
 
+    this.migrateOldStages();
+
+    const validation = this.validateConfigSchema(this.config);
+    if (!validation.valid) {
+      console.log('');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(' Fuska: CONFIG SCHEMA UPDATE NEEDED');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('');
+      console.log('This project has an outdated Fuska config schema.');
+      console.log('');
+      console.log('Missing fields:');
+      for (const field of validation.missing) {
+        console.log(`  - ${field}`);
+      }
+      console.log('');
+
+      const { fix } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'fix',
+          message: 'Would you like to set up these settings now?',
+          default: true
+        }
+      ]);
+
+      if (!fix) {
+        console.log('');
+        console.log('Run "fuska config" again when ready, or run "fuska init" to reinitialize.');
+        console.log('');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        return false;
+      }
+
+      await this.fixSchema(validation.missing);
+    }
+
     const currentSlug = getCurrentInitiativeSlug(this.db);
     if (currentSlug) {
       this.initiativeSlug = currentSlug;
@@ -161,9 +311,62 @@ class ConfigRunner {
     return true;
   }
 
+  private resolveModelAlias(value: string): string {
+    if (!this.config?.model_aliases) {
+      return value;
+    }
+    const aliasKey = value as keyof typeof this.config.model_aliases;
+    if (this.config.model_aliases[aliasKey]) {
+      return this.config.model_aliases[aliasKey]!;
+    }
+    return value;
+  }
+
+  private migrateOldStages(): void {
+    if (!this.config) return;
+
+    for (const profile of ['quality', 'balanced', 'budget'] as ProfileType[]) {
+      const preset = this.config!.profiles.presets[profile];
+      const legacyPreset = preset as any;
+
+      if (legacyPreset.planning && !preset.design) {
+        preset.design = legacyPreset.planning;
+        preset.plan = legacyPreset.planning;
+        delete legacyPreset.planning;
+      }
+      if (legacyPreset.execution && !preset.build) {
+        preset.build = legacyPreset.execution;
+        delete legacyPreset.execution;
+      }
+      if (legacyPreset.verification && !preset.review) {
+        preset.review = legacyPreset.verification;
+        delete legacyPreset.verification;
+      }
+    }
+
+    for (const profile of ['quality', 'balanced', 'budget'] as ProfileType[]) {
+      const overrides = this.config!.profiles.custom_overrides[profile];
+      const legacyOverrides = overrides as any;
+
+      if (legacyOverrides.planning && !overrides.design) {
+        (overrides as any).design = legacyOverrides.planning;
+        (overrides as any).plan = legacyOverrides.planning;
+        delete legacyOverrides.planning;
+      }
+      if (legacyOverrides.execution && !overrides.build) {
+        (overrides as any).build = legacyOverrides.execution;
+        delete legacyOverrides.execution;
+      }
+      if (legacyOverrides.verification && !overrides.review) {
+        (overrides as any).review = legacyOverrides.verification;
+        delete legacyOverrides.verification;
+      }
+    }
+  }
+
   private getEffectiveModels(): ProfilePreset & { overridden: string[] } {
     if (!this.config) {
-      return { planning: '', execution: '', verification: '', overridden: [] };
+      return { design: '', plan: '', build: '', review: '', overridden: [] };
     }
 
     const activeProfile = this.config.profiles.active_profile;
@@ -172,14 +375,16 @@ class ConfigRunner {
     const overridden: string[] = [];
 
     const effective = {
-      planning: overrides.planning || preset.planning,
-      execution: overrides.execution || preset.execution,
-      verification: overrides.verification || preset.verification
+      design: this.resolveModelAlias(overrides.design || preset.design),
+      plan: this.resolveModelAlias(overrides.plan || preset.plan),
+      build: this.resolveModelAlias(overrides.build || preset.build),
+      review: this.resolveModelAlias(overrides.review || preset.review)
     };
 
-    if (overrides.planning) overridden.push('planning');
-    if (overrides.execution) overridden.push('execution');
-    if (overrides.verification) overridden.push('verification');
+    if (overrides.design) overridden.push('design');
+    if (overrides.plan) overridden.push('plan');
+    if (overrides.build) overridden.push('build');
+    if (overrides.review) overridden.push('review');
 
     return { ...effective, overridden };
   }
@@ -188,176 +393,145 @@ class ConfigRunner {
     if (!this.config) return;
 
     const effective = this.getEffectiveModels();
-    const modeConfig = MODE_CONFIG[this.config.workflow.mode];
-    const activeProfile = this.config.profiles.active_profile;
+    const modeConfig = MODE_CONFIG[this.config.workflow.mode] || MODE_CONFIG.standard;
 
     console.log(`Fuska Config: ${this.config.project_name || this.initiativeSlug}`);
-    console.log('│');
-    console.log('├─ Model Aliases');
-    console.log(`│  ├─ quality_model: ${this.config.model_aliases?.quality_model || '(not set)'}`);
-    console.log(`│  ├─ balanced_model: ${this.config.model_aliases?.balanced_model || '(not set)'}`);
-    console.log(`│  ├─ budget_model: ${this.config.model_aliases?.budget_model || '(not set)'}`);
-    console.log(`│  └─ explore_model: ${this.config.model_aliases?.explore_model || '(not set)'}`);
-    console.log('│');
-    console.log(`├─ Active Profile: ${activeProfile}`);
+    console.log('');
+    console.log('Model aliases:');
+    console.log(`* quality_model = ${this.config.model_aliases?.quality_model || '<not set>'}`);
+    console.log(`* balanced_model = ${this.config.model_aliases?.balanced_model || '<not set>'}`);
+    console.log(`* budget_model = ${this.config.model_aliases?.budget_model || '<not set>'}`);
+    console.log(`* explore_model = ${this.config.model_aliases?.explore_model || '<not set>'}`);
+
+    const activeProfile = this.config.profiles.active_profile;
     const preset = this.config.profiles.presets[activeProfile];
     const overrides = this.config.profiles.custom_overrides[activeProfile] || {};
-    
-    const pMark = overrides.planning ? '*' : '';
-    const eMark = overrides.execution ? '*' : '';
-    const vMark = overrides.verification ? '*' : '';
-    
-    console.log('│  └─ Effective Models');
-    console.log(`│     ├─ planning: ${effective.planning}${pMark}`);
-    console.log(`│     ├─ execution: ${effective.execution}${eMark}`);
-    console.log(`│     └─ verification: ${effective.verification}${vMark}`);
-    if (effective.overridden.length > 0) {
-      console.log('│        (* = overridden)');
+
+    console.log('');
+    console.log(`Profile: ${activeProfile}`);
+    const stages: (keyof ProfilePreset)[] = ['design', 'plan', 'build', 'review'];
+    for (const stage of stages) {
+      const aliasValue = overrides[stage] || preset[stage];
+      const resolvedModel = this.resolveModelAlias(aliasValue);
+      console.log(`* ${stage} = ${aliasValue} (${resolvedModel})`);
     }
-    console.log('│');
-    console.log(`├─ Workflow: ${this.config.workflow.mode} (${modeConfig.percentage}%)`);
-    console.log(`│  ├─ research: ${this.config.workflow.research ? 'on' : 'off'}`);
-    console.log(`│  ├─ plan_check: ${this.config.workflow.plan_check ? 'on' : 'off'}`);
-    console.log(`│  └─ verifier: ${this.config.workflow.verifier ? 'on' : 'off'}`);
-    console.log('│');
-    console.log('├─ Checker Panel');
-    console.log(`│  ├─ base: ${this.config.checker_panel?.base || 'quality-advocate'}`);
-    console.log(`│  ├─ contextual: ${this.config.checker_panel?.contextual || '(not detected)'}`);
-    console.log(`│  └─ expert: ${this.config.checker_panel?.expert || 'dynamic'}`);
-    console.log('│');
+    console.log('');
+
+    console.log(`Workflow: ${this.config.workflow.mode} (${modeConfig.percentage}%)`);
+    console.log(`* research = ${this.config.workflow.research ? 'on' : 'off'}`);
+    console.log(`* plan_check = ${this.config.workflow.plan_check ? 'on' : 'off'}`);
+    console.log(`* verifier = ${this.config.workflow.verifier ? 'on' : 'off'}`);
+    console.log('');
+
+    console.log(`Git: ${this.config.git?.commit_strategy || 'per-phase'}`);
+    console.log('');
+
+    console.log('Checker panel:');
+    console.log(`* base = ${this.config.checker_panel?.base || 'quality-advocate'}`);
+    console.log(`* contextual = ${this.config.checker_panel?.contextual || '<not detected>'}`);
+    console.log(`* expert = ${this.config.checker_panel?.expert || 'dynamic'}`);
+
     if (this.config.project_classification) {
-      console.log('├─ Project Classification');
-      console.log(`│  ├─ type: ${this.config.project_classification.type}`);
-      console.log(`│  ├─ confidence: ${this.config.project_classification.confidence}`);
-      console.log(`│  └─ signals: ${this.config.project_classification.signals.join(', ') || 'none'}`);
-      console.log('│');
+      console.log('');
+      console.log('Project classification:');
+      console.log(`* type = ${this.config.project_classification.type}`);
+      console.log(`* confidence = ${this.config.project_classification.confidence}`);
+      console.log(`* signals = ${this.config.project_classification.signals.join(', ')}`);
     }
-    console.log(`└─ Git: ${this.config.git?.commit_strategy || 'per-phase'}`);
   }
 
   private displayState(): void {
     if (!this.config) return;
 
-    console.log('\n');
     const effective = this.getEffectiveModels();
-    const modeConfig = MODE_CONFIG[this.config.workflow.mode];
+    const modeConfig = MODE_CONFIG[this.config.workflow.mode] || MODE_CONFIG.standard;
 
-    console.log('Model Aliases:');
-    console.log('| Alias          | Model                                    |');
-    console.log('|----------------|------------------------------------------|');
-    console.log(`| quality_model  | ${this.config.model_aliases?.quality_model || 'not set'.padEnd(38)} |`);
-    console.log(`| balanced_model | ${this.config.model_aliases?.balanced_model || 'not set'.padEnd(38)} |`);
-    console.log(`| budget_model   | ${this.config.model_aliases?.budget_model || 'not set'.padEnd(38)} |`);
-    console.log(`| explore_model  | ${this.config.model_aliases?.explore_model || 'not set'.padEnd(38)} |`);
+    console.log(`Initiative: ${this.initiativeSlug}`);
     console.log('');
+    console.log('Model aliases:');
+    console.log(`* quality_model = ${this.config.model_aliases?.quality_model || '<not set>'}`);
+    console.log(`* balanced_model = ${this.config.model_aliases?.balanced_model || '<not set>'}`);
+    console.log(`* budget_model = ${this.config.model_aliases?.budget_model || '<not set>'}`);
+    console.log(`* explore_model = ${this.config.model_aliases?.explore_model || '<not set>'}`);
 
-    console.log(`Active profile: ${this.config.profiles.active_profile}`);
+    const activeProfile = this.config.profiles.active_profile;
+    const preset = this.config.profiles.presets[activeProfile];
+    const overrides = this.config.profiles.custom_overrides[activeProfile] || {};
+
     console.log('');
-    console.log('| Stage        | Model                                    |');
-    console.log('|--------------|------------------------------------------|');
-    
-    const planningMark = effective.overridden.includes('planning') ? '*' : ' ';
-    const executionMark = effective.overridden.includes('execution') ? '*' : ' ';
-    const verificationMark = effective.overridden.includes('verification') ? '*' : ' ';
-    
-    console.log(`| planning     | ${(effective.planning + planningMark).padEnd(38)} |`);
-    console.log(`| execution    | ${(effective.execution + executionMark).padEnd(38)} |`);
-    console.log(`| verification | ${(effective.verification + verificationMark).padEnd(38)} |`);
-    console.log('');
-    
-    if (effective.overridden.length > 0) {
-      console.log('* = overridden');
-    } else {
-      console.log('No overrides');
+    console.log(`Profile: ${activeProfile}`);
+    const stages: (keyof ProfilePreset)[] = ['design', 'plan', 'build', 'review'];
+    for (const stage of stages) {
+      const aliasValue = overrides[stage] || preset[stage];
+      const resolvedModel = this.resolveModelAlias(aliasValue);
+      console.log(`* ${stage} = ${aliasValue} (${resolvedModel})`);
     }
     console.log('');
 
-    console.log('Workflow:');
-    console.log('| Mode              | Description                          |');
-    console.log('|-------------------|--------------------------------------|');
-    console.log(`| ${this.config.workflow.mode} (${modeConfig.percentage}%)`.padEnd(19) + ` | ${MODE_DESCRIPTIONS[this.config.workflow.mode].substring(0, 36).padEnd(36)} |`);
+    console.log(`Workflow: ${this.config.workflow.mode} (${modeConfig.percentage}%)`);
+    console.log(`* research = ${this.config.workflow.research ? 'on' : 'off'}`);
+    console.log(`* plan_check = ${this.config.workflow.plan_check ? 'on' : 'off'}`);
+    console.log(`* verifier = ${this.config.workflow.verifier ? 'on' : 'off'}`);
     console.log('');
 
-    console.log('Derived settings (read-only):');
-    console.log('| Toggle     | Value           |');
-    console.log('|------------|-----------------|');
-    console.log(`| Research   | ${this.config.workflow.research ? 'On' : 'Off'.padEnd(13)} |`);
-    console.log(`| Plan Check | ${this.config.workflow.plan_check ? 'On' : 'Off'.padEnd(13)} |`);
-    console.log(`| Verifier   | ${this.config.workflow.verifier ? 'On' : 'Off'.padEnd(13)} |`);
+    console.log(`Git: ${this.config.git?.commit_strategy || 'per-phase'}`);
     console.log('');
 
-    console.log('Git:');
-    console.log('| Setting          | Value                                        |');
-    console.log('|------------------|----------------------------------------------|');
-    console.log(`| commit_strategy  | ${(this.config.git?.commit_strategy || 'per-phase').padEnd(42)} |`);
-    console.log('');
-
-    console.log('Checker Panel:');
-    console.log('| Role        | Value                                        |');
-    console.log('|-------------|----------------------------------------------|');
-    console.log(`| base        | ${(this.config.checker_panel?.base || 'quality-advocate').padEnd(42)} |`);
-    console.log(`| contextual  | ${(this.config.checker_panel?.contextual || 'not detected').padEnd(42)} |`);
-    console.log(`| expert      | ${(this.config.checker_panel?.expert || 'dynamic').padEnd(42)} |`);
-    console.log('');
+    console.log('Checker panel:');
+    console.log(`* base = ${this.config.checker_panel?.base || 'quality-advocate'}`);
+    console.log(`* contextual = ${this.config.checker_panel?.contextual || '<not detected>'}`);
+    console.log(`* expert = ${this.config.checker_panel?.expert || 'dynamic'}`);
 
     if (this.config.project_classification) {
-      console.log('Project Classification:');
-      console.log('| Field       | Value                                        |');
-      console.log('|-------------|----------------------------------------------|');
-      console.log(`| type        | ${this.config.project_classification.type.padEnd(42)} |`);
-      console.log(`| confidence  | ${this.config.project_classification.confidence.padEnd(42)} |`);
-      console.log(`| signals     | ${this.config.project_classification.signals.join(', ').substring(0, 42).padEnd(42)} |`);
       console.log('');
+      console.log('Project classification:');
+      console.log(`* type = ${this.config.project_classification.type}`);
+      console.log(`* confidence = ${this.config.project_classification.confidence}`);
+      console.log(`* signals = ${this.config.project_classification.signals.join(', ')}`);
     }
   }
 
   private async interactiveLoop(): Promise<void> {
     while (true) {
       this.displayState();
+      console.log('');
 
       const { action } = await inquirer.prompt([
         {
           type: 'list',
           name: 'action',
           message: 'Choose an action',
+          loop: false,
           choices: [
-            { name: 'Quick settings', value: 'quick' },
+            { name: 'Set active profile', value: 'set_profile' },
             { name: 'Configure model aliases', value: 'aliases' },
+            { name: 'Set profile stages', value: 'set_stages' },
+            { name: 'Set workflow mode', value: 'set_mode' },
+            { name: 'Set git commit strategy', value: 'git' },
             { name: 'Checker panel settings', value: 'checker_panel' },
-            { name: 'Git commit strategy', value: 'git' },
-            { name: 'Import graph settings', value: 'refresh_settings' },
-            { name: 'Set stage override', value: 'set_override' },
-            { name: 'Clear stage override', value: 'clear_override' },
-            { name: 'Reset presets', value: 'reset' },
             { name: 'Exit', value: 'exit' }
           ]
         }
-      ]);
+      ]).catch(() => ({ action: 'exit' }));
 
       switch (action) {
-        case 'quick':
-          await this.quickSettings();
+        case 'set_profile':
+          await this.setActiveProfile();
           break;
         case 'aliases':
           await this.configureAliases();
           break;
-        case 'checker_panel':
-          await this.configureCheckerPanel();
+        case 'set_stages':
+          await this.configureProfileStages();
+          break;
+        case 'set_mode':
+          await this.setWorkflowMode();
           break;
         case 'git':
           await this.configureGit();
           break;
-        case 'refresh_settings':
-          await this.configureRefreshSettings();
-          break;
-        case 'set_override':
-          await this.setOverride();
-          break;
-        case 'clear_override':
-          await this.clearOverride();
-          break;
-        case 'reset':
-          await this.resetPresets();
+        case 'checker_panel':
+          await this.configureCheckerPanel();
           break;
         case 'exit':
           console.log('Settings saved.');
@@ -366,23 +540,32 @@ class ConfigRunner {
     }
   }
 
-  private async quickSettings(): Promise<void> {
+  private async setActiveProfile(): Promise<void> {
     if (!this.config) return;
 
     const { profile } = await inquirer.prompt([
       {
         type: 'list',
         name: 'profile',
-        message: 'Which model profile?',
-        choices: ['quality', 'balanced', 'budget']
+        message: 'Select active profile',
+        choices: ['quality', 'balanced', 'budget'],
+        default: this.config.profiles.active_profile
       }
     ]);
+
+    this.config.profiles.active_profile = profile;
+    await this.saveConfig();
+    console.log(`Active profile set to: ${profile}`);
+  }
+
+  private async setWorkflowMode(): Promise<void> {
+    if (!this.config) return;
 
     const { mode } = await inquirer.prompt([
       {
         type: 'list',
         name: 'mode',
-        message: 'Which workflow mode?',
+        message: 'Select workflow mode',
         choices: [
           { name: 'Standard (90%)', value: 'standard' },
           { name: 'Thorough (70%)', value: 'thorough' },
@@ -390,44 +573,50 @@ class ConfigRunner {
           { name: 'Fast (30%)', value: 'fast' },
           { name: 'Quick (15%)', value: 'quick' },
           { name: 'Direct (0%)', value: 'direct' }
-        ]
+        ],
+        default: this.config.workflow.mode
       }
     ]);
 
-    this.config.profiles.active_profile = profile;
     this.config.workflow.mode = mode as WorkflowMode;
-    
     const modeConfig = MODE_CONFIG[mode as WorkflowMode];
     this.config.workflow.research = modeConfig.research;
     this.config.workflow.plan_check = modeConfig.plan_check;
     this.config.workflow.verifier = modeConfig.verifier;
 
     await this.saveConfig();
-    this.displaySettingsBanner();
+    console.log(`Workflow mode set to: ${mode}`);
   }
 
   private async configureAliases(): Promise<void> {
     if (!this.config) return;
 
     const aliases = ['quality_model', 'balanced_model', 'budget_model', 'explore_model'] as const;
+    const discoveredDefault = this.getDiscoveredDefaultModel();
     
     for (const alias of aliases) {
       const current = this.config.model_aliases?.[alias] || '';
+      const defaultModel = current || discoveredDefault || '';
+      const hintLabel = current ? `current: ${current}` : (discoveredDefault ? `discovered: ${discoveredDefault}` : 'not set');
       
-      const { modelName } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'modelName',
-          message: `Enter model name for ${alias} (current: ${current || 'not set'})`,
-          default: current
-        }
-      ]);
+      while (true) {
+        const { modelName } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'modelName',
+            message: `Enter model name for ${alias} (${hintLabel})`,
+            default: defaultModel
+          }
+        ]);
 
-      if (modelName.trim()) {
+        if (!modelName.trim()) {
+          break;
+        }
+
         const matches = this.searchModels(modelName.trim());
         
         if (matches.length === 0) {
-          console.log(`No models found matching "${modelName}"`);
+          console.log(`No models found matching "${modelName}". Try again or leave empty to skip.`);
           continue;
         } else if (matches.length === 1) {
           if (!this.config!.model_aliases) {
@@ -435,20 +624,19 @@ class ConfigRunner {
           }
           this.config!.model_aliases[alias] = matches[0];
           console.log(`Set ${alias} to ${matches[0]}`);
+          break;
         } else {
-          const { selectedModel } = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'selectedModel',
-              message: `Multiple providers have '${modelName}'. Which provider?`,
-              choices: matches
-            }
-          ]);
+          const selectedModel = await this.selectModel(
+            `Multiple providers have '${modelName}'. Which provider?`,
+            matches
+          );
           
           if (!this.config!.model_aliases) {
             this.config!.model_aliases = {};
           }
           this.config!.model_aliases[alias] = selectedModel;
+          console.log(`Set ${alias} to ${selectedModel}`);
+          break;
         }
       }
     }
@@ -491,80 +679,6 @@ class ConfigRunner {
 
     await this.saveConfig();
     console.log(`Commit strategy set to ${strategy}`);
-  }
-
-  private async configureRefreshSettings(): Promise<void> {
-    if (!this.config) return;
-
-    const refresh = (this.config as any).refresh || { mode: 'hybrid', age_hours: 24 };
-
-    const { action } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'action',
-        message: 'Import graph refresh settings',
-        choices: [
-          { name: `Toggle mode (current: ${refresh.mode || 'hybrid'})`, value: 'mode' },
-          { name: `Staleness threshold (current: ${refresh.age_hours || 24}h)`, value: 'threshold' },
-          { name: 'View status', value: 'status' },
-          { name: 'Back', value: 'back' }
-        ]
-      }
-    ]);
-
-    if (action === 'back') return;
-
-    if (action === 'mode') {
-      const { mode } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'mode',
-          message: 'Select refresh mode:',
-          choices: [
-            { name: 'hybrid - Auto-refresh if stale or git SHA changed (Recommended)', value: 'hybrid' },
-            { name: 'manual - Only refresh when you run /fuska-refresh', value: 'manual' },
-            { name: 'disabled - Never auto-refresh, use grep fallback', value: 'disabled' }
-          ],
-          default: refresh.mode || 'hybrid'
-        }
-      ]);
-
-      (this.config as any).refresh = { ...refresh, mode };
-      await this.saveConfig();
-      console.log(`Refresh mode set to: ${mode}`);
-    }
-
-    if (action === 'threshold') {
-      const { hours } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'hours',
-          message: 'Enter staleness threshold in hours:',
-          default: String(refresh.age_hours || 24),
-          validate: (input: string) => {
-            const num = parseInt(input);
-            return !isNaN(num) && num > 0 ? true : 'Enter a positive number';
-          }
-        }
-      ]);
-
-      (this.config as any).refresh = { ...refresh, age_hours: parseInt(hours) };
-      await this.saveConfig();
-      console.log(`Staleness threshold set to: ${hours} hours`);
-    }
-
-    if (action === 'status') {
-      console.log('');
-      console.log('Import Graph Status:');
-      console.log(`  Mode: ${refresh.mode || 'not set'}`);
-      console.log(`  Threshold: ${refresh.age_hours || 24} hours`);
-      console.log(`  Last SHA: ${refresh.last_sha || 'never'}`);
-      console.log(`  Last refresh: ${refresh.last_refresh || 'never'}`);
-      console.log(`  Files scanned: ${refresh.files_scanned || 0}`);
-      console.log(`  Symbols indexed: ${refresh.symbols_indexed || 0}`);
-      console.log(`  Dead code count: ${refresh.dead_code_count || 0}`);
-      console.log('');
-    }
   }
 
   private async configureCheckerPanel(): Promise<void> {
@@ -667,141 +781,31 @@ class ConfigRunner {
     }
   }
 
-  private async setOverride(): Promise<void> {
+  private async configureProfileStages(): Promise<void> {
     if (!this.config) return;
 
-    const activeProfile = this.config.profiles.active_profile;
-    const currentOverrides = this.config.profiles.custom_overrides[activeProfile] || {};
-
-    const { stage } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'stage',
-        message: 'Which stage to override?',
-        choices: ['planning', 'execution', 'verification', 'Cancel']
-      }
-    ]);
-
-    if (stage === 'Cancel') return;
-
-    const models = this.getAllModels();
-    
-    if (models.length === 0) {
-      console.log('Could not fetch models. Please check that opencode is available.');
-      return;
-    }
-
-    const { model } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'model',
-        message: `Select model for ${stage}:`,
-        choices: models,
-        default: currentOverrides[stage as keyof ProfilePreset] || ''
-      }
-    ]);
-
-    if (!this.config.profiles.custom_overrides[activeProfile]) {
-      this.config.profiles.custom_overrides[activeProfile] = {};
-    }
-    this.config.profiles.custom_overrides[activeProfile][stage as keyof ProfilePreset] = model;
-
-    await this.saveConfig();
-    console.log(`Override set: ${stage} = ${model}`);
-  }
-
-  private async clearOverride(): Promise<void> {
-    if (!this.config) return;
-
-    const activeProfile = this.config.profiles.active_profile;
-    const currentOverrides = this.config.profiles.custom_overrides[activeProfile] || {};
-    const overrideKeys = Object.keys(currentOverrides) as (keyof ProfilePreset)[];
-
-    if (overrideKeys.length === 0) {
-      console.log('No overrides exist for the current profile.');
-      return;
-    }
-
-    console.log('Current overrides:');
-    for (const key of overrideKeys) {
-      console.log(`  - ${key}: ${currentOverrides[key]}`);
-    }
-
-    const { stage } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'stage',
-        message: 'Which override to clear?',
-        choices: [...overrideKeys, 'Cancel']
-      }
-    ]);
-
-    if (stage === 'Cancel') return;
-
-    delete this.config.profiles.custom_overrides[activeProfile][stage as keyof ProfilePreset];
-    await this.saveConfig();
-    console.log(`Override cleared for ${stage}`);
-  }
-
-  private async resetPresets(): Promise<void> {
-    if (!this.config) return;
-
-    console.log('Running Preset Setup Wizard...');
-    console.log('');
-
-    const models = this.getAllModels();
-    
-    if (models.length === 0) {
-      console.log('Could not fetch models. Please check that opencode is available.');
-      return;
-    }
-
+    const stages: (keyof ProfilePreset)[] = ['design', 'plan', 'build', 'review'];
+    const aliases = ['quality_model', 'balanced_model', 'budget_model'];
     const profiles: ProfileType[] = ['quality', 'balanced', 'budget'];
-    const stages: (keyof ProfilePreset)[] = ['planning', 'execution', 'verification'];
-
-    for (const alias of ['quality_model', 'balanced_model', 'budget_model', 'explore_model'] as const) {
-      const current = this.config.model_aliases?.[alias] || '';
-      const { modelName } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'modelName',
-          message: `Enter model name for ${alias} (current: ${current || 'not set'})`,
-          default: current
-        }
-      ]);
-
-      if (modelName.trim()) {
-        const matches = this.searchModels(modelName.trim());
-        if (matches.length > 0) {
-          if (!this.config!.model_aliases) {
-            this.config!.model_aliases = {};
-          }
-          this.config!.model_aliases[alias] = matches[0];
-          console.log(`Set ${alias} to ${matches[0]}`);
-        }
-      }
-    }
-
-    console.log('');
 
     for (const profile of profiles) {
-      console.log(`Configuring ${profile} profile:`);
-      
+      console.log(`\nConfiguring ${profile} profile:`);
+
       for (const stage of stages) {
         const current = this.config!.profiles.presets[profile][stage];
-        const { model } = await inquirer.prompt([
+        
+        const { alias } = await inquirer.prompt([
           {
             type: 'list',
-            name: 'model',
-            message: `  ${stage} model:`,
-            choices: models,
-            default: current
+            name: 'alias',
+            message: `  ${stage}:`,
+            choices: aliases,
+            default: current || 'balanced_model'
           }
         ]);
-        
-        this.config!.profiles.presets[profile][stage] = model;
+
+        this.config!.profiles.presets[profile][stage] = alias;
       }
-      console.log('');
     }
 
     this.config.profiles.custom_overrides = {
@@ -811,7 +815,7 @@ class ConfigRunner {
     };
 
     await this.saveConfig();
-    this.displayPresetsBanner();
+    console.log('\nProfile stages configured.');
   }
 
   private getAllModels(): string[] {
@@ -821,6 +825,41 @@ class ConfigRunner {
     } catch (e) {
       return [];
     }
+  }
+
+  private getDiscoveredDefaultModel(): string | null {
+    try {
+      const modelPath = path.join(os.homedir(), '.local', 'state', 'opencode', 'model.json');
+      if (!fs.existsSync(modelPath)) return null;
+      const data = JSON.parse(fs.readFileSync(modelPath, 'utf-8'));
+      if (data.recent && data.recent.length > 0) {
+        const { providerID, modelID } = data.recent[0];
+        return `${providerID}/${modelID}`;
+      }
+      return null;
+    } catch { return null; }
+  }
+
+  private async selectModel(
+    message: string,
+    models: string[],
+    defaultModel?: string
+  ): Promise<string> {
+    const { model } = await inquirer.prompt([
+      {
+        type: 'autocomplete',
+        name: 'model',
+        message,
+        default: defaultModel,
+        source: (_: any, input: string) => {
+          if (!input) {
+            return models;
+          }
+          return search(input, models);
+        }
+      }
+    ]);
+    return model;
   }
 
   private async saveConfig(): Promise<void> {
@@ -855,17 +894,18 @@ class ConfigRunner {
     }
 
     const agentConfig: Record<string, { model: string }> = {
-      "fuska-planner": { "model": effective.planning },
-      "fuska-plan-checker": { "model": effective.planning },
-      "fuska-phase-researcher": { "model": effective.planning },
-      "fuska-roadmapper": { "model": effective.planning },
-      "fuska-project-researcher": { "model": effective.planning },
-      "fuska-research-synthesizer": { "model": effective.planning },
-      "fuska-codebase-mapper": { "model": effective.planning },
-      "fuska-executor": { "model": effective.execution },
-      "fuska-debugger": { "model": effective.execution },
-      "fuska-verifier": { "model": effective.verification },
-      "fuska-integration-checker": { "model": effective.verification }
+      "fuska-planner": { "model": effective.design },
+      "fuska-roadmapper": { "model": effective.design },
+      "fuska-initiative-researcher": { "model": effective.design },
+      "fuska-research-synthesizer": { "model": effective.design },
+      "fuska-plan-checker": { "model": effective.plan },
+      "fuska-phase-researcher": { "model": effective.plan },
+      "fuska-codebase-mapper": { "model": effective.plan },
+      "fuska-executor": { "model": effective.build },
+      "fuska-debugger": { "model": effective.build },
+      "fuska-verifier": { "model": effective.review },
+      "fuska-integration-checker": { "model": effective.review },
+      "fuska-commit-checker": { "model": effective.review }
     };
 
     if (exploreModel) {
@@ -884,7 +924,7 @@ class ConfigRunner {
   private displaySettingsBanner(): void {
     if (!this.config) return;
 
-    const modeConfig = MODE_CONFIG[this.config.workflow.mode];
+    const modeConfig = MODE_CONFIG[this.config.workflow.mode] || MODE_CONFIG.standard;
     
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

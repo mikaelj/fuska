@@ -32,7 +32,7 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees (atomic commits, state tra
 
 <execution_context>
 
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 
 Orchestration is inline. Mode determines which agents spawn.
 
@@ -67,7 +67,7 @@ Arguments: `$ARGUMENTS`
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ---
 

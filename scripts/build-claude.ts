@@ -82,6 +82,34 @@ async function buildClaude(): Promise<void> {
     path.join(CLAUDE_DIR, 'fuska')
   );
   
+  console.log('  Transforming OpenCode paths to Claude paths...');
+  const allMdFiles = await glob('**/*.md', { cwd: CLAUDE_DIR });
+  for (const file of allMdFiles) {
+    const filePath = path.join(CLAUDE_DIR, file);
+    let content = await fs.readFile(filePath, 'utf-8');
+    if (content.includes('~/.config/opencode')) {
+      content = content.replace(/~\/\.config\/opencode/g, '~/.claude');
+      await fs.writeFile(filePath, content);
+    }
+  }
+  
+  console.log('  Checking for remaining OpenCode path references...');
+  const opencodePattern = /~\/\.config\/opencode/g;
+  const violations: string[] = [];
+  
+  for (const file of allMdFiles) {
+    const content = await fs.readFile(path.join(CLAUDE_DIR, file), 'utf-8');
+    if (opencodePattern.test(content)) {
+      violations.push(file);
+    }
+  }
+  
+  if (violations.length > 0) {
+    console.error('\nERROR: OpenCode path references found in Claude output:');
+    violations.forEach(f => console.error(`  ${f}`));
+    process.exit(1);
+  }
+  
   console.log('  Transforming commands to skills...');
   const commandsDir = path.join(OPENCODE_DIR, 'command/fuska');
   const commandFiles = await glob('*.md', { cwd: commandsDir, absolute: false });

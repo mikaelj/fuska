@@ -1,10 +1,135 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import * as jsonc from 'jsonc-parser';
 import { execSync } from 'child_process';
 import { runOpenCodeJson } from './utils/json-output';
 import { findInitiativeBySlug } from './utils/initiative-utils';
-import { readProviderConfig } from './utils/provider-config';
+import { readProviderConfig, ProviderType } from './utils/provider-config';
+
+const OPENCODE_FUSKA_PERMISSIONS: Record<string, string> = {
+  '~/.config/opencode/fuska/*': 'allow',
+  '~/.config/opencode/commands/fuska/*': 'allow',
+  '~/.config/opencode/agents/fuska/*': 'allow',
+};
+
+const CLAUDE_FUSKA_PERMISSIONS: string[] = [
+  'Read(~/.claude/fuska/**)',
+  'Read(~/.claude/skills/fuska*/**)',
+  'Read(~/.claude/agents/fuska/**)',
+];
+
+async function updateOpenCodePermissions(projectRoot: string): Promise<void> {
+  const opencodeDir = path.join(projectRoot, '.opencode');
+  const jsonPath = path.join(opencodeDir, 'opencode.json');
+  const jsoncPath = path.join(opencodeDir, 'opencode.jsonc');
+
+  const useJson = await fs.pathExists(jsonPath);
+  const targetPath = useJson ? jsonPath : jsoncPath;
+
+  let content = '{}';
+  if (await fs.pathExists(targetPath)) {
+    content = await fs.readFile(targetPath, 'utf-8');
+  }
+
+  const config = jsonc.parse(content) as Record<string, unknown>;
+
+  if (!config.permission) {
+    config.permission = {};
+  }
+  if (!(config.permission as Record<string, unknown>).external_directory) {
+    (config.permission as Record<string, unknown>).external_directory = {};
+  }
+
+  const externalDir = (config.permission as Record<string, unknown>).external_directory as Record<string, string>;
+  let added = 0;
+
+  for (const [key, value] of Object.entries(OPENCODE_FUSKA_PERMISSIONS)) {
+    if (externalDir[key] !== value) {
+      externalDir[key] = value;
+      added++;
+    }
+  }
+
+  if (added === 0) {
+    console.log('  OpenCode permissions already configured');
+    return;
+  }
+
+  await fs.ensureDir(opencodeDir);
+
+  if (useJson || !(await fs.pathExists(targetPath))) {
+    await fs.writeFile(targetPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  } else {
+    const existingContent = await fs.readFile(targetPath, 'utf-8');
+    const edits: jsonc.Edit[] = [];
+
+    if (!jsonc.parse(existingContent).permission) {
+      edits.push(...jsonc.modify(existingContent, ['permission'], {}, {}));
+    }
+    if (!jsonc.parse(existingContent).permission?.external_directory) {
+      edits.push(...jsonc.modify(existingContent, ['permission', 'external_directory'], {}, {}));
+    }
+
+    for (const [key, value] of Object.entries(OPENCODE_FUSKA_PERMISSIONS)) {
+      const currentPath = ['permission', 'external_directory', key];
+      edits.push(...jsonc.modify(existingContent, currentPath, value, {}));
+    }
+
+    if (edits.length > 0) {
+      const newContent = jsonc.applyEdits(existingContent, edits);
+      await fs.writeFile(targetPath, newContent, 'utf-8');
+    }
+  }
+
+  console.log(`  Updated ${path.relative(projectRoot, targetPath)} with ${added} fuska permission(s)`);
+}
+
+async function updateClaudePermissions(projectRoot: string): Promise<void> {
+  const claudeDir = path.join(projectRoot, '.claude');
+  const settingsPath = path.join(claudeDir, 'settings.json');
+
+  let config: Record<string, unknown> = {};
+
+  if (await fs.pathExists(settingsPath)) {
+    const content = await fs.readFile(settingsPath, 'utf-8');
+    config = jsonc.parse(content) as Record<string, unknown>;
+  }
+
+  if (!config.permissions) {
+    config.permissions = {};
+  }
+  if (!(config.permissions as Record<string, unknown>).allow) {
+    (config.permissions as Record<string, unknown>).allow = [];
+  }
+
+  const allowList = (config.permissions as Record<string, unknown>).allow as string[];
+  let added = 0;
+
+  for (const permission of CLAUDE_FUSKA_PERMISSIONS) {
+    if (!allowList.includes(permission)) {
+      allowList.push(permission);
+      added++;
+    }
+  }
+
+  if (added === 0) {
+    console.log('  Claude permissions already configured');
+    return;
+  }
+
+  await fs.ensureDir(claudeDir);
+  await fs.writeFile(settingsPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  console.log(`  Updated ${path.relative(projectRoot, settingsPath)} with ${added} fuska permission(s)`);
+}
+
+async function updatePermissions(projectRoot: string, provider: ProviderType): Promise<void> {
+  if (provider === 'opencode') {
+    await updateOpenCodePermissions(projectRoot);
+  } else {
+    await updateClaudePermissions(projectRoot);
+  }
+}
 
 class InitRunner {
   private projectDir: string;
@@ -14,7 +139,19 @@ class InitRunner {
     this.projectDir = options.projectDir;
   }
 
-  async run(description: string | undefined, options: { noMap?: boolean }): Promise<void> {
+  async run(description: string | undefined, options: { noMap?: boolean; permissionsOnly?: boolean }): Promise<void> {
+    const config = await readProviderConfig();
+
+    if (options.permissionsOnly) {
+      if (!config) {
+        console.error('Error: No provider configured. Run `fuska install` first.');
+        process.exit(1);
+      }
+      console.log(`Updating ${config.provider} permissions...`);
+      await updatePermissions(this.projectDir, config.provider);
+      return;
+    }
+
     if (await this.isAlreadyInitialized()) {
       this.printAlreadyInitialized();
       return;
@@ -24,6 +161,11 @@ class InitRunner {
     await this.createMegaMemory();
     await this.createInitiative(description);
     await this.ensureMegaMemoryMcp();
+
+    if (config) {
+      console.log('\nUpdating local permissions...');
+      await updatePermissions(this.projectDir, config.provider);
+    }
 
     if (!options.noMap) {
       await this.runCodeMapping();
@@ -66,7 +208,7 @@ class InitRunner {
     await fs.ensureDir(megamemoryPath);
 
     const { KnowledgeDB } = await import('megamemory/dist/db.js');
-    this.db = new KnowledgeDB(megamemoryPath);
+    this.db = new KnowledgeDB(path.join(megamemoryPath, 'knowledge.db'));
   }
 
   private async createInitiative(description: string | undefined): Promise<void> {
@@ -220,7 +362,8 @@ export function initCommand(program: Command) {
     .command('init [description...]')
     .description('Initialize current directory with a "main" initiative')
     .option('--no-map', 'Skip codebase mapping (run "fuska map" later)')
-    .action(async (descriptionParts: string[] | undefined, options: { noMap?: boolean }) => {
+    .option('--permissions-only', 'Only update local permissions for the configured provider')
+    .action(async (descriptionParts: string[] | undefined, options: { noMap?: boolean; permissionsOnly?: boolean }) => {
       const description = descriptionParts?.join(' ');
       const runner = new InitRunner({
         projectDir: process.cwd()

@@ -22,7 +22,7 @@ Uses MegaMemory to query project state and roadmap data.
 </objective>
 
  <execution_context>
- @../../fuska/references/preflight-check-project-exists.md
+ @../../fuska/references/preflight-check-initiative-exists.md
  @../../fuska/workflows/list-phase-assumptions.md
  </execution_context>
 
@@ -61,7 +61,7 @@ megamemory_understand(query="roadmap", top_k=5)
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 **Follow this process to list phase assumptions:**
 

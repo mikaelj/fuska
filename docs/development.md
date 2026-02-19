@@ -52,7 +52,7 @@ The `build:claude` script:
 npm install
 npm run build
 npm link                    # Makes 'fuska' command available globally
-fuska install --opencode    # Creates symlinks to this directory
+fuska install opencode      # Creates symlinks to this directory
 
 # Development cycle
 npm run build               # Rebuild after changes
@@ -70,7 +70,7 @@ npm run build               # Rebuild if TypeScript changed
 
 ```bash
 npm install -g fuska
-fuska install --opencode    # or --claude or --both
+fuska install opencode      # or claude or both
 ```
 
 Creates symlinks from target directories to the npm package location.
@@ -86,19 +86,36 @@ With `npm link`, any changes you make to the source are immediately available to
 For working on Fuska itself:
 
 ```bash
-# Install CLI globally from source
-./install-cli.sh
+# Dev mode: symlinks point to source dir (changes immediately available)
+./install-dev.sh
 
 # Install to target (symlinks to source dir)
-./install-target.sh --opencode
+fuska install opencode
 ```
 
 **Scripts:**
 
 | Script | Purpose | Result |
 |--------|---------|--------|
-| `install-cli.sh` | Build + `npm link` | `fuska` command available globally, points to local source |
-| `install-target.sh` | Run `fuska install` | Symlinks from `~/.config/opencode/` -> local source dir |
+| `install-dev.sh` | Build + `npm link` | `fuska` command available globally, points to local source |
+| `install-pkg.sh` | Build + `npm pack` + install | Production-like install to global node_modules |
+| `install-target.sh` | Manual symlink creation | Direct symlinks without CLI (use `opencode` or `claude`) |
+
+### Production-Like Install
+
+To test the package as if installed from npm (symlinks point to global node_modules, not source dir):
+
+```bash
+./install-pkg.sh
+fuska install opencode
+```
+
+This uses `npm pack` to create a tarball, then installs it globally — exactly like `npm install -g fuska` from the registry.
+
+**When to use:**
+- Testing the actual installation experience
+- Verifying symlinks resolve to the correct global path
+- CI/CD testing of the package
 
 ### Manual Symlinks
 

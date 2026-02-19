@@ -45,7 +45,7 @@ The important field is **`summary`** — it's a JSON string containing the debug
 </megamemory_guide>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 </execution_context>
 
 <context>
@@ -61,7 +61,7 @@ megamemory_understand(query="debug active session", top_k=10)
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 0.5. Help Check
 

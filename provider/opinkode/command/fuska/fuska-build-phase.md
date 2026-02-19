@@ -26,7 +26,7 @@ Context budget: ~15% orchestrator, 100% fresh per subagent.
 
 <execution_context>
 
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/phase-templates.ts
 @../../fuska/scripts/helpers.ts
@@ -155,7 +155,7 @@ If currentBranch is the milestone branch:
 
 ## 2. Preflight Check
 
-Follow MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 **Step 2.1: Resolve Model Profile**
 

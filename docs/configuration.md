@@ -68,6 +68,8 @@ fuska config
 # Select "Model aliases"
 ```
 
+**Model selection UX:** When selecting models, the full list is shown immediately. Type to filter — matching is fuzzy (e.g., "glm5" matches "zai-coding-plan/glm-5").
+
 ---
 
 ## Stages

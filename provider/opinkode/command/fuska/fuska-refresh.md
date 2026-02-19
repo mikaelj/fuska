@@ -25,7 +25,7 @@ Refresh the import graph stored in MegaMemory with file and symbol-level indexin
 </objective>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 </execution_context>
 
 <megamemory_guide>
@@ -70,7 +70,7 @@ Variable: `$ARGUMENTS` contains flags and arguments.
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 1. Parse Arguments
 

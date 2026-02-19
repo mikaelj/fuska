@@ -1,6 +1,8 @@
 # Fuska: Let AI Build Your Code — For Real
 
-**Se även:** [Svensk version](PITCH-SVENSKA.md)
+<center>[Svenska](PITCH-SVENSKA.md)</center>
+
+------
 
 You've probably pasted code and error messages into ChatGPT, got a suggestion, tested it, gone back and asked again. Fuska is something else entirely. It's a system that lets an AI agent plan, build, and review your code — not just suggest it. And unlike a chatbot, Fuska remembers everything between sessions.
 

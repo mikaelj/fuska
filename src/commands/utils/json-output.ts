@@ -36,7 +36,7 @@ function buildProviderArgs(provider: ProviderType, command: string, args?: strin
     // Claude CLI uses --print for non-interactive mode and --output-format stream-json for streaming
     // The command is passed as the prompt argument
     const prompt = args && args.length > 0 ? `${command} ${args.join(' ')}` : command;
-    return ['--print', '--output-format', 'stream-json', prompt];
+    return ['--print', '--output-format', 'stream-json', '--verbose', prompt];
   }
 }
 

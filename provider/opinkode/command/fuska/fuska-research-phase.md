@@ -30,7 +30,7 @@ Research how to implement a phase using MegaMemory. Spawns fuska-phase-researche
 </objective>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/phase-templates.ts
 </execution_context>
@@ -66,7 +66,7 @@ Normalize phase input in step 1 before any MegaMemory lookups.
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 0. Validate MegaMemory
 

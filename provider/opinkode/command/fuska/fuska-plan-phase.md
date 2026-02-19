@@ -30,7 +30,8 @@ Create executable phase concepts (plan concepts) for a roadmap phase with integr
 
 <execution_context>
 
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
+@../../fuska/references/model-validation.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/phase-templates.ts
 @../../fuska/scripts/helpers.ts
@@ -76,7 +77,7 @@ Normalize phase input in step 2 before any MegaMemory lookups.
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 1. Validate Environment and Resolve Model Profile
 
@@ -168,6 +169,89 @@ const models = modelLookup[modelProfile]
 ```
 
 Store the resolved models (e.g., `researcherModel`, `plannerModel`, `checkerModel`) for use in Task calls below.
+
+**Step 1.8: Validate model strings against OpenCode configuration**
+
+Before spawning any Task, validate that model strings reference available providers.
+
+```
+const configPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.jsonc')
+
+let openCodeConfig
+try {
+  const content = readFileSync(configPath, 'utf-8')
+  const cleaned = content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '')
+  openCodeConfig = JSON.parse(cleaned)
+} catch (error) {
+  Display: "Could not read OpenCode configuration at ~/.config/opencode/opencode.jsonc"
+  Display: "Please ensure OpenCode is properly configured, then run `fuska config`"
+  Stop
+}
+
+const modelAliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+
+const validationErrors = []
+const providerModels = new Map()
+
+for (const [alias, modelString] of Object.entries(modelAliases)) {
+  const parts = modelString.split('/')
+  if (parts.length !== 2) {
+    validationErrors.push(`"${modelString}" (${alias}) - invalid format, expected "provider/model"`)
+    continue
+  }
+  
+  const [provider, model] = parts
+  const providerConfig = openCodeConfig.provider?.[provider]
+  
+  if (!providerConfig) {
+    validationErrors.push(`"${modelString}" (${alias}) - provider "${provider}" not found`)
+    const availableProviders = Object.keys(openCodeConfig.provider || {})
+    for (const p of availableProviders) {
+      const pc = openCodeConfig.provider[p]
+      const models = pc.whitelist || Object.keys(pc.models || {})
+      if (!providerModels.has(p)) {
+        providerModels.set(p, models)
+      }
+    }
+    continue
+  }
+  
+  const whitelist = providerConfig.whitelist || []
+  const configuredModels = Object.keys(providerConfig.models || {})
+  const availableModels = whitelist.length > 0 ? whitelist : configuredModels
+  
+  if (!providerModels.has(provider)) {
+    providerModels.set(provider, availableModels)
+  }
+  
+  if (!availableModels.includes(model)) {
+    validationErrors.push(`"${modelString}" (${alias}) - model "${model}" not found in provider "${provider}"`)
+  }
+}
+
+if (validationErrors.length > 0) {
+  const providerList = Array.from(providerModels.entries())
+    .map(([provider, models]) => `  - ${provider}: ${models.join(', ')}`)
+    .join('\n')
+  
+  Display: "Invalid model configuration:"
+  for (const error of validationErrors) {
+    Display: `  - ${error}`
+  }
+  Display: ""
+  Display: "Available providers in your OpenCode config:"
+  Display: providerList
+  Display: ""
+  Display: "To fix: Run `fuska config` to reconfigure your models"
+  Stop
+}
+```
 
 ---
 

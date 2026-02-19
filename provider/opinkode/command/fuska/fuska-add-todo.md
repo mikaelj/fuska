@@ -21,7 +21,7 @@ Enables "thought → capture → continue" flow without losing context or derail
 </objective>
 
 <execution_context>
-@../../fuska/references/preflight-check-project-exists.md
+@../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 </execution_context>
 
@@ -54,7 +54,7 @@ Todo description: `$ARGUMENTS` (optional - extracts from conversation if not pro
 
 ## 0. Preflight Check
 
-Follow the MegaMemory Project Exists Preflight Check from @preflight-check-project-exists.md.
+Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
 ## 1. Validate Environment
 

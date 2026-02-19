@@ -357,18 +357,17 @@ effectiveArgs = phaseNumber + (effectiveArgs ? " " + effectiveArgs : "")
 
 ### 2.3 Read target command file
 
-The target command files are in the same directory as this file.
+Read the target file from: ~/.config/opencode/commands/fuska/{target}
 
-Determine the absolute path of the target file. Use the `read` tool to read it.
+For example, if verb is "design", read:
+    ~/.config/opencode/commands/fuska/fuska-design-phase.md
 
 ### 2.4 Resolve @ references
 
-In the target file content, find the `<execution_context>` section. Look for lines starting with `@`.
-
-Each `@` path is relative to the command file's directory (`provider/opinkode/command/fuska/`):
-- `@../../fuska/references/X.md` → `provider/opinkode/fuska/references/X.md`
-- `@../../fuska/scripts/X.ts` → `provider/opinkode/fuska/scripts/X.ts`
-- `@../../fuska/templates/X.md` → `provider/opinkode/fuska/templates/X.md`
+Each `@` path is relative to the command file's directory:
+- `@../../fuska/references/X.md` → ~/.config/opencode/fuska/references/X.md
+- `@../../fuska/scripts/X.ts` → ~/.config/opencode/fuska/scripts/X.ts
+- `@../../fuska/templates/X.md` → ~/.config/opencode/fuska/templates/X.md
 
 Construct absolute paths and read each referenced file.
 

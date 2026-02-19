@@ -45,39 +45,42 @@ interface ModelProfilesData {
 }
 
 interface ModelStageMapping {
-  planning: string;
-  execution: string;
-  verification: string;
+  design: string;
+  plan: string;
+  build: string;
+  review: string;
 }
 
-type Stage = 'planning' | 'execution' | 'verification';
+type Stage = 'design' | 'plan' | 'build' | 'review';
 ```
 
 ### Stage-to-Agent Mapping
 
 ```typescript
 interface StageAgentMapping {
-  planning: string[];
-  execution: string[];
-  verification: string[];
+  design: string[];
+  plan: string[];
+  build: string[];
+  review: string[];
 }
 
 const STAGE_AGENTS: StageAgentMapping = {
-  planning: [
+  design: [
     'fuska-planner',
-    'fuska-plan-checker',
-    'fuska-phase-researcher',
     'fuska-roadmapper',
     'fuska-initiative-researcher',
-    'fuska-research-synthesizer',
+    'fuska-research-synthesizer'
+  ],
+  plan: [
+    'fuska-plan-checker',
+    'fuska-phase-researcher',
     'fuska-codebase-mapper'
   ],
-  execution: [
+  build: [
     'fuska-executor',
-    'fuska-debugger',
-    'fuska-git-message'
+    'fuska-debugger'
   ],
-  verification: [
+  review: [
     'fuska-verifier',
     'fuska-integration-checker',
     'fuska-commit-checker'
@@ -107,7 +110,7 @@ import { megamemory_create_concept } from '@opencode/mcp-client';
 const modelProfiles = await megamemory_create_concept({
   name: 'model-profiles',
   kind: 'config',
-  summary: 'Model profiles with model_aliases: quality_model=opencode/claude-opus-4, balanced_model=opencode/claude-sonnet-4, budget_model=opencode/claude-haiku-4; active=balanced, presets: quality(planning:claude-opus-4,execution:claude-opus-4,verification:claude-opus-4), balanced(planning:claude-opus-4,execution:claude-sonnet-4,verification:claude-sonnet-4), budget(planning:claude-sonnet-4,execution:claude-sonnet-4,verification:claude-haiku-4)',
+  summary: 'Model profiles with model_aliases: quality_model=opencode/claude-opus-4, balanced_model=opencode/claude-sonnet-4, budget_model=opencode/claude-haiku-4; active=balanced, presets: quality(design:claude-opus-4,plan:claude-opus-4,build:claude-opus-4,review:claude-opus-4), balanced(design:claude-opus-4,plan:claude-opus-4,build:claude-sonnet-4,review:claude-sonnet-4), budget(design:claude-sonnet-4,plan:claude-sonnet-4,build:claude-sonnet-4,review:claude-haiku-4)',
   why: 'Controls model selection per Fuska agent stage to balance quality vs token spend. Model aliases provide indirection between lookup tables and actual model IDs.',
   file_refs: ['opencode.json'],
   edges: [
@@ -145,7 +148,7 @@ await megamemory_update_concept({
 await megamemory_update_concept({
   id: '<model-profiles-concept-id>',
   changes: {
-    summary: 'Model profiles with active=balanced, presets: quality(planning:gpt-4o,execution:gpt-4o-mini,verification:gpt-4o), balanced(planning:gpt-4o,execution:gpt-4o-mini,verification:gpt-4o-mini), budget(planning:gpt-4o-mini,execution:gpt-4o-mini,verification:gpt-4o-mini)'
+    summary: 'Model profiles with active=balanced, presets: quality(design:gpt-4o,plan:gpt-4o,build:gpt-4o-mini,review:gpt-4o), balanced(design:gpt-4o,plan:gpt-4o,build:gpt-4o-mini,review:gpt-4o-mini), budget(design:gpt-4o-mini,plan:gpt-4o-mini,build:gpt-4o-mini,review:gpt-4o-mini)'
   }
 });
 ```
@@ -176,14 +179,14 @@ await megamemory_link({
   from: 'model-profiles',
   to: 'fuska-planner',
   relation: 'configured_by',
-  description: 'Planner uses model from profiles[active].planning'
+  description: 'Planner uses model from profiles[active].design'
 });
 
 await megamemory_link({
   from: 'model-profiles',
   to: 'fuska-executor',
   relation: 'configured_by',
-  description: 'Executor uses model from profiles[active].execution'
+  description: 'Executor uses model from profiles[active].build'
 });
 ```
 
@@ -240,7 +243,7 @@ function parseProfilesFromSummary(summary: string): ModelProfilesData {
 }
 
 function parsePreset(summary: string, profile: string): ModelStageMapping {
-  const regex = new RegExp(`${profile}\\(planning:([^,]+),execution:([^,]+),verification:([^)]+)\\)`);
+  const regex = new RegExp(`${profile}\\(design:([^,]+),plan:([^,]+),build:([^,]+),review:([^)]+)\\)`);
   const match = summary.match(regex);
 
   if (!match) {
@@ -248,9 +251,10 @@ function parsePreset(summary: string, profile: string): ModelStageMapping {
   }
 
   return {
-    planning: match[1],
-    execution: match[2],
-    verification: match[3]
+    design: match[1],
+    plan: match[2],
+    build: match[3],
+    review: match[4]
   };
 }
 ```
@@ -320,12 +324,12 @@ async function updatePresetModel(
   if (result && result.length > 0) {
     const summary = result[0].summary;
 
-    const oldPreset = `\\b${profile}\\(planning:[^,]+,execution:[^,]+,verification:[^)]+\\)`;
+    const oldPreset = `\\b${profile}\\(design:[^,]+,plan:[^,]+,build:[^,]+,review:[^)]+\\)`;
     const presetData = parsePreset(summary, profile);
 
     presetData[stage] = model;
 
-    const newPreset = `${profile}(planning:${presetData.planning},execution:${presetData.execution},verification:${presetData.verification})`;
+    const newPreset = `${profile}(design:${presetData.design},plan:${presetData.plan},build:${presetData.build},review:${presetData.review})`;
 
     const newSummary = summary.replace(new RegExp(oldPreset), newPreset);
 
@@ -349,19 +353,22 @@ async function configureModelProfiles(availableModels: string[]): Promise<void> 
 
   const presets = {
     quality: {
-      planning: strongModels[0] || midTierModels[0],
-      execution: strongModels[0] || midTierModels[0],
-      verification: strongModels[0] || midTierModels[0]
+      design: strongModels[0] || midTierModels[0],
+      plan: strongModels[0] || midTierModels[0],
+      build: strongModels[0] || midTierModels[0],
+      review: strongModels[0] || midTierModels[0]
     },
     balanced: {
-      planning: strongModels[0] || midTierModels[0],
-      execution: midTierModels[0],
-      verification: midTierModels[0]
+      design: strongModels[0] || midTierModels[0],
+      plan: strongModels[0] || midTierModels[0],
+      build: midTierModels[0],
+      review: midTierModels[0]
     },
     budget: {
-      planning: midTierModels[0],
-      execution: midTierModels[0],
-      verification: lightweightModels[0] || midTierModels[0]
+      design: midTierModels[0],
+      plan: midTierModels[0],
+      build: midTierModels[0],
+      review: lightweightModels[0] || midTierModels[0]
     }
   };
 
@@ -394,7 +401,7 @@ function formatProfilesSummary(
   presets: any
 ): string {
   const parts = Object.entries(presets).map(([name, mapping]: [string, any]) => {
-    return `${name}(planning:${mapping.planning},execution:${mapping.execution},verification:${mapping.verification})`;
+    return `${name}(design:${mapping.design},plan:${mapping.plan},build:${mapping.build},review:${mapping.review})`;
   });
 
   return `Model profiles with active=${active}, presets: ${parts.join(', ')}`;
@@ -415,8 +422,9 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 
 | Stage | Agents |
 |-------|--------|
-| Planning | fuska-planner, fuska-plan-checker, fuska-phase-researcher, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer, fuska-codebase-mapper |
-| Build | fuska-executor, fuska-debugger, fuska-git-message |
+| Design | fuska-planner, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer |
+| Plan | fuska-plan-checker, fuska-phase-researcher, fuska-codebase-mapper |
+| Build | fuska-executor, fuska-debugger |
 | Review | fuska-verifier, fuska-integration-checker, fuska-commit-checker |
 
 ## Model Aliases
@@ -479,10 +487,37 @@ Configuration structure (stored in MegaMemory concept summary):
   },
   "active_profile": "balanced",
   "presets": {
-    "quality": { "planning": "...", "execution": "...", "verification": "..." },
-    "balanced": { "planning": "...", "execution": "...", "verification": "..." },
-    "budget": { "planning": "...", "execution": "...", "verification": "..." }
+    "quality": { "design": "quality_model", "plan": "quality_model", "build": "quality_model", "review": "quality_model" },
+    "balanced": { "design": "quality_model", "plan": "quality_model", "build": "balanced_model", "review": "balanced_model" },
+    "budget": { "design": "balanced_model", "plan": "balanced_model", "build": "balanced_model", "review": "budget_model" }
   }
+}
+```
+
+**IMPORTANT:** Presets should store alias names (`quality_model`, `balanced_model`, `budget_model`), NOT actual model IDs. This allows changing the underlying model in one place (`model_aliases`) without updating all presets.
+
+**Resolution function:**
+
+```typescript
+function resolveModelAlias(value: string, aliases: Record<string, string>): string {
+  // If value is an alias key, resolve it
+  if (aliases[value]) {
+    return aliases[value];
+  }
+  // Otherwise, return as-is (backward compatibility with old configs)
+  return value;
+}
+
+// Example: Get effective model for a stage
+function getEffectiveModel(
+  profile: string,
+  stage: 'design' | 'plan' | 'build' | 'review',
+  config: FuskaConfig
+): string {
+  const preset = config.profiles.presets[profile][stage];
+  const override = config.profiles.custom_overrides?.[profile]?.[stage];
+  const aliasOrModel = override || preset;
+  return resolveModelAlias(aliasOrModel, config.model_aliases || {});
 }
 ```
 
@@ -497,15 +532,15 @@ When configuring presets, consider these guidelines:
 
 **balanced** (default) - Smart allocation
 
-- Strong model for planning (where architecture decisions happen)
-- Mid-tier model for execution (follows explicit instructions)
-- Mid-tier model for verification (needs reasoning, not just pattern matching)
+- Strong model for design and plan (where architecture decisions happen)
+- Mid-tier model for build (follows explicit instructions)
+- Mid-tier model for review (needs reasoning, not just pattern matching)
 - Use when: normal development, good balance of quality and cost
 
 **budget** - Minimal token spend
 
 - Mid-tier model for anything that writes code
-- Lightweight model for research and verification
+- Lightweight model for research and review
 - Use when: conserving quota, high-volume work, less critical phases
 
 ## Resolution Logic
@@ -516,9 +551,9 @@ Orchestrators resolve model before spawning:
 1. Query MegaMemory for config concept
 2. Parse JSON from concept.summary
 3. Extract model_aliases (with defaults if missing)
-4. Get model_profile (default: "balanced")
-5. Lookup table maps [profile][agent] → alias
-6. Alias resolves to actual model ID from model_aliases
+4. Get active_profile (default: "balanced")
+5. Get preset value for profile + stage (e.g., presets.balanced.design = "quality_model")
+6. Resolve alias to actual model ID from model_aliases (e.g., "quality_model" → "opencode/claude-opus-4")
 7. Pass model parameter to Task call
 ```
 
@@ -526,43 +561,34 @@ Orchestrators resolve model before spawning:
 
 ```javascript
 const configData = JSON.parse(configMatch.summary);
-const modelProfile = configData.model_profile || "balanced";
+const profile = configData.profiles?.active_profile || "balanced";
 
 const aliases = configData.model_aliases || {
   quality_model: "opencode/claude-opus-4",
   balanced_model: "opencode/claude-sonnet-4",
   budget_model: "opencode/claude-haiku-4"
-  // explore_model is optional; if set, written to opencode.json as agent.explore.model
 };
 
-const modelLookup = {
-  quality: {
-    researcher: aliases.quality_model,
-    planner: aliases.quality_model,
-    checker: aliases.balanced_model,
-    executor: aliases.quality_model,
-    verifier: aliases.balanced_model
-  },
-  balanced: {
-    researcher: aliases.balanced_model,
-    planner: aliases.quality_model,
-    checker: aliases.balanced_model,
-    executor: aliases.balanced_model,
-    verifier: aliases.balanced_model
-  },
-  budget: {
-    researcher: aliases.budget_model,
-    planner: aliases.balanced_model,
-    checker: aliases.budget_model,
-    executor: aliases.balanced_model,
-    verifier: aliases.budget_model
-  }
-};
+// Resolution function - converts alias to actual model ID
+function resolveModelAlias(value) {
+  return aliases[value] || value; // Return resolved or original (backward compat)
+}
 
-const models = modelLookup[modelProfile];
+// Get preset for profile (uses alias names)
+const preset = configData.profiles?.presets?.[profile] || {};
+const overrides = configData.profiles?.custom_overrides?.[profile] || {};
+
+// Resolve stages to actual models
+const models = {
+  researcher: resolveModelAlias(overrides.review || preset.review),
+  planner: resolveModelAlias(overrides.design || preset.design),
+  checker: resolveModelAlias(overrides.plan || preset.plan),
+  executor: resolveModelAlias(overrides.build || preset.build),
+  verifier: resolveModelAlias(overrides.review || preset.review)
+};
 
 // explore_model is written directly to opencode.json as agent.explore.model
-// It is profile-independent and does not go through the lookup table.
+// It is profile-independent and does not go through presets.
 if (aliases.explore_model) {
   agentConfig["explore"] = { model: aliases.explore_model };
 }
@@ -579,7 +605,7 @@ Agent-to-model mappings are written to `opencode.json` by `fuska config`.
 
 ## Switching Profiles
 
-Runtime: `fuska config` → Quick settings → select profile
+Runtime: `fuska config` → Set active profile → select profile
 
 View current: `fuska config --view`
 
@@ -605,14 +631,14 @@ await megamemory:update_concept({
 
 ## Design Rationale
 
-**Why use your strongest model for planning?**
-Planning involves architecture decisions, goal decomposition, and task design. This is where model quality has the highest impact.
+**Why use your strongest model for design?**
+Design involves architecture decisions, goal decomposition, and task design. This is where model quality has the highest impact.
 
-**Why mid-tier for execution?**
-Executors follow explicit PLAN.md instructions. The plan already contains the reasoning; execution is implementation.
+**Why mid-tier for build?**
+Builders follow explicit PLAN.md instructions. The plan already contains the reasoning; building is implementation.
 
-**Why mid-tier (not lightweight) for verification?**
-Verification requires goal-backward reasoning - checking if code *delivers* what the phase promised, not just pattern matching. Mid-tier models handle this well; lightweight models may miss subtle gaps.
+**Why mid-tier (not lightweight) for review?**
+Review requires goal-backward reasoning - checking if code *delivers* what the phase promised, not just pattern matching. Mid-tier models handle this well; lightweight models may miss subtle gaps.
 
 **Why lightweight for codebase mapping?**
 Read-only exploration and pattern extraction. No complex reasoning required, just structured output from file contents.

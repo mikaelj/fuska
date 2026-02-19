@@ -6,6 +6,8 @@ import {
   PACKAGE_ROOT,
   createSymlink,
   createIndividualSymlinks,
+  removeSymlink,
+  removeGlobSymlinks,
   rollback,
   rollbackStack,
   SymlinkOptions
@@ -36,7 +38,7 @@ interface SymlinkMapping {
 
 const OPENCODE_SYMLINKS: SymlinkMapping[] = [
   { targetRel: 'fuska', sourceRel: 'provider/opinkode/fuska' },
-  { targetRel: 'command/fuska', sourceRel: 'provider/opinkode/command/fuska' },
+  { targetRel: 'commands/fuska', sourceRel: 'provider/opinkode/command/fuska' },
   { targetRel: 'agents/fuska', sourceRel: 'provider/opinkode/agents/fuska' },
 ];
 
@@ -46,23 +48,34 @@ const CLAUDE_SYMLINKS: SymlinkMapping[] = [
   { targetRel: 'agents/fuska', sourceRel: 'provider/klod/agents/fuska' },
 ];
 
+const OPENCODE_CLEANUP_PATHS: string[] = [
+  'fuska',
+  'command/fuska',
+  'commands/fuska',
+  'agents/fuska',
+];
+
+const CLAUDE_CLEANUP_PATHS: string[] = [
+  'fuska',
+  'agents/fuska',
+];
+
+const CLAUDE_SKILLS_PATTERN = 'fuska*';
+
 export function installCommand(program: Command) {
   program
-    .command('install')
+    .command('install [target]')
     .description('Install Fuska commands and agents to target tool via symlinks')
-    .option('--opencode', 'Install to ~/.config/opencode/')
-    .option('--claude', 'Install to ~/.claude/')
-    .option('--both', 'Install to both locations')
     .option('--force', 'Replace existing directories without prompting')
     .option('--dry-run', 'Show what would be done without making changes')
-    .action(async (options) => {
+    .action(async (target: string | undefined, options) => {
       const symlinkOptions: SymlinkOptions = {
         force: options.force || false,
         dryRun: options.dryRun || false
       };
 
       try {
-        let provider = await determineProvider(options);
+        let provider = await determineProvider(target, options);
         
         if (provider === 'both') {
           console.log(`\nInstalling to opencode at ${OPENCODE_CONFIG}`);
@@ -70,7 +83,12 @@ export function installCommand(program: Command) {
           console.log(`\nInstalling to claude at ${CLAUDE_CONFIG}`);
           await installToProvider('claude', symlinkOptions);
         } else {
-          if (options.opencode || options.claude) {
+          const cleanupResult = await cleanupOtherProvider(provider, symlinkOptions);
+          if (cleanupResult.removed > 0) {
+            console.log(`Removed ${cleanupResult.removed} old symlinks from previous provider.`);
+          }
+
+          if (target) {
             console.log(`\nInstalling to ${provider} at ${getTargetDir(provider)}`);
           }
           await installToProvider(provider, symlinkOptions);
@@ -85,10 +103,14 @@ export function installCommand(program: Command) {
     });
 }
 
-async function determineProvider(options: any): Promise<ProviderType | 'both'> {
-  if (options.opencode) return 'opencode';
-  if (options.claude) return 'claude';
-  if (options.both) return 'both';
+async function determineProvider(target: string | undefined, options: any): Promise<ProviderType | 'both'> {
+  if (target === 'opencode') return 'opencode';
+  if (target === 'claude') return 'claude';
+  if (target === 'both') return 'both';
+  
+  if (target) {
+    throw new Error(`Unknown target: ${target}. Use 'opencode', 'claude', or 'both'.`);
+  }
 
   const config = await readProviderConfig();
   if (config) {
@@ -129,6 +151,39 @@ async function promptForProvider(): Promise<ProviderType | 'both'> {
   }
 
   return provider;
+}
+
+async function cleanupOtherProvider(
+  keepProvider: ProviderType,
+  options: SymlinkOptions
+): Promise<{ removed: number; skipped: number }> {
+  const otherProvider = keepProvider === 'opencode' ? 'claude' : 'opencode';
+  const targetBase = getTargetDir(otherProvider);
+
+  const cleanupPaths = otherProvider === 'opencode'
+    ? OPENCODE_CLEANUP_PATHS
+    : CLAUDE_CLEANUP_PATHS;
+
+  let removed = 0;
+  let skipped = 0;
+
+  console.log(`\nCleaning up old symlinks from ${otherProvider}...`);
+
+  for (const relPath of cleanupPaths) {
+    const target = path.join(targetBase, relPath);
+    const result = await removeSymlink(target, options);
+    if (result.removed) removed++;
+    if (result.skipped) skipped++;
+  }
+
+  if (otherProvider === 'claude') {
+    const skillsDir = path.join(targetBase, 'skills');
+    const result = await removeGlobSymlinks(skillsDir, CLAUDE_SKILLS_PATTERN, options);
+    removed += result.removed;
+    skipped += result.skipped;
+  }
+
+  return { removed, skipped };
 }
 
 async function installToProvider(

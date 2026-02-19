@@ -1,6 +1,8 @@
 # Fuska: Låt AI:n bygga koden åt dig — på riktigt
 
-**See also:** [English version](PITCH.md)
+<center>[English](PITCH.md)</center>
+
+------
 
 Du har säkert klistrat in kod och felmeddelanden i ChatGPT, fått ett förslag, testat det, gått tillbaka och frågat igen. Fuska är något helt annat. Det är ett system som låter en AI-agent planera, bygga och granska din kod — inte bara föreslå den. Och till skillnad från en chattbot minns Fuska allt mellan sessioner.
 
