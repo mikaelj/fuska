@@ -602,6 +602,25 @@ For "working chat interface":
 **Step 3: Derive Required Artifacts**
 For each truth, ask: "What must EXIST for this to be true?"
 
+**With import graph:**
+```typescript
+// Check if artifact already exists
+const artifactFile = fileByPath.get(artifact.path);
+if (artifactFile) {
+  artifact.exists = true;
+  artifact.current_exports = artifactFile.data.exports || [];
+  artifact.current_imports = artifactFile.data.imports || [];
+} else {
+  artifact.exists = false;
+  artifact.action = "create";
+}
+```
+
+**This enables:**
+- "extend" vs "create" distinction in task actions
+- Preserve existing exports when extending
+- Reference existing imports for wiring
+
 "User can see existing messages" requires:
 - Message list component (renders Message[])
 - Messages state (loaded from somewhere)
@@ -612,6 +631,23 @@ For each truth, ask: "What must EXIST for this to be true?"
 
 **Step 4: Derive Required Wiring**
 For each artifact, ask: "What must be CONNECTED for this artifact to function?"
+
+**With import graph:**
+```typescript
+// Find wiring pattern from similar files
+const similarFiles = Array.from(fileByPath.values())
+  .filter(f => f.data.path.includes(similarPath));
+
+if (similarFiles.length > 0) {
+  // Extract common pattern
+  const wiringPattern = {
+    from_imports: similarFiles[0].data.imports.filter(i => i.includes('repository')),
+    to_usage: "uses repository methods"
+  };
+} else {
+  // No pattern found - use standard wiring approach
+}
+```
 
 Message list component wiring:
 - Imports Message type (not using `any`)
@@ -1086,6 +1122,89 @@ If exists, load relevant concepts based on phase type:
 | refactor, cleanup | concerns, architecture concepts |
 | setup, config | stack, structure concepts |
 | (default) | stack, architecture concepts |
+</step>
+
+<step name="load_import_graph_context" priority="after_load_codebase_context">
+Query import graph for artifact existence and pattern discovery.
+
+**Note:** Orchestrator (fuska-plan-phase) may provide pre-queried import graph data. Check for `<import_graph_context>` section in input before querying.
+
+**If orchestrator provided import graph context:**
+```typescript
+// Parse from <import_graph_context> section in prompt
+// Build lookup maps from provided data
+const fileByPath = new Map();
+const symbolByName = new Map();
+
+for (const fileData of providedFiles) {
+  fileByPath.set(fileData.path, fileData);
+}
+
+for (const symbolData of providedSymbols) {
+  symbolByName.set(symbolData.name, symbolData);
+}
+```
+
+**If no context provided, query directly:**
+```typescript
+const importGraphResult = await megamemory:understand({
+  query: `file symbol ${phaseKeywords}`,
+  top_k: 100
+});
+
+const fileByPath = new Map();
+const symbolByName = new Map();
+
+for (const match of importGraphResult.concepts) {
+  if (match.name.startsWith('file:')) {
+    const data = JSON.parse(match.summary);
+    fileByPath.set(data.path, { match, data });
+  } else if (match.name.startsWith('symbol:')) {
+    const data = JSON.parse(match.summary);
+    symbolByName.set(data.name, { match, data });
+  }
+}
+```
+
+**Store for use during planning:**
+- `fileByPath` — Map of file path → { match, data }
+- `symbolByName` — Map of symbol name → { match, data }
+
+**Fallback handling:**
+- If `fileByPath.size === 0`: Continue without import graph context, note in plan that freshness check recommended
+- If specific artifact lookup fails: Treat as "not found", proceed with "create" action
+
+**Usage patterns:**
+
+**Artifact existence check (in goal-backward step - derive required artifacts):**
+```typescript
+// Check if artifact file exists before planning to create it
+const artifactFile = fileByPath.get('src/services/auth.service.ts');
+if (artifactFile) {
+  artifact.action = "extend" not "create";
+  artifact.current_exports = artifactFile.data.exports || [];
+  artifact.current_imports = artifactFile.data.imports || [];
+}
+```
+
+**Pattern discovery (in goal-backward step - derive required wiring):**
+```typescript
+// Find how similar features wire together
+const similarFiles = Array.from(fileByPath.values())
+  .filter(f => f.data.path.includes('service'));
+
+if (similarFiles.length > 0) {
+  // Extract pattern: "Services import from lib/repositories/*, use repo.method()"
+  const pattern = {
+    import_pattern: similarFiles[0].data.imports.filter(i => i.includes('repository')),
+    usage_pattern: "service.method() calls"
+  };
+}
+```
+
+**Skip dead code:**
+- Filter out concepts with `dead-code:` prefix when building lookup maps
+- Warn if task references dead code symbol
 </step>
 
 <step name="identify_phase">

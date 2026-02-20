@@ -166,6 +166,35 @@ fuska git worktree merge <name>       # Merge worktree back (MegaMemory + git)
 fuska migrate planning <project-dir>  # Import .planning/ into MegaMemory
 ```
 
+#### `fuska progress` Example
+
+```
+Progress on submodule-diff-display, 2/4 phases complete.
+
+Done:
+* Phase 01: Created ResolveSubmoduleRepository function that parses submodule URLs and matches to local Forgejo instance
+* Phase 02: Created PopulateAllNestedFiles function that iterates over diff files and populates NestedFiles for same-instance submodules
+
+Next:
+* Phase 3: Render submodule diffs with links and icons in commit and PR/compare views
+  - Status: ready_to_plan
+  - Context: -
+
+Future:
+* Phase 4: Add unit and integration tests, handle edge cases like missing submodules
+
+Configuration:
+* Profile: balanced
+
+---------
+
+Gather context for phase 3 and clarify approach by running:
+* /fuska-design-phase 3
+
+or skip design of phase 3 and plan directly by running:
+* /fuska-plan-phase 3
+```
+
 See [commands.md](docs/commands.md) for the full reference.
 
 ### Work Through Phases

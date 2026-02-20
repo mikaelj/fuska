@@ -446,7 +446,28 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 
 ## Codebase-Tech Concept Template
 
-```markdown
+IMPORTANT: Summary must start with JSON, then markdown. Use this format:
+
+```json
+{
+  "focus_area": "tech",
+  "analysis_date": "[YYYY-MM-DD]",
+  "technologies": {
+    "primary": "[Language] [Version]",
+    "secondary": "[Language] [Version]"
+  },
+  "frameworks": {
+    "core": "[Framework] - [Purpose]",
+    "testing": "[Framework]",
+    "build": "[Tool]"
+  },
+  "dependencies": {
+    "critical": [
+      { "package": "[Package]", "purpose": "[Why it matters]" }
+    ]
+  }
+}
+
 # Technology Stack Analysis
 
 **Focus Area:** tech
@@ -467,7 +488,19 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 
 ## Codebase-Arch Concept Template
 
-```markdown
+```json
+{
+  "focus_area": "arch",
+  "analysis_date": "[YYYY-MM-DD]",
+  "pattern": "[Pattern name]",
+  "layers": [
+    { "name": "[Layer]", "location": "[path]" }
+  ],
+  "entry_points": {
+    "[name]": "[path]"
+  }
+}
+
 # Architecture Analysis
 
 **Focus Area:** arch
@@ -488,7 +521,22 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 
 ## Codebase-Quality Concept Template
 
-```markdown
+```json
+{
+  "focus_area": "quality",
+  "analysis_date": "[YYYY-MM-DD]",
+  "naming": {
+    "files": "[pattern]",
+    "functions": "[pattern]",
+    "classes": "[pattern]"
+  },
+  "formatting": {
+    "tool": "[linter/formatter]",
+    "indentation": "[tabs/spaces]"
+  },
+  "test_framework": "[Framework]"
+}
+
 # Code Quality Analysis
 
 **Focus Area:** quality
@@ -506,7 +554,21 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 
 ## Codebase-Concerns Concept Template
 
-```markdown
+```json
+{
+  "focus_area": "concerns",
+  "analysis_date": "[YYYY-MM-DD]",
+  "tech_debt": [
+    { "area": "[Area]", "issue": "[Description]" }
+  ],
+  "large_files": [
+    { "file": "[path]", "lines": 123 }
+  ],
+  "test_gaps": [
+    { "area": "[Area]", "what_missing": "[Description]" }
+  ]
+}
+
 # Technical Concerns Analysis
 
 **Focus Area:** concerns

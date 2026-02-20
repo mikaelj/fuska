@@ -20,7 +20,7 @@ For all commands that require an existing initiative (25 commands total).
 - If `roots` is empty:
    → Display: "No initiative found. Run fuska init first"
    → Stop execution
-- If `roots` has content → Proceed normally
+- If `roots` has content → Proceed to Step 2
 
 **When tool call fails or `MEGAMEMORY_ERROR:` is detected:**
 
@@ -34,3 +34,39 @@ For all commands that require an existing initiative (25 commands total).
     3. Restart your editor/OpenCode to start the MCP server
 
 → Stop — do not proceed with any megamemory tool calls.
+
+---
+
+**Step 2:** Validate initiative configuration integrity
+
+After calling `megamemory:list_roots()`:
+
+1. Query the config concept:
+   ```
+   megamemory_understand(query="config", top_k=1, kind="config")
+   ```
+
+2. Extract `current_initiative` from config
+
+3. Query for state with the current initiative:
+   ```
+   megamemory_understand(query="state", top_k=5)
+   ```
+
+4. Check if any state's `parent_id` matches `current_initiative`
+
+5. If mismatch detected:
+   → Display:
+
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        ⚠️  INITIATIVE CONFIGURATION ISSUE
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+       The current initiative pointer doesn't match any existing
+       initiative in MegaMemory.
+
+       Run `fuska config` to fix this issue.
+
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   → Stop — do not proceed

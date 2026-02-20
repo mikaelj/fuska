@@ -14,6 +14,10 @@ export function mapCommand(program: Command) {
       const args = area ? [area] : [];
       const label = options.domainsOnly ? 'Mapping domains' : 'Mapping codebase';
       
+      if (!options.domainsOnly) {
+        console.log('This will take several minutes to finish. Please wait...\n');
+      }
+      
       try {
         const code = await runOpenCodeJson({
           command,

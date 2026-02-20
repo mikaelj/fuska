@@ -131,6 +131,11 @@ Three concept types make up the import graph:
 
 The import graph connects these concepts with four edge relations (see below) and powers `/fuska-ask` queries, dead code detection, and context loading in the planner, executor, and debugger.
 
+**Planner integration:** During planning, the import graph enables:
+- **Artifact existence checking** — Determines if a file already exists, allowing tasks to "extend" rather than "create"
+- **Pattern discovery** — Finds wiring patterns from similar files (e.g., how services import from repositories)
+- **Dead code filtering** — Excludes `dead-code:` symbols from task references
+
 **Staleness:** The graph tracks the last indexed Git SHA. Incremental refresh only scans files changed since that SHA. Auto-refresh can be configured via `fuska config` (mode: hybrid/manual/disabled).
 
 ---

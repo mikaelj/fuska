@@ -77,6 +77,63 @@ Edges define how concepts relate to each other. Use specific relations for accur
 
 These relations are created by `/fuska-refresh` and queried by `/fuska-ask`. Concepts use naming prefixes: `file:path/to/file.ext`, `symbol:SymbolName`, `dead-code:SymbolName`.
 
+## Import Graph Usage by Commands/Agents
+
+| Component | Uses Import Graph? | How |
+|-----------|-------------------|-----|
+| `fuska-plan-phase` | Direct | Step 6.7.3: Check freshness, auto-refresh if stale, query and format for planner |
+| `fuska-planner` | Direct | `load_import_graph_context` step: artifact existence, pattern discovery |
+| `fuska-debug` | Direct | Step 3.3: Query related files/symbols, pass to debugger |
+| `fuska-executor` | Direct | `load_import_graph` step: disambiguation, impact analysis |
+| `fuska-ask` | Direct | Main command for querying import graph |
+| `fuska-refresh` | Creates | Creates `file:`, `symbol:`, `dead-code:` concepts |
+| `fuska-debugger` | Indirect | Receives context from `fuska-debug` orchestrator |
+| `fuska-build-phase` | Indirect | Via spawned `fuska-executor` |
+
+### Planner Import Graph Patterns
+
+**Artifact Existence Check:**
+```typescript
+// In goal-backward step 3 (derive required artifacts)
+const artifactFile = fileByPath.get('src/services/auth.service.ts');
+if (artifactFile) {
+  artifact.action = "extend";
+  artifact.existing_exports = artifactFile.data.exports;
+} else {
+  artifact.action = "create";
+}
+```
+
+**Pattern Discovery:**
+```typescript
+// In goal-backward step 4 (derive required wiring)
+const serviceFiles = Array.from(fileByPath.values())
+  .filter(f => f.data.path.includes('services'));
+
+if (serviceFiles.length > 0) {
+  // Extract common import pattern
+  const commonImports = serviceFiles[0].data.imports
+    .filter(i => i.includes('repository'));
+}
+```
+
+**Dead Code Filtering:**
+```typescript
+// Filter when building lookup maps
+if (!match.name.startsWith('dead-code:')) {
+  symbolByName.set(data.name, { match, data });
+}
+```
+
+**Fallback Handling:**
+```typescript
+// If import graph is empty or unavailable
+if (fileByPath.size === 0) {
+  console.log('Import graph not available - proceeding without artifact checks');
+  // Continue planning, all artifacts treated as "create"
+}
+```
+
 ### Embeddings
 
 Every concept summary is indexed with embeddings. This enables semantic search: "authentication" matches "login", "JWT", "token validation" even without exact text matching.

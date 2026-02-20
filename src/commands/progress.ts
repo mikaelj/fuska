@@ -84,6 +84,15 @@ interface TaskData {
   commit?: string;
 }
 
+interface TodoItem {
+  name: string;
+  description: string;
+}
+
+interface DebugSession {
+  name: string;
+}
+
 interface StructuredContext {
   projectName: string;
   state: StateData | null;
@@ -96,8 +105,8 @@ interface StructuredContext {
   phaseSummaries: Array<{ name: string; data: SummaryData }>;
   phaseUat: UATData | null;
   recentSummaries: Array<{ name: string; data: SummaryData }>;
-  pendingTodos: number;
-  activeDebugSessions: number;
+  pendingTodos: TodoItem[];
+  activeDebugSessions: DebugSession[];
 }
 
 interface AdHocContext {
@@ -137,6 +146,7 @@ class ProgressRunner {
   private edges: Edge[] = [];
   private nodeMap: Map<string, TodoNode> = new Map();
   private currentInitiative: string | null = null;
+  private currentInitiativeId: string | null = null;
 
   constructor(options: { projectDir: string }) {
     this.projectDir = options.projectDir;
@@ -154,6 +164,9 @@ class ProgressRunner {
     }
 
     this.currentInitiative = currentSlug;
+    
+    const root = this.nodes.find(n => n.name === currentSlug && n.parent_id === null);
+    this.currentInitiativeId = root?.id || null;
     
     const state = this.findState();
     const roadmap = this.findRoadmap();
@@ -214,21 +227,21 @@ class ProgressRunner {
 
   private findState(): StateData | null {
     const stateNode = this.nodes.find(n => 
-      n.name === 'state' && n.parent_id === this.currentInitiative
+      n.name === 'state' && n.parent_id === this.currentInitiativeId
     );
     return stateNode ? this.parseSummary<StateData>(stateNode.summary) : null;
   }
 
   private findRoadmap(): RoadmapData | null {
     const roadmapNode = this.nodes.find(n => 
-      n.name === 'roadmap' && n.parent_id === this.currentInitiative
+      n.name === 'roadmap' && n.parent_id === this.currentInitiativeId
     );
     return roadmapNode ? this.parseSummary<RoadmapData>(roadmapNode.summary) : null;
   }
 
   private findConfig(): ConfigData | null {
     const configNode = this.nodes.find(n => 
-      n.name === 'config' && n.parent_id === this.currentInitiative
+      n.name === 'config' && n.parent_id === this.currentInitiativeId
     );
     return configNode ? this.parseSummary<ConfigData>(configNode.summary) : null;
   }
@@ -241,11 +254,12 @@ class ProgressRunner {
   }
 
   private findProjectName(): string {
+    if (this.currentInitiative) {
+      return this.currentInitiative;
+    }
     const roots = this.nodes.filter(n => n.parent_id === null);
     if (roots.length > 0) {
-      const root = roots[0];
-      const data = this.parseSummary<any>(root.summary);
-      return data?.name || data?.initiative_name || root.name;
+      return roots[0].name;
     }
     return 'Unknown Project';
   }
@@ -262,7 +276,7 @@ class ProgressRunner {
 
   private findPhaseData(phaseSlug: string): PhaseData | null {
     const roadmapNode = this.nodes.find(n => 
-      n.name === 'roadmap' && n.parent_id === this.currentInitiative
+      n.name === 'roadmap' && n.parent_id === this.currentInitiativeId
     );
     if (!roadmapNode) return null;
     
@@ -319,24 +333,32 @@ class ProgressRunner {
       .slice(0, limit);
   }
 
-  private countPendingTodos(): number {
-    return this.nodes.filter(n => {
-      if (n.name.startsWith('todo-')) {
-        const data = this.parseSummary<{ status: string }>(n.summary);
-        return data?.status === 'pending';
-      }
-      return false;
-    }).length;
+  private getPendingTodos(): Array<{ name: string; description: string }> {
+    return this.nodes
+      .filter(n => n.name.startsWith('todo-'))
+      .map(n => {
+        const data = this.parseSummary<{ status: string; description?: string }>(n.summary);
+        return {
+          name: n.name,
+          description: data?.description || n.name.replace('todo-', '').replace(/-/g, ' ')
+        };
+      })
+      .filter(todo => {
+        const data = this.parseSummary<{ status: string }>(
+          this.nodes.find(n => n.name === todo.name)?.summary || ''
+        );
+        return data?.status === 'pending' || !data?.status;
+      });
   }
 
-  private countActiveDebugSessions(): number {
-    return this.nodes.filter(n => {
-      if (n.name.includes('debug-session')) {
+  private getActiveDebugSessions(): Array<{ name: string }> {
+    return this.nodes
+      .filter(n => n.name.includes('debug-session'))
+      .filter(n => {
         const data = this.parseSummary<{ status: string }>(n.summary);
         return data?.status !== 'resolved' && data?.status !== 'closed';
-      }
-      return false;
-    }).length;
+      })
+      .map(n => ({ name: n.name }));
   }
 
   private buildStructuredContext(state: StateData, roadmap: RoadmapData): StructuredContext {
@@ -355,8 +377,8 @@ class ProgressRunner {
       phaseSummaries: currentPhaseSlug ? this.findPhaseSummaries(currentPhaseSlug) : [],
       phaseUat: currentPhaseSlug ? this.findPhaseUat(currentPhaseSlug) : null,
       recentSummaries: this.findRecentSummaries(3),
-      pendingTodos: this.countPendingTodos(),
-      activeDebugSessions: this.countActiveDebugSessions()
+      pendingTodos: this.getPendingTodos(),
+      activeDebugSessions: this.getActiveDebugSessions()
     };
   }
 
@@ -458,12 +480,6 @@ class ProgressRunner {
     return { route: 'plan', phaseNumber: phaseNum };
   }
 
-  private renderProgressBar(percentage: number): string {
-    const filled = Math.floor(percentage / 10);
-    const empty = 10 - filled;
-    return `[${'█'.repeat(filled)}${'░'.repeat(empty)}]`;
-  }
-
   private out(text: string): void {
     console.log(markdownToAnsi(text));
   }
@@ -471,197 +487,141 @@ class ProgressRunner {
   private renderStructuredReport(ctx: StructuredContext, nextAction: NextAction): void {
     const completedPhases = ctx.roadmap?.phases.filter(p => p.status === 'complete').length || 0;
     const totalPhases = ctx.roadmap?.phases.length || 0;
-    const progress = totalPhases > 0 ? Math.round((completedPhases / totalPhases) * 100) : 0;
-    const progressBar = this.renderProgressBar(progress);
-    
-    this.out('----------------------------------------------------');
-    this.out('## Fuska: PROJECT PROGRESS');
-    this.out('----------------------------------------------------');
+    const projectName = ctx.projectName;
+
+    this.out(`Progress on ${projectName}, ${completedPhases}/${totalPhases} phases complete.`);
     this.out('');
-    this.out(`**${ctx.projectName}**`);
-    this.out('');
-    this.out(`**Progress:** ${progressBar} ${completedPhases}/${totalPhases} phases complete`);
-    this.out(`**Profile:** ${ctx.config?.model_profile || 'balanced'}`);
-    this.out('');
-    
-    this.out('## Recent Work');
+
+    this.out('Done:');
     if (ctx.recentSummaries.length > 0) {
       for (const s of ctx.recentSummaries) {
         const acc = s.data.accomplishments?.[0] || 'No summary';
-        this.out(`- [${s.data.phase}, ${s.data.plan}]: ${acc}`);
+        const phaseNum = s.data.phase?.replace('phase-', '') || '?';
+        this.out(`* Phase ${phaseNum}: ${acc}`);
       }
     } else {
-      this.out('None');
+      this.out('* (none)');
     }
     this.out('');
-    
-    const phaseNum = ctx.currentPhase?.number || 0;
-    const phaseName = ctx.currentPhase?.name || 'Unknown';
-    this.out('## Current Position');
-    this.out(`Phase ${phaseNum} of ${totalPhases}: ${phaseName}`);
-    this.out(`Status: ${ctx.state?.status || 'unknown'}`);
-    this.out(`Context: ${ctx.phaseContext ? '[OK]' : '-'}`);
+
+    this.out('Next:');
+    if (ctx.currentPhase) {
+      this.out(`* Phase ${ctx.currentPhase.number}: ${ctx.currentPhase.goal}`);
+      this.out(`  - Status: ${ctx.state?.status || 'unknown'}`);
+      this.out(`  - Context: ${ctx.phaseContext ? 'OK' : '-'}`);
+    }
     this.out('');
-    
-    if (ctx.pendingTodos > 0) {
-      this.out(`## Pending Todos`);
-      this.out(`- ${ctx.pendingTodos} pending — /fuska-check-todos to review`);
+
+    this.out('Future:');
+    if (ctx.roadmap?.phases) {
+      const currentNum = ctx.currentPhase?.number || 0;
+      const futurePhases = ctx.roadmap.phases
+        .filter(p => p.number > currentNum)
+        .sort((a, b) => a.number - b.number);
+
+      for (const phase of futurePhases) {
+        this.out(`* Phase ${phase.number}: ${phase.goal}`);
+      }
+      if (futurePhases.length === 0) {
+        this.out('* (no more phases)');
+      }
+    }
+    this.out('');
+
+    if (ctx.pendingTodos.length > 0) {
+      this.out('Pending TODOs:');
+      for (const todo of ctx.pendingTodos) {
+        this.out(`* ${todo.description}`);
+      }
       this.out('');
     }
-    
-    if (ctx.activeDebugSessions > 0) {
-      this.out(`## Active Debug Sessions`);
-      this.out(`- ${ctx.activeDebugSessions} active — /fuska-debug to continue`);
+
+    if (ctx.activeDebugSessions.length > 0) {
+      this.out('Active Debug Sessions:');
+      for (const session of ctx.activeDebugSessions) {
+        this.out(`* ${session.name} — /fuska-debug to continue`);
+      }
       this.out('');
     }
-    
-    this.out('## What\'s Next');
-    this.out(ctx.currentPhase?.goal || 'No next phase defined');
+
+    this.out('Configuration:');
+    this.out(`* Profile: ${ctx.config?.model_profile || ctx.config?.depth || 'balanced'}`);
     this.out('');
-    
-    this.out('─'.repeat(60));
+
+    this.out('---------');
     this.out('');
-    this.renderNextAction(nextAction, ctx);
+
+    this.renderActions(nextAction, ctx);
   }
 
-  private renderNextAction(action: NextAction, ctx: StructuredContext): void {
+  private renderActions(action: NextAction, ctx: StructuredContext): void {
+    const phaseNum = action.phaseNumber || ctx.currentPhase?.number || 1;
+
     switch (action.route) {
       case 'execute':
-        this.out('## > Next Up');
-        this.out('');
-        this.out(`**${action.planName}** — ${action.objective}`);
-        this.out('');
-        this.out(`/fuska-build-phase ${action.phaseNumber}`);
-        this.out('');
-        this.out('*/new first → fresh context window*');
+        this.out(`Execute plan ${action.planName} by running:`);
+        this.out(`* /fuska-build-phase ${phaseNum}`);
         break;
-        
+
       case 'plan':
-        this.out('## > Next Up');
-        this.out('');
-        this.out(`**Phase ${action.phaseNumber}: ${ctx.currentPhase?.name}** — ${ctx.currentPhase?.goal}`);
-        this.out('*[OK] Context gathered, ready to plan*');
-        this.out('');
-        this.out(`/fuska-plan-phase ${action.phaseNumber}`);
-        this.out('');
-        this.out('*/new first → fresh context window*');
+        this.out(`Plan phase ${phaseNum} by running:`);
+        this.out(`* /fuska-plan-phase ${phaseNum}`);
         break;
-        
+
       case 'discuss':
-        this.out('## > Next Up');
+        this.out(`Gather context for phase ${phaseNum} and clarify approach by running:`);
+        this.out(`* /fuska-design-phase ${phaseNum}`);
         this.out('');
-        this.out(`**Phase ${action.phaseNumber}: ${ctx.currentPhase?.name}** — ${ctx.currentPhase?.goal}`);
-        this.out('');
-        this.out(`/fuska-design-phase ${action.phaseNumber} — gather context and clarify approach`);
-        this.out('');
-        this.out('*/new first → fresh context window*');
-        this.out('');
-        this.out('─'.repeat(60));
-        this.out('');
-        this.out('**Also available:**');
-        this.out(`- /fuska-plan-phase ${action.phaseNumber} — skip discussion, plan directly`);
+        this.out(`or skip design of phase ${phaseNum} and plan directly by running:`);
+        this.out(`* /fuska-plan-phase ${phaseNum}`);
         break;
-        
+
       case 'gaps':
-        this.out('## [WARN] UAT Gaps Found');
-        this.out('');
-        this.out(`**${ctx.state?.current_phase}-UAT** has gaps requiring fixes.`);
-        this.out('');
-        this.out(`/fuska-plan-phase ${action.phaseNumber} --gaps`);
-        this.out('');
-        this.out('*/new first → fresh context window*');
+        this.out(`Fix UAT gaps in phase ${phaseNum} by running:`);
+        this.out(`* /fuska-plan-phase ${phaseNum} --gaps`);
         break;
-        
+
       case 'next-phase':
-        const nextPhase = ctx.roadmap?.phases.find(p => p.number === action.phaseNumber);
-        this.out('## [OK] Phase Complete');
+        this.out(`Start phase ${action.phaseNumber} by running:`);
+        this.out(`* /fuska-design-phase ${action.phaseNumber}`);
         this.out('');
-        this.out('## > Next Up');
-        this.out('');
-        this.out(`**Phase ${action.phaseNumber}: ${nextPhase?.name}** — ${nextPhase?.goal}`);
-        this.out('');
-        this.out(`/fuska-design-phase ${action.phaseNumber}`);
-        this.out('');
-        this.out('*/new first → fresh context window*');
+        this.out(`or skip design and plan directly by running:`);
+        this.out(`* /fuska-plan-phase ${action.phaseNumber}`);
         break;
-        
+
       case 'complete-milestone':
-        this.out('## [DONE] Milestone Complete');
-        this.out('');
-        this.out('All phases finished!');
-        this.out('');
-        this.out('## > Next Up');
-        this.out('');
-        this.out('**Complete Milestone** — archive and prepare for next');
-        this.out('');
-        this.out('/fuska-complete-milestone');
-        this.out('');
-        this.out('*/new first → fresh context window*');
+        this.out(`Archive and prepare for next milestone by running:`);
+        this.out(`* /fuska-complete-milestone`);
         break;
     }
-    
-    this.out('');
-    this.out('─'.repeat(60));
   }
 
   private renderAdHocReport(ctx: AdHocContext): void {
-    this.out('## Fuska Progress Report');
-    this.out('');
-    
     const desc = ctx.projectDescription ? ` (${ctx.projectDescription})` : '';
-    this.out(`**Project:** ${ctx.projectName}${desc}`);
-    this.out('**Status:** `ad-hoc` (no active phase)');
-    
-    const lastTask = ctx.taskConcepts.length > 0 ? ctx.taskConcepts[ctx.taskConcepts.length - 1] : null;
-    if (lastTask) {
-      const taskDesc = lastTask.data.description || lastTask.data.summary || lastTask.name;
-      this.out(`**Last Activity:** Task ${taskDesc.slice(0, 50)}`);
-    }
+    this.out(`Progress on ${ctx.projectName}${desc}, ad-hoc mode (no phases).`);
     this.out('');
-    
+
     if (ctx.taskConcepts.length > 0) {
-      this.out(`### Completed Tasks (${ctx.taskConcepts.length})`);
-      this.out('');
-      this.out('| # | Description | Date | Commit |');
-      this.out('|---|-------------|------|--------|');
-      
+      this.out('Done:');
       for (const t of ctx.taskConcepts) {
         const numMatch = t.name.match(/task-(\d+)/);
-        const num = numMatch ? numMatch[1].padStart(3, ' ') : '  ?';
-        const desc = (t.data.description || t.data.summary || 'No description').slice(0, 36);
-        const date = t.data.completed || t.data.timestamp ? this.formatDate(t.data.completed || t.data.timestamp) : '-';
-        const commit = t.data.commit ? t.data.commit.slice(0, 7) : '-';
-        this.out(`| ${num} | ${desc.padEnd(36)} | ${date.padEnd(6)} | ${commit} |`);
+        const num = numMatch ? numMatch[1] : '?';
+        const taskDesc = (t.data.description || t.data.summary || 'No description').slice(0, 60);
+        this.out(`* Task ${num}: ${taskDesc}`);
       }
       this.out('');
     }
-    
-    this.out('`fuska info` for codebase and domain mappings');
-    this.out('');
-    
-    if (ctx.config) {
-      const mode = ctx.config.depth || 'balanced';
-      this.out('### Active Workflows');
-      this.out('');
-      this.out(`- Mode: \`${mode}\``);
-    }
-  }
 
-  private formatDate(dateStr?: string): string {
-    if (!dateStr) return '-';
-    try {
-      const date = new Date(dateStr);
-      const now = new Date();
-      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays}d ago`;
-      
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-      return '-';
-    }
+    this.out('Configuration:');
+    this.out(`* Profile: ${ctx.config?.depth || 'balanced'}`);
+    this.out('');
+
+    this.out('---------');
+    this.out('');
+
+    this.out('Available commands:');
+    this.out('* /fuska-do — execute a standalone task');
+    this.out('* fuska info — view codebase and domain mappings');
   }
 
   private buildStructuredJson(ctx: StructuredContext, nextAction: NextAction): JsonOutput {
@@ -684,8 +644,8 @@ class ProgressRunner {
         plan: s.data.plan,
         accomplishment: s.data.accomplishments?.[0] || ''
       })),
-      pendingTodos: ctx.pendingTodos,
-      activeDebugSessions: ctx.activeDebugSessions
+      pendingTodos: ctx.pendingTodos.length,
+      activeDebugSessions: ctx.activeDebugSessions.length
     };
   }
 

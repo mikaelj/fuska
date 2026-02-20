@@ -3,7 +3,7 @@
  *
  * An initiative is a root feature node (`kind === 'feature'`, `parent_id === null`)
  * that has a child node with `name === 'state'` and `kind === 'config'` where
- * `child.parent_id === node.name`. Domain nodes from codebase mapping never have
+ * `child.parent_id === node.id`. Domain nodes from codebase mapping never have
  * this structure, so this check is definitive.
  */
 
@@ -50,7 +50,7 @@ export function findAllInitiatives(db: any): InitiativeInfo[] {
       (n) =>
         n.name === 'state' &&
         n.kind === 'config' &&
-        n.parent_id === root.name
+        n.parent_id === root.id
     );
 
     if (!hasStateChild) continue;
@@ -168,4 +168,69 @@ export function extractInitiativeName(node: NodeData): string {
   } catch {
     return node.name;
   }
+}
+
+export interface InitiativeIntegrityStatus {
+  hasConfig: boolean;
+  currentInitiativeSlug: string | null;
+  foundInitiatives: InitiativeInfo[];
+  isValid: boolean;
+  issue: 'no_config' | 'no_current' | 'slug_mismatch' | 'no_initiatives' | null;
+}
+
+export function checkInitiativeIntegrity(db: any): InitiativeIntegrityStatus {
+  const config = getConfig(db);
+  const foundInitiatives = findAllInitiatives(db);
+
+  if (!config) {
+    return {
+      hasConfig: false,
+      currentInitiativeSlug: null,
+      foundInitiatives,
+      isValid: false,
+      issue: 'no_config'
+    };
+  }
+
+  const currentSlug = config.current_initiative || null;
+
+  if (foundInitiatives.length === 0) {
+    return {
+      hasConfig: true,
+      currentInitiativeSlug: currentSlug,
+      foundInitiatives: [],
+      isValid: false,
+      issue: 'no_initiatives'
+    };
+  }
+
+  if (!currentSlug) {
+    return {
+      hasConfig: true,
+      currentInitiativeSlug: null,
+      foundInitiatives,
+      isValid: false,
+      issue: 'no_current'
+    };
+  }
+
+  const matches = foundInitiatives.some(i => i.slug === currentSlug);
+
+  if (!matches) {
+    return {
+      hasConfig: true,
+      currentInitiativeSlug: currentSlug,
+      foundInitiatives,
+      isValid: false,
+      issue: 'slug_mismatch'
+    };
+  }
+
+  return {
+    hasConfig: true,
+    currentInitiativeSlug: currentSlug,
+    foundInitiatives,
+    isValid: true,
+    issue: null
+  };
 }

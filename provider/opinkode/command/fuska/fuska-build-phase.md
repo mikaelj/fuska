@@ -327,7 +327,85 @@ Display: `Found ${plansToExecute.length} incomplete plans to execute`
 
 ---
 
-5. **Group by wave**
+5. **Present Phase Execution Plan**
+
+**Step 5.1: Group plans by wave for display**
+
+```
+const waves = {}
+for (const plan of plansToExecute) {
+  const waveNum = plan.wave || 1
+  if (!waves[waveNum]) waves[waveNum] = []
+  waves[waveNum].push(plan)
+}
+const sortedWaves = Object.keys(waves).sort((a, b) => a - b)
+```
+
+**Step 5.2: Display execution plan to user**
+
+Output this markdown directly (not as a code block):
+
+```
+-----------------------------------------------------
+  Fuska: Phase {phaseNumber} Execution Plan
+-----------------------------------------------------
+
+**Phase {phaseNumber}: {phaseName}**
+
+Goal: {phaseGoal}
+
+{plansToExecute.length} plan(s) to execute in {sortedWaves.length} wave(s):
+
+${sortedWaves.map(w => `### Wave ${w}
+${waves[w].map(p => `- **${p.name}**: ${p.objective || 'No objective'}`).join('\n')}`).join('\n\n')}
+
+────────────────────────────────────────────────────
+```
+
+**Step 5.3: Check for auto mode**
+
+```
+const hasNoReviewFlag = input.includes("--no-review")
+const configInteractiveReview = configData?.workflow?.interactive_review !== false
+const isAutoMode = hasNoReviewFlag || !configInteractiveReview || modeOverride === "yolo"
+```
+
+**Step 5.4: Skip confirmation in auto mode, ask otherwise**
+
+If `isAutoMode === true`:
+→ Display: "Auto mode — proceeding with execution"
+→ Continue to step 6
+
+If `isAutoMode === false`:
+→ Use question tool:
+```
+const proceedResponse = question(questions=[{
+  header: "Proceed?",
+  question: "Ready to execute these plans?",
+  options: [
+    {label: "Proceed", description: "Start execution now"},
+    {label: "View details", description: "Show full plan details first"},
+    {label: "Cancel", description: "Abort execution"}
+  ]
+}])
+```
+
+**Step 5.5: Handle user response (interactive mode only)**
+
+If "View details":
+→ For each plan, display: name, objective, tasks, must_haves
+→ Re-offer confirmation
+
+If "Cancel":
+→ Display: "Execution cancelled"
+→ Stop
+
+If "Proceed":
+→ Continue to step 6
+
+---
+
+6. **Group by wave**
 
 **Step 3.1: Group plans by wave**
 
@@ -352,7 +430,7 @@ for (const waveNum of sortedWaves) {
 
 ---
 
-6. **Execute waves**
+7. **Execute waves**
 
 **For each wave in sortedWaves:**
 
@@ -444,7 +522,7 @@ If response.matches.length === 0:
 
 ---
 
-7. **Aggregate results**
+8. **Aggregate results**
 
 **Step 5.1: Collect all summaries**
 
@@ -472,7 +550,7 @@ Status: All summaries created [OK]
 
 ---
 
-8. **Commit phase (if per-phase strategy) and handle orchestrator corrections**
+9. **Commit phase (if per-phase strategy) and handle orchestrator corrections**
 
 **Step 6.1: Stage any orchestrator corrections**
 
@@ -542,7 +620,7 @@ ${stagedFiles.join('\n')}
 
 ---
 
-9. **Verify phase goal**
+10. **Verify phase goal**
 
 **Step 7.1: Query config to check verifier setting**
 
@@ -617,7 +695,7 @@ If verifier returns `gaps_found`:
 
 ---
 
-10. **Update Phase and Requirements in MegaMemory**
+11. **Update Phase and Requirements in MegaMemory**
 
 **Step 8.1: Query phase concept**
 
@@ -669,7 +747,7 @@ for (const reqId of requirements) {
 
 ---
 
-11. **Update State Concept**
+12. **Update State Concept**
 
 **Step 9.1: Query state concept**
 
@@ -758,7 +836,7 @@ megamemory_update_concept(
 
 ---
 
-12. **Offer next steps**
+13. **Offer next steps**
 
 Route to next action (see `<offer_next>`)
 

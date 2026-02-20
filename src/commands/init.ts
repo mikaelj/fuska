@@ -158,8 +158,15 @@ class InitRunner {
     }
 
     await this.ensureGitRepo();
-    await this.createMegaMemory();
-    await this.createInitiative(description);
+
+    try {
+      await this.createMegaMemory();
+      await this.createInitiative(description);
+    } catch (err: any) {
+      this.handleMegaMemoryError(err);
+      process.exit(1);
+    }
+
     await this.ensureMegaMemoryMcp();
 
     if (config) {
@@ -175,6 +182,24 @@ class InitRunner {
     }
   }
 
+  private handleMegaMemoryError(err: any): void {
+    const message = err?.message || String(err);
+
+    console.error('');
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error(' MEGAMEMORY ERROR');
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('');
+    console.error(`Failed to initialize MegaMemory: ${message}`);
+    console.error('');
+    console.error('To fix:');
+    console.error('  1. Ensure MegaMemory is installed: npm install -g megamemory');
+    console.error('  2. Check the database is not locked by another process');
+    console.error('  3. Run fuska init again');
+    console.error('');
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  }
+
   private async isAlreadyInitialized(): Promise<boolean> {
     const resolvedPath = path.resolve(this.projectDir);
     const dbPath = path.join(resolvedPath, '.megamemory', 'knowledge.db');
@@ -183,10 +208,15 @@ class InitRunner {
       return false;
     }
 
-    const { KnowledgeDB } = await import('megamemory/dist/db.js');
-    this.db = new KnowledgeDB(dbPath);
+    try {
+      const { KnowledgeDB } = await import('megamemory/dist/db.js');
+      this.db = new KnowledgeDB(dbPath);
 
-    return !!findInitiativeBySlug(this.db, 'main');
+      return !!findInitiativeBySlug(this.db, 'main');
+    } catch (err: any) {
+      this.handleMegaMemoryError(err);
+      process.exit(1);
+    }
   }
 
   private async ensureGitRepo(): Promise<void> {
@@ -340,9 +370,9 @@ class InitRunner {
   private printAlreadyInitialized(): void {
     console.log('\nAlready initialized: "main" initiative exists.\n');
     console.log('Manage initiatives:');
-    console.log('  fuska initiatives         List all initiatives');
-    console.log('  fuska initiative-switch   Switch to a different initiative');
-    console.log('  fuska progress            View current status');
+    console.log('  fuska initiative list       List all initiatives');
+    console.log('  fuska initiative switch     Switch to a different initiative');
+    console.log('  fuska progress              View current status');
     console.log('\nConfigure current initiative:');
     console.log('  opencode → /fuska-configure-initiative');
   }

@@ -83,7 +83,7 @@ class InfoRunner {
     if (codebaseConcepts.length === 0 && domainConcepts.length === 0) {
       console.log('No codebase or domain concepts found in MegaMemory.');
       console.log('');
-      console.log('Run /map-codebase to create codebase mappings.');
+      console.log('Run "fuska map" to create codebase mappings.');
       return;
     }
 
@@ -91,15 +91,24 @@ class InfoRunner {
     console.log('Project Knowledge');
     console.log('');
 
+    let hasAnyData = false;
+
     if (codebaseConcepts.length > 0) {
-      this.renderCodebaseSection(codebaseConcepts);
+      hasAnyData = this.renderCodebaseSection(codebaseConcepts) || hasAnyData;
     }
 
     if (domainConcepts.length > 0) {
       if (codebaseConcepts.length > 0) {
         console.log('');
       }
-      this.renderDomainsSection(domainConcepts);
+      hasAnyData = this.renderDomainsSection(domainConcepts) || hasAnyData;
+    }
+
+    if (!hasAnyData) {
+      console.log('');
+      console.log('Hint! Map your codebase, domains and index files with:');
+      console.log('');
+      console.log('    fuska map');
     }
 
     console.log('');
@@ -128,6 +137,8 @@ class InfoRunner {
   }
 
   private extractJson(summary: string): Record<string, unknown> {
+    if (!summary) return {};
+    
     try {
       const jsonEnd = summary.indexOf('\n\n#');
       if (jsonEnd > 0) {
@@ -139,13 +150,173 @@ class InfoRunner {
       }
       return JSON.parse(summary);
     } catch {
-      return {};
+      return this.parseMarkdownFrontmatter(summary);
     }
   }
 
-  private renderCodebaseSection(concepts: InfoNode[]): void {
+  private parseMarkdownFrontmatter(summary: string): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    
+    result.focus_area = this.extractValue(summary, 'Focus Area');
+    result.analysis_date = this.extractValue(summary, 'Analysis Date');
+    
+    const langSection = this.extractSection(summary, 'Languages');
+    if (langSection) {
+      result.technologies = {
+        primary: this.extractListItem(langSection, 'Primary'),
+        secondary: this.extractListItem(langSection, 'Secondary')
+      };
+    }
+    
+    const frameworkSection = this.extractSection(summary, 'Runtime & Build') || 
+                             this.extractSection(summary, 'Frameworks');
+    if (frameworkSection) {
+      result.frameworks = {
+        core: this.extractListItem(frameworkSection, 'Framework') || 
+              this.extractListItem(frameworkSection, 'Core'),
+        testing: this.extractListItem(frameworkSection, 'Testing'),
+        build: this.extractListItem(frameworkSection, 'Build')
+      };
+    }
+    
+    const depSection = this.extractSection(summary, 'Dependencies') || 
+                       this.extractSection(summary, 'Core Dependencies');
+    if (depSection) {
+      const allItems = this.extractAllListItems(depSection);
+      if (allItems.length > 0) {
+        result.dependencies = {
+          critical: allItems.slice(0, 5).map(item => ({ package: item, purpose: '' }))
+        };
+      }
+    }
+    
+    const patternSection = this.extractSection(summary, 'Architecture') ||
+                           this.extractSection(summary, 'Pattern Overview') ||
+                           this.extractSection(summary, 'System Structure');
+    if (patternSection) {
+      result.pattern = this.extractValue(patternSection, 'Overall') || 
+                       this.extractValue(patternSection, 'Pattern');
+      const layerItems = this.extractAllListItems(patternSection);
+      if (layerItems.length > 0) {
+        result.layers = layerItems.slice(0, 5).map(item => ({ name: item, location: '' }));
+      }
+    }
+    
+    const entrySection = this.extractSection(summary, 'Entry Points');
+    if (entrySection) {
+      const entries = this.extractAllListItems(entrySection);
+      if (entries.length > 0) {
+        const entryPoints: Record<string, string> = {};
+        entries.forEach(e => {
+          const parts = e.split(':');
+          if (parts.length >= 2) {
+            entryPoints[parts[0].trim()] = parts.slice(1).join(':').trim();
+          }
+        });
+        result.entry_points = entryPoints;
+      }
+    }
+    
+    const convSection = this.extractSection(summary, 'Conventions') || 
+                        this.extractSection(summary, 'Coding Conventions') ||
+                        this.extractSection(summary, 'Naming Patterns');
+    if (convSection) {
+      result.naming = {
+        files: this.extractListItem(convSection, 'Files') || this.extractValue(convSection, 'Files'),
+        functions: this.extractListItem(convSection, 'Functions') || this.extractListItem(convSection, 'Variables') || this.extractValue(convSection, 'Functions'),
+        classes: this.extractListItem(convSection, 'Classes') || this.extractValue(convSection, 'Classes')
+      };
+      result.formatting = {
+        tool: this.extractListItem(convSection, 'Formatter') || this.extractListItem(convSection, 'Formatting') || this.extractValue(convSection, 'Formatter') || 'Standard Dart formatting',
+        indentation: this.extractValue(convSection, 'Indentation')
+      };
+    }
+    
+    const testSection = this.extractSection(summary, 'Testing') || 
+                        this.extractSection(summary, 'Test Framework') ||
+                        this.extractSection(summary, 'Tests');
+    if (testSection) {
+      result.test_framework = this.extractValue(testSection, 'Runner') || 
+                              this.extractValue(testSection, 'Framework') ||
+                              this.extractListItem(testSection, 'Runner');
+    }
+    
+    const debtSection = this.extractSection(summary, 'Tech Debt') || 
+                         this.extractSection(summary, 'Technical Debt') ||
+                          this.extractSection(summary, 'Known Issues') ||
+                          this.extractSection(summary, 'Critical Gotchas');
+    if (debtSection) {
+      const items = this.extractAllListItems(debtSection);
+      if (items.length > 0) {
+        result.tech_debt = items.slice(0, 5).map(item => ({ area: '', issue: item }));
+      }
+    }
+    
+    const largeSection = this.extractSection(summary, 'Large Files') || 
+                          this.extractSection(summary, 'Performance');
+    if (largeSection) {
+      const items = this.extractAllListItems(largeSection);
+      if (items.length > 0) {
+        result.large_files = items.slice(0, 3).map(item => ({ file: item, lines: 0 }));
+      }
+    }
+    
+    const gapSection = this.extractSection(summary, 'Test Gaps') || 
+                        this.extractSection(summary, 'Test Coverage');
+    if (gapSection) {
+      const items = this.extractAllListItems(gapSection);
+      if (items.length > 0) {
+        result.test_gaps = items.slice(0, 3).map(item => ({ area: '', what_missing: item }));
+      }
+    }
+    
+    return result;
+  }
+
+  private extractValue(text: string, label: string): string | undefined {
+    const regex = new RegExp(`\\*\\*${label}:?\\*\\*\\s*(.+)`, 'i');
+    const match = text.match(regex);
+    return match ? match[1].trim() : undefined;
+  }
+
+  private extractSection(text: string, heading: string): string | undefined {
+    const regex = new RegExp(`^##\\s+${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'im');
+    const match = text.match(regex);
+    if (!match || match.index === undefined) return undefined;
+    
+    const start = match.index + match[0].length;
+    const nextSectionMatch = text.substring(start).match(/\n##\s+[^\s]/);
+    const nextSection = nextSectionMatch && nextSectionMatch.index !== undefined 
+      ? start + nextSectionMatch.index 
+      : -1;
+    return nextSection > 0 ? text.substring(start, nextSection) : text.substring(start);
+  }
+
+  private extractListItem(section: string, label: string): string | undefined {
+    const regex = new RegExp(`\\*\\*${label}:?\\*\\*[\\s\\S]*?^[-*]\\s+(.+)$`, 'im');
+    const match = section.match(regex);
+    return match ? match[1].trim() : undefined;
+  }
+
+  private extractAllListItems(text: string): string[] {
+    const items: string[] = [];
+    const lines = text.split('\n');
+    
+    for (const line of lines) {
+      const match = line.match(/^[-*]\s+(.+)$/);
+      if (match) {
+        items.push(match[1].trim());
+      }
+    }
+    
+    return items;
+  }
+
+  private renderCodebaseSection(concepts: InfoNode[]): boolean {
     console.log('Codebase Mapping');
     console.log('');
+
+    let hasAnyData = false;
 
     for (let i = 0; i < concepts.length; i++) {
       const concept = concepts[i];
@@ -155,26 +326,33 @@ class InfoRunner {
 
       const data = this.extractJson(concept.summary);
 
+      let hadData = false;
       switch (concept.name) {
         case 'codebase-tech':
-          this.renderTechStack(data as unknown as CodebaseTech, connector, childPrefix);
+          hadData = this.renderTechStack(data as unknown as CodebaseTech, connector, childPrefix);
           break;
         case 'codebase-arch':
-          this.renderArchitecture(data as unknown as CodebaseArch, connector, childPrefix);
+          hadData = this.renderArchitecture(data as unknown as CodebaseArch, connector, childPrefix);
           break;
         case 'codebase-quality':
-          this.renderQuality(data as unknown as CodebaseQuality, connector, childPrefix);
+          hadData = this.renderQuality(data as unknown as CodebaseQuality, connector, childPrefix);
           break;
         case 'codebase-concerns':
-          this.renderConcerns(data as unknown as CodebaseConcerns, connector, childPrefix, concept.file_refs);
+          hadData = this.renderConcerns(data as unknown as CodebaseConcerns, connector, childPrefix, concept.file_refs);
           break;
         default:
           console.log(`${connector} ${concept.name}`);
       }
+
+      if (hadData) {
+        hasAnyData = true;
+      }
     }
+
+    return hasAnyData;
   }
 
-  private renderTechStack(data: CodebaseTech, connector: string, prefix: string): void {
+  private renderTechStack(data: CodebaseTech, connector: string, prefix: string): boolean {
     console.log(`${connector} Tech Stack`);
 
     const items: string[] = [];
@@ -195,10 +373,10 @@ class InfoRunner {
       }
     }
 
-    this.renderItems(items, prefix);
+    return this.renderItems(items, prefix);
   }
 
-  private renderArchitecture(data: CodebaseArch, connector: string, prefix: string): void {
+  private renderArchitecture(data: CodebaseArch, connector: string, prefix: string): boolean {
     console.log(`${connector} Architecture`);
 
     const items: string[] = [];
@@ -213,10 +391,10 @@ class InfoRunner {
       }
     }
 
-    this.renderItems(items, prefix);
+    return this.renderItems(items, prefix);
   }
 
-  private renderQuality(data: CodebaseQuality, connector: string, prefix: string): void {
+  private renderQuality(data: CodebaseQuality, connector: string, prefix: string): boolean {
     console.log(`${connector} Quality`);
 
     const items: string[] = [];
@@ -237,10 +415,10 @@ class InfoRunner {
       items.push(`Tests: ${data.test_framework}`);
     }
 
-    this.renderItems(items, prefix);
+    return this.renderItems(items, prefix);
   }
 
-  private renderConcerns(data: CodebaseConcerns, connector: string, prefix: string, fileRefs?: string[] | null): void {
+  private renderConcerns(data: CodebaseConcerns, connector: string, prefix: string, fileRefs?: string[] | null): boolean {
     console.log(`${connector} Concerns`);
 
     const items: string[] = [];
@@ -257,7 +435,7 @@ class InfoRunner {
       }
     }
 
-    this.renderItems(items, prefix);
+    const hasItems = this.renderItems(items, prefix);
 
     if (this.long && fileRefs && Array.isArray(fileRefs) && fileRefs.length > 0) {
       console.log(`${prefix}├─ Files:`);
@@ -268,7 +446,10 @@ class InfoRunner {
         const filePrefix = isLastFile ? '└─' : '├─';
         console.log(`${prefix}   ${filePrefix} ${file}`);
       }
+      return true;
     }
+
+    return hasItems;
   }
 
   private parseFileRefs(fileRefs: string[] | string | null | undefined): string[] {
@@ -282,9 +463,11 @@ class InfoRunner {
     }
   }
 
-  private renderDomainsSection(domains: InfoNode[]): void {
+  private renderDomainsSection(domains: InfoNode[]): boolean {
     console.log('Domains');
     console.log('');
+
+    let hasAnyData = false;
 
     for (let i = 0; i < domains.length; i++) {
       const domain = domains[i];
@@ -321,14 +504,19 @@ class InfoRunner {
         }
       }
 
-      this.renderItems(items, childPrefix);
+      const hadData = this.renderItems(items, childPrefix);
+      if (hadData || files.length > 0) {
+        hasAnyData = true;
+      }
     }
+
+    return hasAnyData;
   }
 
-  private renderItems(items: string[], prefix: string): void {
+  private renderItems(items: string[], prefix: string): boolean {
     if (items.length === 0) {
       console.log(`${prefix}└─ (no data)`);
-      return;
+      return false;
     }
 
     const maxItems = this.long ? 100 : (this.verbose ? 10 : 4);
@@ -346,6 +534,8 @@ class InfoRunner {
     if (items.length > maxItems) {
       console.log(`${prefix}└─ ... and ${items.length - maxItems} more`);
     }
+
+    return true;
   }
 
   private truncate(text: string, maxLength: number): string {

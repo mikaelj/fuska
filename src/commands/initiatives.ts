@@ -60,7 +60,7 @@ class InitiativesRunner {
     const withActivity = initiatives.map(initiative => {
       const stateNode = nodes.find((n: InitiativeNode) =>
         n.name === 'state' && n.kind === 'config' &&
-        (n as any).parent_id === initiative.node.name
+        (n as any).parent_id === initiative.node.id
       );
       const updatedAt = (stateNode as any)?.updated_at || (initiative.node as any).updated_at || null;
       return { initiative, updatedAt };

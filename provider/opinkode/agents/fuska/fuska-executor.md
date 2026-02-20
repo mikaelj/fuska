@@ -901,6 +901,34 @@ await megamemory:update_concept({
   id: stateId,
   changes: { summary: JSON.stringify(updatedState) }
 });
+
+// Update phase concept status to "complete"
+const phaseResult = await megamemory:understand({ query: phaseSlug, top_k: 1 });
+if (phaseResult.matches.length > 0) {
+  const phaseData = extractJson(phaseResult.matches[0].summary);
+  phaseData.status = "complete";
+  phaseData.completed_at = new Date().toISOString();
+  await megamemory:update_concept({
+    id: phaseResult.matches[0].id,
+    changes: { summary: JSON.stringify(phaseData) }
+  });
+}
+
+// Update roadmap's phases array
+if (roadmapResult.matches.length > 0) {
+  const roadmapId = roadmapResult.matches[0].id;
+  const roadmapData = extractJson(roadmapResult.matches[0].summary);
+  const phaseIndex = roadmapData.phases.findIndex(p => p.slug === phaseSlug);
+  if (phaseIndex >= 0) {
+    roadmapData.phases[phaseIndex].status = "complete";
+    roadmapData.phases[phaseIndex].completed_date = new Date().toISOString().split('T')[0];
+    roadmapData.updated = new Date().toISOString();
+    await megamemory:update_concept({
+      id: roadmapId,
+      changes: { summary: JSON.stringify(roadmapData) }
+    });
+  }
+}
 ```
 
 No file updates needed — state lives in MegaMemory.
@@ -945,5 +973,7 @@ Plan execution complete when:
 - [ ] All deviations tracked
 - [ ] Summary concept created (kind: component, edges: completes → plan, connects_to → phase)
 - [ ] State concept updated in MegaMemory
+- [ ] Phase concept status updated to "complete" in MegaMemory
+- [ ] Roadmap phases array status updated to "complete" in MegaMemory
 - [ ] Completion format returned to orchestrator
 </success_criteria>

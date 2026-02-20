@@ -25,6 +25,40 @@ Use `fuska config --view` to view current settings non-interactively.
 
 ---
 
+## Initiative Integrity
+
+Fuska automatically validates that your `current_initiative` pointer matches an existing initiative in MegaMemory. Mismatches can occur if:
+
+- Initiative was renamed after creation
+- Slug was derived differently during `/fuska-configure-initiative`
+- Manual edits to the knowledge graph
+
+### Automatic Detection
+
+When running any slash command, Fuska checks initiative integrity. If a mismatch is detected, you'll see:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ⚠️  INITIATIVE CONFIGURATION ISSUE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The current initiative pointer doesn't match any existing initiative.
+Run `fuska config` to fix this issue.
+```
+
+### Quick Validation
+
+```bash
+fuska config --check            # Exit 0 (valid) or 1 (invalid)
+fuska config --check --json     # JSON output for scripts
+```
+
+### Repair
+
+Run `fuska config` and select "Fix initiative configuration" to choose which initiative should be current.
+
+---
+
 ## Model Profiles
 
 A **model profile** controls which AI model is used for each stage. Three presets are available:

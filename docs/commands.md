@@ -15,7 +15,7 @@
 | <nobr>`fuska install`</nobr> | Install commands and agents via symlinks | `--opencode`, `--claude`, `--both`, `--force`, `--dry-run` |
 | <nobr>`fuska migrate planning [dir]`</nobr> | Migrate `.planning/` to MegaMemory | `--clean` to delete existing DB first |
 | <nobr>`fuska migrate multi-initiative`</nobr> | Migrate existing initiative to pointer model | -- |
-| <nobr>`fuska config [dir]`</nobr> | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view |
+| <nobr>`fuska config [dir]`</nobr> | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view; `--check [--json]` for integrity validation |
 | <nobr>`fuska export`</nobr> | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
 | <nobr>`fuska initiative list`</nobr> | List all initiatives sorted by recent activity | -- |
 | <nobr>`fuska initiative switch [slug]`</nobr> | Switch to another initiative | `[slug]` -- initiative to switch to |
@@ -27,6 +27,39 @@
 | <nobr>`fuska git message [args...]`</nobr> | Test and preview commit messages using Fuska rules | -- |
 | <nobr>`fuska git worktree add <name>`</nobr> | Create git worktree with shared context | `--no-context`, `-f, --force` |
 | <nobr>`fuska git worktree merge <name>`</nobr> | Merge worktree (MM + git) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
+
+### `fuska progress` Example
+
+Shows current initiative, completed phases, next steps, and recommended actions:
+
+```
+Progress on submodule-diff-display, 2/4 phases complete.
+
+Done:
+* Phase 01: Created ResolveSubmoduleRepository function that parses submodule URLs and matches to local Forgejo instance
+* Phase 02: Created PopulateAllNestedFiles function that iterates over diff files and populates NestedFiles for same-instance submodules
+
+Next:
+* Phase 3: Render submodule diffs with links and icons in commit and PR/compare views
+  - Status: ready_to_plan
+  - Context: -
+
+Future:
+* Phase 4: Add unit and integration tests, handle edge cases like missing submodules
+
+Configuration:
+* Profile: balanced
+
+---------
+
+Gather context for phase 3 and clarify approach by running:
+* /fuska-design-phase 3
+
+or skip design of phase 3 and plan directly by running:
+* /fuska-plan-phase 3
+```
+
+Use `--json` for machine-readable output.
 
 ---
 

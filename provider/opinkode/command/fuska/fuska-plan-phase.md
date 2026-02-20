@@ -677,17 +677,38 @@ Add to planner context:
 - `fileMatches` -- Related files for disambiguation
 - Filter out `dead-code:` concepts from planning context
 
+**Step 6.7.3a: Format import graph data for planner**
+
+```
+// Build structured data for planner prompt
+const importGraphFiles = fileMatches.matches.map(match => {
+  const data = JSON.parse(match.summary);
+  return {
+    path: data.path,
+    language: data.language,
+    exports: data.exports || [],
+    imports: data.imports || [],
+    symbol_count: data.symbol_count || 0
+  };
+});
+
+const importGraphSymbols = symbolMatches.matches
+  .filter(m => !m.name.startsWith('dead-code:'))
+  .map(match => {
+    const data = JSON.parse(match.summary);
+    return {
+      name: data.name,
+      type: data.type,
+      file: data.file,
+      exported: data.exported,
+      signature: data.signature
+    };
+  });
+
+const importGraphAvailable = importGraphFiles.length > 0 || importGraphSymbols.length > 0;
+```
+
 **Step 6.7.4: Derive computed values**
-
-```
-const importGraphAvailable = symbolMatches.matches.length > 0 || fileMatches.matches.length > 0
-```
-
-Use in planning:
-- If `importGraphAvailable`, prefer file paths from matches
-- Skip dead code symbols when creating tasks
-
-**Step 6.8: Derive computed values**
 
 ```
 const modelProfile = configData?.model_profile || "balanced"
@@ -741,6 +762,27 @@ Include the research concept's summary here (domain-specific findings). Omit if 
 Include the UAT concept's summary here (gaps and findings). Omit entirely if not in --gaps mode.
 
 </planning_context>
+
+**Import Graph Context (if available):**
+{if importGraphAvailable}
+<import_graph_context>
+
+**Related files from import graph ({importGraphFiles.length} files):**
+{importGraphFiles.slice(0, 20).map(f => `- ${f.path} (${f.symbol_count} symbols, exports: ${f.exports.slice(0, 5).join(', ')}${f.exports.length > 5 ? '...' : ''})`).join('\n')}
+
+**Related symbols from import graph ({importGraphSymbols.length} symbols):**
+{importGraphSymbols.slice(0, 20).map(s => `- ${s.name} (${s.type}) in ${s.file}`).join('\n')}
+
+**Usage in planning:**
+- Check `fileByPath.get('path/to/file.ts')` before planning to create files
+- Use `symbolByName.get('SymbolName')` to find existing symbols to reference
+- If file exists: action = "extend", preserve existing exports
+- If file missing: action = "create"
+
+**Fallback:** If import graph context is empty, proceed without artifact existence checks.
+
+</import_graph_context>
+{endif}
 
 <downstream_consumer>
 Output consumed by /fuska-build-phase

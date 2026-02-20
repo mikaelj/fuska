@@ -157,6 +157,48 @@ for (const phase of phases) {
 
 ---
 
+## 1.7. Present Phase Design Overview
+
+**Step 1.7.1: Query phase concept**
+
+Call:
+```
+megamemory_understand(query=`phase ${phaseNumber}`, top_k=5)
+```
+
+**Step 1.7.2: Extract phase data**
+
+If response.matches.length > 0:
+```
+const phaseSummaryString = response.matches[0].summary
+const phaseData = JSON.parse(phaseSummaryString)
+const phaseName = phaseData.name
+const phaseGoal = phaseData.goal
+const phaseStatus = phaseData.status
+```
+
+**Step 1.7.3: Display design session overview**
+
+Output this markdown directly (not as a code block):
+
+```
+-----------------------------------------------------
+  Fuska: Phase {phaseNumber} Design Session
+-----------------------------------------------------
+
+**Phase {phaseNumber}: {phaseName}**
+
+Goal: {phaseGoal}
+Status: {phaseStatus}
+
+This session gathers context and decisions to guide planning.
+You'll discuss implementation choices for this phase.
+
+────────────────────────────────────────────────────
+```
+
+---
+
 ## 2. Check for Existing Phase Context
 
 **Step 2.1: Query phase context**
