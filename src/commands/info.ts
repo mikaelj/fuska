@@ -321,8 +321,8 @@ class InfoRunner {
     for (let i = 0; i < concepts.length; i++) {
       const concept = concepts[i];
       const isLast = i === concepts.length - 1;
-      const connector = isLast ? '└─' : '├─';
-      const childPrefix = isLast ? '   ' : '│  ';
+      const connector = isLast ? '* ' : '* ';
+      const childPrefix = isLast ? '   ' : '  ';
 
       const data = this.extractJson(concept.summary);
 
@@ -424,7 +424,7 @@ class InfoRunner {
     const items: string[] = [];
 
     if (data.tech_debt) {
-      for (const debt of data.tech_debt.slice(0, this.long ? 10 : 2)) {
+      for (const debt of data.tech_debt) {
         items.push(`${debt.area}: ${this.truncate(debt.issue, 40)}`);
       }
     }
@@ -438,12 +438,12 @@ class InfoRunner {
     const hasItems = this.renderItems(items, prefix);
 
     if (this.long && fileRefs && Array.isArray(fileRefs) && fileRefs.length > 0) {
-      console.log(`${prefix}├─ Files:`);
+      console.log(`${prefix}- Files:`);
       for (let i = 0; i < fileRefs.length; i++) {
         const file = fileRefs[i];
         if (typeof file !== 'string') continue;
         const isLastFile = i === fileRefs.length - 1;
-        const filePrefix = isLastFile ? '└─' : '├─';
+        const filePrefix = isLastFile ? '- ' : '- ';
         console.log(`${prefix}   ${filePrefix} ${file}`);
       }
       return true;
@@ -472,8 +472,8 @@ class InfoRunner {
     for (let i = 0; i < domains.length; i++) {
       const domain = domains[i];
       const isLast = i === domains.length - 1;
-      const connector = isLast ? '└─' : '├─';
-      const childPrefix = isLast ? '   ' : '│  ';
+      const connector = isLast ? '* ' : '* ';
+      const childPrefix = isLast ? '   ' : '  ';
 
       const displayName = this.formatDomainName(domain.name);
       const files = this.parseFileRefs(domain.file_refs);
@@ -515,7 +515,7 @@ class InfoRunner {
 
   private renderItems(items: string[], prefix: string): boolean {
     if (items.length === 0) {
-      console.log(`${prefix}└─ (no data)`);
+      console.log(`${prefix}- (no data)`);
       return false;
     }
 
@@ -525,14 +525,14 @@ class InfoRunner {
     for (let i = 0; i < displayItems.length; i++) {
       const item = displayItems[i];
       const isLast = i === displayItems.length - 1 && items.length <= maxItems;
-      const itemPrefix = isLast ? '└─' : '├─';
+      const itemPrefix = isLast ? '- ' : '- ';
 
       const truncated = this.truncate(item, this.long ? 100 : 60);
       console.log(`${prefix}${itemPrefix} ${truncated}`);
     }
 
     if (items.length > maxItems) {
-      console.log(`${prefix}└─ ... and ${items.length - maxItems} more`);
+      console.log(`${prefix}- ... and ${items.length - maxItems} more`);
     }
 
     return true;
