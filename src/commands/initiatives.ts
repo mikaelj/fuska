@@ -286,7 +286,7 @@ class InitiativesRunner {
         name = `Phase ${summary.phase_number}: ${name}`;
       }
       if (summary.status) {
-        status = this.getStatusIndicator(summary.status);
+        status = this.getPhaseStatusText(summary.status);
       }
     } catch (e) {
       if (name.toLowerCase().includes('phase')) {
@@ -297,7 +297,19 @@ class InitiativesRunner {
       }
     }
 
-    return status ? `${status} ${name}` : name;
+    return status ? `${name} ${status}` : name;
+  }
+
+  private getPhaseStatusText(status: string): string {
+    const statusLower = status.toLowerCase();
+
+    if (statusLower === 'completed' || statusLower === 'done' || statusLower === 'shipped') {
+      return '(completed)';
+    } else if (statusLower === 'in_progress' || statusLower === 'in-progress' || statusLower === 'active') {
+      return '(active)';
+    } else {
+      return '(pending)';
+    }
   }
 
   private getStatusIndicator(status: string): string {
