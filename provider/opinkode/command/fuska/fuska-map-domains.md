@@ -8,8 +8,10 @@ tools:
   - bash
   - glob
   - grep
+  - question
   - megamemory:understand
   - megamemory:create_concept
+  - megamemory:remove_concept
 
 ---
 
@@ -68,7 +70,50 @@ If tool call fails or returns `MEGAMEMORY_ERROR:`:
 
 If any response (even empty matches): MCP is working, continue.
 
-### 2. Get Project Root
+### 2. Check for Existing Domains
+
+**2.1: Query existing domain concepts**
+```
+megamemory_understand(query="domain", top_k=50)
+```
+
+**2.2: Handle existing domains**
+
+If domain concepts exist (kind: 'domain' and name starts with 'domain-'):
+
+**Check for --force flag:**
+```
+const forceRefresh = ARGUMENTS && ARGUMENTS.includes('--force')
+```
+
+If `forceRefresh` is true:
+→ Display: "Force refresh requested — updating domain concepts"
+→ Proceed to step 3 (Get Project Root)
+
+If `forceRefresh` is false:
+→ Display: "Domain concepts already exist in MegaMemory"
+→ Use question tool:
+```
+const domainResponse = question(questions=[{
+  header: "Domains Exist",
+  question: "Domain concepts already exist. What would you like to do?",
+  options: [
+    {label: "Refresh all (Recommended)", description: "Re-discover and update domain concepts"},
+    {label: "View existing", description: "Show current domain concepts"},
+    {label: "Skip", description: "Keep existing concepts"}
+  ]
+}])
+```
+
+If user chooses "View existing":
+→ Display existing domain concepts (list names and file counts)
+→ Re-prompt question
+
+If user chooses "Skip":
+→ Display: "Keeping existing concepts. Run with --force to refresh."
+→ Stop
+
+### 3. Get Project Root
 
 ```bash
 pwd
@@ -78,13 +123,13 @@ Store result as `$PROJECT_ROOT`.
 
 Display: "Project root: ${PROJECT_ROOT}"
 
-### 3. Spawn Domain Mapper
+### 4. Spawn Domain Mapper
 
 Display: "Spawning domain mapper agent..."
 
 @../../fuska/references/domain-mapping-task.md
 
-### 4. Verify Domains
+### 5. Verify Domains
 
 Display: "Verifying domain concepts..."
 
@@ -109,7 +154,7 @@ If domain concepts found and valid:
 → Display: "Domains discovered: {list of domain names}"
 → Display: "[OK] Domain mapping complete"
 
-### 5. Present Summary
+### 6. Present Summary
 
 ```
 ---------------------------------------------------

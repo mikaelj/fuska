@@ -320,9 +320,8 @@ class InfoRunner {
 
     for (let i = 0; i < concepts.length; i++) {
       const concept = concepts[i];
-      const isLast = i === concepts.length - 1;
-      const connector = isLast ? '* ' : '* ';
-      const childPrefix = isLast ? '   ' : '  ';
+      const connector = '*';
+      const childPrefix = ' ';
 
       const data = this.extractJson(concept.summary);
 
@@ -438,13 +437,10 @@ class InfoRunner {
     const hasItems = this.renderItems(items, prefix);
 
     if (this.long && fileRefs && Array.isArray(fileRefs) && fileRefs.length > 0) {
-      console.log(`${prefix}- Files:`);
-      for (let i = 0; i < fileRefs.length; i++) {
-        const file = fileRefs[i];
+      console.log(`${prefix}  Files:`);
+      for (const file of fileRefs) {
         if (typeof file !== 'string') continue;
-        const isLastFile = i === fileRefs.length - 1;
-        const filePrefix = isLastFile ? '- ' : '- ';
-        console.log(`${prefix}   ${filePrefix} ${file}`);
+        console.log(`${prefix}    - ${file}`);
       }
       return true;
     }
@@ -471,9 +467,8 @@ class InfoRunner {
 
     for (let i = 0; i < domains.length; i++) {
       const domain = domains[i];
-      const isLast = i === domains.length - 1;
-      const connector = isLast ? '* ' : '* ';
-      const childPrefix = isLast ? '   ' : '  ';
+      const connector = '*';
+      const childPrefix = ' ';
 
       const displayName = this.formatDomainName(domain.name);
       const files = this.parseFileRefs(domain.file_refs);
@@ -522,13 +517,8 @@ class InfoRunner {
     const maxItems = this.long ? 100 : (this.verbose ? 10 : 4);
     const displayItems = items.slice(0, maxItems);
 
-    for (let i = 0; i < displayItems.length; i++) {
-      const item = displayItems[i];
-      const isLast = i === displayItems.length - 1 && items.length <= maxItems;
-      const itemPrefix = isLast ? '- ' : '- ';
-
-      const truncated = this.truncate(item, this.long ? 100 : 60);
-      console.log(`${prefix}${itemPrefix} ${truncated}`);
+    for (const item of displayItems) {
+      console.log(`${prefix}- ${this.truncate(item, this.long ? 100 : 60)}`);
     }
 
     if (items.length > maxItems) {

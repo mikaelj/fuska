@@ -130,6 +130,17 @@ megamemory_understand(query="codebase", top_k=20)
 **2.5: Handle existing codebase**
 
 If codebase concepts exist:
+
+**Check for --force flag:**
+```
+const forceRefresh = ARGUMENTS && ARGUMENTS.includes('--force')
+```
+
+If `forceRefresh` is true:
+→ Display: "Force refresh requested — updating all codebase concepts, domains, and file/code index"
+→ Proceed to step 3 (Get Project Root)
+
+If `forceRefresh` is false:
 → Display: "Codebase concepts already exist in MegaMemory"
 → Use question tool:
 ```
@@ -137,7 +148,7 @@ const codebaseResponse = question(questions=[{
   header: "Codebase Exists",
   question: "Codebase concepts already exist. What would you like to do?",
   options: [
-    {label: "Refresh all", description: "Update all codebase concepts"},
+    {label: "Refresh all (Recommended)", description: "Update codebase concepts, domains, and file/code index"},
     {label: "View existing", description: "Show current codebase concepts"},
     {label: "Skip", description: "Keep existing concepts"}
   ]
@@ -145,10 +156,11 @@ const codebaseResponse = question(questions=[{
 ```
 
 If user chooses "View existing":
-→ Display existing codebase concepts
+→ Display existing codebase concepts (query and show codebase-tech, codebase-arch, codebase-quality, codebase-concerns summaries)
 → Re-prompt question
 
 If user chooses "Skip":
+→ Display: "Keeping existing concepts. Run with --force to refresh."
 → Stop
 
 ### 3. Get Project Root

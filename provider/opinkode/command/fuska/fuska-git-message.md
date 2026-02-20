@@ -316,9 +316,20 @@ git diff --cached
 
 Combine both outputs as `diffContent`.
 
-If both diffs are empty:
-→ Display: "No uncommitted changes found in working tree"
-→ Stop
+**If both diffs are empty:**
+
+Check for HEAD fallback:
+```bash
+git rev-parse HEAD 2>/dev/null
+```
+
+- If HEAD exists:
+  - Set `commitHash = "HEAD"`
+  - Set `isDefaultMode = false` (don't show usage header)
+  - Proceed to **Step 2a** to generate message from HEAD commit
+- If no HEAD (empty repo):
+  → Display: "No uncommitted changes and no commits found"
+  → Stop
 
 ---
 
@@ -557,6 +568,7 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Trailer contains phase-plan identifier (e.g., `task-002`, `02-01`, `phase-02`)
 - [ ] Message is printed, nothing is committed
 - [ ] No arguments defaults to working tree mode (unstaged + staged)
+- [ ] No arguments falls back to HEAD commit when no uncommitted changes exist
 - [ ] Usage header printed when no arguments provided
 - [ ] Usage header NOT printed when explicit arguments given
 - [ ] Header contains valid usage information

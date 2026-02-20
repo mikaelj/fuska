@@ -13,6 +13,20 @@ interface InitiativeNode {
   kind: string;
   summary: string;
   children?: string[];
+  parent_id?: string | null;
+  updated_at?: string;
+}
+
+interface PhaseData {
+  number: number;
+  slug: string;
+  name: string;
+  goal: string;
+  status: string;
+}
+
+interface RoadmapData {
+  phases: PhaseData[];
 }
 
 class InitiativesRunner {
@@ -42,9 +56,19 @@ class InitiativesRunner {
     this.db = new KnowledgeDB(dbPath);
   }
 
+  private parseSummary<T>(summary: string): T | null {
+    try {
+      const start = summary.indexOf('{');
+      const end = summary.lastIndexOf('}');
+      if (start === -1 || end === -1) return null;
+      return JSON.parse(summary.substring(start, end + 1)) as T;
+    } catch {
+      return null;
+    }
+  }
+
   private async displayInitiatives(): Promise<void> {
-    const nodes = this.db.getAllActiveNodes();
-    const edges = this.db.getAllEdges ? this.db.getAllEdges() : [];
+    const nodes: InitiativeNode[] = this.db.getAllActiveNodes();
 
     const initiatives = findAllInitiatives(this.db);
 
@@ -56,17 +80,15 @@ class InitiativesRunner {
       return;
     }
 
-    // Find each initiative's state concept updated_at for sorting
     const withActivity = initiatives.map(initiative => {
-      const stateNode = nodes.find((n: InitiativeNode) =>
+      const stateNode = nodes.find(n =>
         n.name === 'state' && n.kind === 'config' &&
-        (n as any).parent_id === initiative.node.id
+        n.parent_id === initiative.node.id
       );
-      const updatedAt = (stateNode as any)?.updated_at || (initiative.node as any).updated_at || null;
+      const updatedAt = stateNode?.updated_at || (initiative.node as any).updated_at || null;
       return { initiative, updatedAt };
     });
 
-    // Sort by updated_at descending (most recent first), nulls last
     withActivity.sort((a, b) => {
       if (!a.updatedAt && !b.updatedAt) return 0;
       if (!a.updatedAt) return 1;
@@ -81,9 +103,9 @@ class InitiativesRunner {
       const { initiative, updatedAt } = withActivity[i];
       const isLast = i === withActivity.length - 1;
 
-      const initiativeNode = nodes.find((n: InitiativeNode) => n.id === initiative.node.id);
+      const initiativeNode = nodes.find(n => n.id === initiative.node.id);
       if (initiativeNode) {
-        this.displayInitiativeTree(initiativeNode, nodes, edges, '', isLast, initiative.isCurrent, updatedAt);
+        this.displayInitiativeTree(initiativeNode, nodes, '', isLast, initiative.isCurrent, updatedAt);
       }
     }
   }
@@ -91,18 +113,11 @@ class InitiativesRunner {
   private displayInitiativeTree(
     initiative: InitiativeNode,
     nodes: InitiativeNode[],
-    edges: any[],
     prefix: string,
     isLast: boolean,
     isCurrent: boolean = false,
     updatedAt: string | null = null
   ): void {
-    const nodeMap = new Map<string, InitiativeNode>();
-
-    for (const node of nodes) {
-      nodeMap.set(node.id, node);
-    }
-
     const connector = isLast ? '└─' : '├─';
     const initiativeName = this.getInitiativeDisplayName(initiative, isCurrent);
     const timeAgo = updatedAt ? this.formatRelativeTime(updatedAt) : '';
@@ -110,99 +125,88 @@ class InitiativesRunner {
 
     console.log(`${prefix}${connector} ${initiativeName}${padding}${timeAgo}`);
 
-    const childEdges = edges.filter((e: any) => e.to_id === initiative.id);
-    const children = childEdges
-      .map((e: any) => {
-        const child = nodeMap.get(e.from_id);
-        return child ? { ...child, relation: e.relation } : null;
-      })
-      .filter((n: any) => n !== undefined);
-
     const newPrefix = prefix + (isLast ? '  ' : '│ ');
 
-    if (children.length > 0) {
-      const milestones = children.filter((c: any) =>
-        c.kind === 'decision' ||
-        c.kind === 'feature' ||
-        c.name.toLowerCase().includes('milestone') ||
-        c.name.toLowerCase().includes('phase')
-      );
-
-      if (milestones.length > 0) {
-        for (let i = 0; i < milestones.length; i++) {
-          const milestone = milestones[i] as InitiativeNode;
-          const isLastMilestone = i === milestones.length - 1;
-          this.displayMilestoneTree(milestone, nodes, newPrefix, isLastMilestone);
-        }
-      } else {
-        const configChildren = children.filter((c: any) => c.relation === 'configured_by');
-        const analysisChildren = children.filter((c: any) => c.relation === 'connects_to');
-
-        if (analysisChildren.length > 0) {
-          console.log(`${newPrefix}├─ Codebase Analysis`);
-          for (let i = 0; i < Math.min(analysisChildren.length, 3); i++) {
-            const child = analysisChildren[i];
-            if (!child) continue;
-            const isLastChild = i === Math.min(analysisChildren.length, 3) - 1 && configChildren.length === 0;
-            const childConnector = isLastChild ? '└─' : '├─';
-            const childName = this.formatChildName(child.name);
-            console.log(`${newPrefix}│  ${childConnector} ${childName}`);
-          }
-          if (analysisChildren.length > 3) {
-            console.log(`${newPrefix}│  └─ ... and ${analysisChildren.length - 3} more`);
-          }
-        }
-
-        if (configChildren.length > 0) {
-          console.log(`${newPrefix}└─ Config & State`);
-        }
+    const phases = this.findPhasesForInitiative(initiative.id, nodes);
+    if (phases.length > 0) {
+      for (let i = 0; i < phases.length; i++) {
+        const phase = phases[i];
+        const isLastPhase = i === phases.length - 1;
+        this.displayPhaseTree(phase, nodes, newPrefix, isLastPhase);
       }
     }
   }
 
-  private displayMilestoneTree(
-    milestone: InitiativeNode,
+  private findPhasesForInitiative(initiativeId: string, nodes: InitiativeNode[]): Array<PhaseData & { updated_at?: string }> {
+    const roadmapNode = nodes.find(n =>
+      (n.name === 'roadmap' || n.name.endsWith('-roadmap')) && n.parent_id === initiativeId
+    );
+
+    if (roadmapNode) {
+      const roadmapData = this.parseSummary<RoadmapData>(roadmapNode.summary);
+      if (roadmapData?.phases) {
+        return roadmapData.phases.map(phase => {
+          const phaseNode = nodes.find(n =>
+            (n.name === phase.slug || n.name.endsWith('/' + phase.slug)) && n.parent_id === roadmapNode.id
+          );
+          return {
+            ...phase,
+            updated_at: phaseNode?.updated_at
+          };
+        });
+      }
+    }
+
+    const phases: Array<PhaseData & { updated_at?: string }> = [];
+
+    for (const node of nodes) {
+      if (node.kind !== 'feature') continue;
+      if (!node.parent_id) continue;
+
+      const isPhase = /^phase-\d+$/.test(node.name) || /\/phase-\d+$/.test(node.name);
+      if (!isPhase) continue;
+
+      const belongsToInitiative = node.parent_id === initiativeId ||
+        node.parent_id.startsWith(initiativeId + '/');
+      if (!belongsToInitiative) continue;
+
+      const phaseData = this.parseSummary<PhaseData>(node.summary);
+      if (phaseData) {
+        phases.push({
+          ...phaseData,
+          updated_at: node.updated_at
+        });
+      } else {
+        const numMatch = node.name.match(/phase-(\d+)/);
+        if (numMatch) {
+          phases.push({
+            number: parseInt(numMatch[1], 10),
+            slug: node.name,
+            name: node.name,
+            goal: '',
+            status: 'planned',
+            updated_at: node.updated_at
+          });
+        }
+      }
+    }
+
+    phases.sort((a, b) => a.number - b.number);
+    return phases;
+  }
+
+  private displayPhaseTree(
+    phase: PhaseData & { updated_at?: string },
     nodes: InitiativeNode[],
     prefix: string,
     isLast: boolean
   ): void {
-    const nodeMap = new Map<string, InitiativeNode>();
-    for (const node of nodes) {
-      nodeMap.set(node.id, node);
-    }
-
     const connector = isLast ? '└─' : '├─';
-    const milestoneName = this.getMilestoneDisplayName(milestone);
+    const statusIcon = this.getStatusIndicator(phase.status);
+    const timeAgo = phase.updated_at ? ` ${this.formatRelativeTime(phase.updated_at)}` : '';
+    const name = phase.name || phase.slug;
 
-    console.log(`${prefix}${connector} ${milestoneName}`);
-
-    const newPrefix = prefix + (isLast ? '  ' : '│ ');
-
-    if (milestone.children && milestone.children.length > 0) {
-      const children = milestone.children
-        .map(id => nodeMap.get(id))
-        .filter(n => n !== undefined) as InitiativeNode[];
-
-      const phases = children.filter(c =>
-        c.name.toLowerCase().includes('phase') ||
-        c.kind === 'module'
-      );
-
-      if (phases.length > 0) {
-        for (let i = 0; i < phases.length; i++) {
-          const phase = phases[i];
-          const isLastPhase = i === phases.length - 1;
-          this.displayPhaseTree(phase, newPrefix, isLastPhase);
-        }
-      }
-    }
-  }
-
-  private displayPhaseTree(phase: InitiativeNode, prefix: string, isLast: boolean): void {
-    const connector = isLast ? '└─' : '├─';
-    const phaseName = this.getPhaseDisplayName(phase);
-
-    console.log(`${prefix}${connector} ${phaseName}`);
+    console.log(`${prefix}${connector} ${statusIcon} Phase ${phase.number}: ${name}${timeAgo}`);
   }
 
   private getInitiativeDisplayName(initiative: InitiativeNode, isCurrent: boolean = false): string {
@@ -246,92 +250,16 @@ class InitiativesRunner {
     return `${months} month${months === 1 ? '' : 's'} ago`;
   }
 
-  private getMilestoneDisplayName(milestone: InitiativeNode): string {
-    let name = milestone.name;
-    let status = '';
-
-    try {
-      const summary = JSON.parse(milestone.summary);
-      if (summary.name) {
-        name = summary.name;
-      }
-      if (summary.milestone_number) {
-        name = `M${summary.milestone_number}: ${name}`;
-      }
-      if (summary.status) {
-        status = this.getStatusIndicator(summary.status);
-      }
-    } catch (e) {
-      if (name.includes('milestone')) {
-        const match = name.match(/milestone-?(\d+)/i);
-        if (match) {
-          name = `M${match[1]}: ${name.replace(/milestone-?\d+[-_]?/i, '').replace(/[-_]/g, ' ')}`;
-        }
-      }
-    }
-
-    return status ? `${status} ${name}` : name;
-  }
-
-  private getPhaseDisplayName(phase: InitiativeNode): string {
-    let name = phase.name;
-    let status = '';
-
-    try {
-      const summary = JSON.parse(phase.summary);
-      if (summary.name) {
-        name = summary.name;
-      }
-      if (summary.phase_number !== undefined) {
-        name = `Phase ${summary.phase_number}: ${name}`;
-      }
-      if (summary.status) {
-        status = this.getPhaseStatusText(summary.status);
-      }
-    } catch (e) {
-      if (name.toLowerCase().includes('phase')) {
-        const match = name.match(/phase-?(\d+)/i);
-        if (match) {
-          name = `Phase ${match[1]}`;
-        }
-      }
-    }
-
-    return status ? `${name} ${status}` : name;
-  }
-
-  private getPhaseStatusText(status: string): string {
-    const statusLower = status.toLowerCase();
-
-    if (statusLower === 'completed' || statusLower === 'done' || statusLower === 'shipped') {
-      return '(completed)';
-    } else if (statusLower === 'in_progress' || statusLower === 'in-progress' || statusLower === 'active') {
-      return '(active)';
-    } else {
-      return '(pending)';
-    }
-  }
-
   private getStatusIndicator(status: string): string {
-    const statusLower = status.toLowerCase();
+    const statusLower = (status || '').toLowerCase();
 
-    if (statusLower === 'completed' || statusLower === 'done' || statusLower === 'shipped') {
+    if (statusLower === 'completed' || statusLower === 'done' || statusLower === 'shipped' || statusLower === 'complete') {
       return '✓';
     } else if (statusLower === 'in_progress' || statusLower === 'in-progress' || statusLower === 'active') {
       return '●';
     } else {
       return '○';
     }
-  }
-
-  private formatChildName(name: string): string {
-    const parts = name.split('/');
-    const lastPart = parts[parts.length - 1];
-
-    return lastPart
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   }
 }
 

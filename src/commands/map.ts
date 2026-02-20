@@ -6,12 +6,16 @@ export function mapCommand(program: Command) {
     .command('map [area]')
     .description('Map codebase structure to MegaMemory using parallel analysis agents')
     .option('--domains-only', 'Run only domain discovery (faster)')
-    .action(async (area: string | undefined, options: { domainsOnly?: boolean }) => {
+    .option('--force', 'Force refresh all codebase concepts, domains, and file/code index')
+    .action(async (area: string | undefined, options: { domainsOnly?: boolean; force?: boolean }) => {
       const command = options.domainsOnly 
         ? '/fuska-map-domains' 
         : '/fuska-map-codebase';
       
-      const args = area ? [area] : [];
+      const args: string[] = [];
+      if (area) args.push(area);
+      if (options.force) args.push('--force');
+      
       const label = options.domainsOnly ? 'Mapping domains' : 'Mapping codebase';
       
       if (!options.domainsOnly) {
