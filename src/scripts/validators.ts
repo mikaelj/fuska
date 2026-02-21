@@ -23,8 +23,8 @@ export function validatePlanConcept(data: unknown): ValidationResult {
   if (!d.output || typeof d.output !== 'string') {
     errors.push('Missing or invalid "output" (string required)');
   }
-  if (!Array.isArray(d.must_haves) || d.must_haves.length === 0) {
-    errors.push('Missing or empty "must_haves" (non-empty array required)');
+  if (!Array.isArray(d.requirements) || d.requirements.length === 0) {
+    errors.push('Missing or empty "requirements" (non-empty array required)');
   }
   if (!Array.isArray(d.tasks) || d.tasks.length === 0) {
     errors.push('Missing or empty "tasks" (non-empty array required)');

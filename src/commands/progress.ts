@@ -66,9 +66,9 @@ interface SummaryData {
   completed?: string;
 }
 
-interface UATData {
+interface VerificationData {
   status: string;
-  gaps?: string[];
+  issues?: string[];
 }
 
 interface ChapterContextData {
@@ -103,7 +103,7 @@ interface StructuredContext {
   chapterContext: ChapterContextData | null;
   chapterPlans: Array<{ name: string; data: PlanData }>;
   chapterSummaries: Array<{ name: string; data: SummaryData }>;
-  chapterUat: UATData | null;
+  chapterVerification: VerificationData | null;
   recentSummaries: Array<{ name: string; data: SummaryData }>;
   pendingTodos: TodoItem[];
   activeDebugSessions: DebugSession[];
@@ -312,9 +312,9 @@ class ProgressRunner {
       .filter((s): s is { name: string; data: SummaryData } => s !== null);
   }
 
-  private findChapterUat(chapterSlug: string): UATData | null {
-    const uatNode = this.nodes.find(n => n.name === `${chapterSlug}-uat`);
-    return uatNode ? this.parseSummary<UATData>(uatNode.summary) : null;
+  private findChapterVerification(chapterSlug: string): VerificationData | null {
+    const verificationNode = this.nodes.find(n => n.name === `${chapterSlug}-verification`);
+    return verificationNode ? this.parseSummary<VerificationData>(verificationNode.summary) : null;
   }
 
   private findRecentSummaries(limit: number = 3): Array<{ name: string; data: SummaryData }> {
@@ -375,7 +375,7 @@ class ProgressRunner {
       chapterContext: currentChapterSlug ? this.findChapterContext(currentChapterSlug) : null,
       chapterPlans: currentChapterSlug ? this.findChapterPlans(currentChapterSlug) : [],
       chapterSummaries: currentChapterSlug ? this.findChapterSummaries(currentChapterSlug) : [],
-      chapterUat: currentChapterSlug ? this.findChapterUat(currentChapterSlug) : null,
+      chapterVerification: currentChapterSlug ? this.findChapterVerification(currentChapterSlug) : null,
       recentSummaries: this.findRecentSummaries(3),
       pendingTodos: this.getPendingTodos(),
       activeDebugSessions: this.getActiveDebugSessions()
@@ -423,7 +423,7 @@ class ProgressRunner {
     const chapterSlug = ctx.state?.current_chapter;
     const chapterNum = chapterSlug ? parseInt(chapterSlug.replace('chapter-', '')) : 0;
 
-    if (ctx.chapterUat?.status === 'diagnosed' && ctx.chapterUat.gaps && ctx.chapterUat.gaps.length > 0) {
+    if (ctx.chapterVerification?.status === 'diagnosed' && ctx.chapterVerification.issues && ctx.chapterVerification.issues.length > 0) {
       return { route: 'gaps', chapterNumber: chapterNum };
     }
 
@@ -560,12 +560,12 @@ class ProgressRunner {
     switch (action.route) {
       case 'execute':
         this.out(`Execute plan ${action.planName} by running:`);
-        this.out(`* /fuska-build-chapter ${chapterNum}`);
+        this.out(`* /fuska-build ${chapterNum}`);
         break;
 
       case 'plan':
         this.out(`Plan chapter ${chapterNum} by running:`);
-        this.out(`* /fuska-plan-chapter ${chapterNum}`);
+        this.out(`* /fuska-plan ${chapterNum}`);
         break;
 
       case 'discuss':
@@ -573,12 +573,12 @@ class ProgressRunner {
         this.out(`* /fuska-design-chapter ${chapterNum}`);
         this.out('');
         this.out(`or skip design of chapter ${chapterNum} and plan directly by running:`);
-        this.out(`* /fuska-plan-chapter ${chapterNum}`);
+        this.out(`* /fuska-plan ${chapterNum}`);
         break;
 
       case 'gaps':
         this.out(`Fix UAT gaps in chapter ${chapterNum} by running:`);
-        this.out(`* /fuska-plan-chapter ${chapterNum} --gaps`);
+        this.out(`* /fuska-plan ${chapterNum} --gaps`);
         break;
 
       case 'next-chapter':
@@ -586,7 +586,7 @@ class ProgressRunner {
         this.out(`* /fuska-design-chapter ${action.chapterNumber}`);
         this.out('');
         this.out(`or skip design and plan directly by running:`);
-        this.out(`* /fuska-plan-chapter ${action.chapterNumber}`);
+        this.out(`* /fuska-plan ${action.chapterNumber}`);
         break;
 
       case 'complete-milestone':

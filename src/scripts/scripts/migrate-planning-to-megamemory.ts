@@ -649,7 +649,7 @@ class PlanningToMegaMemoryMigration {
       if (chapterFiles.uat) {
         const uatData = this.parseUATFile(chapterFiles.uat);
         if (uatData) {
-          const concept = ChapterTemplates.createUAT(chapterName, uatData);
+          const concept = ChapterTemplates.createVerification(chapterName, uatData);
           concept.parent_id = chapterParentId;
           concept.edges = [
             { to: chapterParentId, relation: 'connects_to' as const },

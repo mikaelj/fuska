@@ -14,8 +14,8 @@ class TerminologyMigration {
     return text
       // Specific compound tokens first (avoid partial replacements)
       .replace(/fuska-phase-researcher/g, 'fuska-chapter-researcher')
-      .replace(/fuska-plan-phase/g, 'fuska-plan-chapter')
-      .replace(/fuska-build-phase/g, 'fuska-build-chapter')
+      .replace(/fuska-plan-phase/g, 'fuska-plan')
+      .replace(/fuska-build-phase/g, 'fuska-build')
       .replace(/fuska-design-phase/g, 'fuska-design-chapter')
       .replace(/fuska-add-phase/g, 'fuska-add-chapter')
       .replace(/fuska-remove-phase/g, 'fuska-remove-chapter')

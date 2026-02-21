@@ -1,5 +1,5 @@
-import { FuskaConcept, ChapterContextData, PlanData, SummaryData, ResearchData, UATData } from './types';
-import { generateSummary, generateContextMarkdown, generatePlanMarkdown, generateSummaryMarkdown, generateResearchMarkdown, generateUATMarkdown } from './helpers';
+import { FuskaConcept, ChapterContextData, PlanData, SummaryData, ResearchData, VerificationData } from './types';
+import { generateSummary, generateContextMarkdown, generatePlanMarkdown, generateSummaryMarkdown, generateResearchMarkdown, generateVerificationMarkdown } from './helpers';
 
 export class ChapterConceptTemplates {
   static createContext(chapterSlug: string, contextData: ChapterContextData, relevantKnowledge: any[] = []): FuskaConcept {
@@ -60,11 +60,11 @@ export class ChapterConceptTemplates {
     };
   }
 
-  static createUAT(chapterSlug: string, uatData: UATData): FuskaConcept {
-    const markdown = generateUATMarkdown(uatData);
+  static createVerification(chapterSlug: string, uatData: VerificationData): FuskaConcept {
+    const markdown = generateVerificationMarkdown(uatData);
 
     return {
-      name: `${chapterSlug}-uat`,
+      name: `${chapterSlug}-verification`,
       kind: 'component',
       summary: generateSummary(uatData) + '\n\n' + markdown,
       parent_id: chapterSlug,

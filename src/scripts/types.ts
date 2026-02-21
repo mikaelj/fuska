@@ -102,7 +102,7 @@ export interface PlanData {
   objective: string;
   purpose: string;
   output: string;
-  must_haves: string[];
+  requirements: string[];
   megamemory_references?: {
     knowledge_applied: string[];
     patterns_to_follow: string[];
@@ -153,7 +153,7 @@ export interface ResearchData {
   pitfalls?: string[];
 }
 
-export interface UATData {
+export interface VerificationData {
   verification_results: string[];
   issues_found: string[];
   recommendations: string[];

@@ -164,8 +164,8 @@ export function generatePlanMarkdown(planData: any, patterns: any[], relevantSum
   sections.push(`## Purpose\n\n${planData.purpose}`);
   sections.push(`## Output\n\n${planData.output}`);
 
-  if (planData.must_haves && planData.must_haves.length > 0) {
-    sections.push(`## Must Haves\n\n${planData.must_haves.map((mh: string) => `- ${mh}`).join('\n')}`);
+  if (planData.requirements && planData.requirements.length > 0) {
+    sections.push(`## Requirements\n\n${planData.requirements.map((mh: string) => `- ${mh}`).join('\n')}`);
   }
 
   if (planData.megamemory_references) {
@@ -294,7 +294,7 @@ export function generateResearchMarkdown(researchData: any): string {
   return sections.join('\n\n');
 }
 
-export function generateUATMarkdown(uatData: any): string {
+export function generateVerificationMarkdown(uatData: any): string {
   const sections: string[] = [];
 
   if (uatData.verification_results && Array.isArray(uatData.verification_results) && uatData.verification_results.length > 0) {
