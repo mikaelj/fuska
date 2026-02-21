@@ -408,14 +408,14 @@ megamemory_update_concept(
 
 **Plan first gap closure chapter**
 
-/fuska-plan-chapter ${newChapters[0].number}
+/fuska-plan ${newChapters[0].number}
 
 */new first → fresh context window*
 
 ---
 
 **Also available:**
-- /fuska-build-chapter ${newChapters[0].number} — if plans already exist
+- /fuska-build ${newChapters[0].number} — if plans already exist
 - Query roadmap: megamemory:understand(query='roadmap') — see updated roadmap
 
 ---
@@ -514,5 +514,5 @@ becomes:
 - [ ] Roadmap concept updated with new chapters
 - [ ] Chapter concepts created in MegaMemory
 - [ ] State concept updated with gap closure status
-- [ ] User knows to run `/fuska-plan-chapter` next
+- [ ] User knows to run `/fuska-plan` next
 </success_criteria>

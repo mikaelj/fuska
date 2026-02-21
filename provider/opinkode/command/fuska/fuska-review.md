@@ -18,7 +18,7 @@ Validate built features through conversational testing with persistent state usi
 
 Purpose: Confirm what OpenCode built actually works from user's perspective. One test at a time, plain text responses, no interrogation. When issues are found, automatically diagnose, plan fixes, and prepare for execution.
 
-Output: {chapter}-uat concept — tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /fuska-build-chapter.
+Output: {chapter}-uat concept — tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /fuska-build.
 
 </objective>
 
@@ -487,7 +487,7 @@ If plans pass, verification is complete. If issues remain, iterate.
 When all issues resolved and verification complete:
 
 → Display: "Gap closure plans verified. Ready for execution."
-→ Suggest: `/fuska-build-chapter ${chapterNumber}`
+→ Suggest: `/fuska-build ${chapterNumber}`
 
 </process>
 
@@ -538,8 +538,8 @@ UAT complete [OK]
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-plan-chapter {Z+1} — skip design, plan directly
-- /fuska-build-chapter {Z+1} — skip to execution (if already planned)
+- /fuska-plan {Z+1} — skip design, plan directly
+- /fuska-build {Z+1} — skip to execution (if already planned)
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -597,7 +597,7 @@ Fix plans verified [OK]
 ## > Next Up
 
 **Execute fix plans** — run diagnosed fixes
-/fuska-build-chapter {Z} --gaps-only
+/fuska-build {Z} --gaps-only
 
 */new first → fresh context window*
 
@@ -605,7 +605,7 @@ Fix plans verified [OK]
 
 **Also available:**
 - Query fix plans: use megamemory:understand to search for the chapter's plan concepts
-- /fuska-plan-chapter {Z} --gaps — regenerate fix plans
+- /fuska-plan {Z} --gaps — regenerate fix plans
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -641,7 +641,7 @@ Review the issues above and either:
 ──────────────────────────────────────────────────────────────
 
 **Options:**
-- /fuska-plan-chapter {Z} --gaps — retry fix planning with guidance
+- /fuska-plan {Z} --gaps — retry fix planning with guidance
 - /fuska-design-chapter {Z} — gather more context before replanning
 ──────────────────────────────────────────────────────────────
 ```
@@ -659,6 +659,6 @@ Review the issues above and either:
 - [ ] If issues: Parallel debug agents diagnose root causes
 - [ ] If issues: fuska-planner creates fix plans from diagnosed gaps
 - [ ] If issues: fuska-plan-checker verifies fix plans (max 3 iterations)
-- [ ] Ready for `/fuska-build-chapter` when complete
+- [ ] Ready for `/fuska-build` when complete
 
 </success_criteria>

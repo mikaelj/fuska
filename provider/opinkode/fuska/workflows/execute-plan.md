@@ -1920,7 +1920,7 @@ Summary concept: {chapter}-{plan}-Summary
 
 **{chapter}-{next_plan}: [Plan Name]** — [objective from plan concept]
 
-`/fuska-execute-chapter {chapter}`
+`/fuska-build {chapter}`
 
 *`/new` first → fresh context window*
 
@@ -1983,7 +1983,7 @@ All {Y} plans finished.
 
 **Chapter {Z+1}: {Next Chapter Name}** — {Goal from roadmap}
 
-`/fuska-plan-chapter {Z+1}`
+`/fuska-plan {Z+1}`
 
 *`/new` first → fresh context window*
 

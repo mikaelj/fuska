@@ -785,7 +785,7 @@ Include the UAT concept's summary here (gaps and findings). Omit entirely if not
 {endif}
 
 <downstream_consumer>
-Output consumed by /fuska-build-chapter
+Output consumed by /fuska-build
 
 Plans must be executable prompts with:
 - Frontmatter (batch, depends_on, files_modified, autonomous)
@@ -1410,7 +1410,7 @@ Verification: {Passed | Passed with override | Skipped}
 ## > Next Up
 
 **Execute Chapter {X}** — run all {N} plans
-/fuska-build-chapter {X}
+/fuska-build {X}
 
 */new first → fresh context window*
 
@@ -1418,7 +1418,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 **Also available:**
 - Review plans in MegaMemory: search for "{CHAPTER}-plan" to see all plan concepts
-- /fuska-plan-chapter {X} --research — re-research first
+- /fuska-plan {X} --research — re-research first
 ──────────────────────────────────────────────────────────────
 ```
 

@@ -22,12 +22,43 @@
 | <nobr>`fuska initiative switch [slug]`</nobr> | Switch to another initiative | `[slug]` -- initiative to switch to |
 | <nobr>`fuska todo`</nobr> | List completed and pending tasks | -- |
 | <nobr>`fuska info`</nobr> | Display codebase and domain mappings from MegaMemory | `--long` for all files, `--verbose` for small domains |
+| <nobr>`fuska help [command]`</nobr> | Show help for Fuska commands | `[command]` -- specific command for detailed help |
 | <nobr>`fuska progress`</nobr> | Check project progress and show next action | `--json` for machine-readable output |
 | <nobr>`fuska refresh [args...]`</nobr> | Refresh import graph with file and symbol-level indexing | `--full`, `--dead-code`, `--json`, `--prune` |
 | <nobr>`fuska ask [args...]`</nobr> | Ask questions about the codebase using import graph data | `[question]` |
 | <nobr>`fuska git message [args...]`</nobr> | Test and preview commit messages using Fuska rules | -- |
 | <nobr>`fuska git worktree add <name>`</nobr> | Create git worktree with shared context | `--no-context`, `-f, --force` |
 | <nobr>`fuska git worktree merge <name>`</nobr> | Merge worktree (MM + git) | `--only-git`, `--only-megamemory`, `--dry-run`, `--keep <strategy>`, `--force` |
+
+### `fuska help` Example
+
+Shows detailed help for any Fuska command:
+
+```
+fuska help do
+
+/fuska-do [mode] [description]
+
+Execute unplanned tasks with mode-aware agent chain.
+
+Modes:
+  planned    Planner → Builder (auto-build)
+  checked    + Plan Checker (ask first)
+  researched + Researcher (ask first)
+  verified   Full pipeline + Reviewer (auto-build)
+
+Flags:
+  --review       Force plan review before executing
+  --no-review    Skip plan review (auto-execute)
+  --auto-commit  Auto-commit without prompt
+
+Examples:
+  /fuska-do planned fix typo in README
+  /fuska-do checked "add input validation"
+  /fuska-do verified "implement auth" --auto-commit
+```
+
+Run `fuska help` without arguments to see all available commands.
 
 ### `fuska progress` Example
 

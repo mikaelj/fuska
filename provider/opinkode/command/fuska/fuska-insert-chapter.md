@@ -320,7 +320,7 @@ Project state updated in MegaMemory
 
 **Chapter {decimal_chapter}: {description}** — urgent insertion
 
-`/fuska-plan-chapter {decimal_chapter}`
+`/fuska-plan {decimal_chapter}`
 
 *`/new` first → fresh context window*
 
@@ -342,7 +342,7 @@ Project state updated in MegaMemory
 - Don't insert before Chapter 1 (decimal 0.1 makes no sense)
 - Don't renumber existing chapters
 - Don't modify the target chapter content
-- Don't create plans yet (that's /fuska-plan-chapter)
+- Don't create plans yet (that's /fuska-plan)
 - Don't commit changes (user decides when to commit)
 </anti_patterns>
 

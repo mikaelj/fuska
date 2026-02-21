@@ -601,7 +601,7 @@ Next: Chapter [X+1] — [Name]
 [AUTO] Auto-continuing: Plan Chapter [X+1] in detail
 ```
 
-Exit skill and invoke Command("/fuska-plan-chapter [X+1]")
+Exit skill and invoke Command("/fuska-plan [X+1]")
 
 </if>
 
@@ -616,7 +616,7 @@ Exit skill and invoke Command("/fuska-plan-chapter [X+1]")
 
 **Chapter [X+1]: [Name]** — [Goal from ROADMAP]
 
-`/fuska-plan-chapter [X+1]`
+`/fuska-plan [X+1]`
 
 *`/new` first → fresh context window*
 

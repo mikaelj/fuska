@@ -558,7 +558,7 @@ ${!stateData.current_chapter ? 'Initialize project' : 'Continue with project pla
 
 ${!stateData.current_chapter
    ? 'fuska init — Initialize project foundation with this codebase understanding'
-   : '/fuska-plan-chapter ' + stateData.current_chapter + ' — Plan next chapter'
+   : '/fuska-plan ' + stateData.current_chapter + ' — Plan next chapter'
 }
 
 ────────────────────────────────────────────────────────────
@@ -566,7 +566,7 @@ ${!stateData.current_chapter
 **Also available:**
 - Query codebase concepts: megamemory:understand(query='codebase')
 - /fuska-design-chapter {N} — Discuss a chapter
-- /fuska-plan-chapter {N} — Plan a chapter
+- /fuska-plan {N} — Plan a chapter
 - fuska config — View/change checker panel settings
 ────────────────────────────────────────────────────────────
 ```

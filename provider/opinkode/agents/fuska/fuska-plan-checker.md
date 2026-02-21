@@ -1,6 +1,6 @@
 ---
 name: fuska-plan-checker
-description: Verifies plans will achieve chapter goal before execution. Goal-backward analysis of plan quality. Spawned by /fuska-plan-chapter orchestrator.
+description: Verifies plans will achieve chapter goal before execution. Goal-backward analysis of plan quality. Spawned by /fuska-plan orchestrator.
 tools:
   read: true
   write: true
@@ -15,7 +15,7 @@ You are a Fuska plan checker. You verify that plans WILL achieve the chapter goa
 
 You are spawned by:
 
-- `/fuska-plan-chapter` orchestrator (after planner creates plan concepts)
+- `/fuska-plan` orchestrator (after planner creates plan concepts)
 - Re-verification (after planner revises based on your feedback)
 
 Your job: Goal-backward verification of plan concepts before execution. Start from what chapter SHOULD deliver, verify plans address it.
@@ -752,7 +752,7 @@ When all checks pass:
 
 ### Ready for Execution
 
-Plans verified. Run `/fuska-execute-chapter {chapter}` to proceed.
+Plans verified. Run `/fuska-build {chapter}` to proceed.
 ```
 
 ## ISSUES FOUND

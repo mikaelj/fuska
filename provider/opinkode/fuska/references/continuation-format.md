@@ -77,7 +77,7 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Execute Next Plan Variant",
   kind: "pattern",
-  summary: "Standard plan execution with chapter/plan ID, description from PLAN.md, /fuska-execute-chapter command",
+  summary: "Standard plan execution with chapter/plan ID, description from PLAN.md, /fuska-build command",
   why: "Standard format for executing plans within a chapter",
   parent_id: "continuation-variant",
   file_refs: ["@continuation-format.md:38-58"]
@@ -253,7 +253,7 @@ Standard format for presenting next steps after completing a command or workflow
 
 **02-03: Refresh Token Rotation** — Add /api/auth/refresh with sliding expiry
 
-`/fuska-execute-chapter 2`
+`/fuska-build 2`
 
 *`/new` first → fresh context window*
 
@@ -278,7 +278,7 @@ Add note that this is the last plan and what comes after:
 **02-03: Refresh Token Rotation** — Add /api/auth/refresh with sliding expiry
 *Final plan in Chapter 2*
 
-`/fuska-execute-chapter 2`
+`/fuska-build 2`
 
 *`/new` first → fresh context window*
 
@@ -300,7 +300,7 @@ Add note that this is the last plan and what comes after:
 
 **Chapter 2: Authentication** — JWT login flow with refresh tokens
 
-`/fuska-plan-chapter 2`
+`/fuska-plan 2`
 
 *`/new` first → fresh context window*
 
@@ -329,7 +329,7 @@ Show completion status before next action:
 
 **Chapter 3: Core Features** — User dashboard, settings, and data export
 
-`/fuska-plan-chapter 3`
+`/fuska-plan 3`
 
 *`/new` first → fresh context window*
 
@@ -354,7 +354,7 @@ When there's no clear primary action:
 
 **Chapter 3: Core Features** — User dashboard, settings, and data export
 
-**To plan directly:** `/fuska-plan-chapter 3`
+**To plan directly:** `/fuska-plan 3`
 
 **To discuss context first:** `/fuska-design-chapter 3`
 
@@ -423,7 +423,7 @@ Extract: `**02-03: Refresh Token Rotation** — Add /api/auth/refresh with slidi
 ## To Continue
 
 Run `/new`, then paste:
-/fuska-execute-chapter 2
+/fuska-build 2
 ```
 
 User has no idea what 02-03 is about.
@@ -431,7 +431,7 @@ User has no idea what 02-03 is about.
 ### Don't: Missing /new explanation
 
 ```
-`/fuska-plan-chapter 3`
+`/fuska-plan 3`
 
 Run /new first.
 ```
@@ -451,7 +451,7 @@ Sounds like an afterthought. Use "Also available:" instead.
 
 ```
 ```
-/fuska-plan-chapter 3
+/fuska-plan 3
 ```
 ```
 

@@ -34,7 +34,7 @@ megamemory:understand({query: "chapter {chapter} uat"})
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /fuska-execute-chapter
+Output consumed by /fuska-build
 Plans must be executable prompts with:
 - Frontmatter (batch, depends_on, files_modified, autonomous)
 - Tasks in XML format
@@ -103,7 +103,7 @@ summary: |
 why: |
   Stores executable plans for chapter implementation.
   Plans contain tasks, dependencies, verification criteria, and must-haves.
-  Consumed by /fuska-execute-chapter for execution.
+  Consumed by /fuska-build for execution.
 
 edges: [
   {
@@ -213,7 +213,7 @@ const createPlan = async (planId: string, chapterNumber: string, chapterName: st
     summary,
     why: "Stores executable plans for chapter implementation. " +
           "Plans contain tasks, dependencies, verification criteria, and must-haves. " +
-          "Consumed by /fuska-execute-chapter for execution.",
+          "Consumed by /fuska-build for execution.",
     edges,
     created_by_task: `Planning for Chapter ${chapterNumber}`
   });
@@ -339,7 +339,7 @@ const resumePlanning = async (chapterNumber: string) => {
 ## Usage Pattern for Agents
 
 ```markdown
-**When /fuska-plan-chapter is called:**
+**When /fuska-plan is called:**
 
 1. Check for existing plans via `megamemory:understand({query: "chapter {chapter_number} plans"})`
 2. If exists → resume planning with existing state

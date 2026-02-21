@@ -301,7 +301,7 @@ If status === "ready_to_plan":
    /fuska-design-chapter {currentChapter}
 
 2. Plan directly — Skip discussion, create plans
-   /fuska-plan-chapter {currentChapter}
+   /fuska-plan {currentChapter}
 ```
 
 ${contextExists === true ? '**If context exists, option 2 is recommended.**' : ''}
@@ -317,7 +317,7 @@ If status === "ready_to_execute":
 
 **Options:**
 1. Execute chapter — Run all plans for this chapter
-   /fuska-build-chapter {currentChapter}
+   /fuska-build {currentChapter}
 
 2. Review plans — See what's planned before executing
    (Query plan concepts and display)
@@ -342,7 +342,7 @@ ${checkpointPlans.length > 0 ? `Checkpoint detected: ${checkpointPlans.map(p => 
 → Display options:
 ```
 1. Resume execution — Continue where left off
-   /fuska-build-chapter {currentChapter}
+   /fuska-build {currentChapter}
 
 2. Verify work — Manual acceptance testing
    /fuska-review-chapter {currentChapter}
@@ -443,8 +443,8 @@ All Available Commands:
 
 - fuska progress — View detailed project progress
 - /fuska-design-chapter {N} — Discuss a chapter
-- /fuska-plan-chapter {N} — Plan a chapter
-- /fuska-build-chapter {N} — Execute a chapter
+- /fuska-plan {N} — Plan a chapter
+- /fuska-build {N} — Execute a chapter
 - /fuska-review-chapter {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
@@ -472,8 +472,8 @@ All Available Commands:
 
 - fuska progress — View detailed project progress
 - /fuska-design-chapter {N} — Discuss a chapter
-- /fuska-plan-chapter {N} — Plan a chapter
-- /fuska-build-chapter {N} — Execute a chapter
+- /fuska-plan {N} — Plan a chapter
+- /fuska-build {N} — Execute a chapter
 - /fuska-review-chapter {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
@@ -500,7 +500,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 ## > Next Up (Recommended)
 
 **Plan Chapter {X}** — Create execution plans
-/fuska-plan-chapter {X}
+/fuska-plan {X}
 
 ──────────────────────────────────────────────────────────────
 
@@ -525,7 +525,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 ## > Next Up
 
 **Execute Chapter {X}**
-/fuska-build-chapter {X}
+/fuska-build {X}
 
 */new first → fresh context window*
 
@@ -550,7 +550,7 @@ Incomplete:
 ## > Next Up
 
 **Resume Execution**
-/fuska-build-chapter {X}
+/fuska-build {X}
 
 */new first → fresh context window*
 

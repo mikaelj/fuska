@@ -1,6 +1,6 @@
 ---
 name: fuska-planner
-description: Creates executable chapter plans with task breakdown, dependency analysis, and goal-backward verification. Spawned by /fuska-plan-chapter orchestrator.
+description: Creates executable chapter plans with task breakdown, dependency analysis, and goal-backward verification. Spawned by /fuska-plan orchestrator.
 tools:
   read: true
   write: true
@@ -15,9 +15,9 @@ You are a Fuska planner. You create executable chapter plans with task breakdown
 
 You are spawned by:
 
-- `/fuska-plan-chapter` orchestrator (standard chapter planning)
-- `/fuska-plan-chapter --gaps` orchestrator (gap closure planning from verification failures)
-- `/fuska-plan-chapter` orchestrator in revision mode (updating plans based on checker feedback)
+- `/fuska-plan` orchestrator (standard chapter planning)
+- `/fuska-plan --gaps` orchestrator (gap closure planning from verification failures)
+- `/fuska-plan` orchestrator in revision mode (updating plans based on checker feedback)
 
 Your job: Produce plan concepts in MegaMemory that OpenCode executors can query and implement without interpretation. Plans are concepts, not files.
 
@@ -1127,7 +1127,7 @@ If exists, load relevant concepts based on chapter type:
 <step name="load_import_graph_context" priority="after_load_codebase_context">
 Query import graph for artifact existence and pattern discovery.
 
-**Note:** Orchestrator (fuska-plan-chapter) may provide pre-queried import graph data. Check for `<import_graph_context>` section in input before querying.
+**Note:** Orchestrator (fuska-plan) may provide pre-queried import graph data. Check for `<import_graph_context>` section in input before querying.
 
 **If orchestrator provided import graph context:**
 ```typescript
@@ -1483,7 +1483,7 @@ Return structured planning outcome to orchestrator.
 
 ### Next Steps
 
-Execute: `/fuska-execute-chapter {chapter}`
+Execute: `/fuska-build {chapter}`
 
 *`/new` first - fresh context window*
 ```
@@ -1527,7 +1527,7 @@ Execute: `/fuska-execute-chapter {chapter}`
 
 ### Next Steps
 
-Execute: `/fuska-execute-chapter {chapter} --gaps-only`
+Execute: `/fuska-build {chapter} --gaps-only`
 ```
 
 ## Revision Complete
@@ -1577,7 +1577,7 @@ Chapter planning complete when:
 - [ ] Each plan has implements → chapter edge
 - [ ] Each plan has valid data (objective, must_haves, tasks, batch, depends_on)
 - [ ] User knows batch structure and parallelization opportunities
-- [ ] User knows next step (/fuska-execute-chapter)
+- [ ] User knows next step (/fuska-build)
 
 ## Gap Closure Mode
 
@@ -1589,6 +1589,6 @@ Planning complete when:
 - [ ] Gap closure plan concepts created with gap_closure: true in JSON
 - [ ] Each plan: tasks derived from gap.missing items
 - [ ] Plan concepts created in MegaMemory
-- [ ] User knows to run `/fuska-execute-chapter {X}` next
+- [ ] User knows to run `/fuska-build {X}` next
 
 </success_criteria>

@@ -38,7 +38,7 @@ Never use Chinese in responses or internal reasoning.
 </language>
 
 <downstream_consumer>
-Your roadmap concept is consumed by `/fuska-plan-chapter` which uses it to:
+Your roadmap concept is consumed by `/fuska-plan` which uses it to:
 
 | Output | How Plan-Chapter Uses It |
 |--------|------------------------|
@@ -590,7 +590,7 @@ After incorporating user feedback and updating files:
 
 ### Ready for Planning
 
-Next: `/fuska-plan-chapter 1`
+Next: `/fuska-plan 1`
 ```
 
 ## Roadmap Blocked

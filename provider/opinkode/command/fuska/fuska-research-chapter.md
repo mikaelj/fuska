@@ -1,6 +1,6 @@
 ---
 name: fuska-research-chapter
-description: Research how to implement a chapter (standalone - usually use /fuska-plan-chapter instead) using MegaMemory
+description: Research how to implement a chapter (standalone - usually use /fuska-plan instead) using MegaMemory
 argument-hint: "[chapter]"
 agent: @../../agents/fuska/fuska-chapter-researcher.md
 tools:
@@ -17,7 +17,7 @@ tools:
 <objective>
 Research how to implement a chapter using MegaMemory. Spawns fuska-chapter-researcher agent with chapter context.
 
-**Note:** This is a standalone research command. For most workflows, use `/fuska-plan-chapter` which integrates research automatically.
+**Note:** This is a standalone research command. For most workflows, use `/fuska-plan` which integrates research automatically.
 
 **Use this command when:**
 - You want to research without planning yet
@@ -288,7 +288,7 @@ ${contextData ? JSON.stringify(contextData, null, 2) : 'No context found'}
 </context>
 
 <downstream_consumer>
-Your research concept will be loaded by `/fuska-plan-chapter` which uses specific sections:
+Your research concept will be loaded by `/fuska-plan` which uses specific sections:
 - `## Standard Stack` → Plans use these libraries
 - `## Architecture Patterns` → Task structure follows these
 - `## Don't Hand-Roll` → Tasks NEVER build custom solutions for listed problems

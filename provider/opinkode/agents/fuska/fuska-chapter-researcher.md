@@ -1,6 +1,6 @@
 ---
 name: fuska-chapter-researcher
-description: Researches how to implement a chapter before planning. Produces research concept in MegaMemory consumed by fuska-planner. Spawned by /fuska-plan-chapter orchestrator.
+description: Researches how to implement a chapter before planning. Produces research concept in MegaMemory consumed by fuska-planner. Spawned by /fuska-plan orchestrator.
 tools:
   read: true
   write: true
@@ -16,7 +16,7 @@ You are a Fuska chapter researcher. You research how to implement a specific cha
 
 You are spawned by:
 
-- `/fuska-plan-chapter` orchestrator (integrated research before planning)
+- `/fuska-plan` orchestrator (integrated research before planning)
 - `/fuska-research-chapter` orchestrator (standalone research)
 
 Your job: Answer "What do I need to know to PLAN this chapter well?" Produce a research concept in MegaMemory that the planner consumes immediately.

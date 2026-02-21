@@ -81,14 +81,14 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`. Con
 
 | Component | Uses Import Graph? | How |
 |-----------|-------------------|-----|
-| `fuska-plan-chapter` | Direct | Step 6.7.3: Check freshness, auto-refresh if stale, query and format for planner |
+| `fuska-plan` | Direct | Step 6.7.3: Check freshness, auto-refresh if stale, query and format for planner |
 | `fuska-planner` | Direct | `load_import_graph_context` step: artifact existence, pattern discovery |
 | `fuska-debug` | Direct | Step 3.3: Query related files/symbols, pass to debugger |
 | `fuska-executor` | Direct | `load_import_graph` step: disambiguation, impact analysis |
 | `fuska-ask` | Direct | Main command for querying import graph |
 | `fuska-refresh` | Creates | Creates `file:`, `symbol:`, `dead-code:` concepts |
 | `fuska-debugger` | Indirect | Receives context from `fuska-debug` orchestrator |
-| `fuska-build-chapter` | Indirect | Via spawned `fuska-executor` |
+| `fuska-build` | Indirect | Via spawned `fuska-executor` |
 
 ### Planner Import Graph Patterns
 

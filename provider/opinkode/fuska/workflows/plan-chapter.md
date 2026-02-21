@@ -1,5 +1,5 @@
 ---
-name: fuska-plan-chapter-megamemory
+name: fuska-plan-megamemory
 description: Create detailed execution plan for a chapter with MegaMemory and verification loop
 argument-hint: "[chapter] [--research] [--skip-research] [--gaps] [--skip-verify]"
 agent: fuska-planner
@@ -325,7 +325,7 @@ Fill prompt with inlined concept data and spawn:
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /fuska-execute-chapter-megamemory
+Output consumed by /fuska-build
 
 Plans must be executable prompts with:
 - Frontmatter (batch, depends_on, files_modified, autonomous)
@@ -567,7 +567,7 @@ Verification: {Passed | Passed with override | Skipped}
 ## > Next Up
 
 **Execute Chapter {X}** — run all {N} plans
-/fuska-execute-chapter-megamemory {X}
+/fuska-build {X}
 
 */new first → fresh context window*
 
@@ -575,7 +575,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 **Also available:**
 - Query MegaMemory for plans: `megamemory understand "${CHAPTER}-plan" top_k=20`
-- /fuska-plan-chapter-megamemory {X} --research — re-research first
+- /fuska-plan {X} --research — re-research first
 ──────────────────────────────────────────────────────────────
 ```
 

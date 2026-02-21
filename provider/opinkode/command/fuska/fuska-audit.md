@@ -482,7 +482,7 @@ All requirements covered. Cross-chapter integration verified. E2E flows complete
 
 **Plan gap closure** — create chapters to complete milestone
 
-/fuska-plan-chapter --gaps
+/fuska-plan --gaps
 
 */new first → fresh context window*
 
@@ -522,7 +522,7 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 **B. Plan cleanup chapter** — address debt before completing
 
-/fuska-plan-chapter --gaps
+/fuska-plan --gaps
 
 */new first → fresh context window*
 

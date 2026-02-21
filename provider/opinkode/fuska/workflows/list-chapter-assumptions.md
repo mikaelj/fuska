@@ -187,7 +187,7 @@ Present next steps:
 ```
 What's next?
 1. Discuss context (/fuska-discuss-chapter ${CHAPTER}) - Let me ask you questions to build comprehensive context
-2. Plan this chapter (/fuska-plan-chapter ${CHAPTER}) - Create detailed execution plans
+2. Plan this chapter (/fuska-plan ${CHAPTER}) - Create detailed execution plans
 3. Re-examine assumptions - I'll analyze again with your corrections
 4. Done for now
 ```

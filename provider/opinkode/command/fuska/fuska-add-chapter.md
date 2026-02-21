@@ -321,7 +321,7 @@ Output this markdown directly (not as a code block):
 
 **Plan Chapter {N}**
 
-/fuska-plan-chapter {N}
+/fuska-plan {N}
 
 */new first → fresh context window*
 
@@ -341,7 +341,7 @@ Output this markdown directly (not as a code block):
 - Don't modify chapters outside current milestone
 - Don't renumber existing chapters
 - Don't use decimal numbering (that's for insert-chapter)
-- Don't create plans yet (that's /fuska-plan-chapter)
+- Don't create plans yet (that's /fuska-plan)
 - Don't commit changes (MegaMemory auto-persists)
 </anti_patterns>
 

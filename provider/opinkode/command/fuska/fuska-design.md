@@ -495,7 +495,7 @@ const researchEnabled = configData.workflow?.research !== false
 ```
 
 If researchEnabled === true:
-→ Suggest: `/fuska-plan-chapter ${chapterNumber} --research`
+→ Suggest: `/fuska-plan ${chapterNumber} --research`
 
 If researchEnabled === false:
 → Display: "Research is disabled in config. Research chapter is not available."
@@ -503,7 +503,7 @@ If researchEnabled === false:
 
 **If user chooses "Plan chapter":**
 
-→ Suggest: `/fuska-plan-chapter ${chapterNumber}`
+→ Suggest: `/fuska-plan ${chapterNumber}`
 
 **If user chooses "Review context":**
 
@@ -534,12 +534,12 @@ ${allDeferred.map(deferred => `- ${deferred}`).join('\n') || 'No deferred ideas'
 ## > Next Up
 
 **Research Chapter ${chapterNumber}** — investigate domain ecosystem
-/fuska-plan-chapter ${chapterNumber} --research
+/fuska-plan ${chapterNumber} --research
 
 **Or skip to planning:**
 
 **Plan Chapter ${chapterNumber}** — create execution plans directly
-/fuska-plan-chapter ${chapterNumber}
+/fuska-plan ${chapterNumber}
 
 */new first → fresh context window*
 

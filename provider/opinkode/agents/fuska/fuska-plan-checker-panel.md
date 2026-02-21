@@ -324,7 +324,7 @@ Return the aggregated findings.
 All checkers passed. No issues found.
 
 ### Ready for Execution
-Run `/fuska-execute-chapter {chapter}` to proceed.
+Run `/fuska-build {chapter}` to proceed.
 ```
 
 **If issues found:**

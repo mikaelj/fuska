@@ -263,7 +263,7 @@ megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
 
 If response.matches.length === 0:
 → Display: `No plans found for ${chapterSlug}`
-→ Suggest: "Run /fuska-plan-chapter ${chapterNumber} to create plans"
+→ Suggest: "Run /fuska-plan ${chapterNumber} to create plans"
 → Stop
 
 **Step 1.6: Extract plan data**
@@ -690,7 +690,7 @@ If verifier returns `human_needed`:
 
 If verifier returns `gaps_found`:
 → Present gaps to user
-→ Suggest: `/fuska-plan-chapter ${chapterNumber} --gaps`
+→ Suggest: `/fuska-plan ${chapterNumber} --gaps`
 → Stop (let user run gap closure planning)
 
 ---
@@ -881,7 +881,7 @@ Goal verified [OK]
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-plan-chapter {Z+1} — skip design, plan directly
+- /fuska-plan {Z+1} — skip design, plan directly
 - /fuska-review-chapter {Z} — manual acceptance testing before continuing
 ──────────────────────────────────────────────────────────────
 ```
@@ -971,7 +971,7 @@ Report: UAT concept {chapter}-uat
 ## > Next Up
 
 **Plan gap closure** — create additional plans to complete chapter
-/fuska-plan-chapter {Z} --gaps
+/fuska-plan {Z} --gaps
 
 */new first → fresh context window*
 
@@ -983,10 +983,10 @@ Report: UAT concept {chapter}-uat
 ──────────────────────────────────────────────────────────────
 ```
 
-After user runs `/fuska-plan-chapter {Z} --gaps`:
+After user runs `/fuska-plan {Z} --gaps`:
 1. Planner reads UAT concept gaps
 2. Creates additional plans (04, 05, etc.) to close gaps
-3. User runs `/fuska-build-chapter {Z}` again
+3. User runs `/fuska-build {Z}` again
 4. Build-chapter runs incomplete plans (04, 05...)
 5. Reviewer runs again → loop until passed
 

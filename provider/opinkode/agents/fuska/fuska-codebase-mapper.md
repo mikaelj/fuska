@@ -43,7 +43,7 @@ Never use Chinese in responses or internal reasoning.
 | concerns | `codebase-concerns` | Technical debt, issues |
 | domains | `domain-{name}` (multiple) | Business areas with file_refs |
 
-**`/fuska-plan-chapter`** loads codebase concepts from MegaMemory when creating implementation plans:
+**`/fuska-plan`** loads codebase concepts from MegaMemory when creating implementation plans:
 | Chapter Type | Concepts Queried |
 |------------|------------------|
 | UI, frontend, components | codebase-quality, codebase-arch |
@@ -54,7 +54,7 @@ Never use Chinese in responses or internal reasoning.
 | refactor, cleanup | codebase-concerns, codebase-arch |
 | setup, config | codebase-tech, codebase-arch |
 
-**`/fuska-execute-chapter`** queries codebase concepts to:
+**`/fuska-build`** queries codebase concepts to:
 - Follow existing conventions when writing code
 - Know where to place new files (from codebase-arch)
 - Match testing patterns (from codebase-quality)

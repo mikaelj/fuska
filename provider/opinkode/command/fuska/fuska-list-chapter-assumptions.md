@@ -364,7 +364,7 @@ const feedbackResponse = question(questions=[{
 **Step 8.1: "Looks good"**
 
 → Display: "Great! Ready to plan Chapter {X}"
-→ Suggest: `/fuska-plan-chapter {X}`
+→ Suggest: `/fuska-plan {X}`
 
 **Step 8.2: "Clarify something"**
 

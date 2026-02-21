@@ -27,7 +27,7 @@ This is the brownfield equivalent of new-project. The project exists, project co
 - Roadmap concept — chapter structure (continues numbering)
 - State concept — reset for new milestone
 
-**After this command:** Run `/fuska-plan-chapter [N]` to start execution.
+**After this command:** Run `/fuska-plan [N]` to start execution.
 </objective>
 
 <execution_context>
@@ -738,7 +738,7 @@ Present completion with next steps:
 ---
 
 **Also available:**
-- /fuska-plan-chapter [N] — skip design, plan directly
+- /fuska-plan [N] — skip design, plan directly
 
 ──────────────────────────────────────────────────────────────
 ```

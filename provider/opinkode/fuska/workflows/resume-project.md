@@ -180,11 +180,11 @@ What would you like to do?
 [Primary action based on state - e.g.:]
 1. Resume interrupted agent [if interrupted agent found]
    OR
-1. Execute chapter (/fuska-execute-chapter {chapter})
+1. Execute chapter (/fuska-build {chapter})
    OR
 1. Discuss Chapter 3 context (/fuska-discuss-chapter 3) [if context_available is false]
    OR
-1. Plan Chapter 3 (/fuska-plan-chapter 3) [if context_available is true or discuss option declined]
+1. Plan Chapter 3 (/fuska-plan 3) [if context_available is true or discuss option declined]
 
 [Secondary options:]
 2. Review current chapter status
@@ -207,7 +207,7 @@ Based on user selection, route to appropriate workflow:
 
   **{chapter}-{plan}: [Plan Name]** — [objective from plan concept.summary JSON]
 
-  `/fuska-execute-chapter {chapter}`
+  `/fuska-build {chapter}`
 
   *`/new` first → fresh context window*
 
@@ -221,7 +221,7 @@ Based on user selection, route to appropriate workflow:
 
   **Chapter [N]: [Name]** — [Goal from roadmap concept.summary JSON]
 
-  `/fuska-plan-chapter [chapter-number]`
+  `/fuska-plan [chapter-number]`
 
   *`/new` first → fresh context window*
 

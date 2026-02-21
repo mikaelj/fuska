@@ -322,7 +322,7 @@ skipped: [N]
 **Gaps:**
 - APPEND only when issue found (YAML format)
 - After diagnosis: fill `root_cause`, `artifacts`, `missing`, `debug_session`
-- This section feeds directly into /fuska-plan-chapter --gaps
+- This section feeds directly into /fuska-plan --gaps
 
 </section_rules>
 
@@ -336,7 +336,7 @@ skipped: [N]
 4. UAT.md Gaps section updated with diagnosis:
    - Each gap gets `root_cause`, `artifacts`, `missing`, `debug_session` filled
 5. status → "diagnosed"
-6. Ready for /fuska-plan-chapter --gaps with root causes
+6. Ready for /fuska-plan --gaps with root causes
 
 **After diagnosis:**
 ```yaml

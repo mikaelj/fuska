@@ -460,7 +460,7 @@ Wait for user response and route accordingly.
 
 - Don't delete todo concepts — use megamemory:remove_concept only when truly obsolete
 - Don't start work without moving todo to "done" status first
-- Don't create plans from this command — route to /fuska-plan-chapter or /fuska-add-chapter
+- Don't create plans from this command — route to /fuska-plan or /fuska-add-chapter
 
 </anti_patterns>
 

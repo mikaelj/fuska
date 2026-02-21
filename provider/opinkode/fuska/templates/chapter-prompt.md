@@ -386,7 +386,7 @@ After completion, create or update the MegaMemory chapter-summary concept for th
 | `user_setup` | No | Array of human-required setup items (external services) |
 | `must_haves` | Yes | Goal-backward verification criteria (see below) |
 
-**Batch is pre-computed:** Batch numbers are assigned during `/fuska-plan-chapter`. Execute-chapter reads `batch` directly from frontmatter and groups plans by batch number. No runtime dependency analysis needed.
+**Batch is pre-computed:** Batch numbers are assigned during `/fuska-plan`. Execute-chapter reads `batch` directly from frontmatter and groups plans by batch number. No runtime dependency analysis needed.
 
 **Must-haves enable verification:** The `must_haves` field carries goal-backward requirements from planning to execution. After all plans complete, execute-chapter spawns a verification subagent that checks these criteria against the actual codebase.
 
