@@ -21,7 +21,7 @@ This is the reverse of the migration script — converts the knowledge graph bac
 **Creates:**
 - `.planning.export/` directory with full markdown hierarchy
 - PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, MILESTONES.md
-- `phases/NN-*/` directories with CONTEXT.md, PLAN.md, SUMMARY.md, RESEARCH.md, UAT.md
+- `chapters/NN-*/` directories with CONTEXT.md, PLAN.md, SUMMARY.md, RESEARCH.md, UAT.md
 - `todos/pending/` and `todos/done/` with todo files
 - `config.json` with settings
 
@@ -48,7 +48,7 @@ All project data lives in MegaMemory. The summary field contains JSON data that 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 Parse the `summary` field to extract data. Convert JSON to appropriate markdown format with frontmatter.
@@ -188,7 +188,7 @@ const allRequirements = requirementsConcepts.map(match => {
     name: match.name,
     description: reqData.description,
     status: reqData.status,
-    phaseRef: reqData.phase_ref
+    chapterRef: reqData.chapter_ref
   }
 })
 ```
@@ -204,7 +204,7 @@ ${allRequirements.map(req => `## ${req.name}
 
 **ID:** ${req.id}
 **Status:** ${req.status}
-${req.phaseRef ? `**Phase:** ${req.phaseRef}` : ''}
+${req.chapterRef ? `**Chapter:** ${req.chapterRef}` : ''}
 
 ${req.description}
 `).join('\n\n')}
@@ -234,17 +234,17 @@ const roadmapSummaryString = response.matches[0].summary
 const roadmapData = JSON.parse(roadmapSummaryString)
 
 const currentMilestone = roadmapData.current_milestone
-const phases = roadmapData.phases
+const chapters = roadmapData.chapters
 ```
 
-**Step 4.3: Query phase concepts for details**
+**Step 4.3: Query chapter concepts for details**
 
-For each phase in roadmapData.phases:
+For each chapter in roadmapData.chapters:
 ```
-megamemory_understand(query=`${phase.slug}`, top_k=1)
+megamemory_understand(query=`${chapter.slug}`, top_k=1)
 ```
 
-Extract phase name, goal, status from each phase concept.
+Extract chapter name, goal, status from each chapter concept.
 
 **Step 4.4: Write ROADMAP.md**
 
@@ -261,18 +261,18 @@ ${currentMilestone.definition_of_done ? `**Definition of Done:** ${currentMilest
 
 ---
 
-## Phases
+## Chapters
 
-${phases.map(phase => `### Phase ${phase.number}: ${phase.name}
+${chapters.map(chapter => `### Chapter ${chapter.number}: ${chapter.name}
 
-**Goal:** ${phase.goal || 'TBD'}
-**Status:** ${phase.status || 'not_started'}
-**Depends on:** ${phase.depends_on ? phase.depends_on.map(d => `Phase ${d}`).join(', ') : 'None'}
+**Goal:** ${chapter.goal || 'TBD'}
+**Status:** ${chapter.status || 'not_started'}
+**Depends on:** ${chapter.depends_on ? chapter.depends_on.map(d => `Chapter ${d}`).join(', ') : 'None'}
 
-${phase.description ? `**Description:** ${phase.description}` : ''}
+${chapter.description ? `**Description:** ${chapter.description}` : ''}
 
 **Plans:**
-${phase.plans && phase.plans.length > 0 ? phase.plans.map(p => `- ${p}`).join('\n') : 'No plans yet'}
+${chapter.plans && chapter.plans.length > 0 ? chapter.plans.map(p => `- ${p}`).join('\n') : 'No plans yet'}
 
 ---
 
@@ -282,7 +282,7 @@ ${phase.plans && phase.plans.length > 0 ? phase.plans.map(p => `- ${p}`).join('\
 *Generated from MegaMemory: ${new Date().toISOString()}*
 ```
 
-Confirm: "[OK] ROADMAP.md exported (${phases.length} phases)"
+Confirm: "[OK] ROADMAP.md exported (${chapters.length} chapters)"
 
 ---
 
@@ -312,7 +312,7 @@ Write to `$outputDir/STATE.md`:
 
 ## Current Position
 
-**Current Phase:** ${stateData.current_phase || 'Not started'}
+**Current Chapter:** ${stateData.current_chapter || 'Not started'}
 **Current Plan:** ${stateData.current_plan || 'None'}
 **Status:** ${stateData.status || 'unknown'}
 **Progress:** ${stateData.progress || 0}%
@@ -410,8 +410,8 @@ ${milestones.map(m => `## ${m.version} ${m.name}
 **Status:** ${m.status}
 **Completed:** ${m.completed_at || 'In progress'}
 
-**Phases:**
-${m.phases && m.phases.length > 0 ? m.phases.map(p => `- Phase ${p}`).join('\n') : 'No phases'}
+**Chapters:**
+${m.chapters && m.chapters.length > 0 ? m.chapters.map(p => `- Chapter ${p}`).join('\n') : 'No chapters'}
 
 ${m.notes ? `**Notes:** ${m.notes}` : ''}
 
@@ -427,77 +427,77 @@ Confirm: "[OK] MILESTONES.md exported (${milestones.length} milestones)"
 
 ---
 
-## 8. Export Phases
+## 8. Export Chapters
 
-**Step 8.1: Query all phase concepts**
+**Step 8.1: Query all chapter concepts**
 
 Call:
 ```
-megamemory_understand(query="phase-", top_k=50)
+megamemory_understand(query="chapter-", top_k=50)
 ```
 
-**Step 8.2: Group by phase**
+**Step 8.2: Group by chapter**
 
 ```
-const phaseConcepts = response.matches.filter(m => m.name.startsWith('phase-'))
+const chapterConcepts = response.matches.filter(m => m.name.startsWith('chapter-'))
 
-// Group by phase slug (e.g., phase-01)
-const phaseGroups = {}
-phaseConcepts.forEach(match => {
-  const phaseSlug = match.name.split('-')[0] + '-' + match.name.split('-')[1]
-  if (!phaseGroups[phaseSlug]) {
-    phaseGroups[phaseSlug] = { phase: null, context: [], plans: [], summaries: [], research: [], uat: [] }
+// Group by chapter slug (e.g., chapter-01)
+const chapterGroups = {}
+chapterConcepts.forEach(match => {
+  const chapterSlug = match.name.split('-')[0] + '-' + match.name.split('-')[1]
+  if (!chapterGroups[chapterSlug]) {
+    chapterGroups[chapterSlug] = { chapter: null, context: [], plans: [], summaries: [], research: [], uat: [] }
   }
 
   const summaryString = match.summary
   const data = JSON.parse(summaryString)
 
-  if (match.name === phaseSlug) {
-    phaseGroups[phaseSlug].phase = { name: match.name, data }
+  if (match.name === chapterSlug) {
+    chapterGroups[chapterSlug].chapter = { name: match.name, data }
   } else if (match.name.includes('-context')) {
-    phaseGroups[phaseSlug].context.push({ name: match.name, data })
+    chapterGroups[chapterSlug].context.push({ name: match.name, data })
   } else if (match.name.includes('-plan-')) {
-    phaseGroups[phaseSlug].plans.push({ name: match.name, data })
+    chapterGroups[chapterSlug].plans.push({ name: match.name, data })
   } else if (match.name.includes('-summary')) {
-    phaseGroups[phaseSlug].summaries.push({ name: match.name, data })
+    chapterGroups[chapterSlug].summaries.push({ name: match.name, data })
   } else if (match.name.includes('-research')) {
-    phaseGroups[phaseSlug].research.push({ name: match.name, data })
+    chapterGroups[chapterSlug].research.push({ name: match.name, data })
   } else if (match.name.includes('-uat')) {
-    phaseGroups[phaseSlug].uat.push({ name: match.name, data })
+    chapterGroups[chapterSlug].uat.push({ name: match.name, data })
   }
 })
 ```
 
-**Step 8.3: Export each phase**
+**Step 8.3: Export each chapter**
 
-For each phase in Object.keys(phaseGroups):
+For each chapter in Object.keys(chapterGroups):
 
 ```
-const phaseSlug = key
-const phaseGroup = phaseGroups[key]
-const phaseDir = `${outputDir}/phases/${phaseSlug}`
+const chapterSlug = key
+const chapterGroup = chapterGroups[key]
+const chapterDir = `${outputDir}/chapters/${chapterSlug}`
 
-mkdir -p "$phaseDir"
+mkdir -p "$chapterDir"
 ```
 
-**Export phase metadata:**
+**Export chapter metadata:**
 
-Write to `$phaseDir/PHASE.md`:
+Write to `$chapterDir/CHAPTER.md`:
 
 ```markdown
 ---
-name: ${phaseSlug}
-number: ${phaseGroup.phase?.data.number || 'N/A'}
-status: ${phaseGroup.phase?.data.status || 'unknown'}
+name: ${chapterSlug}
+number: ${chapterGroup.chapter?.data.number || 'N/A'}
+status: ${chapterGroup.chapter?.data.status || 'unknown'}
 ---
 
-# Phase ${phaseGroup.phase?.data.number || 'N/A'}: ${phaseGroup.phase?.data.name || 'Unnamed'}
+# Chapter ${chapterGroup.chapter?.data.number || 'N/A'}: ${chapterGroup.chapter?.data.name || 'Unnamed'}
 
-**Goal:** ${phaseGroup.phase?.data.goal || 'TBD'}
+**Goal:** ${chapterGroup.chapter?.data.goal || 'TBD'}
 
-**Status:** ${phaseGroup.phase?.data.status || 'unknown'}
+**Status:** ${chapterGroup.chapter?.data.status || 'unknown'}
 
-**Depends on:** ${phaseGroup.phase?.data.depends_on ? phaseGroup.phase.data.depends_on.map(d => `Phase ${d}`).join(', ') : 'None'}
+**Depends on:** ${chapterGroup.chapter?.data.depends_on ? chapterGroup.chapter.data.depends_on.map(d => `Chapter ${d}`).join(', ') : 'None'}
 
 ---
 *Generated from MegaMemory: ${new Date().toISOString()}*
@@ -505,10 +505,10 @@ status: ${phaseGroup.phase?.data.status || 'unknown'}
 
 **Export context:**
 
-If phaseGroup.context.length > 0:
+If chapterGroup.context.length > 0:
 ```
-const context = phaseGroup.context[0]
-write to `${phaseDir}/${phaseSlug}-CONTEXT.md`:
+const context = chapterGroup.context[0]
+write to `${chapterDir}/${chapterSlug}-CONTEXT.md`:
 
 ```markdown
 # ${context.name.replace('-', ' ').toUpperCase()}
@@ -521,9 +521,9 @@ ${context.data.gathered || 'Not specified'}
 
 ${context.data.status || 'unknown'}
 
-## Phase Boundary
+## Chapter Boundary
 
-${context.data.phase_boundary || 'Not specified'}
+${context.data.chapter_boundary || 'Not specified'}
 
 ## Decisions
 
@@ -547,14 +547,14 @@ ${context.data.deferred && context.data.deferred.length > 0 ? context.data.defer
 
 **Export plans:**
 
-For each plan in phaseGroup.plans:
+For each plan in chapterGroup.plans:
 ```
 const plan = plan
-write to `${phaseDir}/${plan.name.replace('-', ' ').toUpperCase()}.md`:
+write to `${chapterDir}/${plan.name.replace('-', ' ').toUpperCase()}.md`:
 
 ```markdown
 ---
-wave: ${plan.data.wave}
+batch: ${plan.data.batch}
 depends_on: ${plan.data.depends_on ? plan.data.depends_on.join(', ') : ''}
 files_modified: ${plan.data.files_modified ? plan.data.files_modified.join(', ') : ''}
 autonomous: ${plan.data.autonomous || false}
@@ -580,10 +580,10 @@ ${plan.data.tasks && plan.data.tasks.length > 0 ? plan.data.tasks.map(t => `<tas
 
 **Export summaries:**
 
-For each summary in phaseGroup.summaries:
+For each summary in chapterGroup.summaries:
 ```
 const summary = summary
-write to `${phaseDir}/${summary.name.replace('-', ' ').toUpperCase()}.md`:
+write to `${chapterDir}/${summary.name.replace('-', ' ').toUpperCase()}.md`:
 
 ```markdown
 ---
@@ -619,10 +619,10 @@ ${summary.data.next_steps ? summary.data.next_steps : 'None specified'}
 
 **Export research:**
 
-For each research in phaseGroup.research:
+For each research in chapterGroup.research:
 ```
 const research = research
-write to `${phaseDir}/${research.name.replace('-', ' ').toUpperCase()}.md`:
+write to `${chapterDir}/${research.name.replace('-', ' ').toUpperCase()}.md`:
 
 ```markdown
 # ${research.name.replace('-', ' ').toUpperCase()}
@@ -653,10 +653,10 @@ ${research.data.references && research.data.references.length > 0 ? research.dat
 
 **Export UAT:**
 
-For each uat in phaseGroup.uat:
+For each uat in chapterGroup.uat:
 ```
 const uat = uat
-write to `${phaseDir}/${uat.name.replace('-', ' ').toUpperCase()}.md`:
+write to `${chapterDir}/${uat.name.replace('-', ' ').toUpperCase()}.md`:
 
 ```markdown
 ---
@@ -685,7 +685,7 @@ ${uat.data.pass_fail_criteria ? uat.data.pass_fail_criteria : 'Not defined'}
 *Generated from MegaMemory: ${new Date().toISOString()}*
 ```
 
-Confirm: "[OK] Phase ${phaseSlug} exported (context: ${phaseGroup.context.length}, plans: ${phaseGroup.plans.length}, summaries: ${phaseGroup.summaries.length}, research: ${phaseGroup.research.length}, uat: ${phaseGroup.uat.length})"
+Confirm: "[OK] Chapter ${chapterSlug} exported (context: ${chapterGroup.context.length}, plans: ${chapterGroup.plans.length}, summaries: ${chapterGroup.summaries.length}, research: ${chapterGroup.research.length}, uat: ${chapterGroup.uat.length})"
 
 ---
 
@@ -788,12 +788,12 @@ Output Directory: $outputDir
 Files Exported:
 - PROJECT.md [OK]
 - REQUIREMENTS.md [OK] (${allRequirements.length} requirements)
-- ROADMAP.md [OK] (${phases.length} phases)
+- ROADMAP.md [OK] (${chapters.length} chapters)
 - STATE.md [OK]
 - config.json [OK]
 - MILESTONES.md [OK] (${milestones.length} milestones)
-- Phase directories: ${Object.keys(phaseGroups).length} total
-- Phase documents:
+- Chapter directories: ${Object.keys(chapterGroups).length} total
+- Chapter documents:
   - Context: ${totalContext} files
   - Plans: ${totalPlans} files
   - Summaries: ${totalSummaries} files
@@ -823,16 +823,16 @@ Total files: ${totalFileCount}
     variant="amend",
     prompt=`<commit_context>
 **Mode:** export-commit
-**Commit Strategy:** per-phase
+**Commit Strategy:** per-chapter
 
 **Export Summary:**
 - PROJECT.md
 - REQUIREMENTS.md (${allRequirements.length} requirements)
-- ROADMAP.md (${phases.length} phases)
+- ROADMAP.md (${chapters.length} chapters)
 - STATE.md
 - config.json
 - MILESTONES.md (${milestones.length} milestones)
-- Phase directories: ${Object.keys(phaseGroups).length} total
+- Chapter directories: ${Object.keys(chapterGroups).length} total
 - Todos: ${todos.length} total
 
 **Staged files:**
@@ -881,12 +881,12 @@ $outputDir/
 - [ ] Output directory created
 - [ ] PROJECT.md exported
 - [ ] REQUIREMENTS.md exported with all requirements
-- [ ] ROADMAP.md exported with all phases
+- [ ] ROADMAP.md exported with all chapters
 - [ ] STATE.md exported
 - [ ] config.json exported
 - [ ] MILESTONES.md exported with all milestones
-- [ ] All phase directories created
-- [ ] Phase documents exported (context, plans, summaries, research, UAT)
+- [ ] All chapter directories created
+- [ ] Chapter documents exported (context, plans, summaries, research, UAT)
 - [ ] Todos exported (pending and done)
 - [ ] Export summary displayed with file counts
 - [ ] User knows next actions

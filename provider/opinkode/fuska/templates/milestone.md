@@ -11,7 +11,7 @@ Template for milestone entry - stored in MegaMemory as part of milestone concept
 
 **Delivered:** [One sentence describing what shipped]
 
-**Phases completed:** [X-Y] ([Z] plans total)
+**Chapters completed:** [X-Y] ([Z] plans total)
 
 **Key accomplishments:**
 - [Major achievement 1]
@@ -22,7 +22,7 @@ Template for milestone entry - stored in MegaMemory as part of milestone concept
 **Stats:**
 - [X] files created/modified
 - [Y] lines of code (primary language)
-- [Z] phases, [N] plans, [M] tasks
+- [Z] chapters, [N] plans, [M] tasks
 - [D] days from start to ship (or milestone to milestone)
 
 **Git range:** `feat(XX-XX)` → `feat(YY-YY)`
@@ -45,7 +45,7 @@ This entry is **part of the milestone concept** created by `milestone-archive.md
 summary: |
   Milestone v{version}: {name}
   Shipped: {date}
-  Phases: {phase_start}-{phase_end}
+  Chapters: {chapter_start}-{chapter_end}
   Total plans: {total_plans}
   Delivered: {one_sentence_overview}
 
@@ -58,7 +58,7 @@ summary: |
   Stats:
   - {files_count} files created/modified
   - {lines_of_code} lines of code
-  - {phases_count} phases, {plans_count} plans, {tasks_count} tasks
+  - {chapters_count} chapters, {plans_count} plans, {tasks_count} tasks
   - {days_count} days from {start_date} to {ship_date}
 
   Git range: {first_commit} → {last_commit}
@@ -77,7 +77,7 @@ summary: |
 1. Create milestone concept with entry structure in summary
 2. Include version, name, shipped date, delivered overview
 3. List key accomplishments (4-6 major achievements)
-4. Add stats: files, LOC, phases, plans, tasks, timeline
+4. Add stats: files, LOC, chapters, plans, tasks, timeline
 5. Include git commit range
 6. Note next milestone goals
 
@@ -106,14 +106,14 @@ summary: |
 const createMilestoneEntry = async (version: string, name: string, data: {
   shippedDate: string;
   delivered: string;
-  phaseStart: string;
-  phaseEnd: string;
+  chapterStart: string;
+  chapterEnd: string;
   plansCount: number;
   keyAccomplishments: string[];
   stats: {
     filesCreated: number;
     linesOfCode: number;
-    phasesCount: number;
+    chaptersCount: number;
     tasksCount: number;
     startDate: string;
     endDate: string;
@@ -128,7 +128,7 @@ const createMilestoneEntry = async (version: string, name: string, data: {
   const summary =
     `Milestone v${version}: ${name}\n` +
     `Shipped: ${data.shippedDate}\n` +
-    `Phases: ${data.phaseStart}-${data.phaseEnd}\n` +
+    `Chapters: ${data.chapterStart}-${data.chapterEnd}\n` +
     `Total plans: ${data.plansCount}\n` +
     `Delivered: ${data.delivered}\n\n` +
     `Key accomplishments:\n` +
@@ -137,7 +137,7 @@ const createMilestoneEntry = async (version: string, name: string, data: {
     `Stats:\n` +
     `- ${data.stats.filesCreated} files created/modified\n` +
     `- ${data.stats.linesOfCode} lines of code\n` +
-    `- ${data.stats.phasesCount} phases, ${data.plansCount} plans, ${data.stats.tasksCount} tasks\n` +
+    `- ${data.stats.chaptersCount} chapters, ${data.plansCount} plans, ${data.stats.tasksCount} tasks\n` +
     `- ${daysCount} days from ${data.stats.startDate} to ${data.stats.endDate}\n\n` +
     `Git range: ${data.gitRange.first} → ${data.gitRange.last}\n\n` +
     `What's next: ${data.whatsNext}`;
@@ -146,7 +146,7 @@ const createMilestoneEntry = async (version: string, name: string, data: {
     name: `Milestone v${version}: ${name}`,
     kind: "milestone",
     summary,
-    why: "Archives completed milestones with phases, decisions, issues. " +
+    why: "Archives completed milestones with chapters, decisions, issues. " +
           "Provides historical record of project progress across versions. " +
           "Enables rollback understanding and decision traceability.",
     edges: [{
@@ -176,7 +176,7 @@ const queryMilestoneEntry = async (version: string) => {
       name: summary.match(/Milestone v\d+\.\d+: ([^\n]+)/)?.[1] || '',
       shippedDate: summary.match(/Shipped: ([^\n]+)/)?.[1] || '',
       delivered: summary.match(/Delivered: ([^\n]+)/)?.[1] || '',
-      phases: summary.match(/Phases: ([^\n]+)/)?.[1] || '',
+      chapters: summary.match(/Chapters: ([^\n]+)/)?.[1] || '',
       plansCount: summary.match(/Total plans: (\d+)/)?.[1] || '0',
       keyAccomplishments: summary.includes('Key accomplishments:')
         ? summary.match(/Key accomplishments:\n([\s\S]*?)(?=\n\nStats:)/)?.[1]
@@ -187,9 +187,9 @@ const queryMilestoneEntry = async (version: string) => {
       stats: {
         filesCreated: summary.match(/- (\d+) files created/)?.[1] || '0',
         linesOfCode: summary.match(/- (\d+) lines of code/)?.[1] || '0',
-        phasesCount: summary.match(/- (\d+) phases/)?.[1] || '0',
-        plansCount: summary.match(/- \d+ phases, (\d+) plans/)?.[1] || '0',
-        tasksCount: summary.match(/- \d+ phases, \d+ plans, (\d+) tasks/)?.[1] || '0',
+        chaptersCount: summary.match(/- (\d+) chapters/)?.[1] || '0',
+        plansCount: summary.match(/- \d+ chapters, (\d+) plans/)?.[1] || '0',
+        tasksCount: summary.match(/- \d+ chapters, \d+ plans, (\d+) tasks/)?.[1] || '0',
         daysCount: summary.match(/- (\d+) days from/)?.[1] || '0',
         startDate: summary.match(/days from ([^-]+) to/)?.[1] || '',
         endDate: summary.match(/to ([^\n]+)/)?.[1] || ''
@@ -222,7 +222,7 @@ const queryAllMilestoneEntries = async () => {
       name: summary.match(/Milestone v\d+\.\d+: ([^\n]+)/)?.[1] || '',
       shippedDate: summary.match(/Shipped: ([^\n]+)/)?.[1] || '',
       delivered: summary.match(/Delivered: ([^\n]+)/)?.[1] || '',
-      phases: summary.match(/Phases: ([^\n]+)/)?.[1] || '',
+      chapters: summary.match(/Chapters: ([^\n]+)/)?.[1] || '',
       plansCount: summary.match(/Total plans: (\d+)/)?.[1] || '0',
       whatsNext: summary.match(/What's next: ([^\n]+)/)?.[1] || ''
     };
@@ -246,7 +246,7 @@ const queryAllMilestoneEntries = async () => {
 
 **Don't create milestones for:**
 
-- Individual phase completions (normal workflow)
+- Individual chapter completions (normal workflow)
 - Work in progress (wait until shipped)
 - Minor bug fixes that don't constitute a release
 ```
@@ -265,8 +265,8 @@ git diff --stat feat(XX-XX)..feat(YY-YY) | tail -1
 # Count LOC (replace with relevant extension)
 find . -name "*.ts" -o -name "*.tsx" | xargs wc -l
 
-# Phase/plan/task counts from ROADMAP
-grep -c "^## Phase" ROADMAP.md
+# Chapter/plan/task counts from ROADMAP
+grep -c "^## Chapter" ROADMAP.md
 grep -c "PLAN.md" ROADMAP.md (or actual count)
 grep -c "- \[" ROADMAP.md (or actual count)
 
@@ -278,7 +278,7 @@ git log --format="%ai" feat(XX-XX)..feat(YY-YY) | tail -1
 **Git range format:**
 
 - First commit of milestone → last commit of milestone
-- Example: `feat(01-01)` → `feat(04-01)` for phases 1-4
+- Example: `feat(01-01)` → `feat(04-01)` for chapters 1-4
 ```
 
 ---
@@ -290,7 +290,7 @@ git log --format="%ai" feat(XX-XX)..feat(YY-YY) | tail -1
 
 **Delivered:** Security hardening with Keychain integration and comprehensive error handling
 
-**Phases completed:** 5-6 (3 plans total)
+**Chapters completed:** 5-6 (3 plans total)
 
 **Key accomplishments:**
 - Migrated API key storage from plaintext to macOS Keychain
@@ -301,7 +301,7 @@ git log --format="%ai" feat(XX-XX)..feat(YY-YY) | tail -1
 **Stats:**
 - 23 files modified
 - 650 lines of Swift added
-- 2 phases, 3 plans, 12 tasks
+- 2 chapters, 3 plans, 12 tasks
 - 8 days from v1.0 to v1.1
 
 **Git range:** `feat(05-01)` → `feat(06-02)`
@@ -314,7 +314,7 @@ git log --format="%ai" feat(XX-XX)..feat(YY-YY) | tail -1
 
 **Delivered:** Menu bar weather app with current conditions and 3-day forecast
 
-**Phases completed:** 1-4 (7 plans total)
+**Chapters completed:** 1-4 (7 plans total)
 
 **Key accomplishments:**
 - Menu bar app with popover UI (AppKit)
@@ -326,7 +326,7 @@ git log --format="%ai" feat(XX-XX)..feat(YY-YY) | tail -1
 **Stats:**
 - 47 files created
 - 2,450 lines of Swift
-- 4 phases, 7 plans, 28 tasks
+- 4 chapters, 7 plans, 28 tasks
 - 12 days from start to ship
 
 **Git range:** `feat(01-01)` → `feat(04-01)`

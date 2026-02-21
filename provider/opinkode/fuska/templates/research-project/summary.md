@@ -81,38 +81,38 @@ const summaryContent = `
 
 **Implications for Roadmap:**
 
-Based on research, suggested phase structure:
+Based on research, suggested chapter structure:
 
-**Phase 1: [Name]**
+**Chapter 1: [Name]**
 **Rationale:** [why this comes first based on research]
-**Delivers:** [what this phase produces]
+**Delivers:** [what this chapter produces]
 **Addresses:** [features from FEATURES.md]
 **Avoids:** [pitfall from PITFALLS.md]
 
-**Phase 2: [Name]**
+**Chapter 2: [Name]**
 **Rationale:** [why this order]
-**Delivers:** [what this phase produces]
+**Delivers:** [what this chapter produces]
 **Uses:** [stack elements from STACK.md]
 **Implements:** [architecture component]
 
-**Phase 3: [Name]**
+**Chapter 3: [Name]**
 **Rationale:** [why this order]
-**Delivers:** [what this phase produces]
+**Delivers:** [what this chapter produces]
 
-[Continue for suggested phases...]
+[Continue for suggested chapters...]
 
-**Phase Ordering Rationale:**
+**Chapter Ordering Rationale:**
 - [Why this order based on dependencies discovered]
 - [Why this grouping based on architecture patterns]
 - [How this avoids pitfalls from research]
 
 **Research Flags:**
-Phases likely needing deeper research during planning:
-- **Phase [X]:** [reason — e.g., "complex integration, needs API research"]
-- **Phase [Y]:** [reason — e.g., "niche domain, sparse documentation"]
+Chapters likely needing deeper research during planning:
+- **Chapter [X]:** [reason — e.g., "complex integration, needs API research"]
+- **Chapter [Y]:** [reason — e.g., "niche domain, sparse documentation"]
 
-Phases with standard patterns (skip research-phase):
-- **Phase [X]:** [reason — e.g., "well-documented, established patterns"]
+Chapters with standard patterns (skip research-chapter):
+- **Chapter [X]:** [reason — e.g., "well-documented, established patterns"]
 
 **Confidence Assessment:**
 
@@ -213,9 +213,9 @@ Top pitfalls identified include silent failures (commands exit with success on e
 
 **Implications for Roadmap:**
 
-Based on research, suggested phase structure:
+Based on research, suggested chapter structure:
 
-**Phase 1: Core CLI Infrastructure**
+**Chapter 1: Core CLI Infrastructure**
 **Rationale:** Foundation must be solid before adding features. Establishes CLI framework, error handling, and exit codes — all table stakes. Prevents silent failures and ensures graceful exit.
 **Delivers:** CLI framework setup, error handling infrastructure, help command
 **Addresses:** Help command, error handling, exit codes (table stakes)
@@ -223,7 +223,7 @@ Based on research, suggested phase structure:
 **Uses:** Commander.js, TypeScript
 **Implements:** Commands layer, handlers layer
 
-**Phase 2: Core Commands with I/O**
+**Chapter 2: Core Commands with I/O**
 **Rationale:** After infrastructure, implement core user-facing commands. File operations and async patterns are common CLI operations. Adds progress indicators for long operations.
 **Delivers:** Core command implementations, file I/O utilities, progress indicators
 **Addresses:** Config file, progress indicators (should have)
@@ -231,7 +231,7 @@ Based on research, suggested phase structure:
 **Uses:** fs-extra, ora, listr2
 **Implements:** Services layer, core utilities
 
-**Phase 3: Interactive Features**
+**Chapter 3: Interactive Features**
 **Rationale:** Core commands working, now enhance UX with interactive prompts. Complex workflows benefit from guided input. Adds after validation that basic CLI works.
 **Delivers:** Interactive mode, prompt system, enhanced help
 **Addresses:** Interactive mode (differentiator)
@@ -239,7 +239,7 @@ Based on research, suggested phase structure:
 **Uses:** Inquirer.js, prompts library
 **Implements:** Enhanced handlers layer
 
-**Phase 4: Advanced Features (v1.x)**
+**Chapter 4: Advanced Features (v1.x)**
 **Rationale:** After validation, add features users request. Workspace support and auto-completion improve power user experience.
 **Delivers:** Workspace support, shell auto-completion, config file
 **Addresses:** Workspace support, auto-completion, config file
@@ -247,7 +247,7 @@ Based on research, suggested phase structure:
 **Uses:** Shell completion libraries, workspace management
 **Implements:** Plugin hooks, workspace services
 
-**Phase 5: Extensibility (v2+)**
+**Chapter 5: Extensibility (v2+)**
 **Rationale:** Only after core is stable and validated. Plugin system is complex and requires well-defined interfaces.
 **Delivers:** Plugin system, plugin API, plugin registry
 **Addresses:** Plugin system (deferred)
@@ -255,7 +255,7 @@ Based on research, suggested phase structure:
 **Uses:** Plugin framework, dynamic loading
 **Implements:** Plugin infrastructure
 
-**Phase Ordering Rationale:**
+**Chapter Ordering Rationale:**
 - Infrastructure first: Cannot prevent pitfalls like silent failures without solid error handling foundation
 - Core commands before features: Users need functional CLI before enhancements like interactive mode
 - I/O early: Most CLIs need file operations, establish patterns early
@@ -263,14 +263,14 @@ Based on research, suggested phase structure:
 - Extensibility last: Plugin system requires stable core and clear APIs
 
 **Research Flags:**
-Phases likely needing deeper research during planning:
-- **Phase 3 (Interactive Features):** Inquirer.js has complex plugin system, may need research on prompt composition
-- **Phase 5 (Extensibility):** Plugin architecture patterns vary, may need comparison of approaches
+Chapters likely needing deeper research during planning:
+- **Chapter 3 (Interactive Features):** Inquirer.js has complex plugin system, may need research on prompt composition
+- **Chapter 5 (Extensibility):** Plugin architecture patterns vary, may need comparison of approaches
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Infrastructure):** CLI framework setup is well-documented (Commander.js)
-- **Phase 2 (Core Commands):** File I/O and async patterns are standard Node.js
-- **Phase 4 (Advanced Features):** Shell completion has established patterns (oclif/completions)
+Chapters with standard patterns (skip research-chapter):
+- **Chapter 1 (Infrastructure):** CLI framework setup is well-documented (Commander.js)
+- **Chapter 2 (Core Commands):** File I/O and async patterns are standard Node.js
+- **Chapter 4 (Advanced Features):** Shell completion has established patterns (oclif/completions)
 
 **Confidence Assessment:**
 
@@ -284,10 +284,10 @@ Phases with standard patterns (skip research-phase):
 **Overall confidence:** HIGH
 
 **Gaps to Address:**
-No major gaps. Research covers all core aspects of CLI tool development. Plugin system in Phase 5 will need deeper planning but is deferred appropriately. Workspace support patterns vary by tool type, will need research based on specific CLI being built.
+No major gaps. Research covers all core aspects of CLI tool development. Plugin system in Chapter 5 will need deeper planning but is deferred appropriately. Workspace support patterns vary by tool type, will need research based on specific CLI being built.
 
-- Plugin system architecture: Defer to Phase 5 planning, research patterns (oclif, Yarn plugins) when needed
-- Workspace support patterns: Depends on CLI type (monorepo tool vs project generator), research during Phase 4 planning
+- Plugin system architecture: Defer to Chapter 5 planning, research patterns (oclif, Yarn plugins) when needed
+- Workspace support patterns: Depends on CLI type (monorepo tool vs project generator), research during Chapter 4 planning
 
 **Sources:**
 
@@ -361,14 +361,14 @@ After additional competitor analysis, discovered that workspace support is becom
 [... existing ...]
 - [NEW] Workspace support — developer tools users expect this
 
-**Updated Phase Structure:**
+**Updated Chapter Structure:**
 
-**Phase 4 (revised): Workspace and Completion**
+**Chapter 4 (revised): Workspace and Completion**
 **Rationale:** Updated to include workspace support after discovering it's table stakes. Auto-completion remains here as enhancement.
 **Delivers:** Workspace support, shell auto-completion, enhanced config
 **Addresses:** Workspace support, auto-completion, config file
 
-**Phase 5 (new): Extensibility (v2+)**
+**Chapter 5 (new): Extensibility (v2+)**
 [... same as before ...]
 
 [... rest of original ...]
@@ -387,7 +387,7 @@ const summaryResults = await megamemory_understand({
 });
 
 // Results include concept with full summary details
-// Use summaryResults[0].summary to get executive summary, phase suggestions, confidence assessment
+// Use summaryResults[0].summary to get executive summary, chapter suggestions, confidence assessment
 ```
 
 ### Linking Research Summary to Other Concepts
@@ -498,9 +498,9 @@ ${extractTopPitfalls(pitfalls.summary, 5)}
 
 **Implications for Roadmap:**
 
-Based on research, suggested phase structure:
+Based on research, suggested chapter structure:
 
-${generatePhaseSuggestions(stack, features, arch, pitfalls)}
+${generateChapterSuggestions(stack, features, arch, pitfalls)}
 
 **Confidence Assessment:**
 
@@ -535,14 +535,14 @@ async function createRoadmapFromSummary(summaryConceptId: string) {
   const summary = summaryResults[0];
   const summaryText = summary.summary;
   
-  // Extract phase suggestions
-  const phases = extractPhases(summaryText);
+  // Extract chapter suggestions
+  const chapters = extractChapters(summaryText);
   
   // Create roadmap concept
   const roadmapConcept = await megamemory.create_concept({
     name: "Roadmap: REST API",
     kind: "config",
-    summary: `Roadmap generated from research summary with ${phases.length} phases`,
+    summary: `Roadmap generated from research summary with ${chapters.length} chapters`,
     why: "Roadmap structure based on research findings",
     edges: [
       { to: summaryConceptId, relation: "configured_by", description: "Roadmap follows research summary" }
@@ -550,40 +550,40 @@ async function createRoadmapFromSummary(summaryConceptId: string) {
     created_by_task: "Create roadmap from research summary"
   });
   
-  // Create phase concepts for each suggested phase
-  const phaseConcepts = [];
-  for (const phase of phases) {
-    const phaseConcept = await megamemory.create_concept({
-      name: `Phase ${phase.number}: ${phase.name}`,
+  // Create chapter concepts for each suggested chapter
+  const chapterConcepts = [];
+  for (const chapter of chapters) {
+    const chapterConcept = await megamemory.create_concept({
+      name: `Chapter ${chapter.number}: ${chapter.name}`,
       kind: "feature",
-      summary: phase.rationale,
-      why: phase.delivers,
+      summary: chapter.rationale,
+      why: chapter.delivers,
       parent_id: roadmapConcept.id,
-      created_by_task: "Create phase from research summary"
+      created_by_task: "Create chapter from research summary"
     });
     
-    phaseConcepts.push(phaseConcept);
+    chapterConcepts.push(chapterConcept);
     
-    // Link features to phase
-    for (const featureName of phase.features) {
+    // Link features to chapter
+    for (const featureName of chapter.features) {
       const featureConcept = await findOrCreateFeatureConcept(featureName);
       await megamemory.link({
-        from: phaseConcept.id,
+        from: chapterConcept.id,
         to: featureConcept.id,
         relation: "implements",
-        description: `Phase implements ${featureName}`
+        description: `Chapter implements ${featureName}`
       });
     }
   }
   
-  return { roadmap: roadmapConcept, phases: phaseConcepts };
+  return { roadmap: roadmapConcept, chapters: chapterConcepts };
 }
 ```
 
 ### Example 3: Extracting Research Flags for Planning
 
 ```typescript
-// When agent needs to identify which phases need research
+// When agent needs to identify which chapters need research
 
 async function getResearchFlags(summaryConceptId: string) {
   const summaryResults = await megamemory_understand({
@@ -603,11 +603,11 @@ async function getResearchFlags(summaryConceptId: string) {
   const lines = researchFlagsSection.split('\n');
   
   for (const line of lines) {
-    if (line.includes('**Phase')) {
-      const match = line.match(/\*\*Phase (\d+): ([^*]+)\*\*: (.+)/);
+    if (line.includes('**Chapter')) {
+      const match = line.match(/\*\*Chapter (\d+): ([^*]+)\*\*: (.+)/);
       if (match) {
         flags.push({
-          phase: match[1],
+          chapter: match[1],
           name: match[2],
           reason: match[3],
           needsResearch: true
@@ -622,9 +622,9 @@ async function getResearchFlags(summaryConceptId: string) {
 // Usage
 const flags = await getResearchFlags(summaryConceptId);
 for (const flag of flags) {
-  console.log(`Phase ${flag.phase} (${flag.name}): ${flag.reason}`);
+  console.log(`Chapter ${flag.chapter} (${flag.name}): ${flag.reason}`);
   if (flag.needsResearch) {
-    console.log(`  → Schedule research-phase for Phase ${flag.phase}`);
+    console.log(`  → Schedule research-chapter for Chapter ${flag.chapter}`);
   }
 }
 ```
@@ -696,27 +696,27 @@ for (const flag of flags) {
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, suggested chapter structure:
 
-### Phase 1: [Name]
+### Chapter 1: [Name]
 **Rationale:** [why this comes first based on research]
-**Delivers:** [what this phase produces]
+**Delivers:** [what this chapter produces]
 **Addresses:** [features from FEATURES.md]
 **Avoids:** [pitfall from PITFALLS.md]
 
-### Phase 2: [Name]
+### Chapter 2: [Name]
 **Rationale:** [why this order]
-**Delivers:** [what this phase produces]
+**Delivers:** [what this chapter produces]
 **Uses:** [stack elements from STACK.md]
 **Implements:** [architecture component]
 
-### Phase 3: [Name]
+### Chapter 3: [Name]
 **Rationale:** [why this order]
-**Delivers:** [what this phase produces]
+**Delivers:** [what this chapter produces]
 
-[Continue for suggested phases...]
+[Continue for suggested chapters...]
 
-### Phase Ordering Rationale
+### Chapter Ordering Rationale
 
 - [Why this order based on dependencies discovered]
 - [Why this grouping based on architecture patterns]
@@ -724,12 +724,12 @@ Based on research, suggested phase structure:
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase [X]:** [reason — e.g., "complex integration, needs API research"]
-- **Phase [Y]:** [reason — e.g., "niche domain, sparse documentation"]
+Chapters likely needing deeper research during planning:
+- **Chapter [X]:** [reason — e.g., "complex integration, needs API research"]
+- **Chapter [Y]:** [reason — e.g., "niche domain, sparse documentation"]
 
-Phases with standard patterns (skip research-phase):
-- **Phase [X]:** [reason — e.g., "well-documented, established patterns"]
+Chapters with standard patterns (skip research-chapter):
+- **Chapter [X]:** [reason — e.g., "well-documented, established patterns"]
 
 ## Confidence Assessment
 
@@ -787,8 +787,8 @@ Phases with standard patterns (skip research-phase):
 **Implications for Roadmap:**
 - This is the most important section
 - Directly informs roadmap creation
-- Be explicit about phase suggestions and rationale
-- Include research flags for each suggested phase
+- Be explicit about chapter suggestions and rationale
+- Include research flags for each suggested chapter
 
 **Confidence Assessment:**
 - Be honest about uncertainty
@@ -799,7 +799,7 @@ Phases with standard patterns (skip research-phase):
 
 **Integration with roadmap creation:**
 - This file is loaded as context during roadmap creation
-- Phase suggestions here become starting point for roadmap
-- Research flags inform phase planning
+- Chapter suggestions here become starting point for roadmap
+- Research flags inform chapter planning
 
 </guidelines>

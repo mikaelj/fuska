@@ -1,26 +1,26 @@
 # Summary Template (MegaMemory-Backed)
 
-Template for phase completion documentation stored as MegaMemory concept.
+Template for chapter completion documentation stored as MegaMemory concept.
 
 ---
 
 <megamemory_schema>
 
-## Concept: `phase-summary`
+## Concept: `chapter-summary`
 
 **Kind:** `feature`
 
-**Summary:** Phase/plan completion documentation with dependency graph, tech stack, key files, decisions, patterns, performance metrics, and deviations. Enables automatic context assembly via dependency graph.
+**Summary:** Chapter/plan completion documentation with dependency graph, tech stack, key files, decisions, patterns, performance metrics, and deviations. Enables automatic context assembly via dependency graph.
 
 **Fields:**
-- `phase_id` (string) - Phase identifier (e.g., "03-features")
-- `plan_id` (string) - Plan number within phase
+- `chapter_id` (string) - Chapter identifier (e.g., "03-features")
+- `plan_id` (string) - Plan number within chapter
 - `subsystem` (string) - Primary category (auth, payments, ui, api, database, infra, testing)
 - `tags` (array) - Searchable tech keywords (jwt, stripe, react, postgres)
 - `dependency_graph` (object)
-  - `requires` (array) - Prior phases this depends on with what they provide
-  - `provides` (array) - What this phase delivered
-  - `affects` (array) - Phases that will need this context
+  - `requires` (array) - Prior chapters this depends on with what they provide
+  - `provides` (array) - What this chapter delivered
+  - `affects` (array) - Chapters that will need this context
 - `tech_stack` (object)
   - `added` (array) - Libraries/tools added
   - `patterns` (array) - Architectural patterns established
@@ -28,47 +28,47 @@ Template for phase completion documentation stored as MegaMemory concept.
   - `created` (array) - Important files created
   - `modified` (array) - Important files modified
 - `key_decisions` (array) - Major decisions made
-- `patterns_established` (array) - Patterns future phases should maintain
+- `patterns_established` (array) - Patterns future chapters should maintain
 - `deviations` (array) - Auto-fixed issues (if any)
 - `issues_encountered` (array) - Problems during planned work
 - `next_readiness` (object) - What's ready, blockers, concerns
 
 **Relationships:**
-- `implements` → `phase-plan:plan_id` - Completes execution of plan
-- `depends_on` → `phase-context:phase_id` - Context used for execution
-- `depends_on` → `phase-research:phase_id` - Research used for stack decisions
-- `connects_to` → `phase-summary:requires` - Links to prior summaries for dependency graph
-- `configured_by` → `phase-summary:affects` - Future phases depend on this
+- `implements` → `chapter-plan:plan_id` - Completes execution of plan
+- `depends_on` → `chapter-context:chapter_id` - Context used for execution
+- `depends_on` → `chapter-research:chapter_id` - Research used for stack decisions
+- `connects_to` → `chapter-summary:requires` - Links to prior summaries for dependency graph
+- `configured_by` → `chapter-summary:affects` - Future chapters depend on this
 
 </megamemory_schema>
 
 <megamemory_operations>
 
-## Create Phase Summary
+## Create Chapter Summary
 
 ```typescript
-// After completing a phase/plan execution
+// After completing a chapter/plan execution
 await megamemory.create_concept({
-  name: `phase-summary:${phaseId}-${planId}`,
+  name: `chapter-summary:${chapterId}-${planId}`,
   kind: "feature",
   summary: `${oneLiner}. Duration: ${duration}. Files: ${filesModified.length}. Decisions: ${keyDecisions.length}. Tech stack added: ${techStack.added.join(", ")}. Subsystem: ${subsystem}. Tags: ${tags.join(", ")}.`,
   why: "Documents actual execution results, enables automatic context assembly via dependency graph",
   parent_id: `initiative:${initiativeId}`,
   edges: [
     {
-      to: `phase-plan:${phaseId}-${planId}`,
+      to: `chapter-plan:${chapterId}-${planId}`,
       relation: "implements",
       description: "Completes execution of plan"
     },
     {
-      to: `phase-context:${phaseId}`,
+      to: `chapter-context:${chapterId}`,
       relation: "depends_on",
       description: "Used context decisions during execution"
     },
     ...dependencyGraph.requires.map(req => ({
-      to: `phase-summary:${req.phase}`,
+      to: `chapter-summary:${req.chapter}`,
       relation: "depends_on",
-      description: `Requires ${req.provides} from ${req.phase}`
+      description: `Requires ${req.provides} from ${req.chapter}`
     }))
   ]
 })
@@ -79,38 +79,38 @@ await megamemory.create_concept({
 ```typescript
 // Get all summary concepts for a subsystem (auth, payments, ui, etc.)
 const result = await megamemory.understand({
-  query: `phase summaries subsystem ${subsystem} with decisions and patterns`,
+  query: `chapter summaries subsystem ${subsystem} with decisions and patterns`,
   top_k: 10
 })
 
-// Returns all auth-related phase-summary concepts with their decisions and patterns
+// Returns all auth-related chapter-summary concepts with their decisions and patterns
 // Used for context assembly when planning new auth features
 ```
 
 ## Query Tech Stack Usage
 
 ```typescript
-// Find all phases that use a specific library
+// Find all chapters that use a specific library
 const result = await megamemory.understand({
-  query: `phase summaries using ${libraryName} with examples and patterns`,
+  query: `chapter summaries using ${libraryName} with examples and patterns`,
   top_k: 15
 })
 
-// Returns all phase-summary concepts where library is in tech_stack.added or tags
+// Returns all chapter-summary concepts where library is in tech_stack.added or tags
 // Shows patterns established for that library
 ```
 
 ## Query Dependency Graph for Context Assembly
 
 ```typescript
-// Plan-phase agent builds context by traversing dependency graph
+// Plan-chapter agent builds context by traversing dependency graph
 const result = await megamemory.understand({
-  query: `phase summary ${currentPhaseId} dependency graph requires provides affects`,
+  query: `chapter summary ${currentChapterId} dependency graph requires provides affects`,
   top_k: 20
 })
 
-// Returns transitive closure of all required phase-summary concepts
-// Context assembly: query phase-summary concepts in dependency order
+// Returns transitive closure of all required chapter-summary concepts
+// Context assembly: query chapter-summary concepts in dependency order
 ```
 
 </megamemory_operations>
@@ -120,21 +120,21 @@ const result = await megamemory.understand({
 ## Example 1: Creating Auth Foundation Summary
 
 ```typescript
-// After completing Phase 1: Foundation (auth)
+// After completing Chapter 1: Foundation (auth)
 await megamemory.create_concept({
-  name: "phase-summary:01-foundation-01",
+  name: "chapter-summary:01-foundation-01",
   kind: "feature",
   summary: "JWT auth with refresh rotation using jose library, Prisma User model, and protected API middleware. Duration: 28 min. Files: 8. Decisions: 3. Tech stack added: jose, prisma. Subsystem: auth. Tags: jwt, refresh-tokens, prisma, postgres, protected-routes.",
-  why: "Auth foundation complete, provides User model and protected middleware to future phases",
+  why: "Auth foundation complete, provides User model and protected middleware to future chapters",
   parent_id: "project:myapp",
   edges: [
     {
-      to: "phase-plan:01-foundation-01",
+      to: "chapter-plan:01-foundation-01",
       relation: "implements",
       description: "Completed auth foundation plan"
     },
     {
-      to: "phase-context:01-foundation",
+      to: "chapter-context:01-foundation",
       relation: "depends_on",
       description: "Used context decisions during execution"
     }
@@ -147,11 +147,11 @@ await megamemory.create_concept({
 ```typescript
 // Planning new payment feature - what auth decisions matter?
 const authContext = await megamemory.understand({
-  query: "phase summaries subsystem auth with User model auth middleware patterns",
+  query: "chapter summaries subsystem auth with User model auth middleware patterns",
   top_k: 5
 })
 
-// Returns phase-summary concepts with:
+// Returns chapter-summary concepts with:
 // - Summary: "JWT auth with refresh rotation using jose library"
 // - Key files from summary: src/lib/auth.ts, src/middleware.ts
 // - Decisions: 15-min access tokens, 7-day refresh tokens
@@ -164,11 +164,11 @@ const authContext = await megamemory.understand({
 ```typescript
 // Planning to add another Prisma model - what patterns exist?
 const prismaPatterns = await megamemory.understand({
-  query: "phase summaries using prisma with schema patterns migration examples",
+  query: "chapter summaries using prisma with schema patterns migration examples",
   top_k: 10
 })
 
-// Returns phase-summary concepts for all phases using Prisma with:
+// Returns chapter-summary concepts for all chapters using Prisma with:
 // - Schema patterns established (model structure, relations)
 // - Migration patterns (how to run migrations)
 // - Query patterns (where, include, select usage)
@@ -178,20 +178,20 @@ const prismaPatterns = await megamemory.understand({
 ## Example 4: Dependency Graph Traversal
 
 ```typescript
-// Plan-phase needs context for Phase 4: Comments
+// Plan-chapter needs context for Chapter 4: Comments
 const result = await megamemory.understand({
-  query: "phase summary 04-comments dependency graph requires provides affects",
+  query: "chapter summary 04-comments dependency graph requires provides affects",
   top_k: 20
 })
 
 // Returns dependency chain:
-// Phase 4 requires:
-//   - Phase 1 (auth) provides: User model, protected routes
-//   - Phase 2 (posts) provides: Post model, post API
-//   - Phase 3 (UAT) provides: Testing patterns
+// Chapter 4 requires:
+//   - Chapter 1 (auth) provides: User model, protected routes
+//   - Chapter 2 (posts) provides: Post model, post API
+//   - Chapter 3 (UAT) provides: Testing patterns
 
-// Context assembly loads phase-summary:01-foundation-01, phase-summary:02-posts-01, phase-summary:03-uat-01
-// Plan-phase knows User type, Post type, auth middleware patterns from summary concepts
+// Context assembly loads chapter-summary:01-foundation-01, chapter-summary:02-posts-01, chapter-summary:03-uat-01
+// Plan-chapter knows User type, Post type, auth middleware patterns from summary concepts
 ```
 
 </megamemory_examples>
@@ -202,22 +202,22 @@ const result = await megamemory.understand({
 
 ```markdown
 ---
-phase: XX-name
+chapter: XX-name
 plan: YY
 subsystem: [primary category: auth, payments, ui, api, database, infra, testing, etc.]
 tags: [searchable tech: jwt, stripe, react, postgres, prisma]
 
 # Dependency graph
 requires:
-  - phase: [prior phase this depends on]
-    provides: [what that phase built that this uses]
+  - chapter: [prior chapter this depends on]
+    provides: [what that chapter built that this uses]
 provides:
-  - [bullet list of what this phase built/delivered]
-affects: [list of phase names or keywords that will need this context]
+  - [bullet list of what this chapter built/delivered]
+affects: [list of chapter names or keywords that will need this context]
 
 # Tech tracking
 tech-stack:
-  added: [libraries/tools added in this phase]
+  added: [libraries/tools added in this chapter]
   patterns: [architectural/code patterns established]
 
 key-files:
@@ -233,9 +233,9 @@ patterns-established:
   - "Pattern 2: description"
 ---
 
-# Phase [X]: [Name] Summary
+# Chapter [X]: [Name] Summary
 
-**[Substantive one-liner describing outcome - NOT "phase complete" or "implementation finished"]**
+**[Substantive one-liner describing outcome - NOT "chapter complete" or "implementation finished"]**
 
 ## Accomplishments
 - [Most important outcome]
@@ -292,7 +292,7 @@ _Note: TDD tasks may have multiple commits (test → feat → refactor)_
 ## User Setup Required
 
 [If USER-SETUP.md was generated:]
-**External services require manual configuration.** See [{phase}-USER-SETUP.md](./{phase}-USER-SETUP.md) for:
+**External services require manual configuration.** See [{chapter}-USER-SETUP.md](./{chapter}-USER-SETUP.md) for:
 - Environment variables to add
 - Dashboard configuration steps
 - Verification commands
@@ -300,29 +300,29 @@ _Note: TDD tasks may have multiple commits (test → feat → refactor)_
 [If no USER-SETUP.md:]
 None - no external service configuration required.
 
-## Next Phase Readiness
-[What's ready for next phase]
+## Next Chapter Readiness
+[What's ready for next chapter]
 [Any blockers or concerns]
 
 ---
-*Phase: XX-name*
+*Chapter: XX-name*
 *Completed: [date]*
 ```
 
 <frontmatter_guidance>
-**Purpose:** Enable automatic context assembly via dependency graph. Frontmatter makes summary metadata machine-readable so plan-phase can scan all summaries quickly and select relevant ones based on dependencies.
+**Purpose:** Enable automatic context assembly via dependency graph. Frontmatter makes summary metadata machine-readable so plan-chapter can scan all summaries quickly and select relevant ones based on dependencies.
 
 **Fast scanning:** Frontmatter is first ~25 lines, cheap to scan across all summaries without reading full content.
 
-**Dependency graph:** `requires`/`provides`/`affects` create explicit links between phases, enabling transitive closure for context selection.
+**Dependency graph:** `requires`/`provides`/`affects` create explicit links between chapters, enabling transitive closure for context selection.
 
-**Subsystem:** Primary categorization (auth, payments, ui, api, database, infra, testing) for detecting related phases.
+**Subsystem:** Primary categorization (auth, payments, ui, api, database, infra, testing) for detecting related chapters.
 
 **Tags:** Searchable technical keywords (libraries, frameworks, tools) for tech stack awareness.
 
 **Key-files:** Important files for @context references in PLAN.md.
 
-**Patterns:** Established conventions future phases should maintain.
+**Patterns:** Established conventions future chapters should maintain.
 
 **Population:** Frontmatter is populated during summary creation in execute-plan.md. See `<step name="create_summary">` for field-by-field guidance.
 </frontmatter_guidance>
@@ -336,7 +336,7 @@ The one-liner MUST be substantive:
 - "Dashboard with real-time metrics via Server-Sent Events"
 
 **Bad:**
-- "Phase complete"
+- "Chapter complete"
 - "Authentication implemented"
 - "Foundation finished"
 - "All tasks done"
@@ -346,7 +346,7 @@ The one-liner should tell someone what actually shipped.
 
 <example>
 ```markdown
-# Phase 1: Foundation Summary
+# Chapter 1: Foundation Summary
 
 **JWT auth with refresh rotation using jose library, Prisma User model, and protected API middleware**
 
@@ -396,19 +396,19 @@ The one-liner should tell someone what actually shipped.
 ## Issues Encountered
 - jsonwebtoken CommonJS import failed in Edge runtime - switched to jose (planned library change, worked as expected)
 
-## Next Phase Readiness
+## Next Chapter Readiness
 - Auth foundation complete, ready for feature development
 - User registration endpoint needed before public launch
 
 ---
-*Phase: 01-foundation*
+*Chapter: 01-foundation*
 *Completed: 2025-01-15*
 ```
 </example>
 
 <guidelines>
 **When to create:**
-- After completing each phase plan
+- After completing each chapter plan
 - Required output from execute-plan workflow
 - Documents what actually happened vs what was planned
 
@@ -418,7 +418,7 @@ The one-liner should tell someone what actually shipped.
 - Frontmatter enables automatic context assembly for future planning
 
 **One-liner requirements:**
-- Must be substantive (describe what shipped, not "phase complete")
+- Must be substantive (describe what shipped, not "chapter complete")
 - Should tell someone what was accomplished
 - Examples: "JWT auth with refresh rotation using jose library" not "Authentication implemented"
 

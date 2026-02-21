@@ -81,7 +81,7 @@ describe('Helper Functions', () => {
       const contextData = {
         gathered: '2025-01-20',
         status: 'ready_for_planning',
-        phase_boundary: 'Implement authentication',
+        chapter_boundary: 'Implement authentication',
         decisions: {
           auth_type: 'JWT',
           library: 'jose'
@@ -95,7 +95,7 @@ describe('Helper Functions', () => {
       const result = generateContextMarkdown(contextData, relevantKnowledge);
 
       expect(result).toContain('<domain>');
-      expect(result).toContain('## Phase Boundary');
+      expect(result).toContain('## Chapter Boundary');
       expect(result).toContain('Implement authentication');
       expect(result).toContain('<decisions>');
       expect(result).toContain('## Implementation Decisions');
@@ -110,7 +110,7 @@ describe('Helper Functions', () => {
       const contextData = {
         gathered: '2025-01-20',
         status: 'ready',
-        phase_boundary: 'Test',
+        chapter_boundary: 'Test',
         decisions: {},
         open_code_discretion: [],
         specifics: [],
@@ -171,11 +171,11 @@ describe('Helper Functions', () => {
   describe('generateSummaryMarkdown', () => {
     it('generates summary markdown with all sections', () => {
       const summaryData = {
-        phase: 'phase-01',
-        plan: 'phase-01-plan-1',
+        chapter: 'chapter-01',
+        plan: 'chapter-01-plan-1',
         subsystem: 'Authentication',
         tags: ['auth', 'security'],
-        requires: ['phase-00'],
+        requires: ['chapter-00'],
         provides: ['login capability'],
         affects: ['user management'],
         tech_stack: {
@@ -195,13 +195,13 @@ describe('Helper Functions', () => {
         decisions_made: {},
         deviations: [],
         issues_encountered: [],
-        next_phase_readiness: 'Ready'
+        next_chapter_readiness: 'Ready'
       };
 
       const result = generateSummaryMarkdown(summaryData);
 
-      expect(result).toContain('## Phase');
-      expect(result).toContain('phase-01');
+      expect(result).toContain('## Chapter');
+      expect(result).toContain('chapter-01');
       expect(result).toContain('## Plan');
       expect(result).toContain('## Duration');
       expect(result).toContain('45 minutes');
@@ -217,57 +217,57 @@ describe('Helper Functions', () => {
       expect(result).toContain('## Accomplishments');
       expect(result).toContain('## Deviations from Plan');
       expect(result).toContain('## Issues Encountered');
-      expect(result).toContain('## Next Phase Readiness');
+      expect(result).toContain('## Next Chapter Readiness');
     });
   });
 
   describe('calculateProgress', () => {
-    it('calculates progress for empty phases array', () => {
+    it('calculates progress for empty chapters array', () => {
       const result = calculateProgress([]);
       expect(result).toBe(0);
     });
 
-    it('calculates progress with no completed phases', () => {
-      const phases = [
+    it('calculates progress with no completed chapters', () => {
+      const chapters = [
         { number: 1, status: 'planned' },
         { number: 2, status: 'in_progress' },
         { number: 3, status: 'planned' }
       ];
 
-      const result = calculateProgress(phases);
+      const result = calculateProgress(chapters);
       expect(result).toBe(0);
     });
 
-    it('calculates progress with one completed phase', () => {
-      const phases = [
+    it('calculates progress with one completed chapter', () => {
+      const chapters = [
         { number: 1, status: 'complete' },
         { number: 2, status: 'in_progress' },
         { number: 3, status: 'planned' }
       ];
 
-      const result = calculateProgress(phases);
+      const result = calculateProgress(chapters);
       expect(result).toBe(33);
     });
 
-    it('calculates progress with all completed phases', () => {
-      const phases = [
+    it('calculates progress with all completed chapters', () => {
+      const chapters = [
         { number: 1, status: 'complete' },
         { number: 2, status: 'complete' },
         { number: 3, status: 'complete' }
       ];
 
-      const result = calculateProgress(phases);
+      const result = calculateProgress(chapters);
       expect(result).toBe(100);
     });
 
     it('handles missing status field', () => {
-      const phases = [
+      const chapters = [
         { number: 1, status: 'complete' },
         { number: 2 }, // no status
         { number: 3, status: 'complete' }
       ];
 
-      const result = calculateProgress(phases);
+      const result = calculateProgress(chapters);
       expect(result).toBe(67);
     });
   });
@@ -288,8 +288,8 @@ describe('buildDependencyGraph', () => {
         updated_at: '2025-01-20'
       },
       {
-        id: 'phase-01',
-        name: 'phase-01',
+        id: 'chapter-01',
+        name: 'chapter-01',
         kind: 'feature',
         summary: '{}',
         parent_id: 'roadmap',
@@ -299,13 +299,13 @@ describe('buildDependencyGraph', () => {
         updated_at: '2025-01-20'
       },
       {
-        id: 'phase-01-plan-1-summary',
-        name: 'phase-01-plan-1-summary',
+        id: 'chapter-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: '{\n  "accomplishments": ["Task 1"]\n}',
-        parent_id: 'phase-01',
+        parent_id: 'chapter-01',
         file_refs: null,
-        edges: [{ to: 'phase-01-plan-1', relation: 'connects_to' }],
+        edges: [{ to: 'chapter-01-plan-1', relation: 'connects_to' }],
         created_at: '2025-01-20',
         updated_at: '2025-01-20'
       }
@@ -330,13 +330,13 @@ describe('buildDependencyGraph', () => {
 
     const graph = await buildDependencyGraph(mockMegaMemory);
 
-    const summaries = graph.getRelevantSummaries('phase-01');
+    const summaries = graph.getRelevantSummaries('chapter-01');
     expect(summaries).toHaveLength(1);
-    expect(summaries[0].name).toBe('phase-01-plan-1-summary');
+    expect(summaries[0].name).toBe('chapter-01-plan-1-summary');
     expect(summaries[0].data).toEqual({ accomplishments: ['Task 1'] });
 
-    const phases = graph.getDependentPhases('phase-01');
-    expect(phases).toHaveLength(0); // No other phases depend on phase-01
+    const chapters = graph.getDependentChapters('chapter-01');
+    expect(chapters).toHaveLength(0); // No other chapters depend on chapter-01
 
     const allConcepts = graph.getAllConcepts();
     expect(allConcepts).toHaveLength(3);

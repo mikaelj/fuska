@@ -1,5 +1,5 @@
 ---
-name: fuska-review-chapter
+name: fuska-review
 description: Validate built features through conversational UAT using MegaMemory
 argument-hint: "[chapter number, e.g., '4']"
 tools:

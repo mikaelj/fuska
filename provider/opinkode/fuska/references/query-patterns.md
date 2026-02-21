@@ -20,8 +20,8 @@ Every `understand` match has this shape:
 
 ```typescript
 interface ConceptMatch {
-  id: string;            // e.g. "my-project/phase-01"
-  name: string;          // e.g. "phase-01"
+  id: string;            // e.g. "my-project/chapter-01"
+  name: string;          // e.g. "chapter-01"
   kind: string;          // feature | module | pattern | component | config | decision
   summary: string;       // JSON string — always parse with JSON.parse()
   why: string | null;
@@ -62,11 +62,11 @@ megamemory_understand({ query: "config", top_k: 1 })
 ### State
 
 ```typescript
-// Get initiative state (current phase, progress)
+// Get initiative state (current chapter, progress)
 megamemory_understand({ query: "state", top_k: 1 })
 ```
 
-**Parse:** `JSON.parse(match.summary)` → `{ current_phase, current_plan, status, progress, last_activity }`
+**Parse:** `JSON.parse(match.summary)` → `{ current_chapter, current_plan, status, progress, last_activity }`
 
 ### Requirements
 
@@ -78,36 +78,36 @@ megamemory_understand({ query: "requirements", top_k: 5 })
 const reqs = matches.filter(m => m.kind === 'feature' || m.name.startsWith('req-'))
 ```
 
-**Parse each:** `JSON.parse(match.summary)` → `{ description, status, phase_ref }`
+**Parse each:** `JSON.parse(match.summary)` → `{ description, status, chapter_ref }`
 
 ### Roadmap
 
 ```typescript
-// Get roadmap with phase list
+// Get roadmap with chapter list
 megamemory_understand({ query: "roadmap", top_k: 1 })
 ```
 
-**Parse:** `JSON.parse(match.summary)` → `{ current_milestone: { name, goal }, phases: [...] }`
+**Parse:** `JSON.parse(match.summary)` → `{ current_milestone: { name, goal }, chapters: [...] }`
 
-### Phases
+### Chapters
 
 ```typescript
-// Get a specific phase
-megamemory_understand({ query: "phase-01", top_k: 1 })
+// Get a specific chapter
+megamemory_understand({ query: "chapter-01", top_k: 1 })
 
-// Get all phases
-megamemory_understand({ query: "phase-", top_k: 50 })
+// Get all chapters
+megamemory_understand({ query: "chapter-", top_k: 50 })
 
 // Filter by type
-const phases = matches.filter(m => m.name.match(/^phase-\d+$/))        // phase roots only
+const chapters = matches.filter(m => m.name.match(/^chapter-\d+$/))        // chapter roots only
 const plans = matches.filter(m => m.name.includes('-plan-'))             // plans only
 const summaries = matches.filter(m => m.name.includes('-summary'))       // summaries only
 const contexts = matches.filter(m => m.name.includes('-context'))        // contexts only
 ```
 
-**Phase root parse:** `JSON.parse(match.summary)` → `{ number, name, goal, status, depends_on }`
-**Plan parse:** `JSON.parse(match.summary)` → `{ wave, depends_on, objective, must_haves, tasks }`
-**Summary parse:** `JSON.parse(match.summary)` → `{ phase, plan, accomplishments, files_modified, ... }`
+**Chapter root parse:** `JSON.parse(match.summary)` → `{ number, name, goal, status, depends_on }`
+**Plan parse:** `JSON.parse(match.summary)` → `{ batch, depends_on, objective, must_haves, tasks }`
+**Summary parse:** `JSON.parse(match.summary)` → `{ chapter, plan, accomplishments, files_modified, ... }`
 
 ### Research
 
@@ -181,10 +181,10 @@ Prefer specific concept names over generic terms:
 
 ```typescript
 // Good — specific
-megamemory_understand({ query: "phase-03", top_k: 5 })
+megamemory_understand({ query: "chapter-03", top_k: 5 })
 
 // Less good — too broad, may return unrelated matches
-megamemory_understand({ query: "phase", top_k: 50 })
+megamemory_understand({ query: "chapter", top_k: 50 })
 ```
 
 ### Adjust top_k for Scope
@@ -226,19 +226,19 @@ const initiative = matches[0]
 ### Traverse Edges for Relationships
 
 ```typescript
-const phase = matches[0]
-// phase.edges = [{to: "initiative-slug", relation: "connects_to"}, ...]
-// phase.incoming_edges = [{from: "phase-01-plan-1", relation: "connects_to"}, ...]
+const chapter = matches[0]
+// chapter.edges = [{to: "initiative-slug", relation: "connects_to"}, ...]
+// chapter.incoming_edges = [{from: "chapter-01-plan-1", relation: "connects_to"}, ...]
 ```
 
 ## Concept Kind Reference
 
 | Kind | Used For | Examples |
 |------|----------|---------|
-| `feature` | Initiative root, phases, requirements, todos | `my-initiative`, `phase-01`, `req-AUTH-01` |
+| `feature` | Initiative root, chapters, requirements, todos | `my-initiative`, `chapter-01`, `req-AUTH-01` |
 | `module` | Grouping containers | `requirements`, `roadmap`, `todos` |
 | `pattern` | Research findings | `research-stack`, `research-pitfalls` |
-| `component` | Phase artifacts | `phase-01-plan-1`, `phase-01-summary-1`, `phase-01-context` |
+| `component` | Chapter artifacts | `chapter-01-plan-1`, `chapter-01-summary-1`, `chapter-01-context` |
 | `config` | State and settings | `config`, `state` |
 | `decision` | Architectural choices, milestones | `milestone-v1`, `use-typescript` |
 
@@ -246,8 +246,8 @@ const phase = matches[0]
 
 | Relation | Meaning | Common Usage |
 |----------|---------|-------------|
-| `connects_to` | General association | Phase → initiative, plan → phase |
-| `depends_on` | Prerequisite | Phase → phase, plan → plan |
-| `implements` | Delivers/builds | Requirement → phase |
+| `connects_to` | General association | Chapter → initiative, plan → chapter |
+| `depends_on` | Prerequisite | Chapter → chapter, plan → plan |
+| `implements` | Delivers/builds | Requirement → chapter |
 | `calls` | Runtime invocation | Service → service |
 | `configured_by` | Configuration link | Config → project, state → project |

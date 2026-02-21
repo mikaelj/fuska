@@ -79,7 +79,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
+          current_chapter: 'chapter-01',
           status: 'ready_to_plan'
         }),
         parent_id: 'test-project',
@@ -89,7 +89,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
       const stateResult = await mockMegaMemory.understand({ query: 'state' });
       expect(stateResult.matches.length).toBeGreaterThan(0);
       const state = extractJson(stateResult.matches[0].summary);
-      expect(state.current_phase).toBe('phase-01');
+      expect(state.current_chapter).toBe('chapter-01');
     });
 
     it('should create requirements module and requirement concepts', async () => {
@@ -116,21 +116,21 @@ describe('MegaMemory Workflow Integration Tests', () => {
       expect(reqs.matches.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should create roadmap and phase concepts', async () => {
+    it('should create roadmap and chapter concepts', async () => {
       await mockMegaMemory.create_concept({
         name: 'roadmap',
         kind: 'module',
-        summary: 'Project roadmap with phases',
+        summary: 'Project roadmap with chapters',
         parent_id: 'test-project',
         edges: [{ to: 'test-project', relation: 'connects_to' }]
       });
 
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
-          slug: 'phase-01',
+          slug: 'chapter-01',
           name: 'Authentication',
           goal: 'Implement auth',
           status: 'planned'
@@ -139,14 +139,14 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: [{ to: 'roadmap', relation: 'connects_to' }]
       });
 
-      const phases = await mockMegaMemory.understand({ query: 'phase' });
-      expect(phases.matches.length).toBeGreaterThanOrEqual(2);
+      const chapters = await mockMegaMemory.understand({ query: 'chapter' });
+      expect(chapters.matches.length).toBeGreaterThanOrEqual(2);
     });
   });
 
-  describe('Discuss Phase Workflow', () => {
+  describe('Discuss Chapter Workflow', () => {
     beforeEach(async () => {
-      // Setup project with phase
+      // Setup project with chapter
       await mockMegaMemory.create_concept({
         name: 'test-project',
         kind: 'feature',
@@ -155,11 +155,11 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
-          slug: 'phase-01',
+          slug: 'chapter-01',
           name: 'Auth',
           goal: 'Implement authentication',
           status: 'planned'
@@ -169,11 +169,11 @@ describe('MegaMemory Workflow Integration Tests', () => {
       });
     });
 
-    it('should create phase context concept', async () => {
+    it('should create chapter context concept', async () => {
       const contextData = {
         gathered: '2025-01-20',
         status: 'ready_for_planning',
-        phase_boundary: 'Implement JWT authentication',
+        chapter_boundary: 'Implement JWT authentication',
         decisions: {
           auth_type: 'JWT',
           library: 'jose'
@@ -184,34 +184,34 @@ describe('MegaMemory Workflow Integration Tests', () => {
       };
 
       await mockMegaMemory.create_concept({
-        name: 'phase-01-context',
+        name: 'chapter-01-context',
         kind: 'config',
         summary: JSON.stringify(contextData),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'configured_by' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'configured_by' }]
       });
 
-      const context = await mockMegaMemory.understand({ query: 'phase-01-context' });
+      const context = await mockMegaMemory.understand({ query: 'chapter-01-context' });
       expect(context.matches.length).toBe(1);
       const data = extractJson(context.matches[0].summary);
-      expect(data.phase_boundary).toBe('Implement JWT authentication');
+      expect(data.chapter_boundary).toBe('Implement JWT authentication');
     });
 
-    it('should update existing phase context concept', async () => {
+    it('should update existing chapter context concept', async () => {
       // Create initial context
       await mockMegaMemory.create_concept({
-        name: 'phase-01-context',
+        name: 'chapter-01-context',
         kind: 'config',
         summary: JSON.stringify({
           gathered: '2025-01-20',
           decisions: { initial: 'decision' }
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
 
       // Get the created concept
-      const created = await mockMegaMemory.understand({ query: 'phase-01-context' });
+      const created = await mockMegaMemory.understand({ query: 'chapter-01-context' });
       const conceptId = created.matches[0].id;
 
       // Update context
@@ -226,15 +226,15 @@ describe('MegaMemory Workflow Integration Tests', () => {
       });
 
       // Verify update
-      const updated = await mockMegaMemory.understand({ query: 'phase-01-context' });
+      const updated = await mockMegaMemory.understand({ query: 'chapter-01-context' });
       const data = extractJson(updated.matches[0].summary);
       expect(data.decisions.updated).toBe('new decision');
     });
   });
 
-  describe('Plan Phase Workflow', () => {
+  describe('Plan Chapter Workflow', () => {
     beforeEach(async () => {
-      // Setup project with phase and context
+      // Setup project with chapter and context
       await mockMegaMemory.create_concept({
         name: 'test-project',
         kind: 'feature',
@@ -243,25 +243,25 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
-        summary: JSON.stringify({ number: 1, slug: 'phase-01', name: 'Auth', goal: 'Implement auth' }),
+        summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Auth', goal: 'Implement auth' }),
         parent_id: 'test-project/roadmap',
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-01-context',
+        name: 'chapter-01-context',
         kind: 'config',
         summary: JSON.stringify({
           gathered: '2025-01-20',
           decisions: { auth_type: 'JWT' }
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
     });
 
-    it('should create phase plan concept', async () => {
+    it('should create chapter plan concept', async () => {
       const planData = {
         objective: 'Implement JWT login',
         purpose: 'Secure authentication',
@@ -278,17 +278,17 @@ describe('MegaMemory Workflow Integration Tests', () => {
       };
 
       await mockMegaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify(planData),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-1', relation: 'implements' },
+          { to: 'chapter-1', relation: 'implements' },
           { to: 'context-concept', relation: 'depends_on' }
         ]
       });
 
-      const plan = await mockMegaMemory.understand({ query: 'phase-01-plan' });
+      const plan = await mockMegaMemory.understand({ query: 'chapter-01-plan' });
       expect(plan.matches.length).toBeGreaterThan(0);
       const data = extractJson(plan.matches[0].summary);
       expect(data.objective).toBe('Implement JWT login');
@@ -306,11 +306,11 @@ describe('MegaMemory Workflow Integration Tests', () => {
       };
 
       await mockMegaMemory.create_concept({
-        name: 'phase-01-research',
+        name: 'chapter-01-research',
         kind: 'pattern',
         summary: JSON.stringify(researchData),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'connects_to' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
 
       const research = await mockMegaMemory.understand({ query: 'research' });
@@ -321,9 +321,9 @@ describe('MegaMemory Workflow Integration Tests', () => {
     });
   });
 
-  describe('Execute Phase Workflow', () => {
+  describe('Execute Chapter Workflow', () => {
     beforeEach(async () => {
-      // Setup project with phase and plans
+      // Setup project with chapter and plans
       await mockMegaMemory.create_concept({
         name: 'test-project',
         kind: 'feature',
@@ -332,25 +332,25 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
-        summary: JSON.stringify({ number: 1, slug: 'phase-01', name: 'Auth', goal: 'Implement auth' }),
+        summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Auth', goal: 'Implement auth' }),
         parent_id: 'test-project/roadmap',
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
-        summary: JSON.stringify({ objective: 'Implement login', wave: 1 }),
-        parent_id: 'phase-1',
+        summary: JSON.stringify({ objective: 'Implement login', batch: 1 }),
+        parent_id: 'chapter-1',
         edges: []
       });
     });
 
     it('should create summary concept after execution', async () => {
       const summaryData = {
-        phase: 'phase-01',
-        plan: 'phase-01-plan-1',
+        chapter: 'chapter-01',
+        plan: 'chapter-01-plan-1',
         subsystem: 'Authentication',
         tags: ['auth', 'security'],
         tech_stack: {
@@ -370,19 +370,19 @@ describe('MegaMemory Workflow Integration Tests', () => {
         decisions_made: {},
         deviations: [],
         issues_encountered: [],
-        next_phase_readiness: 'Ready'
+        next_chapter_readiness: 'Ready'
       };
 
       await mockMegaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify(summaryData),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-01-plan-1', relation: 'connects_to' },
-          { to: 'phase-1', relation: 'connects_to' }
+          { to: 'chapter-01-plan-1', relation: 'connects_to' },
+          { to: 'chapter-1', relation: 'connects_to' }
         ],
-        created_by_task: 'phase-01-plan-1'
+        created_by_task: 'chapter-01-plan-1'
       });
 
       const summary = await mockMegaMemory.understand({ query: 'summary' });
@@ -392,12 +392,12 @@ describe('MegaMemory Workflow Integration Tests', () => {
       expect(data.duration_minutes).toBe(45);
     });
 
-    it('should update state after phase completion', async () => {
+    it('should update state after chapter completion', async () => {
       // Create state
       await mockMegaMemory.create_concept({
         name: 'state',
         kind: 'config',
-        summary: JSON.stringify({ current_phase: 'phase-01', status: 'in_progress' }),
+        summary: JSON.stringify({ current_chapter: 'chapter-01', status: 'in_progress' }),
         parent_id: 'test-project',
         edges: []
       });
@@ -410,8 +410,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
         id: stateId,
         changes: {
           summary: JSON.stringify({
-            current_phase: 'phase-02',
-            status: 'phase_complete',
+            current_chapter: 'chapter-02',
+            status: 'chapter_complete',
             progress: 33
           })
         }
@@ -419,14 +419,14 @@ describe('MegaMemory Workflow Integration Tests', () => {
 
       const updated = await mockMegaMemory.understand({ query: 'state' });
       const data = extractJson(updated.matches[0].summary);
-      expect(data.current_phase).toBe('phase-02');
+      expect(data.current_chapter).toBe('chapter-02');
       expect(data.progress).toBe(33);
     });
   });
 
   describe('Verify Work Workflow', () => {
     beforeEach(async () => {
-      // Setup project with completed phase
+      // Setup project with completed chapter
       await mockMegaMemory.create_concept({
         name: 'test-project',
         kind: 'feature',
@@ -435,19 +435,19 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
-        summary: JSON.stringify({ number: 1, slug: 'phase-01', name: 'Auth', goal: 'Implement auth' }),
+        summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Auth', goal: 'Implement auth' }),
         parent_id: 'test-project/roadmap',
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({
           accomplishments: ['Login works', 'Logout works']
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
     });
@@ -457,17 +457,17 @@ describe('MegaMemory Workflow Integration Tests', () => {
         verification_results: ['Login works', 'Logout works', 'Password reset works'],
         issues_found: [],
         recommendations: [],
-        concepts_reviewed: ['phase-01-plan-1-summary']
+        concepts_reviewed: ['chapter-01-plan-1-summary']
       };
 
       await mockMegaMemory.create_concept({
-        name: 'phase-01-uat',
+        name: 'chapter-01-uat',
         kind: 'component',
         summary: JSON.stringify(uatData),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-1', relation: 'connects_to' },
-          { to: 'phase-01-plan-1-summary', relation: 'connects_to' }
+          { to: 'chapter-1', relation: 'connects_to' },
+          { to: 'chapter-01-plan-1-summary', relation: 'connects_to' }
         ]
       });
 
@@ -483,15 +483,15 @@ describe('MegaMemory Workflow Integration Tests', () => {
         verification_results: ['Login works', 'Logout fails'],
         issues_found: ['Logout endpoint crashes'],
         recommendations: ['Fix logout endpoint'],
-        concepts_reviewed: ['phase-01-plan-1-summary']
+        concepts_reviewed: ['chapter-01-plan-1-summary']
       };
 
       await mockMegaMemory.create_concept({
-        name: 'phase-01-uat',
+        name: 'chapter-01-uat',
         kind: 'component',
         summary: JSON.stringify(uatData),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'connects_to' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
 
       const uat = await mockMegaMemory.understand({ query: 'uat' });
@@ -515,8 +515,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
-          current_plan: 'phase-01-plan-1',
+          current_chapter: 'chapter-01',
+          current_plan: 'chapter-01-plan-1',
           status: 'in_progress',
           progress: 25
         }),
@@ -524,17 +524,17 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
-        summary: JSON.stringify({ number: 1, slug: 'phase-01' }),
+        summary: JSON.stringify({ number: 1, slug: 'chapter-01' }),
         parent_id: 'test-project/roadmap',
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({ objective: 'Implement login' }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
     });
@@ -549,7 +549,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
       const state = await mockMegaMemory.understand({ query: 'state' });
       expect(state.matches.length).toBe(1);
       const data = extractJson(state.matches[0].summary);
-      expect(data.current_phase).toBe('phase-01');
+      expect(data.current_chapter).toBe('chapter-01');
       expect(data.status).toBe('in_progress');
       expect(data.progress).toBe(25);
     });
@@ -565,7 +565,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
 
   describe('Dependency Graph', () => {
     beforeEach(async () => {
-      // Setup project with phases and relationships
+      // Setup project with chapters and relationships
       mockConcepts = [];
       await mockMegaMemory.create_concept({
         name: 'test-project',
@@ -575,7 +575,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({ number: 1 }),
         parent_id: 'roadmap',
@@ -589,11 +589,11 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: [{ to: 'test-project', relation: 'connects_to' }]
       });
       await mockMegaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({ accomplishments: ['Task done'] }),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'connects_to' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
     });
 
@@ -602,23 +602,23 @@ describe('MegaMemory Workflow Integration Tests', () => {
 
       expect(graph).toBeDefined();
       expect(typeof graph.getRelevantSummaries).toBe('function');
-      expect(typeof graph.getDependentPhases).toBe('function');
+      expect(typeof graph.getDependentChapters).toBe('function');
       expect(typeof graph.getTechStackHistory).toBe('function');
     });
 
-    it('should get relevant summaries for phase', async () => {
+    it('should get relevant summaries for chapter', async () => {
       const graph = await buildDependencyGraph(mockMegaMemory);
-      const summaries = graph.getRelevantSummaries('phase-1');
+      const summaries = graph.getRelevantSummaries('chapter-1');
 
       expect(summaries).toHaveLength(1);
       expect(summaries[0].data.accomplishments).toEqual(['Task done']);
     });
 
-    it('should get dependent phases', async () => {
+    it('should get dependent chapters', async () => {
       const graph = await buildDependencyGraph(mockMegaMemory);
-      const phases = graph.getDependentPhases('phase-1');
+      const chapters = graph.getDependentChapters('chapter-1');
 
-      expect(phases).toEqual([]); // No dependent phases
+      expect(chapters).toEqual([]); // No dependent chapters
     });
 
     it('should get all concepts', async () => {

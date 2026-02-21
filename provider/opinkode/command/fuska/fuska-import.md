@@ -18,17 +18,17 @@ tools:
 
 <objective>
 
-Import legacy `.planning/` markdown files into MegaMemory as concepts, preserving project structure, requirements, phases, research, and todos.
+Import legacy `.planning/` markdown files into MegaMemory as concepts, preserving project structure, requirements, chapters, research, and todos.
 
 This is the reverse of `/fuska-export-md` — converts the traditional `.planning/` markdown file structure into the MegaMemory knowledge graph.
 
 **Reads:**
 - `PROJECT.md` — project root concept
 - `REQUIREMENTS.md` — requirements module + individual requirements
-- `ROADMAP.md` — roadmap concept + phase concepts
+- `ROADMAP.md` — roadmap concept + chapter concepts
 - `STATE.md` — project state concept
 - `config.json` — config concept
-- `phases/NN-*/` — phase context, plans, summaries, research, UAT
+- `chapters/NN-*/` — chapter context, plans, summaries, research, UAT
 - `todos/pending/` and `todos/done/` — todo concepts + todos module
 - `research/` — research concepts (if present at top level)
 - `codebase/` — codebase concepts (if present at top level)
@@ -55,7 +55,7 @@ All project data will live in MegaMemory after import. This command reads files 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -138,7 +138,7 @@ Scan source directory and report what was found:
 
 ```bash
 ls -la "$sourceDir/"
-ls -la "$sourceDir/phases/" 2>/dev/null
+ls -la "$sourceDir/chapters/" 2>/dev/null
 ls -la "$sourceDir/todos/pending/" 2>/dev/null
 ls -la "$sourceDir/todos/done/" 2>/dev/null
 ls -la "$sourceDir/research/" 2>/dev/null
@@ -161,7 +161,7 @@ Found:
 - STATE.md: ${exists ? 'Yes' : 'No'}
 - config.json: ${exists ? 'Yes' : 'No'}
 - MILESTONES.md: ${exists ? 'Yes' : 'No'}
-- Phase directories: ${count}
+- Chapter directories: ${count}
 - Todos (pending): ${count}
 - Todos (done): ${count}
 - Research files: ${count}
@@ -247,7 +247,7 @@ Confirm: ">> Config imported"
 Read `$sourceDir/STATE.md` (if exists)
 
 Parse content to extract:
-- Current Phase (from "Current Phase:" line)
+- Current Chapter (from "Current Chapter:" line)
 - Current Plan
 - Status
 - Progress percentage
@@ -261,7 +261,7 @@ megamemory_create_concept({
   name: "state",
   kind: "config",
   summary: JSON.stringify({
-    current_phase: currentPhase,
+    current_chapter: currentChapter,
     current_plan: currentPlan,
     status: status,
     progress: progress,
@@ -287,7 +287,7 @@ Parse each requirement section (## headings) to extract:
 - ID
 - Status (validated/active/out_of_scope)
 - Description
-- Phase reference (if any)
+- Chapter reference (if any)
 
 **Step 5.2: Create requirements module**
 
@@ -313,7 +313,7 @@ megamemory_create_concept({
   summary: JSON.stringify({
     description: reqDescription,
     status: reqStatus,
-    phase_ref: phaseRef || null
+    chapter_ref: chapterRef || null
   }),
   parent_id: requirementsModuleId,
   edges: [{ to: requirementsModuleId, relation: "connects_to" }]
@@ -324,7 +324,7 @@ Confirm: ">> Requirements imported (${count} requirements)"
 
 ---
 
-## 6. Import Roadmap and Phases
+## 6. Import Roadmap and Chapters
 
 **Step 6.1: Read ROADMAP.md**
 
@@ -332,7 +332,7 @@ Read `$sourceDir/ROADMAP.md` (if exists)
 
 Parse content to extract:
 - Current milestone name and goal
-- Phase list with numbers, names, goals, statuses, dependencies
+- Chapter list with numbers, names, goals, statuses, dependencies
 
 **Step 6.2: Create roadmap concept**
 
@@ -345,9 +345,9 @@ megamemory_create_concept({
       name: milestoneName,
       goal: milestoneGoal
     },
-    phases: phases.map(p => ({
+    chapters: chapters.map(p => ({
       number: p.number,
-      slug: `phase-${String(p.number).padStart(2, '0')}`,
+      slug: `chapter-${String(p.number).padStart(2, '0')}`,
       name: p.name,
       goal: p.goal,
       status: p.status,
@@ -359,22 +359,22 @@ megamemory_create_concept({
 })
 ```
 
-**Step 6.3: Create phase concepts**
+**Step 6.3: Create chapter concepts**
 
-For each phase from roadmap:
+For each chapter from roadmap:
 
 ```
-const phaseSlug = `phase-${String(phase.number).padStart(2, '0')}`
+const chapterSlug = `chapter-${String(chapter.number).padStart(2, '0')}`
 
 megamemory_create_concept({
-  name: phaseSlug,
+  name: chapterSlug,
   kind: "feature",
   summary: JSON.stringify({
-    number: phase.number,
-    name: phase.name,
-    goal: phase.goal,
-    status: phase.status || "not_started",
-    depends_on: phase.depends_on || []
+    number: chapter.number,
+    name: chapter.name,
+    goal: chapter.goal,
+    status: chapter.status || "not_started",
+    depends_on: chapter.depends_on || []
   }),
   parent_id: initiativeId,
   edges: [
@@ -384,62 +384,62 @@ megamemory_create_concept({
 })
 ```
 
-Confirm: ">> Roadmap imported (${phases.length} phases)"
+Confirm: ">> Roadmap imported (${chapters.length} chapters)"
 
 ---
 
-## 7. Import Phase Details
+## 7. Import Chapter Details
 
-**Step 7.1: Scan phase directories**
+**Step 7.1: Scan chapter directories**
 
 ```bash
-ls -d "$sourceDir/phases/"*/ 2>/dev/null
+ls -d "$sourceDir/chapters/"*/ 2>/dev/null
 ```
 
-For each phase directory found:
+For each chapter directory found:
 
-**Step 7.2: Determine phase slug**
+**Step 7.2: Determine chapter slug**
 
-Extract phase slug from directory name (e.g., `phase-01` from `phases/phase-01/` or `01-setup/`).
+Extract chapter slug from directory name (e.g., `chapter-01` from `chapters/chapter-01/` or `01-setup/`).
 
-**Step 7.3: Import phase context**
+**Step 7.3: Import chapter context**
 
-If `${phaseDir}/*-CONTEXT.md` exists:
+If `${chapterDir}/*-CONTEXT.md` exists:
 
-Read file. Parse gathered context, phase boundary, decisions, specifics, deferred items.
+Read file. Parse gathered context, chapter boundary, decisions, specifics, deferred items.
 
 ```
 megamemory_create_concept({
-  name: `${phaseSlug}-context`,
+  name: `${chapterSlug}-context`,
   kind: "component",
   summary: JSON.stringify({
     gathered: gathered,
     status: "complete",
-    phase_boundary: phaseBoundary,
+    chapter_boundary: chapterBoundary,
     decisions: decisions,
     open_code_discretion: discretionItems,
     specifics: specifics,
     deferred: deferred
   }),
-  parent_id: phaseSlug,
-  edges: [{ to: phaseSlug, relation: "connects_to" }]
+  parent_id: chapterSlug,
+  edges: [{ to: chapterSlug, relation: "connects_to" }]
 })
 ```
 
-**Step 7.4: Import phase plans**
+**Step 7.4: Import chapter plans**
 
-For each `*-PLAN*.md` or plan file in the phase directory:
+For each `*-PLAN*.md` or plan file in the chapter directory:
 
-Read file. Parse frontmatter (wave, depends_on, files_modified, autonomous) and body (objective, must_haves, tasks).
+Read file. Parse frontmatter (batch, depends_on, files_modified, autonomous) and body (objective, must_haves, tasks).
 
 ```
-const planName = `${phaseSlug}-plan-${planNumber}`
+const planName = `${chapterSlug}-plan-${planNumber}`
 
 megamemory_create_concept({
   name: planName,
   kind: "component",
   summary: JSON.stringify({
-    wave: wave,
+    batch: batch,
     depends_on: dependsOn,
     files_modified: filesModified,
     autonomous: autonomous,
@@ -447,46 +447,46 @@ megamemory_create_concept({
     must_haves: mustHaves,
     tasks: tasks
   }),
-  parent_id: phaseSlug,
-  edges: [{ to: phaseSlug, relation: "connects_to" }]
+  parent_id: chapterSlug,
+  edges: [{ to: chapterSlug, relation: "connects_to" }]
 })
 ```
 
-**Step 7.5: Import phase summaries**
+**Step 7.5: Import chapter summaries**
 
-For each `*-SUMMARY*.md` in the phase directory:
+For each `*-SUMMARY*.md` in the chapter directory:
 
 Read file. Parse accomplishments, files modified, decisions, issues, next steps.
 
 ```
-const summaryName = `${phaseSlug}-summary-${planNumber}`
+const summaryName = `${chapterSlug}-summary-${planNumber}`
 
 megamemory_create_concept({
   name: summaryName,
   kind: "component",
   summary: JSON.stringify({
-    phase: phaseSlug,
+    chapter: chapterSlug,
     plan: planNumber,
     accomplishments: accomplishments,
     files_modified: filesModified,
     decisions_made: decisions,
     issues_encountered: issues,
-    next_phase_readiness: nextSteps
+    next_chapter_readiness: nextSteps
   }),
-  parent_id: phaseSlug,
-  edges: [{ to: phaseSlug, relation: "connects_to" }]
+  parent_id: chapterSlug,
+  edges: [{ to: chapterSlug, relation: "connects_to" }]
 })
 ```
 
-**Step 7.6: Import phase research**
+**Step 7.6: Import chapter research**
 
-For each `*-RESEARCH*.md` in the phase directory:
+For each `*-RESEARCH*.md` in the chapter directory:
 
 Read file. Parse research domain, findings, standard stack, architecture patterns.
 
 ```
 megamemory_create_concept({
-  name: `${phaseSlug}-research`,
+  name: `${chapterSlug}-research`,
   kind: "component",
   summary: JSON.stringify({
     domain: domain,
@@ -496,32 +496,32 @@ megamemory_create_concept({
     architecture_patterns: architecturePatterns,
     pitfalls: pitfalls
   }),
-  parent_id: phaseSlug,
-  edges: [{ to: phaseSlug, relation: "connects_to" }]
+  parent_id: chapterSlug,
+  edges: [{ to: chapterSlug, relation: "connects_to" }]
 })
 ```
 
-**Step 7.7: Import phase UAT**
+**Step 7.7: Import chapter UAT**
 
-For each `*-UAT*.md` in the phase directory:
+For each `*-UAT*.md` in the chapter directory:
 
 Read file. Parse verification results, issues found, recommendations.
 
 ```
 megamemory_create_concept({
-  name: `${phaseSlug}-uat`,
+  name: `${chapterSlug}-uat`,
   kind: "component",
   summary: JSON.stringify({
     verification_results: verificationResults,
     issues_found: issuesFound,
     recommendations: recommendations
   }),
-  parent_id: phaseSlug,
-  edges: [{ to: phaseSlug, relation: "connects_to" }]
+  parent_id: chapterSlug,
+  edges: [{ to: chapterSlug, relation: "connects_to" }]
 })
 ```
 
-Confirm: ">> Phase ${phaseSlug} imported (context: ${hasContext}, plans: ${planCount}, summaries: ${summaryCount}, research: ${hasResearch}, uat: ${hasUAT})"
+Confirm: ">> Chapter ${chapterSlug} imported (context: ${hasContext}, plans: ${planCount}, summaries: ${summaryCount}, research: ${hasResearch}, uat: ${hasUAT})"
 
 ---
 
@@ -676,7 +676,7 @@ Parse each milestone section (## headings) to extract:
 - Version/name
 - Status
 - Completed date
-- Phases included
+- Chapters included
 - Notes
 
 **Step 11.2: Create milestone concepts**
@@ -692,7 +692,7 @@ megamemory_create_concept({
     name: milestoneName,
     status: status,
     completed_at: completedAt,
-    phases: phases,
+    chapters: chapters,
     notes: notes
   }),
   parent_id: initiativeId,
@@ -727,12 +727,12 @@ Concepts Created:
 - Requirements module: 1
   - Individual requirements: ${reqCount}
 - Roadmap: 1
-  - Phases: ${phaseCount}
-  - Phase contexts: ${contextCount}
-  - Phase plans: ${planCount}
-  - Phase summaries: ${summaryCount}
-  - Phase research: ${researchCount}
-  - Phase UAT: ${uatCount}
+  - Chapters: ${chapterCount}
+  - Chapter contexts: ${contextCount}
+  - Chapter plans: ${planCount}
+  - Chapter summaries: ${summaryCount}
+  - Chapter research: ${researchCount}
+  - Chapter UAT: ${uatCount}
 - Research concepts: ${topLevelResearchCount}
 - Codebase concepts: ${codebaseCount}
 - Todos module: 1
@@ -805,8 +805,8 @@ Total concepts: ${totalCount}
 - [ ] Config concept created (if config.json exists)
 - [ ] State concept created (if STATE.md exists)
 - [ ] Requirements module and individual requirements created
-- [ ] Roadmap and phase concepts created
-- [ ] Phase detail concepts created (context, plans, summaries, research, UAT)
+- [ ] Roadmap and chapter concepts created
+- [ ] Chapter detail concepts created (context, plans, summaries, research, UAT)
 - [ ] Top-level research concepts created (if research/ directory exists)
 - [ ] Codebase concepts created (if codebase/ directory exists)
 - [ ] Todos module and individual todos created

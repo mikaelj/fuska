@@ -2,20 +2,20 @@
 
 Template for comprehensive ecosystem research stored as MegaMemory concepts before planning.
 
-**Purpose:** Document what OpenCode needs to know to implement a phase well - not just "which library" but "how do experts build this."
+**Purpose:** Document what OpenCode needs to know to implement a chapter well - not just "which library" but "how do experts build this."
 
 ---
 
 <megamemory_schema>
 
-## Concept: `phase-research`
+## Concept: `chapter-research`
 
 **Kind:** `module`
 
-**Summary:** Comprehensive ecosystem research for a phase domain. Includes standard stack, architecture patterns, anti-patterns, pitfalls, code examples, state of the art, and sources with confidence levels.
+**Summary:** Comprehensive ecosystem research for a chapter domain. Includes standard stack, architecture patterns, anti-patterns, pitfalls, code examples, state of the art, and sources with confidence levels.
 
 **Fields:**
-- `phase_id` (string) - Phase identifier
+- `chapter_id` (string) - Chapter identifier
 - `domain` (string) - Primary technology/problem domain
 - `confidence` (string) - HIGH/MEDIUM/LOW
 - `research_summary` (string) - Executive summary with primary recommendation
@@ -49,31 +49,31 @@ Template for comprehensive ecosystem research stored as MegaMemory concepts befo
   - `valid_until` (string) - Expiration date estimate
 
 **Relationships:**
-- `connects_to` → `phase-context:phase_id` - Informed by context decisions
-- `configured_by` → `phase-plan:phase_id` - Planner uses research for stack decisions
+- `connects_to` → `chapter-context:chapter_id` - Informed by context decisions
+- `configured_by` → `chapter-plan:chapter_id` - Planner uses research for stack decisions
 
 </megamemory_schema>
 
 <megamemory_operations>
 
-## Create Phase Research
+## Create Chapter Research
 
 ```typescript
-// After completing ecosystem research for a phase
+// After completing ecosystem research for a chapter
 await megamemory.create_concept({
-  name: `phase-research:${phaseId}`,
+  name: `chapter-research:${chapterId}`,
   kind: "module",
   summary: `${researchSummary}. Domain: ${domain}. Confidence: ${confidence}. Standard stack: ${standardStack.core.map(s => s.name).join(", ")}. Key insight: ${dontHandRoll.keyInsight}. Primary sources: ${sources.primary.length}.`,
-  why: "Documents expert knowledge for phase implementation - not just which library, but how experts build this",
+  why: "Documents expert knowledge for chapter implementation - not just which library, but how experts build this",
   parent_id: `initiative:${initiativeId}`,
   edges: [
     {
-      to: `phase-context:${phaseId}`,
+      to: `chapter-context:${chapterId}`,
       relation: "connects_to",
       description: "Informed by context decisions about what to investigate"
     },
     {
-      to: `phase-plan:${phaseId}`,
+      to: `chapter-plan:${chapterId}`,
       relation: "configured_by",
       description: "Planner uses research for stack decisions and patterns"
     }
@@ -86,7 +86,7 @@ await megamemory.create_concept({
 ```typescript
 // Get all research for a domain (Three.js, auth, payments, etc.)
 const result = await megamemory.understand({
-  query: `phase research domain ${domain} with standard stack patterns pitfalls`,
+  query: `chapter research domain ${domain} with standard stack patterns pitfalls`,
   top_k: 10
 })
 
@@ -102,16 +102,16 @@ const result = await megamemory.understand({
 ```typescript
 // Find all research mentioning a specific library
 const result = await megamemory.understand({
-  query: `phase research using ${libraryName} with installation patterns examples`,
+  query: `chapter research using ${libraryName} with installation patterns examples`,
   top_k: 15
 })
 
-// Returns all phases that researched this library with:
+// Returns all chapters that researched this library with:
 // - Installation commands
 // - Usage patterns from official docs
 // - Code examples
 // - Alternatives considered
-// Used to maintain consistency across phases using same library
+// Used to maintain consistency across chapters using same library
 ```
 
 ## Query Pitfalls by Pattern
@@ -119,7 +119,7 @@ const result = await megamemory.understand({
 ```typescript
 // Find common pitfalls for a specific pattern
 const result = await megamemory.understand({
-  query: `phase research pitfalls for ${pattern} with warning signs prevention`,
+  query: `chapter research pitfalls for ${pattern} with warning signs prevention`,
   top_k: 10
 })
 
@@ -138,16 +138,16 @@ const result = await megamemory.understand({
 ## Example 1: Creating Three.js Game Research
 
 ```typescript
-// Research for Phase 3: 3D City Driving
+// Research for Chapter 3: 3D City Driving
 await megamemory.create_concept({
-  name: "phase-research:03-city-driving",
+  name: "chapter-research:03-city-driving",
   kind: "module",
   summary: "Three.js 3D web game with driving mechanics. Domain: Three.js, React Three Fiber. Confidence: HIGH. Standard stack: three, @react-three/fiber, @react-three/drei, @react-three/rapier. Key insight: Don't hand-roll physics or collision detection. Rapier handles vehicle physics, terrain collision, city interactions efficiently. Primary sources: /pmndrs/react-three-fiber, /pmndrs/drei, /dimforge/rapier-js.",
   why: "Expert knowledge for building 3D games - physics instancing, performance patterns",
   parent_id: "project:city-driving-game",
   edges: [
     {
-      to: "phase-context:03-city-driving",
+      to: "chapter-context:03-city-driving",
       relation: "connects_to",
       description: "Context decisions about driving mechanics informed research"
     }
@@ -160,7 +160,7 @@ await megamemory.create_concept({
 ```typescript
 // Planning new auth feature - what patterns are standard?
 const authResearch = await megamemory.understand({
-  query: "phase research domain auth jwt refresh tokens with patterns pitfalls",
+  query: "chapter research domain auth jwt refresh tokens with patterns pitfalls",
   top_k: 5
 })
 
@@ -178,7 +178,7 @@ const authResearch = await megamemory.understand({
 ```typescript
 // Adding new Prisma model - what patterns exist?
 const prismaResearch = await megamemory.understand({
-  query: "phase research using prisma with schema patterns migration examples",
+  query: "chapter research using prisma with schema patterns migration examples",
   top_k: 10
 })
 
@@ -195,7 +195,7 @@ const prismaResearch = await megamemory.understand({
 ```typescript
 // Research focused on avoiding performance issues
 const perfResearch = await megamemory.understand({
-  query: "phase research performance pitfalls with warning signs prevention",
+  query: "chapter research performance pitfalls with warning signs prevention",
   top_k: 15
 })
 
@@ -213,7 +213,7 @@ const perfResearch = await megamemory.understand({
 ## File Template
 
 ```markdown
-# Phase [X]: [Name] - Research
+# Chapter [X]: [Name] - Research
 
 **Researched:** [date]
 **Domain:** [primary technology/problem domain]
@@ -420,7 +420,7 @@ Things that couldn't be fully resolved:
 
 ---
 
-*Phase: XX-name*
+*Chapter: XX-name*
 *Research completed: [date]*
 *Ready for planning: [yes/no]*
 ```
@@ -430,7 +430,7 @@ Things that couldn't be fully resolved:
 ## Good Example
 
 ```markdown
-# Phase 3: 3D City Driving - Research
+# Chapter 3: 3D City Driving - Research
 
 **Researched:** 2025-01-20
 **Domain:** Three.js 3D web game with driving mechanics
@@ -694,7 +694,7 @@ function useVehicleControls(rigidBodyRef) {
 
 ---
 
-*Phase: 03-city-driving*
+*Chapter: 03-city-driving*
 *Research completed: 2025-01-20*
 *Ready for planning: yes*
 ```
@@ -704,7 +704,7 @@ function useVehicleControls(rigidBodyRef) {
 ## Guidelines
 
 **When to create:**
-- Before planning phases in niche/complex domains
+- Before planning chapters in niche/complex domains
 - When OpenCode's training data is likely stale or sparse
 - When "how do experts do this" matters more than "which library"
 
@@ -728,6 +728,6 @@ function useVehicleControls(rigidBodyRef) {
 - Code examples can be referenced in task actions
 
 **After creation:**
-- Concept stored in MegaMemory as `phase-research:{phaseId}`
+- Concept stored in MegaMemory as `chapter-research:{chapterId}`
 - Researcher queries the concept during planning workflow
-- Planner uses phase-research concept for stack decisions and patterns
+- Planner uses chapter-research concept for stack decisions and patterns

@@ -72,7 +72,7 @@ export interface InitiativeData {
   what_this_is: string;
   core_value: string;
   requirements: Requirement[];
-  phases: Phase[];
+  chapters: Chapter[];
 }
 
 export interface Requirement {
@@ -81,17 +81,17 @@ export interface Requirement {
   status: 'validated' | 'active' | 'out_of_scope';
 }
 
-export interface Phase {
+export interface Chapter {
   number: number;
   slug: string;
   name: string;
   goal: string;
 }
 
-export interface PhaseContextData {
+export interface ChapterContextData {
   gathered: string;
   status: string;
-  phase_boundary: string;
+  chapter_boundary: string;
   decisions: Record<string, any>;
   open_code_discretion: string[];
   specifics: string[];
@@ -117,7 +117,7 @@ export interface Task {
 }
 
 export interface SummaryData {
-  phase: string;
+  chapter: string;
   plan: string;
   subsystem: string;
   tags: string[];
@@ -139,7 +139,7 @@ export interface SummaryData {
   decisions_made: Record<string, any>;
   deviations: string[];
   issues_encountered: string[];
-  next_phase_readiness: string;
+  next_chapter_readiness: string;
 }
 
 export interface ResearchData {
@@ -159,7 +159,7 @@ export interface UATData {
 }
 
 export interface StateData {
-  current_phase: string;
+  current_chapter: string;
   current_plan: string | null;
   status: string;
   progress: number;
@@ -174,8 +174,8 @@ export interface ConfigData {
   parallelization?: boolean;
   current_initiative?: string | null;
   git?: {
-    branching_strategy?: 'none' | 'phase' | 'milestone';
-    phase_branch_template?: string;
+    branching_strategy?: 'none' | 'chapter' | 'milestone';
+    chapter_branch_template?: string;
     milestone_branch_template?: string;
   };
 }
@@ -183,6 +183,6 @@ export interface ConfigData {
 export interface MilestoneData {
   name: string;
   status: 'shipped' | 'in_progress' | 'planned';
-  phases: string[];
+  chapters: string[];
   description?: string;
 }

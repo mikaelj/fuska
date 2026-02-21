@@ -113,7 +113,7 @@ Todos are captured during work sessions with /fuska-add-todo.
 
 Would you like to:
 
-1. Continue with current phase (fuska progress)
+1. Continue with current chapter (fuska progress)
 2. Add a todo now (/fuska-add-todo)
 ```
 
@@ -247,7 +247,7 @@ For each file in selectedTodo.files:
 
 ---
 
-## 7. Check Roadmap for Phase Match
+## 7. Check Roadmap for Chapter Match
 
 **Step 7.1: Query roadmap concept**
 
@@ -255,27 +255,27 @@ For each file in selectedTodo.files:
 megamemory_understand(query="roadmap", top_k=5)
 ```
 
-**Step 7.2: Extract phase data**
+**Step 7.2: Extract chapter data**
 
 If response.matches.length > 0:
 ```
 const roadmapSummaryString = response.matches[0].summary
 const roadmapData = JSON.parse(roadmapSummaryString)
-const phases = roadmapData.phases
+const chapters = roadmapData.chapters
 ```
 
-**Step 7.3: Check for phase match**
+**Step 7.3: Check for chapter match**
 
-Check if todo's area matches an upcoming phase:
+Check if todo's area matches an upcoming chapter:
 ```
-const matchingPhase = phases.find(phase => {
-  const phaseArea = phase.area || ""
-  return phaseArea === selectedTodo.area
+const matchingChapter = chapters.find(chapter => {
+  const chapterArea = chapter.area || ""
+  return chapterArea === selectedTodo.area
 })
 
-const hasFileOverlap = phases.some(phase => {
-  const phaseFiles = phase.files || []
-  return phaseFiles.some(file => selectedTodo.files.includes(file))
+const hasFileOverlap = chapters.some(chapter => {
+  const chapterFiles = chapter.files || []
+  return chapterFiles.some(file => selectedTodo.files.includes(file))
 })
 ```
 
@@ -287,15 +287,15 @@ Store the match result for use in step 8.
 
 **Step 8.1: Prepare question options**
 
-**If matchingPhase exists or hasFileOverlap === true:**
+**If matchingChapter exists or hasFileOverlap === true:**
 
 ```
 const actionResponse = question(questions=[{
   header: "Action",
-  question: "This todo relates to Phase ${matchingPhase.number}: ${matchingPhase.name}. What would you like to do?",
+  question: "This todo relates to Chapter ${matchingChapter.number}: ${matchingChapter.name}. What would you like to do?",
   options: [
     {label: "Work on it now", description: "Mark as done, start working"},
-    {label: "Add to phase plan", description: "Include when planning Phase ${matchingPhase.number}"},
+    {label: "Add to chapter plan", description: "Include when planning Chapter ${matchingChapter.number}"},
     {label: "Brainstorm approach", description: "Think through before deciding"},
     {label: "Put it back", description: "Return to list"}
   ]
@@ -310,7 +310,7 @@ const actionResponse = question(questions=[{
   question: "What would you like to do with this todo?",
   options: [
     {label: "Work on it now", description: "Mark as done, start working"},
-    {label: "Create a phase", description: "Create phase with this scope"},
+    {label: "Create a chapter", description: "Create chapter with this scope"},
     {label: "Brainstorm approach", description: "Think through before deciding"},
     {label: "Put it back", description: "Return to list"}
   ]
@@ -350,12 +350,12 @@ Display problem/solution context. Begin work or ask how to proceed.
 
 ---
 
-**Step 9.2: Add to phase plan**
+**Step 9.2: Add to chapter plan**
 
-Note todo reference in phase planning notes. Keep status as "pending". Return to list or exit.
+Note todo reference in chapter planning notes. Keep status as "pending". Return to list or exit.
 
 ```
-Todo noted for Phase ${matchingPhase.number}. Keep in pending for now.
+Todo noted for Chapter ${matchingChapter.number}. Keep in pending for now.
 
 Would you like to:
 1. Return to list
@@ -364,9 +364,9 @@ Would you like to:
 
 ---
 
-**Step 9.3: Create a phase**
+**Step 9.3: Create a chapter**
 
-Display: `/fuska-add-phase ${selectedTodo.title}`
+Display: `/fuska-add-chapter ${selectedTodo.title}`
 
 Keep in pending. User runs command in fresh context.
 
@@ -441,8 +441,8 @@ Wait for user response and route accordingly.
 
 ## 13. Handle Edge Cases
 
-- No matching phase found → offer to create new phase
-- Multiple phases match → ask user which phase
+- No matching chapter found → offer to create new chapter
+- Multiple chapters match → ask user which chapter
 - Todo has no area → ask user to specify
 - Files don't exist → notify user, offer to continue anyway
 
@@ -460,7 +460,7 @@ Wait for user response and route accordingly.
 
 - Don't delete todo concepts — use megamemory:remove_concept only when truly obsolete
 - Don't start work without moving todo to "done" status first
-- Don't create plans from this command — route to /fuska-plan-phase or /fuska-add-phase
+- Don't create plans from this command — route to /fuska-plan-chapter or /fuska-add-chapter
 
 </anti_patterns>
 
@@ -470,7 +470,7 @@ Wait for user response and route accordingly.
 - [ ] All pending todos listed with title, area, age
 - [ ] Area filter applied if specified
 - [ ] Selected todo's full context loaded
-- [ ] Roadmap context checked for phase match
+- [ ] Roadmap context checked for chapter match
 - [ ] Appropriate actions offered
 - [ ] Selected action executed
 - [ ] Todo concept status updated if needed

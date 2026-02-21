@@ -1,5 +1,5 @@
 ---
-name: fuska-resume-work
+name: fuska-resume
 description: Resume work from previous session with full context restoration using MegaMemory
 argument-hint: "[optional: project name or path]"
 tools:
@@ -18,7 +18,7 @@ Restore complete project context and resume work seamlessly from previous sessio
 
 Routes to resume-project workflow which handles:
 - State concept loading
-- Phase context detection
+- Chapter context detection
 - Incomplete work detection (plan without summary)
 - Status presentation
 - Context-aware next action routing
@@ -42,7 +42,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -132,7 +132,7 @@ const stateId = response.matches[0].id
 const stateSummaryString = response.matches[0].summary
 const stateData = JSON.parse(stateSummaryString)
 
-const currentPhase = stateData.current_phase
+const currentChapter = stateData.current_chapter
 const currentPlan = stateData.current_plan
 const status = stateData.status
 const progress = stateData.progress
@@ -150,7 +150,7 @@ const totalTasks = stateData.total_tasks
 
  **${initiativeName || 'Initiative'}**
 
-Current Phase: ${currentPhase || 'None'}
+Current Chapter: ${currentChapter || 'None'}
 Current Plan: ${currentPlan || 'None'}
 Status: ${status || 'Unknown'}
 Progress: ${progress || 0}%
@@ -163,25 +163,25 @@ Last Activity: ${lastActivity || 'Never'}
 
 ## 3. Detect Incomplete Work
 
-**Step 3.1: Query phase concept**
+**Step 3.1: Query chapter concept**
 
-If currentPhase exists:
+If currentChapter exists:
 ```
-megamemory_understand(query=currentPhase, top_k=5)
+megamemory_understand(query=currentChapter, top_k=5)
 ```
 
 If response.matches.length > 0:
 ```
-const phaseSummaryString = response.matches[0].summary
-const phaseData = JSON.parse(phaseSummaryString)
-const phaseName = phaseData.name
-const phaseGoal = phaseData.goal
+const chapterSummaryString = response.matches[0].summary
+const chapterData = JSON.parse(chapterSummaryString)
+const chapterName = chapterData.name
+const chapterGoal = chapterData.goal
 ```
 
 **Step 3.2: Query plan concepts**
 
 ```
-megamemory_understand(query=`${currentPhase}-plan`, top_k=20)
+megamemory_understand(query=`${currentChapter}-plan`, top_k=20)
 ```
 
 If response.matches.length > 0:
@@ -193,7 +193,7 @@ const planConcepts = response.matches.map(match => {
     id: match.id,
     slug: match.name,
     objective: planData.objective,
-    wave: planData.wave
+    batch: planData.batch
   }
 })
 ```
@@ -201,7 +201,7 @@ const planConcepts = response.matches.map(match => {
 **Step 3.3: Query summary concepts**
 
 ```
-megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
+megamemory_understand(query=`${currentChapter}-summary`, top_k=20)
 ```
 
 If response.matches.length > 0:
@@ -221,7 +221,7 @@ const checkpointPlans = planConcepts.filter(plan => plan.slug.includes('checkpoi
 
 If incompletePlans.length > 0:
 ```
-Display: "You have incomplete work in ${currentPhase}"
+Display: "You have incomplete work in ${currentChapter}"
 Display incomplete plans:
 for (const plan of incompletePlans) {
   Display: `- ${plan.slug}: ${plan.objective}`
@@ -230,7 +230,7 @@ for (const plan of incompletePlans) {
 
 If checkpointPlans.length > 0:
 ```
-Display: "Checkpoint detected in ${currentPhase}"
+Display: "Checkpoint detected in ${currentChapter}"
 ```
 
 If incompletePlans.length === 0 AND checkpointPlans.length === 0:
@@ -249,7 +249,7 @@ Display: "Task ${currentTask} of ${totalTasks}"
 
 If currentTask is undefined:
 ```
-megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
+megamemory_understand(query=`${currentChapter}-summary`, top_k=20)
 const completedCount = response.matches.length
 const inferredTask = completedCount + 1
 Display: "Task ${inferredTask} (inferred) - legacy project, run build to update tracking"
@@ -257,12 +257,12 @@ Display: "Task ${inferredTask} (inferred) - legacy project, run build to update 
 
 ---
 
-## 4. Detect Phase Context
+## 4. Detect Chapter Context
 
-**Step 4.1: Query phase context**
+**Step 4.1: Query chapter context**
 
 ```
-megamemory_understand(query=`${currentPhase}-context`, top_k=5)
+megamemory_understand(query=`${currentChapter}-context`, top_k=5)
 ```
 
 **Step 4.2: Check for context**
@@ -284,7 +284,7 @@ If contextExists === true:
 → Mark: "Context available — can plan directly"
 
 If contextExists === false:
-→ Mark: "Context missing — should design phase first"
+→ Mark: "Context missing — should design chapter first"
 
 ## 5. Present Context-Aware Next Actions
 
@@ -297,11 +297,11 @@ If status === "ready_to_plan":
 ### Status: ready_to_plan
 
 **Options:**
-1. Discuss phase first — Gather context, clarify approach
-   /fuska-design-phase {currentPhase}
+1. Discuss chapter first — Gather context, clarify approach
+   /fuska-design-chapter {currentChapter}
 
 2. Plan directly — Skip discussion, create plans
-   /fuska-plan-phase {currentPhase}
+   /fuska-plan-chapter {currentChapter}
 ```
 
 ${contextExists === true ? '**If context exists, option 2 is recommended.**' : ''}
@@ -316,8 +316,8 @@ If status === "ready_to_execute":
 ### Status: ready_to_execute
 
 **Options:**
-1. Execute phase — Run all plans for this phase
-   /fuska-build-phase {currentPhase}
+1. Execute chapter — Run all plans for this chapter
+   /fuska-build-chapter {currentChapter}
 
 2. Review plans — See what's planned before executing
    (Query plan concepts and display)
@@ -342,31 +342,31 @@ ${checkpointPlans.length > 0 ? `Checkpoint detected: ${checkpointPlans.map(p => 
 → Display options:
 ```
 1. Resume execution — Continue where left off
-   /fuska-build-phase {currentPhase}
+   /fuska-build-chapter {currentChapter}
 
 2. Verify work — Manual acceptance testing
-   /fuska-review-phase {currentPhase}
+   /fuska-review-chapter {currentChapter}
 
 3. View status — See detailed status of current work
-   (Display phase concepts in detail)
+   (Display chapter concepts in detail)
 ```
 
-**Step 5.4: Handle status phase_complete**
+**Step 5.4: Handle status chapter_complete**
 
-If status === "phase_complete":
+If status === "chapter_complete":
 
 → Display options:
 ```
-### Status: phase_complete
+### Status: chapter_complete
 
 **Options:**
-1. Next phase — Move to next phase in roadmap
-   /fuska-design-phase {next_phase}
+1. Next chapter — Move to next chapter in roadmap
+   /fuska-design-chapter {next_chapter}
 
-2. Verify phase — Manual acceptance testing before proceeding
-   /fuska-review-phase {currentPhase}
+2. Verify chapter — Manual acceptance testing before proceeding
+   /fuska-review-chapter {currentChapter}
 
-3. Audit milestone — If this was last phase
+3. Audit milestone — If this was last chapter
    /fuska-audit-milestone
 ```
 
@@ -404,10 +404,10 @@ Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kin
 
  **${initiativeName || 'Initiative'}**
 
- ${status === 'ready_to_plan' ? 'Ready to plan next phase' : ''}
+ ${status === 'ready_to_plan' ? 'Ready to plan next chapter' : ''}
 ${status === 'ready_to_execute' ? 'Plans ready to build' : ''}
 ${status === 'in_progress' ? 'Work in progress' : ''}
-${status === 'phase_complete' ? 'Phase complete, ready for next' : ''}
+${status === 'chapter_complete' ? 'Chapter complete, ready for next' : ''}
 ${incompletePlans.length > 0 ? `${incompletePlans.length} incomplete plan(s) remaining` : ''}
 ${checkpointPlans.length > 0 ? 'Checkpoint available' : ''}
 ```
@@ -420,17 +420,17 @@ Based on status and context detection from steps 3-5:
 ## Recommended Next Step
 
 ${status === 'ready_to_plan' && contextExists === true
-  ? 'Plan Phase ' + currentPhase + ' (context available, ready to create plans)'
+  ? 'Plan Chapter ' + currentChapter + ' (context available, ready to create plans)'
   : status === 'ready_to_plan' && contextExists === false
-  ? 'Discuss Phase ' + currentPhase + ' (context missing, gather information first)'
+  ? 'Discuss Chapter ' + currentChapter + ' (context missing, gather information first)'
   : status === 'ready_to_execute' && incompletePlans.length === 0 && checkpointPlans.length === 0
-  ? 'Execute Phase ' + currentPhase + ' (all plans complete, ready to run)'
+  ? 'Execute Chapter ' + currentChapter + ' (all plans complete, ready to run)'
   : status === 'ready_to_execute' && incompletePlans.length > 0
-  ? 'Execute Phase ' + currentPhase + ' (resuming incomplete work, ' + incompletePlans.length + ' plan(s) remaining)'
+  ? 'Execute Chapter ' + currentChapter + ' (resuming incomplete work, ' + incompletePlans.length + ' plan(s) remaining)'
   : status === 'in_progress'
-  ? 'Execute Phase ' + currentPhase + ' (continue from ' + (checkpointPlans.length > 0 ? 'checkpoint' : 'current position'))
-  : status === 'phase_complete'
-  ? 'Move to next phase or review milestone'
+  ? 'Execute Chapter ' + currentChapter + ' (continue from ' + (checkpointPlans.length > 0 ? 'checkpoint' : 'current position'))
+  : status === 'chapter_complete'
+  ? 'Move to next chapter or review milestone'
   : 'Check status and determine next action'}
 ```
 
@@ -442,10 +442,10 @@ ${status === 'ready_to_plan' && contextExists === true
 All Available Commands:
 
 - fuska progress — View detailed project progress
-- /fuska-design-phase {N} — Discuss a phase
-- /fuska-plan-phase {N} — Plan a phase
-- /fuska-build-phase {N} — Execute a phase
-- /fuska-review-phase {N} — Verify work
+- /fuska-design-chapter {N} — Discuss a chapter
+- /fuska-plan-chapter {N} — Plan a chapter
+- /fuska-build-chapter {N} — Execute a chapter
+- /fuska-review-chapter {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
 ─────────────────────────────────────────────────────────────
@@ -471,10 +471,10 @@ All Available Commands:
 **All Available Commands:**
 
 - fuska progress — View detailed project progress
-- /fuska-design-phase {N} — Discuss a phase
-- /fuska-plan-phase {N} — Plan a phase
-- /fuska-build-phase {N} — Execute a phase
-- /fuska-review-phase {N} — Verify work
+- /fuska-design-chapter {N} — Discuss a chapter
+- /fuska-plan-chapter {N} — Plan a chapter
+- /fuska-build-chapter {N} — Execute a chapter
+- /fuska-review-chapter {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
 ──────────────────────────────────────────────────────────────
@@ -493,19 +493,19 @@ Based on the status and detection results from step 5, output the appropriate ro
  Fuska: READY TO PLAN
 -----------------------------------------------------
 
-**Phase {X}: {Name}** — Context available [OK]
+**Chapter {X}: {Name}** — Context available [OK]
 
 ──────────────────────────────────────────────────────────────
 
 ## > Next Up (Recommended)
 
-**Plan Phase {X}** — Create execution plans
-/fuska-plan-phase {X}
+**Plan Chapter {X}** — Create execution plans
+/fuska-plan-chapter {X}
 
 ──────────────────────────────────────────────────────────────
 
 **Or design first:**
-/fuska-design-phase {X}
+/fuska-design-chapter {X}
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -516,16 +516,16 @@ Based on the status and detection results from step 5, output the appropriate ro
  Fuska: READY TO EXECUTE
 -----------------------------------------------------
 
-**Phase {X}: {Name}** — Plans ready [OK]
+**Chapter {X}: {Name}** — Plans ready [OK]
 
-{N} plans in {M} wave(s)
+{N} plans in {M} batch(s)
 
 ──────────────────────────────────────────────────────────────
 
 ## > Next Up
 
-**Execute Phase {X}**
-/fuska-build-phase {X}
+**Execute Chapter {X}**
+/fuska-build-chapter {X}
 
 */new first → fresh context window*
 
@@ -539,7 +539,7 @@ Based on the status and detection results from step 5, output the appropriate ro
  Fuska: INCOMPLETE WORK DETECTED
 -----------------------------------------------------
 
-**Phase {X}: {Name}**
+**Chapter {X}: {Name}**
 
 Incomplete:
 - {plan 1} — {objective}
@@ -550,39 +550,39 @@ Incomplete:
 ## > Next Up
 
 **Resume Execution**
-/fuska-build-phase {X}
+/fuska-build-chapter {X}
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Or review first:**
-/fuska-review-phase {X}
+/fuska-review-chapter {X}
 ──────────────────────────────────────────────────────────────
 ```
 
-### Route: phase_complete
+### Route: chapter_complete
 
 ```
 -----------------------------------------------------
- Fuska: PHASE COMPLETE
+ Fuska: CHAPTER COMPLETE
 -----------------------------------------------------
 
-**Phase {X}: {Name}** — Verified [OK]
+**Chapter {X}: {Name}** — Verified [OK]
 
 ──────────────────────────────────────────────────────────────
 
 ## > Next Up
 
-**Next Phase**
-/fuska-design-phase {X+1}
+**Next Chapter**
+/fuska-design-chapter {X+1}
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Or review first:**
-/fuska-review-phase {X}
+/fuska-review-chapter {X}
 ──────────────────────────────────────────────────────────────
 
 **Or audit milestone:**
@@ -597,9 +597,9 @@ Incomplete:
 - [ ] MegaMemory queried successfully
 - [ ] Project identified (from roots or argument)
 - [ ] State concept loaded
-- [ ] Current phase and status extracted
+- [ ] Current chapter and status extracted
 - [ ] Incomplete work detected (plans without summaries, checkpoints)
-- [ ] Phase context checked
+- [ ] Chapter context checked
 - [ ] Context-aware next actions presented
 - [ ] User knows where to resume
 - [ ] Session continuity updated in state concept

@@ -1,5 +1,5 @@
 ---
-name: fuska-plan-chapter
+name: fuska-plan
 description: Create detailed execution plan for a chapter with MegaMemory and verification loop
 argument-hint: "[chapter] [--research] [--skip-research] [--gaps] [--skip-verify] [--no-review]"
 agent: @../../agents/fuska/fuska-planner.md

@@ -12,7 +12,7 @@ color: "#50C878"
 
 <role>
 
-You are a Fuska document planner. You create document outlines with sections and key points that guide the writing phase.
+You are a Fuska document planner. You create document outlines with sections and key points that guide the writing chapter.
 
 You are spawned by:
 - `/fuska-doc` orchestrator (all modes)
@@ -105,7 +105,7 @@ Standard sections:
 Standard sections:
 1. Current State — Where we are now
 2. Target State — Where we're going
-3. Steps — Migration phases
+3. Steps — Migration chapters
 4. Rollback — How to undo if needed
 5. Validation — How to verify success
 

@@ -42,7 +42,7 @@ const pitfallsSummary = `
 **Why it happens:** [Root cause — why developers make this mistake]
 **How to avoid:** [Specific prevention strategy]
 **Warning signs:** [How to detect this early before it becomes a problem]
-**Phase to address:** [Which roadmap phase should prevent this]
+**Chapter to address:** [Which roadmap chapter should prevent this]
 
 [... more pitfalls ...]
 
@@ -73,9 +73,9 @@ const pitfallsSummary = `
 | Pitfall | Recovery Cost | Recovery Steps |
 | [pitfall] | LOW/MEDIUM/HIGH | [what to do] |
 
-**Pitfall-to-Phase Mapping:**
-| Pitfall | Prevention Phase | Verification |
-| [pitfall] | Phase [X] | [how to verify prevention worked] |
+**Pitfall-to-Chapter Mapping:**
+| Pitfall | Prevention Chapter | Verification |
+| [pitfall] | Chapter [X] | [how to verify prevention worked] |
 
 **Sources:**
 - [Post-mortems referenced]
@@ -120,7 +120,7 @@ Developers forget to set process.exitCode on errors, or swallow exceptions in as
 - Data inconsistencies in production
 - User reports of "it didn't work but said it did"
 
-**Phase to address:** Phase 1 - Core CLI infrastructure
+**Chapter to address:** Chapter 1 - Core CLI infrastructure
 
 ---
 
@@ -142,7 +142,7 @@ Commands added independently without establishing conventions. No central style 
 - Multiple flags that do similar things
 - Confusion in help documentation
 
-**Phase to address:** Phase 1 - Command design and documentation
+**Chapter to address:** Chapter 1 - Command design and documentation
 
 ---
 
@@ -164,7 +164,7 @@ Blocking synchronous I/O operations, or heavy CPU work without yielding. No prog
 - Users report "it hung"
 - No output for long periods
 
-**Phase to address:** Phase 2 - Long-running operations
+**Chapter to address:** Chapter 2 - Long-running operations
 
 ---
 
@@ -186,7 +186,7 @@ Not handling SIGINT/SIGTERM signals. Not implementing cleanup logic.
 - Database locks not released on abort
 - Orphaned child processes
 
-**Phase to address:** Phase 1 - Core CLI infrastructure
+**Chapter to address:** Chapter 1 - Core CLI infrastructure
 
 ---
 
@@ -208,7 +208,7 @@ Not using modern features correctly, or no engine field in package.json. Not tes
 - Works on developer machine, fails in CI
 - No version check in startup code
 
-**Phase to address:** Phase 1 - Package setup
+**Chapter to address:** Chapter 1 - Package setup
 
 ---
 
@@ -269,15 +269,15 @@ Not using modern features correctly, or no engine field in package.json. Not tes
 | No graceful exit | MEDIUM | Add signal handlers and cleanup logic |
 | Incompatible Node | LOW | Add version check, clear error message |
 
-**Pitfall-to-Phase Mapping:**
+**Pitfall-to-Chapter Mapping:**
 
-| Pitfall | Prevention Phase | Verification |
+| Pitfall | Prevention Chapter | Verification |
 |---------|------------------|--------------|
-| Silent failures | Phase 1 | Integration tests verify exit codes |
-| Inconsistent flags | Phase 1 | Code review audits all flag names |
-| Blocking operations | Phase 2 | Performance tests on large operations |
-| No graceful exit | Phase 1 | Manual test: Ctrl+C mid-operation |
-| Incompatible Node | Phase 1 | Test on minimum supported Node version |
+| Silent failures | Chapter 1 | Integration tests verify exit codes |
+| Inconsistent flags | Chapter 1 | Code review audits all flag names |
+| Blocking operations | Chapter 2 | Performance tests on large operations |
+| No graceful exit | Chapter 1 | Manual test: Ctrl+C mid-operation |
+| Incompatible Node | Chapter 1 | Test on minimum supported Node version |
 
 **Sources:**
 - CLI best practices: https://cli-guidelines.io/
@@ -327,7 +327,7 @@ No file locking or process detection. Tool assumes single instance usage.
 - "File already in use" errors
 - Users reporting "it works sometimes, fails sometimes"
 
-**Phase to address:** Phase 2 - Build operations
+**Chapter to address:** Chapter 2 - Build operations
 
 [... rest of original ...]
 `
@@ -351,7 +351,7 @@ const pitfallsResults = await megamemory_understand({
 ### Linking Pitfalls to Other Concepts
 
 ```typescript
-// Link pitfalls research to project and phase concepts
+// Link pitfalls research to project and chapter concepts
 await megamemory.link({
   from: "[pitfalls-research-concept-id]",
   to: "[project-concept-id]",
@@ -360,10 +360,10 @@ await megamemory.link({
 });
 
 await megamemory.link({
-  from: "[phase-concept-id]",
+  from: "[chapter-concept-id]",
   to: "[pitfall-concept-id]",
   relation: "verifies",
-  description: "Phase includes verification that this pitfall is avoided"
+  description: "Chapter includes verification that this pitfall is avoided"
 });
 ```
 
@@ -388,12 +388,12 @@ await megamemory.link({
   description: "Part of CLI critical pitfalls"
 });
 
-// Link to phase that addresses it
+// Link to chapter that addresses it
 await megamemory.link({
-  from: "[phase-1-concept-id]",
+  from: "[chapter-1-concept-id]",
   to: silentFailurePitfall.id,
   relation: "verifies",
-  description: "Phase 1 prevents silent failures with proper error handling"
+  description: "Chapter 1 prevents silent failures with proper error handling"
 });
 ```
 
@@ -440,7 +440,7 @@ Developers fetch related data inside loops instead of eager loading. ORM makes t
 - Database connection pool exhaustion
 - Monitoring shows many similar queries
 
-**Phase to address:** Phase 2 - List operations
+**Chapter to address:** Chapter 2 - List operations
 
 ---
 
@@ -462,7 +462,7 @@ No centralized error handling. Each endpoint defines errors differently.
 - Some errors return 200 with error message in body
 - Stack traces visible in production
 
-**Phase to address:** Phase 1 - Error handling infrastructure
+**Chapter to address:** Chapter 1 - Error handling infrastructure
 
 ---
 
@@ -484,7 +484,7 @@ Data is small in dev. Pagination deferred as "nice to have." Not tested with rea
 - Memory usage spikes on large datasets
 - Monitoring shows slow list endpoints
 
-**Phase to address:** Phase 2 - List operations
+**Chapter to address:** Chapter 2 - List operations
 
 ---
 
@@ -506,7 +506,7 @@ API tokens stored in plaintext, database, or environment files without encryptio
 - Logs contain raw tokens
 - No hashing in token storage code
 
-**Phase to address:** Phase 1 - Authentication infrastructure
+**Chapter to address:** Chapter 1 - Authentication infrastructure
 
 ---
 
@@ -528,7 +528,7 @@ No optimistic concurrency control or versioning. APIs assume serial access.
 - Tests pass in sequential execution, fail in parallel
 - "It worked yesterday" issues
 
-**Phase to address:** Phase 3 - Update operations
+**Chapter to address:** Chapter 3 - Update operations
 
 ---
 
@@ -591,15 +591,15 @@ No optimistic concurrency control or versioning. APIs assume serial access.
 | Inconsistent errors | MEDIUM | Implement error middleware, migrate endpoints |
 | Insecure token storage | HIGH | Hash all tokens, force users to regenerate |
 
-**Pitfall-to-Phase Mapping:**
+**Pitfall-to-Chapter Mapping:**
 
-| Pitfall | Prevention Phase | Verification |
+| Pitfall | Prevention Chapter | Verification |
 |---------|------------------|--------------|
-| N+1 queries | Phase 2 | Load test with 1000 records |
-| Inconsistent errors | Phase 1 | Integration tests verify error schema |
-| Missing pagination | Phase 2 | Load test with large datasets |
-| Insecure auth tokens | Phase 1 | Security audit of token storage |
-| Race conditions | Phase 3 | Concurrent update tests |
+| N+1 queries | Chapter 2 | Load test with 1000 records |
+| Inconsistent errors | Chapter 1 | Integration tests verify error schema |
+| Missing pagination | Chapter 2 | Load test with large datasets |
+| Insecure auth tokens | Chapter 1 | Security audit of token storage |
+| Race conditions | Chapter 3 | Concurrent update tests |
 
 **Sources:**
 - API security: https://owasp.org/www-project-api-security/
@@ -623,17 +623,17 @@ No optimistic concurrency control or versioning. APIs assume serial access.
   });
 }
 
-// Step 4: Use pitfalls research in phase planning
+// Step 4: Use pitfalls research in chapter planning
 const pitfallsInfo = existingPitfalls[0] || pitfallsConcept;
-console.log("Critical pitfalls for Phase 1:", extractPhasePitfalls(pitfallsInfo.summary, "Phase 1"));
+console.log("Critical pitfalls for Chapter 1:", extractChapterPitfalls(pitfallsInfo.summary, "Chapter 1"));
 ```
 
-### Example 2: Extracting Pitfall Prevention for Phases
+### Example 2: Extracting Pitfall Prevention for Chapters
 
 ```typescript
-// When agent needs pitfalls to prevent in a phase
+// When agent needs pitfalls to prevent in a chapter
 
-async function getPitfallsForPhase(domain: string, phase: string) {
+async function getPitfallsForChapter(domain: string, chapter: string) {
   const results = await megamemory_understand({
     query: `pitfalls research ${domain}`,
     top_k: 1
@@ -647,16 +647,16 @@ async function getPitfallsForPhase(domain: string, phase: string) {
   const pitfalls = results[0];
   const summary = pitfalls.summary;
   
-  // Extract pitfalls mapped to this phase
-  const phasePitfalls = [];
+  // Extract pitfalls mapped to this chapter
+  const chapterPitfalls = [];
   const lines = summary.split('\n');
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.includes(`Phase to address:** ${phase}`)) {
+    if (line.includes(`Chapter to address:** ${chapter}`)) {
       // Find the pitfall name (3 lines up)
       const pitfallName = lines[i - 3].replace(/### Pitfall \d+: /, '');
-      phasePitfalls.push({
+      chapterPitfalls.push({
         name: pitfallName,
         what: extractSection(lines, i - 2, 'What goes wrong:'),
         howToAvoid: extractSection(lines, i - 1, 'How to avoid:'),
@@ -665,12 +665,12 @@ async function getPitfallsForPhase(domain: string, phase: string) {
     }
   }
   
-  return phasePitfalls;
+  return chapterPitfalls;
 }
 
-// Agent uses to create phase tasks
-const phase1Pitfalls = await getPitfallsForPhase('REST API', 'Phase 1');
-for (const pitfall of phase1Pitfalls) {
+// Agent uses to create chapter tasks
+const chapter1Pitfalls = await getPitfallsForChapter('REST API', 'Chapter 1');
+for (const pitfall of chapter1Pitfalls) {
   console.log(`Prevent: ${pitfall.name}`);
   console.log(`  Warning signs: ${pitfall.warningSigns}`);
 }
@@ -705,8 +705,8 @@ for (const pitfall of phase1Pitfalls) {
 **Warning signs:**
 [How to detect this early before it becomes a problem]
 
-**Phase to address:**
-[Which roadmap phase should prevent this]
+**Chapter to address:**
+[Which roadmap chapter should prevent this]
 
 ---
 
@@ -724,8 +724,8 @@ for (const pitfall of phase1Pitfalls) {
 **Warning signs:**
 [How to detect this early before it becomes a problem]
 
-**Phase to address:**
-[Which roadmap phase should prevent this]
+**Chapter to address:**
+[Which roadmap chapter should prevent this]
 
 ---
 
@@ -743,8 +743,8 @@ for (const pitfall of phase1Pitfalls) {
 **Warning signs:**
 [How to detect this early before it becomes a problem]
 
-**Phase to address:**
-[Which roadmap phase should prevent this]
+**Chapter to address:**
+[Which roadmap chapter should prevent this]
 
 ---
 
@@ -819,15 +819,15 @@ When pitfalls occur despite prevention, how to recover.
 | [pitfall] | LOW/MEDIUM/HIGH | [what to do] |
 | [pitfall] | LOW/MEDIUM/HIGH | [what to do] |
 
-## Pitfall-to-Phase Mapping
+## Pitfall-to-Chapter Mapping
 
-How roadmap phases should address these pitfalls.
+How roadmap chapters should address these pitfalls.
 
-| Pitfall | Prevention Phase | Verification |
+| Pitfall | Prevention Chapter | Verification |
 |---------|------------------|--------------|
-| [pitfall] | Phase [X] | [how to verify prevention worked] |
-| [pitfall] | Phase [X] | [how to verify prevention worked] |
-| [pitfall] | Phase [X] | [how to verify prevention worked] |
+| [pitfall] | Chapter [X] | [how to verify prevention worked] |
+| [pitfall] | Chapter [X] | [how to verify prevention worked] |
+| [pitfall] | Chapter [X] | [how to verify prevention worked] |
 
 ## Sources
 
@@ -852,7 +852,7 @@ How roadmap phases should address these pitfalls.
 **Critical Pitfalls:**
 - Focus on domain-specific issues, not generic mistakes
 - Include warning signs — early detection prevents disasters
-- Link to specific phases — makes pitfalls actionable
+- Link to specific chapters — makes pitfalls actionable
 
 **Technical Debt:**
 - Be realistic — some shortcuts are acceptable
@@ -874,9 +874,9 @@ How roadmap phases should address these pitfalls.
 - Common in demos vs. production
 - Prevents "it works on my machine" issues
 
-**Pitfall-to-Phase Mapping:**
+**Pitfall-to-Chapter Mapping:**
 - Critical for roadmap creation
-- Each pitfall should map to a phase that prevents it
-- Informs phase ordering and success criteria
+- Each pitfall should map to a chapter that prevents it
+- Informs chapter ordering and success criteria
 
 </guidelines>

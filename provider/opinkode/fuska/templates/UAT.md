@@ -13,7 +13,7 @@ Template for UAT session tracking using MegaMemory concepts — persistent test 
 **Summary:** User Acceptance Testing session with persistent test tracking, results, gaps, and diagnosis. Supports resumable sessions across /new invocations.
 
 **Fields:**
-- `phase_id` (string) - Phase identifier
+- `chapter_id` (string) - Chapter identifier
 - `status` (string) - "testing", "complete", or "diagnosed"
 - `source` (array) - SUMMARY.md files being tested
 - `updated` (string) - ISO timestamp of last update
@@ -48,8 +48,8 @@ Template for UAT session tracking using MegaMemory concepts — persistent test 
    - `debug_session` (string, optional) - Debug session MegaMemory concept ID
 
 **Relationships:**
-- `depends_on` → `phase-summary:source` - Tests against phase summaries
-- `connects_to` → `phase-plan:gaps` - Diagnosed gaps feed back into planning
+- `depends_on` → `chapter-summary:source` - Tests against chapter summaries
+- `connects_to` → `chapter-plan:gaps` - Diagnosed gaps feed back into planning
 
 </megamemory_schema>
 
@@ -58,16 +58,16 @@ Template for UAT session tracking using MegaMemory concepts — persistent test 
 ## Create UAT Session
 
 ```typescript
-// When starting new UAT session for a phase
+// When starting new UAT session for a chapter
 await megamemory.create_concept({
-  name: `uat-session:${phaseId}`,
+  name: `uat-session:${chapterId}`,
   kind: "feature",
-  summary: `UAT session for phase ${phaseId}. Status: testing. ${tests.length} tests from ${source.length} summaries. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending.`,
+  summary: `UAT session for chapter ${chapterId}. Status: testing. ${tests.length} tests from ${source.length} summaries. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending.`,
   why: "Persistent UAT session tracking across /new invocations, supports resumable testing and gap diagnosis",
   parent_id: `initiative:${initiativeId}`,
   edges: [
     ...source.map((sum, i) => ({
-      to: `phase-summary:${sum}`,
+      to: `chapter-summary:${sum}`,
       relation: "depends_on",
       description: `Tests against ${sum}`
     }))
@@ -80,7 +80,7 @@ await megamemory.create_concept({
 ```typescript
 // After /new invocation - resume UAT if active
 const result = await megamemory.understand({
-  query: `uat session for phase ${phaseId} current test status`,
+  query: `uat session for chapter ${chapterId} current test status`,
   top_k: 3
 })
 
@@ -96,9 +96,9 @@ const result = await megamemory.understand({
 ```typescript
 // When user responds to a test
 await megamemory.update_concept({
-  id: `uat-session:${phaseId}`,
+  id: `uat-session:${chapterId}`,
   changes: {
-    summary: `UAT session for phase ${phaseId}. Status: ${status}. ${tests.length} tests. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending. Gaps: ${gaps.length}.`
+    summary: `UAT session for chapter ${chapterId}. Status: ${status}. ${tests.length} tests. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending. Gaps: ${gaps.length}.`
   }
 })
 ```
@@ -106,11 +106,11 @@ await megamemory.update_concept({
 ## Link UAT Gaps to Planning
 
 ```typescript
-// After diagnosis - link gaps to phase planning
+// After diagnosis - link gaps to chapter planning
 gaps.forEach(gap => {
   megamemory.link({
-    from: `uat-session:${phaseId}`,
-    to: `phase-plan:${phaseId}`,
+    from: `uat-session:${chapterId}`,
+    to: `chapter-plan:${chapterId}`,
     relation: "connects_to",
     description: `Diagnosed gap: ${gap.truth} - root cause: ${gap.root_cause}`
   })
@@ -124,21 +124,21 @@ gaps.forEach(gap => {
 ## Example 1: Creating UAT Session
 
 ```typescript
-// Starting UAT for Phase 4: Comments
+// Starting UAT for Chapter 4: Comments
 await megamemory.create_concept({
   name: "uat-session:04-comments",
   kind: "feature",
-  summary: "UAT session for phase 04-comments. Status: testing. 6 tests from 2 summaries. Current: test 1 - View Comments on Post. Summary: 0 passed, 0 issues, 6 pending.",
+  summary: "UAT session for chapter 04-comments. Status: testing. 6 tests from 2 summaries. Current: test 1 - View Comments on Post. Summary: 0 passed, 0 issues, 6 pending.",
   why: "Test comment functionality: viewing, creating, replying, deleting, visual nesting, comment counts",
   parent_id: "project:social-app",
   edges: [
     {
-      to: "phase-summary:04-comments-01",
+      to: "chapter-summary:04-comments-01",
       relation: "depends_on",
       description: "Tests against 04-01-SUMMARY.md"
     },
     {
-      to: "phase-summary:04-comments-02",
+      to: "chapter-summary:04-comments-02",
       relation: "depends_on",
       description: "Tests against 04-02-SUMMARY.md"
     }
@@ -167,7 +167,7 @@ const result = await megamemory.understand({
 await megamemory.update_concept({
   id: "uat-session:04-comments",
   changes: {
-    summary: "UAT session for phase 04-comments. Status: testing. 6 tests. Current: test 3 - Reply to a Comment. Summary: 1 passed, 1 issues, 4 pending. Gaps: 1."
+    summary: "UAT session for chapter 04-comments. Status: testing. 6 tests. Current: test 3 - Reply to a Comment. Summary: 1 passed, 1 issues, 4 pending. Gaps: 1."
   }
 })
 
@@ -201,7 +201,7 @@ const gaps = [
 gaps.forEach(gap => {
   megamemory.link({
     from: "uat-session:04-comments",
-    to: "phase-plan:04-comments",
+    to: "chapter-plan:04-comments",
     relation: "connects_to",
     description: `Diagnosed gap: ${gap.truth} - ${gap.root_cause}`
   })
@@ -211,9 +211,9 @@ gaps.forEach(gap => {
 ## Example 5: Querying All Gaps for Planning
 
 ```typescript
-// plan-phase --gaps asks: what diagnosed gaps need fixing?
+// plan-chapter --gaps asks: what diagnosed gaps need fixing?
 const result = await megamemory.understand({
-  query: `uat session ${phaseId} diagnosed gaps with root cause artifacts missing`,
+  query: `uat session ${chapterId} diagnosed gaps with root cause artifacts missing`,
   top_k: 20
 })
 
@@ -223,7 +223,7 @@ const result = await megamemory.understand({
 // - artifacts (files to fix)
 // - missing (what to add)
 // - severity (blocker, major, minor, cosmetic)
-// plan-phase creates fix plans for each gap
+// plan-chapter creates fix plans for each gap
 ```
 
 </megamemory_examples>
@@ -235,7 +235,7 @@ const result = await megamemory.understand({
 ```markdown
 ---
 status: testing | complete | diagnosed
-phase: XX-name
+chapter: XX-name
 source: [list of SUMMARY.md files tested]
 updated: [ISO timestamp]
 ---
@@ -282,7 +282,7 @@ skipped: [N]
 
 ## Gaps
 
-<!-- YAML format for plan-phase --gaps consumption -->
+<!-- YAML format for plan-chapter --gaps consumption -->
 - truth: "[expected behavior from test]"
   status: failed
   reason: "User reported: [verbatim response]"
@@ -300,7 +300,7 @@ skipped: [N]
 
 **Frontmatter:**
 - `status`: OVERWRITE - "testing" or "complete"
-- `phase`: IMMUTABLE - set on creation
+- `chapter`: IMMUTABLE - set on creation
 - `source`: IMMUTABLE - SUMMARY files being tested
 - `updated`: OVERWRITE - update on every change
 
@@ -322,7 +322,7 @@ skipped: [N]
 **Gaps:**
 - APPEND only when issue found (YAML format)
 - After diagnosis: fill `root_cause`, `artifacts`, `missing`, `debug_session`
-- This section feeds directly into /fuska-plan-phase --gaps
+- This section feeds directly into /fuska-plan-chapter --gaps
 
 </section_rules>
 
@@ -336,7 +336,7 @@ skipped: [N]
 4. UAT.md Gaps section updated with diagnosis:
    - Each gap gets `root_cause`, `artifacts`, `missing`, `debug_session` filled
 5. status → "diagnosed"
-6. Ready for /fuska-plan-phase --gaps with root causes
+6. Ready for /fuska-plan-chapter --gaps with root causes
 
 **After diagnosis:**
 ```yaml
@@ -381,7 +381,7 @@ skipped: [N]
 - Present summary with next steps
 
 **Resume after /new:**
-1. read frontmatter → know phase and status
+1. read frontmatter → know chapter and status
 2. read Current Test → know where we are
 3. Find first [pending] result → continue from there
 4. Summary shows progress so far
@@ -407,7 +407,7 @@ Default: **major** (safe default, user can clarify if wrong)
 ```markdown
 ---
 status: diagnosed
-phase: 04-comments
+chapter: 04-comments
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md
 updated: 2025-01-15T10:45:00Z
 ---

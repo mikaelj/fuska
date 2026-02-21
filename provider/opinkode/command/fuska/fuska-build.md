@@ -1,5 +1,5 @@
 ---
-name: fuska-build-chapter
+name: fuska-build
 description: Execute all plans in a chapter with batch-based parallelization using MegaMemory
 argument-hint: "<chapter-number> [--gaps-only]"
 tools:
@@ -18,7 +18,7 @@ tools:
 
 Execute all plans in a chapter using batch-based parallel execution with MegaMemory concepts.
 
-Orchestrator stays lean: discover plans, analyze dependencies, group into batchs, spawn subagents, collect results. Each subagent loads full execute-plan context and handles its own plan.
+Orchestrator stays lean: discover plans, analyze dependencies, group into batches, spawn subagents, collect results. Each subagent loads full execute-plan context and handles its own plan.
 
 Context budget: ~15% orchestrator, 100% fresh per subagent.
 
@@ -332,13 +332,13 @@ Display: `Found ${plansToExecute.length} incomplete plans to execute`
 **Step 5.1: Group plans by batch for display**
 
 ```
-const batchs = {}
+const batches = {}
 for (const plan of plansToExecute) {
   const batchNum = plan.batch || 1
-  if (!batchs[batchNum]) batchs[batchNum] = []
-  batchs[batchNum].push(plan)
+  if (!batches[batchNum]) batches[batchNum] = []
+  batches[batchNum].push(plan)
 }
-const sortedBatchs = Object.keys(batchs).sort((a, b) => a - b)
+const sortedBatchs = Object.keys(batches).sort((a, b) => a - b)
 ```
 
 **Step 5.2: Display execution plan to user**
@@ -357,7 +357,7 @@ Goal: {chapterGoal}
 {plansToExecute.length} plan(s) to execute in {sortedBatchs.length} batch(s):
 
 ${sortedBatchs.map(w => `### Batch ${w}
-${batchs[w].map(p => `- **${p.name}**: ${p.objective || 'No objective'}`).join('\n')}`).join('\n\n')}
+${batches[w].map(p => `- **${p.name}**: ${p.objective || 'No objective'}`).join('\n')}`).join('\n\n')}
 
 ────────────────────────────────────────────────────
 ```
@@ -410,27 +410,27 @@ If "Proceed":
 **Step 3.1: Group plans by batch**
 
 ```
-const batchs = {}
+const batches = {}
 for (const plan of plansToExecute) {
   const batchNum = plan.batch
-  if (!batchs[batchNum]) batchs[batchNum] = []
-  batchs[batchNum].push(plan)
+  if (!batches[batchNum]) batches[batchNum] = []
+  batches[batchNum].push(plan)
 }
 ```
 
-**Step 3.2: Sort and display batchs**
+**Step 3.2: Sort and display batches**
 
 ```
-const sortedBatchs = Object.keys(batchs).sort((a, b) => a - b)
+const sortedBatchs = Object.keys(batches).sort((a, b) => a - b)
 Display: `Executing ${sortedBatchs.length} batch(s)`
 for (const batchNum of sortedBatchs) {
-  Display: `Batch ${batchNum}: ${batchs[batchNum].length} plan(s)`
+  Display: `Batch ${batchNum}: ${batches[batchNum].length} plan(s)`
 }
 ```
 
 ---
 
-7. **Execute batchs**
+7. **Execute batches**
 
 **For each batch in sortedBatchs:**
 

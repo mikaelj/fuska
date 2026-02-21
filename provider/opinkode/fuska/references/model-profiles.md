@@ -73,7 +73,7 @@ const STAGE_AGENTS: StageAgentMapping = {
   ],
   plan: [
     'fuska-plan-checker',
-    'fuska-phase-researcher',
+    'fuska-chapter-researcher',
     'fuska-codebase-mapper'
   ],
   build: [
@@ -423,7 +423,7 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 | Stage | Agents |
 |-------|--------|
 | Design | fuska-planner, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer |
-| Plan | fuska-plan-checker, fuska-phase-researcher, fuska-codebase-mapper |
+| Plan | fuska-plan-checker, fuska-chapter-researcher, fuska-codebase-mapper |
 | Build | fuska-executor, fuska-debugger |
 | Review | fuska-verifier, fuska-integration-checker, fuska-commit-checker |
 
@@ -448,7 +448,7 @@ Model aliases provide an indirection layer between lookup tables and actual mode
 | fuska-executor | quality_model | balanced_model | balanced_model |
 | fuska-plan-checker | balanced_model | balanced_model | budget_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
-| fuska-phase-researcher | quality_model | balanced_model | budget_model |
+| fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-git-message | balanced_model | budget_model | budget_model |
 | fuska-commit-checker | budget_model | budget_model | budget_model |
 
@@ -541,7 +541,7 @@ When configuring presets, consider these guidelines:
 
 - Mid-tier model for anything that writes code
 - Lightweight model for research and review
-- Use when: conserving quota, high-volume work, less critical phases
+- Use when: conserving quota, high-volume work, less critical chapters
 
 ## Resolution Logic
 
@@ -638,7 +638,7 @@ Design involves architecture decisions, goal decomposition, and task design. Thi
 Builders follow explicit PLAN.md instructions. The plan already contains the reasoning; building is implementation.
 
 **Why mid-tier (not lightweight) for review?**
-Review requires goal-backward reasoning - checking if code *delivers* what the phase promised, not just pattern matching. Mid-tier models handle this well; lightweight models may miss subtle gaps.
+Review requires goal-backward reasoning - checking if code *delivers* what the chapter promised, not just pattern matching. Mid-tier models handle this well; lightweight models may miss subtle gaps.
 
 **Why lightweight for codebase mapping?**
 Read-only exploration and pattern extraction. No complex reasoning required, just structured output from file contents.

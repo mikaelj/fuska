@@ -2,7 +2,7 @@ import { ChapterConceptTemplates } from '../chapter-templates';
 
 describe('ChapterConceptTemplates', () => {
   describe('createContext', () => {
-    it('creates phase context concept', () => {
+    it('creates chapter context concept', () => {
       const contextData = {
         gathered: '2025-01-20',
         status: 'ready_for_planning',
@@ -57,7 +57,7 @@ describe('ChapterConceptTemplates', () => {
   });
 
   describe('createPlan', () => {
-    it('creates phase plan concept', () => {
+    it('creates chapter plan concept', () => {
       const planData = {
         objective: 'Implement JWT authentication',
         purpose: 'Secure the application with JWT tokens',
@@ -160,7 +160,7 @@ describe('ChapterConceptTemplates', () => {
   describe('createSummary', () => {
     it('creates summary concept', () => {
       const summaryData = {
-        phase: 'chapter-01',
+        chapter: 'chapter-01',
         plan: 'chapter-01-plan-1',
         subsystem: 'Authentication',
         tags: ['auth', 'security'],

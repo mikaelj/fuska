@@ -7,10 +7,10 @@ Template for human-required configuration - stored in MegaMemory, never on disk.
 ## Original Template Structure
 
 ```markdown
-# Phase {X}: User Setup Required
+# Chapter {X}: User Setup Required
 
 **Generated:** [YYYY-MM-DD]
-**Phase:** {phase-name}
+**Chapter:** {chapter-name}
 **Status:** Incomplete
 
 Complete these items for the integration to function. OpenCode automated everything possible; these items require human access to external dashboards/accounts.
@@ -64,7 +64,7 @@ Expected results:
 concept_kind: "user-setup"
 
 summary: |
-  User Setup for Phase {phase_number}: {phase_name}
+  User Setup for Chapter {chapter_number}: {chapter_name}
   Status: {incomplete | complete}
   Generated: {date}
   {Env vars: X, Account setup: X, Dashboard config: X}
@@ -79,9 +79,9 @@ file_refs: [
 
 edges: [
   {
-    to: "phase-{phase_number}",
+    to: "chapter-{chapter_number}",
     relation: "connects_to",
-    description: "Setup required for this phase"
+    description: "Setup required for this chapter"
   }
 ]
 </megamemory_schema>
@@ -95,11 +95,11 @@ edges: [
 <megamemory_operations>
 **Create User Setup (when plan requires human setup):**
 
-1. Create concept with phase, environment variables, account setup, dashboard config
+1. Create concept with chapter, environment variables, account setup, dashboard config
 2. Set status to "incomplete"
 3. List all required items with checkboxes
 4. Include verification commands
-5. Link to parent phase
+5. Link to parent chapter
 6. Return concept ID for updates
 
 **Update Status (when items completed):**
@@ -110,7 +110,7 @@ edges: [
 
 **Query User Setup (for execution):**
 
-1. Query setup by phase number
+1. Query setup by chapter number
 2. Read environment variables, account setup, dashboard config
 3. Run verification commands to confirm setup is complete
 </megamemory_operations>
@@ -124,7 +124,7 @@ edges: [
 <megamemory_examples>
 ```typescript
 // Create a user setup
-const createUserSetup = async (phaseNumber: string, phaseName: string, setup: {
+const createUserSetup = async (chapterNumber: string, chapterName: string, setup: {
   envVars: Array<{
     name: string;
     source: string;
@@ -149,7 +149,7 @@ const createUserSetup = async (phaseNumber: string, phaseName: string, setup: {
   const now = new Date().toISOString().split('T')[0];
 
   let summary =
-    `User Setup for Phase ${phaseNumber}: ${phaseName}\n` +
+    `User Setup for Chapter ${chapterNumber}: ${chapterName}\n` +
     `Status: incomplete\n` +
     `Generated: ${now}\n\n` +
     `Environment Variables:\n` +
@@ -187,18 +187,18 @@ const createUserSetup = async (phaseNumber: string, phaseName: string, setup: {
   }
 
   const result = await megamemory.create_concept({
-    name: `User Setup: Phase ${phaseNumber}`,
+    name: `User Setup: Chapter ${chapterNumber}`,
     kind: "user-setup",
     summary,
     why: "Documents setup tasks that literally require human action - account creation, dashboard configuration, secret retrieval. " +
           "OpenCode automates everything possible; this file captures only what remains.",
     file_refs: [".env.local"],
     edges: [{
-      to: `phase-${phaseNumber}`,
+      to: `chapter-${chapterNumber}`,
       relation: "connects_to",
-      description: "Setup required for this phase"
+      description: "Setup required for this chapter"
     }],
-    created_by_task: `Execute plan for Phase ${phaseNumber}`
+    created_by_task: `Execute plan for Chapter ${chapterNumber}`
   });
   const concept = JSON.parse(result.concepts[0]);
 
@@ -250,9 +250,9 @@ const updateSetupStatus = async (setupId: string, status: 'incomplete' | 'comple
 };
 
 // Query user setup
-const queryUserSetup = async (phaseNumber: string) => {
+const queryUserSetup = async (chapterNumber: string) => {
   const result = await megamemory.understand({
-    query: `User setup for Phase ${phaseNumber} with env vars, account setup, dashboard config`
+    query: `User setup for Chapter ${chapterNumber} with env vars, account setup, dashboard config`
   });
 
   if (result.concepts.length > 0) {
@@ -262,8 +262,8 @@ const queryUserSetup = async (phaseNumber: string) => {
     // Parse basic info
     const setupData = {
       id: setup.id,
-      phaseNumber,
-      phaseName: summary.match(/User Setup for Phase ([\d.]+): ([^\n]+)/)?.[2] || '',
+      chapterNumber,
+      chapterName: summary.match(/User Setup for Chapter ([\d.]+): ([^\n]+)/)?.[2] || '',
       status: summary.match(/Status: (incomplete|complete)/)?.[1] || 'incomplete',
       generated: summary.match(/Generated: ([^\n]+)/)?.[1] || '',
       envVars: summary.includes('Environment Variables:')
@@ -344,8 +344,8 @@ const verifySetupComplete = async (setupId: string) => {
   // Parse basic info
   const setupData = {
     id: setup.id,
-    phaseNumber: summary.match(/User Setup for Phase ([\d.]+): ([^\n]+)/)?.[1] || '',
-    phaseName: summary.match(/User Setup for Phase [\d.]+: ([^\n]+)/)?.[2] || '',
+    chapterNumber: summary.match(/User Setup for Chapter ([\d.]+): ([^\n]+)/)?.[1] || '',
+    chapterName: summary.match(/User Setup for Chapter [\d.]+: ([^\n]+)/)?.[2] || '',
     status: summary.match(/Status: (incomplete|complete)/)?.[1] || 'incomplete',
     generated: summary.match(/Generated: ([^\n]+)/)?.[1] || '',
     envVars: summary.includes('Environment Variables:')
@@ -443,10 +443,10 @@ const verifySetupComplete = async (setupId: string) => {
 ### Stripe Example
 
 ```markdown
-# Phase 10: User Setup Required
+# Chapter 10: User Setup Required
 
 **Generated:** 2025-01-14
-**Phase:** 10-monetization
+**Chapter:** 10-monetization
 **Status:** Incomplete
 
 Complete these items for Stripe integration to function.
@@ -518,10 +518,10 @@ Expected: Build passes, webhook returns 400 (signature validation working).
 ### Supabase Example
 
 ```markdown
-# Phase 2: User Setup Required
+# Chapter 2: User Setup Required
 
 **Generated:** 2025-01-14
-**Phase:** 02-authentication
+**Chapter:** 02-authentication
 **Status:** Incomplete
 
 Complete these items for Supabase Auth to function.
@@ -572,10 +572,10 @@ npx supabase status
 ### SendGrid Example
 
 ```markdown
-# Phase 5: User Setup Required
+# Chapter 5: User Setup Required
 
 **Generated:** 2025-01-14
-**Phase:** 05-notifications
+**Chapter:** 05-notifications
 **Status:** Incomplete
 
 Complete these items for SendGrid email to function.
@@ -634,7 +634,7 @@ Generate user setup when plan frontmatter contains `user_setup` field.
 
 **Trigger:** `user_setup` exists in PLAN.md frontmatter and has items.
 
-**Location:** MegaMemory concept linked to phase concept.
+**Location:** MegaMemory concept linked to chapter concept.
 
 **Timing:** Generated during execute-plan.md after tasks complete, before SUMMARY.md creation.
 ```
@@ -682,9 +682,9 @@ user_setup:
 - Steps OpenCode can automate (package installs, code changes, file creation)
 - Generic instructions ("set up your environment")
 
-**Naming:** `{phase}-USER-SETUP.md` matches the phase number pattern.
+**Naming:** `{chapter}-USER-SETUP.md` matches the chapter number pattern.
 
 **Status tracking:** User marks checkboxes and updates status line when complete.
 
-**Searchability:** Query MegaMemory for `user-setup` kind to find all phases with user requirements.
+**Searchability:** Query MegaMemory for `user-setup` kind to find all chapters with user requirements.
 ```

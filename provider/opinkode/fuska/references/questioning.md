@@ -12,7 +12,7 @@ Reference file for @questioning.md - Learn how to effectively question users dur
 
 ```
 questioning-pattern (pattern)
-├── questioning-phase (component)
+├── questioning-chapter (component)
 │   ├── questioning-technique (pattern)
 │   └── anti-pattern (pattern)
 └── context-checklist-item (component)
@@ -27,7 +27,7 @@ questioning-pattern (pattern)
 ### Relationships
 
 - `depends_on`: One technique requires understanding of another
-- `configured_by`: A phase uses specific techniques
+- `configured_by`: A chapter uses specific techniques
 - `calls`: One pattern invokes another
 
 </megamemory_schema>
@@ -45,7 +45,7 @@ await megamemory.createConcept({
   kind: "pattern",
   summary: "Begin with open questions to let users dump their mental model without interruption",
   why: "Users need to express their full vision before structure can be applied",
-  parent_id: "questioning-phase-initiation",
+  parent_id: "questioning-chapter-initiation",
   file_refs: ["@questioning.md:31-33"],
   edges: [
     {
@@ -82,13 +82,13 @@ const antiPatterns = await megamemory.understand({
 });
 ```
 
-## Linking Techniques to Phases
+## Linking Techniques to Chapters
 
 ```typescript
-// Connect technique to workflow phase
+// Connect technique to workflow chapter
 await megamemory.link({
   from: "concreteness-making",
-  to: "questioning-phase-clarification",
+  to: "questioning-chapter-clarification",
   relation: "configured_by",
   description: "Used during clarification to make abstract ideas concrete"
 });
@@ -166,7 +166,7 @@ await megamemory.createConcept({
   name: "Decision Gate: Ready for PROJECT.md",
   kind: "decision",
   summary: "Offer to create PROJECT.md when sufficient clarity exists: what, why, who, done",
-  why: "Prevents premature planning and ensures downstream phases have clear direction",
+  why: "Prevents premature planning and ensures downstream chapters have clear direction",
   file_refs: ["@questioning.md:114-124"],
   edges: [
     {
@@ -175,7 +175,7 @@ await megamemory.createConcept({
       description: "Checklist items must be satisfied"
     },
     {
-      to: "questioning-phase-completion",
+      to: "questioning-chapter-completion",
       relation: "calls",
       description: "If 'Keep exploring', continue questioning"
     }
@@ -201,15 +201,15 @@ Don't interrogate. Collaborate. Don't follow a script. Follow the thread.
 
 <the_goal>
 
-By the end of questioning, you need enough clarity to write a PROJECT.md that downstream phases can act on:
+By the end of questioning, you need enough clarity to write a PROJECT.md that downstream chapters can act on:
 
 - **Research** needs: what domain to research, what the user already knows, what unknowns exist
 - **Requirements** needs: clear enough vision to scope v1 features
-- **Roadmap** needs: clear enough vision to decompose into phases, what "done" looks like
-- **plan-phase** needs: specific requirements to break into tasks, context for implementation choices
-- **execute-phase** needs: success criteria to verify against, the "why" behind requirements
+- **Roadmap** needs: clear enough vision to decompose into chapters, what "done" looks like
+- **plan-chapter** needs: specific requirements to break into tasks, context for implementation choices
+- **execute-chapter** needs: success criteria to verify against, the "why" behind requirements
 
-A vague PROJECT.md forces every downstream phase to guess. The cost compounds.
+A vague PROJECT.md forces every downstream chapter to guess. The cost compounds.
 
 </the_goal>
 

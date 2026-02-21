@@ -15,6 +15,7 @@
 | <nobr>`fuska install`</nobr> | Install commands and agents via symlinks | `--opencode`, `--claude`, `--both`, `--force`, `--dry-run` |
 | <nobr>`fuska migrate planning [dir]`</nobr> | Migrate `.planning/` to MegaMemory | `--clean` to delete existing DB first |
 | <nobr>`fuska migrate multi-initiative`</nobr> | Migrate existing initiative to pointer model | -- |
+| <nobr>`fuska migrate terminology [dir]`</nobr> | Rename phase→chapter and wave→batch in existing MegaMemory database | -- |
 | <nobr>`fuska config [dir]`</nobr> | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view; `--check [--json]` for integrity validation |
 | <nobr>`fuska export`</nobr> | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
 | <nobr>`fuska initiative list`</nobr> | List all initiatives sorted by recent activity | -- |
@@ -30,33 +31,33 @@
 
 ### `fuska progress` Example
 
-Shows current initiative, completed phases, next steps, and recommended actions:
+Shows current initiative, completed chapters, next steps, and recommended actions:
 
 ```
-Progress on submodule-diff-display, 2/4 phases complete.
+Progress on submodule-diff-display, 2/4 chapters complete.
 
 Done:
-* Phase 01: Created ResolveSubmoduleRepository function that parses submodule URLs and matches to local Forgejo instance
-* Phase 02: Created PopulateAllNestedFiles function that iterates over diff files and populates NestedFiles for same-instance submodules
+* Chapter 01: Created ResolveSubmoduleRepository function that parses submodule URLs and matches to local Forgejo instance
+* Chapter 02: Created PopulateAllNestedFiles function that iterates over diff files and populates NestedFiles for same-instance submodules
 
 Next:
-* Phase 3: Render submodule diffs with links and icons in commit and PR/compare views
+* Chapter 3: Render submodule diffs with links and icons in commit and PR/compare views
   - Status: ready_to_plan
   - Context: -
 
 Future:
-* Phase 4: Add unit and integration tests, handle edge cases like missing submodules
+* Chapter 4: Add unit and integration tests, handle edge cases like missing submodules
 
 Configuration:
 * Profile: balanced
 
 ---------
 
-Gather context for phase 3 and clarify approach by running:
-* /fuska-design-phase 3
+Gather context for chapter 3 and clarify approach by running:
+* /fuska-design-chapter 3
 
-or skip design of phase 3 and plan directly by running:
-* /fuska-plan-phase 3
+or skip design of chapter 3 and plan directly by running:
+* /fuska-plan-chapter 3
 ```
 
 Use `--json` for machine-readable output.
@@ -71,7 +72,7 @@ Use `--json` for machine-readable output.
 |---------|-------------|-----------|
 | <nobr>`/fuska`</nobr> | Universal entry point -- navigate, plan, execute, and more | `[verb] [args]` -- see below; bare invocation shows current position and next step |
 
-`/fuska` routes to all other commands. Run it bare to see where you are, or with a verb: `/fuska plan`, `/fuska build`, `/fuska do fix the bug`, etc. Phase numbers are auto-detected.
+`/fuska` routes to all other commands. Run it bare to see where you are, or with a verb: `/fuska plan`, `/fuska build`, `/fuska do fix the bug`, etc. Chapter numbers are auto-detected.
 
 ### Initiative Setup
 
@@ -83,24 +84,24 @@ Use `--json` for machine-readable output.
 
 > **Note:** `fuska init` runs `/fuska-map-codebase` automatically (unless `--no-map`), so you only need to run it manually to re-map after significant structural changes.
 
-### Phase Workflow
+### Chapter Workflow
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-design-phase`</nobr> | Design phase details before planning | `<N>` -- phase number |
-| <nobr>`/fuska-plan-phase`</nobr> | Create detailed phase plan | `<N>` `[--research \| --skip-research \| --skip-verify \| --mode <MODE>]` |
-| <nobr>`/fuska-research-phase`</nobr> | Research phase requirements | `<N>` -- phase number |
-| <nobr>`/fuska-build-phase`</nobr> | Build phase tasks | `<N>` `[--mode <MODE>]` -- phase number and optional mode override |
-| <nobr>`/fuska-review-phase`</nobr> | Review phase completion | `<N>` -- phase number |
+| <nobr>`/fuska-design-chapter`</nobr> | Design chapter details before planning | `<N>` -- chapter number |
+| <nobr>`/fuska-plan-chapter`</nobr> | Create detailed chapter plan | `<N>` `[--research \| --skip-research \| --skip-verify \| --mode <MODE>]` |
+| <nobr>`/fuska-research-chapter`</nobr> | Research chapter requirements | `<N>` -- chapter number |
+| <nobr>`/fuska-build-chapter`</nobr> | Build chapter tasks | `<N>` `[--mode <MODE>]` -- chapter number and optional mode override |
+| <nobr>`/fuska-review-chapter`</nobr> | Review chapter completion | `<N>` -- chapter number |
 
-### Phase Management
+### Chapter Management
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-add-phase`</nobr> | Add new phase to current milestone | `<desc>` -- phase description |
-| <nobr>`/fuska-insert-phase`</nobr> | Insert phase between existing phases | `<N> <desc>` -- position and description |
-| <nobr>`/fuska-remove-phase`</nobr> | Remove phase from project | `<N>` -- phase number |
-| <nobr>`/fuska-list-phase-assumptions`</nobr> | List assumptions for a phase | `<N>` -- phase number |
+| <nobr>`/fuska-add-chapter`</nobr> | Add new chapter to current milestone | `<desc>` -- chapter description |
+| <nobr>`/fuska-insert-chapter`</nobr> | Insert chapter between existing chapters | `<N> <desc>` -- position and description |
+| <nobr>`/fuska-remove-chapter`</nobr> | Remove chapter from project | `<N>` -- chapter number |
+| <nobr>`/fuska-list-chapter-assumptions`</nobr> | List assumptions for a chapter | `<N>` -- chapter number |
 
 ### Milestones
 
@@ -181,7 +182,7 @@ Falls back to grep when import graph data is unavailable.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-git-message`</nobr> | Generate Fuska commit messages or regenerate for existing commits/ranges | `<commit-hash \| commit-range \| phase-X-plan-Y>` |
+| <nobr>`/fuska-git-message`</nobr> | Generate Fuska commit messages or regenerate for existing commits/ranges | `<commit-hash \| commit-range \| chapter-X-plan-Y>` |
 
 **Modes:**
 
@@ -192,16 +193,16 @@ Falls back to grep when import graph data is unavailable.
 **Examples:**
 ```bash
 /fuska-git-message HEAD~5..HEAD                    # Range mode
-/fuska-git-message abc123..def456 phase-02-plan-03  # Range with explicit phase-plan
+/fuska-git-message abc123..def456 chapter-02-plan-03  # Range with explicit chapter-plan
 /fuska-git-message abc123                          # Single commit replay
-/fuska-git-message phase-02-plan-01                # Working tree mode
+/fuska-git-message chapter-02-plan-01                # Working tree mode
 ```
 
 **Features:**
-- Auto-detects phase-plan from most recent commit (full format: `phase-02-plan-01`, short: `02-01`, phase-only: `phase-02`)
+- Auto-detects chapter-plan from most recent commit (full format: `chapter-02-plan-01`, short: `02-01`, chapter-only: `chapter-02`)
 - Shows all original commit messages in range mode
 - Validates commit range endpoints and checks for merges
-- Phase-plan argument overrides auto-detection
+- Chapter-plan argument overrides auto-detection
 
 ### Debug
 

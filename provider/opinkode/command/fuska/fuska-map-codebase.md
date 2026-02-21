@@ -37,7 +37,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -554,19 +554,19 @@ Use `fuska config` to view or override the contextual checker role.
 
 ## > Next Up
 
-${!stateData.current_phase ? 'Initialize project' : 'Continue with project planning'}
+${!stateData.current_chapter ? 'Initialize project' : 'Continue with project planning'}
 
-${!stateData.current_phase
+${!stateData.current_chapter
    ? 'fuska init — Initialize project foundation with this codebase understanding'
-   : '/fuska-plan-phase ' + stateData.current_phase + ' — Plan next phase'
+   : '/fuska-plan-chapter ' + stateData.current_chapter + ' — Plan next chapter'
 }
 
 ────────────────────────────────────────────────────────────
 
 **Also available:**
 - Query codebase concepts: megamemory:understand(query='codebase')
-- /fuska-design-phase {N} — Discuss a phase
-- /fuska-plan-phase {N} — Plan a phase
+- /fuska-design-chapter {N} — Discuss a chapter
+- /fuska-plan-chapter {N} — Plan a chapter
 - fuska config — View/change checker panel settings
 ────────────────────────────────────────────────────────────
 ```

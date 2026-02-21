@@ -396,7 +396,7 @@ const deploymentCheckpoint = await megamemory_create_concept({
   kind: "feature",
   summary: "Vercel deployment verification checkpoint. OpenCode deployed via CLI, captured URL, human must verify in browser.",
   why: "Visual verification requires human judgment",
-  file_refs: ["plan:deployment-phase"]
+  file_refs: ["plan:deployment-chapter"]
 });
 
 // Link to the pattern it implements
@@ -1125,7 +1125,7 @@ If default port is in use, check what's running and either:
 
 **Placement:**
 - **After automation completes** - not before OpenCode does the work
-- **After UI buildout** - before declaring phase complete
+- **After UI buildout** - before declaring chapter complete
 - **Before dependent work** - decisions before implementation
 - **At integration points** - after configuring external services
 

@@ -445,7 +445,7 @@ const resolveDebugSession = async (sessionId: string, finalVerification: string)
 ```markdown
 When OpenCode reads this session after /new:
 
-1. Parse status → know current phase (gathering/investigating/fixing/verifying)
+1. Parse status → know current chapter (gathering/investigating/fixing/verifying)
 2. Read current_focus → know exactly what was happening
 3. Read eliminated → know what NOT to retry (prevents re-investigating dead ends)
 4. Read evidence → know what's been learned

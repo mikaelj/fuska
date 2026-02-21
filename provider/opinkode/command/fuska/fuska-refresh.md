@@ -401,7 +401,7 @@ Display: "Pruned ${prunedCount} dead code concepts that are no longer dead"
 const updatedRefresh = {
   mode: refreshConfig.mode || 'hybrid',
   age_hours: refreshConfig.age_hours || 24,
-  auto_before: refreshConfig.auto_before || ["plan-phase", "execute-phase", "debug"],
+  auto_before: refreshConfig.auto_before || ["plan-chapter", "execute-chapter", "debug"],
   last_sha: currentSha,
   last_refresh: new Date().toISOString(),
   files_scanned: filesToScan.length,

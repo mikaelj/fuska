@@ -41,7 +41,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
+          current_chapter: 'chapter-01',
           current_plan: null,
           status: 'ready_to_plan',
           progress: 0,
@@ -65,14 +65,14 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       expect(roots.roots[0].name).toBe('test-lifecycle-project');
     });
 
-    it('should complete discuss phase workflow', async () => {
+    it('should complete discuss chapter workflow', async () => {
       // Setup: Create phase concept
       await megaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
-          slug: 'phase-01',
+          slug: 'chapter-01',
           name: 'Authentication',
           goal: 'Implement authentication',
           status: 'planned'
@@ -81,14 +81,14 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         edges: [{ to: 'roadmap', relation: 'connects_to' }]
       });
 
-      // Discuss phase: Create context
+      // Discuss Chapter: Create context
       await megaMemory.create_concept({
-        name: 'phase-01-context',
+        name: 'chapter-01-context',
         kind: 'config',
         summary: JSON.stringify({
           gathered: new Date().toISOString().split('T')[0],
           status: 'ready_for_planning',
-          phase_boundary: 'Implement JWT authentication',
+          chapter_boundary: 'Implement JWT authentication',
           decisions: {
             auth_type: 'JWT',
             library: 'jose'
@@ -97,20 +97,20 @@ describe('Full Fuska Lifecycle E2E Test', () => {
           specifics: [],
           deferred: []
         }),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'configured_by' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'configured_by' }]
       });
 
       // Verify context created
-      const context = await megaMemory.understand({ query: 'phase-01-context' });
+      const context = await megaMemory.understand({ query: 'chapter-01-context' });
       expect(context.matches.length).toBe(1);
       expect(context.matches[0].kind).toBe('config');
     });
 
-    it('should complete plan phase workflow', async () => {
+    it('should complete plan chapter workflow', async () => {
       // Setup: Create research
       await megaMemory.create_concept({
-        name: 'phase-01-research',
+        name: 'chapter-01-research',
         kind: 'pattern',
         summary: JSON.stringify({
           domain: 'authentication',
@@ -120,13 +120,13 @@ describe('Full Fuska Lifecycle E2E Test', () => {
           architecture_patterns: ['Token rotation'],
           pitfalls: ['Token expiration timing']
         }),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'connects_to' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
 
       // Create plan
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({
           objective: 'Implement JWT login',
@@ -134,7 +134,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
           output: 'Working login system',
           must_haves: ['Login endpoint', 'Token generation', 'Token validation'],
           megamemory_references: {
-            knowledge_applied: ['phase-01-context', 'phase-01-research'],
+            knowledge_applied: ['chapter-01-context', 'chapter-01-research'],
             patterns_to_follow: ['Token rotation']
           },
           tasks: [
@@ -142,25 +142,25 @@ describe('Full Fuska Lifecycle E2E Test', () => {
             { description: 'Create login endpoint', dependencies: ['Setup jose library'] }
           ]
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-1', relation: 'implements' },
-          { to: 'phase-01-context', relation: 'depends_on' },
-          { to: 'phase-01-research', relation: 'depends_on' }
+          { to: 'chapter-1', relation: 'implements' },
+          { to: 'chapter-01-context', relation: 'depends_on' },
+          { to: 'chapter-01-research', relation: 'depends_on' }
         ]
       });
 
       // Verify plan created
-      const plan = await megaMemory.understand({ query: 'phase-01-plan' });
+      const plan = await megaMemory.understand({ query: 'chapter-01-plan' });
       expect(plan.matches.length).toBe(1);
       const data = JSON.parse(plan.matches[0].summary);
       expect(data.must_haves.length).toBe(3);
     });
 
-    it('should complete execute phase workflow', async () => {
+    it('should complete execute chapter workflow', async () => {
       // Setup: Create plan
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({
           objective: 'Implement login',
@@ -169,14 +169,14 @@ describe('Full Fuska Lifecycle E2E Test', () => {
             { description: 'Create login endpoint', dependencies: ['Create auth service'] }
           ]
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
 
       // Create summary after execution
       const summaryData = {
-        phase: 'phase-01',
-        plan: 'phase-01-plan-1',
+        chapter: 'chapter-01',
+        plan: 'chapter-01-plan-1',
         subsystem: 'Authentication',
         tags: ['auth'],
         tech_stack: {
@@ -203,19 +203,19 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         decisions_made: {},
         deviations: [],
         issues_encountered: [],
-        next_phase_readiness: 'Ready'
+        next_chapter_readiness: 'Ready'
       };
 
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify(summaryData),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-01-plan-1', relation: 'connects_to' },
-          { to: 'phase-1', relation: 'connects_to' }
+          { to: 'chapter-01-plan-1', relation: 'connects_to' },
+          { to: 'chapter-1', relation: 'connects_to' }
         ],
-        created_by_task: 'phase-01-plan-1'
+        created_by_task: 'chapter-01-plan-1'
       });
 
       // Verify summary created
@@ -229,12 +229,12 @@ describe('Full Fuska Lifecycle E2E Test', () => {
     it('should complete verify work workflow - all pass', async () => {
       // Setup: Phase has summary
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({
           accomplishments: ['Login works', 'Logout works', 'Password reset works']
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
 
@@ -248,17 +248,17 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         ],
         issues_found: [],
         recommendations: [],
-        concepts_reviewed: ['phase-01-plan-1-summary']
+        concepts_reviewed: ['chapter-01-plan-1-summary']
       };
 
       await megaMemory.create_concept({
-        name: 'phase-01-uat',
+        name: 'chapter-01-uat',
         kind: 'component',
         summary: JSON.stringify(uatData),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-1', relation: 'connects_to' },
-          { to: 'phase-01-plan-1-summary', relation: 'connects_to' }
+          { to: 'chapter-1', relation: 'connects_to' },
+          { to: 'chapter-01-plan-1-summary', relation: 'connects_to' }
         ]
       });
 
@@ -273,12 +273,12 @@ describe('Full Fuska Lifecycle E2E Test', () => {
     it('should complete verify work workflow - with issues', async () => {
       // Setup: Phase has summary
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({
           accomplishments: ['Login works']
         }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
 
@@ -287,15 +287,15 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         verification_results: ['Login works', 'Logout fails'],
         issues_found: ['Logout endpoint crashes on token expiry'],
         recommendations: ['Fix logout crash'],
-        concepts_reviewed: ['phase-01-plan-1-summary']
+        concepts_reviewed: ['chapter-01-plan-1-summary']
       };
 
       await megaMemory.create_concept({
-        name: 'phase-01-uat',
+        name: 'chapter-01-uat',
         kind: 'component',
         summary: JSON.stringify(uatData),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'connects_to' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
 
       // Verify UAT with issues
@@ -307,40 +307,40 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       expect(data.recommendations.length).toBe(1);
     });
 
-    it('should complete multi-phase lifecycle', async () => {
+    it('should complete multi-chapter lifecycle', async () => {
       // Phase 1: Auth
       await megaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({ number: 1, name: 'Auth', goal: 'Implement auth', status: 'complete' }),
         parent_id: 'roadmap',
         edges: []
       });
 
-      // Phase 2: Data
+      // Chapter 2: Data
       await megaMemory.create_concept({
-        name: 'phase-2',
+        name: 'chapter-2',
         kind: 'feature',
         summary: JSON.stringify({ number: 2, name: 'Data', goal: 'Implement data layer', status: 'complete' }),
         parent_id: 'roadmap',
         edges: []
       });
 
-      // Phase 3: UI
+      // Chapter 3: UI
       await megaMemory.create_concept({
-        name: 'phase-3',
+        name: 'chapter-3',
         kind: 'feature',
         summary: JSON.stringify({ number: 3, name: 'UI', goal: 'Build user interface', status: 'in_progress' }),
         parent_id: 'roadmap',
         edges: []
       });
 
-      // Query all phases
-      const phases = await megaMemory.understand({ query: 'phase' });
-      expect(phases.matches.length).toBe(3);
+      // Query all chapters
+      const chapters = await megaMemory.understand({ query: 'chapter' });
+      expect(chapters.matches.length).toBe(3);
 
-      // Count completed phases
-      const completed = phases.matches.filter((p: any) => {
+      // Count completed chapters
+      const completed = chapters.matches.filter((p: any) => {
         const data = JSON.parse(p.summary);
         return data.status === 'complete';
       });
@@ -353,7 +353,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
+          current_chapter: 'chapter-01',
           current_plan: null,
           status: 'ready_to_plan',
           progress: 0
@@ -368,8 +368,8 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         id: state1.matches[0].id,
         changes: {
           summary: JSON.stringify({
-            current_phase: 'phase-01',
-            current_plan: 'phase-01-plan-1',
+            current_chapter: 'chapter-01',
+            current_plan: 'chapter-01-plan-1',
             status: 'ready_to_execute',
             progress: 10
           })
@@ -382,7 +382,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         id: state2.matches[0].id,
         changes: {
           summary: JSON.stringify({
-            current_phase: 'phase-02',
+            current_chapter: 'chapter-02',
             current_plan: null,
             status: 'ready_to_plan',
             progress: 33
@@ -393,7 +393,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       // Verify final state
       const finalState = await megaMemory.understand({ query: 'state' });
       const data = JSON.parse(finalState.matches[0].summary);
-      expect(data.current_phase).toBe('phase-02');
+      expect(data.current_chapter).toBe('chapter-02');
       expect(data.progress).toBe(33);
       expect(data.status).toBe('ready_to_plan');
     });
@@ -406,8 +406,8 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
-          current_plan: 'phase-01-plan-1',
+          current_chapter: 'chapter-01',
+          current_plan: 'chapter-01-plan-1',
           status: 'in_progress',
           progress: 15
         }),
@@ -415,10 +415,10 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         edges: []
       });
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({ objective: 'Implement login' }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
 
@@ -433,32 +433,32 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       expect(summaries.matches.length).toBe(0); // No summary yet = incomplete
     });
 
-    it('should resume after phase completion', async () => {
+    it('should resume after chapter completion', async () => {
       // Setup: Completed phase
       await megaMemory.create_concept({
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
+          current_chapter: 'chapter-01',
           current_plan: null,
-          status: 'phase_complete',
+          status: 'chapter_complete',
           progress: 50
         }),
         parent_id: 'test-project',
         edges: []
       });
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({ accomplishments: ['Done'] }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: []
       });
 
       // Resume: Should suggest next phase
       const state = await megaMemory.understand({ query: 'state' });
       const stateData = JSON.parse(state.matches[0].summary);
-      expect(stateData.status).toBe('phase_complete');
+      expect(stateData.status).toBe('chapter_complete');
       expect(stateData.progress).toBe(50);
     });
   });
@@ -504,44 +504,44 @@ describe('Full Fuska Lifecycle E2E Test', () => {
     it('should maintain proper edge relationships', async () => {
       // Create concepts with edges
       await megaMemory.create_concept({
-        name: 'phase-1',
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({ number: 1 }),
         parent_id: 'roadmap',
         edges: [{ to: 'roadmap', relation: 'connects_to' }]
       });
       await megaMemory.create_concept({
-        name: 'phase-01-context',
+        name: 'chapter-01-context',
         kind: 'config',
-        summary: JSON.stringify({ phase_boundary: 'Auth' }),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'configured_by' }]
+        summary: JSON.stringify({ chapter_boundary: 'Auth' }),
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'configured_by' }]
       });
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1',
+        name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({ objective: 'Implement login' }),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'implements' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'implements' }]
       });
       await megaMemory.create_concept({
-        name: 'phase-01-plan-1-summary',
+        name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({ accomplishments: ['Done'] }),
-        parent_id: 'phase-1',
+        parent_id: 'chapter-1',
         edges: [
-          { to: 'phase-01-plan-1', relation: 'connects_to' },
-          { to: 'phase-1', relation: 'connects_to' }
+          { to: 'chapter-01-plan-1', relation: 'connects_to' },
+          { to: 'chapter-1', relation: 'connects_to' }
         ]
       });
 
       // Verify edge relationships
-      const phase = await megaMemory.understand({ query: 'phase-1' });
-      const context = await megaMemory.understand({ query: 'phase-01-context' });
-      const plan = await megaMemory.understand({ query: 'phase-01-plan-1' });
+      const chapter = await megaMemory.understand({ query: 'chapter-1' });
+      const context = await megaMemory.understand({ query: 'chapter-01-context' });
+      const plan = await megaMemory.understand({ query: 'chapter-01-plan-1' });
       const summary = await megaMemory.understand({ query: 'summary' });
 
-      expect(phase.matches[0].edges.length).toBe(1);
+      expect(chapter.matches[0].edges.length).toBe(1);
       expect(context.matches[0].edges[0].relation).toBe('configured_by');
       expect(plan.matches[0].edges[0].relation).toBe('implements');
       expect(summary.matches[0].edges.length).toBe(2);

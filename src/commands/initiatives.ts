@@ -17,7 +17,7 @@ interface InitiativeNode {
   updated_at?: string;
 }
 
-interface PhaseData {
+interface ChapterData {
   number: number;
   slug: string;
   name: string;
@@ -26,7 +26,7 @@ interface PhaseData {
 }
 
 interface RoadmapData {
-  phases: PhaseData[];
+  chapters: ChapterData[];
 }
 
 class InitiativesRunner {
@@ -127,59 +127,59 @@ class InitiativesRunner {
 
     const newPrefix = prefix + (isLast ? '  ' : '│ ');
 
-    const phases = this.findPhasesForInitiative(initiative.id, nodes);
-    if (phases.length > 0) {
-      for (let i = 0; i < phases.length; i++) {
-        const phase = phases[i];
-        const isLastPhase = i === phases.length - 1;
-        this.displayPhaseTree(phase, nodes, newPrefix, isLastPhase);
+    const chapters = this.findChaptersForInitiative(initiative.id, nodes);
+    if (chapters.length > 0) {
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+        const isLastChapter = i === chapters.length - 1;
+        this.displayChapterTree(chapter, nodes, newPrefix, isLastChapter);
       }
     }
   }
 
-  private findPhasesForInitiative(initiativeId: string, nodes: InitiativeNode[]): Array<PhaseData & { updated_at?: string }> {
+  private findChaptersForInitiative(initiativeId: string, nodes: InitiativeNode[]): Array<ChapterData & { updated_at?: string }> {
     const roadmapNode = nodes.find(n =>
       (n.name === 'roadmap' || n.name.endsWith('-roadmap')) && n.parent_id === initiativeId
     );
 
     if (roadmapNode) {
       const roadmapData = this.parseSummary<RoadmapData>(roadmapNode.summary);
-      if (roadmapData?.phases) {
-        return roadmapData.phases.map(phase => {
-          const phaseNode = nodes.find(n =>
-            (n.name === phase.slug || n.name.endsWith('/' + phase.slug)) && n.parent_id === roadmapNode.id
+      if (roadmapData?.chapters) {
+        return roadmapData.chapters.map(chapter => {
+          const chapterNode = nodes.find(n =>
+            (n.name === chapter.slug || n.name.endsWith('/' + chapter.slug)) && n.parent_id === roadmapNode.id
           );
           return {
-            ...phase,
-            updated_at: phaseNode?.updated_at
+            ...chapter,
+            updated_at: chapterNode?.updated_at
           };
         });
       }
     }
 
-    const phases: Array<PhaseData & { updated_at?: string }> = [];
+    const chapters: Array<ChapterData & { updated_at?: string }> = [];
 
     for (const node of nodes) {
       if (node.kind !== 'feature') continue;
       if (!node.parent_id) continue;
 
-      const isPhase = /^phase-\d+$/.test(node.name) || /\/phase-\d+$/.test(node.name);
-      if (!isPhase) continue;
+      const isChapter = /^chapter-\d+$/.test(node.name) || /\/chapter-\d+$/.test(node.name);
+      if (!isChapter) continue;
 
       const belongsToInitiative = node.parent_id === initiativeId ||
         node.parent_id.startsWith(initiativeId + '/');
       if (!belongsToInitiative) continue;
 
-      const phaseData = this.parseSummary<PhaseData>(node.summary);
-      if (phaseData) {
-        phases.push({
-          ...phaseData,
+      const chapterData = this.parseSummary<ChapterData>(node.summary);
+      if (chapterData) {
+        chapters.push({
+          ...chapterData,
           updated_at: node.updated_at
         });
       } else {
-        const numMatch = node.name.match(/phase-(\d+)/);
+        const numMatch = node.name.match(/chapter-(\d+)/);
         if (numMatch) {
-          phases.push({
+          chapters.push({
             number: parseInt(numMatch[1], 10),
             slug: node.name,
             name: node.name,
@@ -191,22 +191,22 @@ class InitiativesRunner {
       }
     }
 
-    phases.sort((a, b) => a.number - b.number);
-    return phases;
+    chapters.sort((a, b) => a.number - b.number);
+    return chapters;
   }
 
-  private displayPhaseTree(
-    phase: PhaseData & { updated_at?: string },
+  private displayChapterTree(
+    chapter: ChapterData & { updated_at?: string },
     nodes: InitiativeNode[],
     prefix: string,
     isLast: boolean
   ): void {
     const connector = isLast ? '└─' : '├─';
-    const statusIcon = this.getStatusIndicator(phase.status);
-    const timeAgo = phase.updated_at ? ` ${this.formatRelativeTime(phase.updated_at)}` : '';
-    const name = phase.name || phase.slug;
+    const statusIcon = this.getStatusIndicator(chapter.status);
+    const timeAgo = chapter.updated_at ? ` ${this.formatRelativeTime(chapter.updated_at)}` : '';
+    const name = chapter.name || chapter.slug;
 
-    console.log(`${prefix}${connector} ${statusIcon} Phase ${phase.number}: ${name}${timeAgo}`);
+    console.log(`${prefix}${connector} ${statusIcon} Chapter ${chapter.number}: ${name}${timeAgo}`);
   }
 
   private getInitiativeDisplayName(initiative: InitiativeNode, isCurrent: boolean = false): string {
@@ -266,7 +266,7 @@ class InitiativesRunner {
 export function initiativeListCommand(program: Command) {
   program
     .command('list [project-path]')
-    .description('List all Fuska initiatives with milestones and phases')
+    .description('List all Fuska initiatives with milestones and chapters')
     .action(async (projectPath?: string) => {
       const runner = new InitiativesRunner({
         projectDir: projectPath || process.cwd()

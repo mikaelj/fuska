@@ -10,40 +10,40 @@ Template for milestone completion archive - stored in MegaMemory, never on disk.
 # Milestone v{{VERSION}}: {{MILESTONE_NAME}}
 
 **Status:** ✅ SHIPPED {{DATE}}
-**Phases:** {{PHASE_START}}-{{PHASE_END}}
+**Chapters:** {{CHAPTER_START}}-{{CHAPTER_END}}
 **Total Plans:** {{TOTAL_PLANS}}
 
 ## Overview
 
 {{MILESTONE_DESCRIPTION}}
 
-## Phases
+## Chapters
 
-{{PHASES_SECTION}}
+{{CHAPTERS_SECTION}}
 
-[For each phase in this milestone, include:]
+[For each chapter in this milestone, include:]
 
-### Phase {{PHASE_NUM}}: {{PHASE_NAME}}
+### Chapter {{CHAPTER_NUM}}: {{CHAPTER_NAME}}
 
-**Goal**: {{PHASE_GOAL}}
+**Goal**: {{CHAPTER_GOAL}}
 **Depends on**: {{DEPENDS_ON}}
 **Plans**: {{PLAN_COUNT}} plans
 
 Plans:
 
-- [x] {{PHASE}}-01: {{PLAN_DESCRIPTION}}
-- [x] {{PHASE}}-02: {{PLAN_DESCRIPTION}}
+- [x] {{CHAPTER}}-01: {{PLAN_DESCRIPTION}}
+- [x] {{CHAPTER}}-02: {{PLAN_DESCRIPTION}}
       [... all plans ...]
 
 **Details:**
-{{PHASE_DETAILS_FROM_ROADMAP}}
+{{CHAPTER_DETAILS_FROM_ROADMAP}}
 
-**For decimal phases, include (INSERTED) marker:**
+**For decimal chapters, include (INSERTED) marker:**
 
-### Phase 2.1: Critical Security Patch (INSERTED)
+### Chapter 2.1: Critical Security Patch (INSERTED)
 
 **Goal**: Fix authentication bypass vulnerability
-**Depends on**: Phase 2
+**Depends on**: Chapter 2
 **Plans**: 1 plan
 
 Plans:
@@ -51,16 +51,16 @@ Plans:
 - [x] 02.1-01: Patch auth vulnerability
 
 **Details:**
-{{PHASE_DETAILS_FROM_ROADMAP}}
+{{CHAPTER_DETAILS_FROM_ROADMAP}}
 
 ---
 
 ## Milestone Summary
 
-**Decimal Phases:**
+**Decimal Chapters:**
 
-- Phase 2.1: Critical Security Patch (inserted after Phase 2 for urgent fix)
-- Phase 5.1: Performance Hotfix (inserted after Phase 5 for production issue)
+- Chapter 2.1: Critical Security Patch (inserted after Chapter 2 for urgent fix)
+- Chapter 5.1: Performance Hotfix (inserted after Chapter 5 for production issue)
 
 **Key Decisions:**
 {{DECISIONS_FROM_PROJECT_STATE}}
@@ -86,12 +86,12 @@ concept_kind: "milestone"
 summary: |
   Milestone v{version}: {name}
   Shipped: {date}
-  Phases: {phase_start}-{phase_end}
+  Chapters: {chapter_start}-{chapter_end}
   Total plans: {total_plans}
   {One-sentence overview of what was delivered}
 
 why: |
-  Archives completed milestones with phases, decisions, issues.
+  Archives completed milestones with chapters, decisions, issues.
   Provides historical record of project progress across versions.
   Enables rollback understanding and decision traceability.
 
@@ -113,11 +113,11 @@ edges: [
 
 ```markdown
 <megamemory_operations>
-**Create Milestone (when completing all phases in milestone):**
+**Create Milestone (when completing all chapters in milestone):**
 
 1. Create concept with version, name, shipped date
-2. Add overview, phases section with all completed phases
-3. Document decimal phases with (INSERTED) marker
+2. Add overview, chapters section with all completed chapters
+3. Document decimal chapters with (INSERTED) marker
 4. List key decisions, issues resolved, issues deferred
 5. Track technical debt incurred
 6. Link to project concept
@@ -125,13 +125,13 @@ edges: [
 **Update Milestone (rare - retrospective corrections):**
 
 1. Only update if retrospective corrections needed
-2. Update summary if phase details change
+2. Update summary if chapter details change
 3. Document why update was made
 
 **Query Milestone (for historical reference):**
 
 1. Query by version number
-2. Read phases, decisions, issues, technical debt
+2. Read chapters, decisions, issues, technical debt
 3. Understand what was delivered in each milestone
 4. Trace decision history across versions
 </megamemory_operations>
@@ -147,11 +147,11 @@ edges: [
 // Create a milestone archive
 const createMilestone = async (version: string, name: string, data: {
   shippedDate: string;
-  phaseStart: string;
-  phaseEnd: string;
+  chapterStart: string;
+  chapterEnd: string;
   totalPlans: number;
   overview: string;
-  phases: Array<{
+  chapters: Array<{
     number: string;
     name: string;
     goal: string;
@@ -161,34 +161,34 @@ const createMilestone = async (version: string, name: string, data: {
     details: string;
     isInserted?: boolean;
   }>;
-  decimalPhases?: Array<{ number: string; name: string; reason: string }>;
+  decimalChapters?: Array<{ number: string; name: string; reason: string }>;
   keyDecisions: Array<{ decision: string; rationale: string }>;
   issuesResolved: string[];
   issuesDeferred: string[];
   technicalDebt: string[];
 }) => {
-  const phasesSection = data.phases.map(phase => {
-    const inserted = phase.isInserted ? ' (INSERTED)' : '';
-    const plansList = phase.plans.map(p => `- [x] ${p.number}: ${p.description}`).join('\n    ');
+  const chaptersSection = data.chapters.map(chapter => {
+    const inserted = chapter.isInserted ? ' (INSERTED)' : '';
+    const plansList = chapter.plans.map(p => `- [x] ${p.number}: ${p.description}`).join('\n    ');
 
     return `
-### Phase ${phase.number}: ${phase.name}${inserted}
+### Chapter ${chapter.number}: ${chapter.name}${inserted}
 
-**Goal**: ${phase.goal}
-**Depends on**: ${phase.dependsOn}
-**Plans**: ${phase.planCount} plans
+**Goal**: ${chapter.goal}
+**Depends on**: ${chapter.dependsOn}
+**Plans**: ${chapter.planCount} plans
 
 Plans:
 
     ${plansList}
 
 **Details:**
-${phase.details}`;
+${chapter.details}`;
   }).join('\n\n');
 
-  const summarySection = data.decimalPhases && data.decimalPhases.length > 0
-    ? `\n\n**Decimal Phases:**\n\n` +
-      data.decimalPhases.map(d => `- Phase ${d.number}: ${d.name} (${d.reason})`).join('\n')
+  const summarySection = data.decimalChapters && data.decimalChapters.length > 0
+    ? `\n\n**Decimal Chapters:**\n\n` +
+      data.decimalChapters.map(d => `- Chapter ${d.number}: ${d.name} (${d.reason})`).join('\n')
     : '';
 
   const keyDecisionsSection = data.keyDecisions.length > 0
@@ -216,11 +216,11 @@ ${phase.details}`;
     kind: "milestone",
     summary: `Mstone v${version}: ${name}\n` +
              `Shipped: ${data.shippedDate}\n` +
-             `Phases: ${data.phaseStart}-${data.phaseEnd}\n` +
+             `Chapters: ${data.chapterStart}-${data.chapterEnd}\n` +
              `Total plans: ${data.totalPlans}\n` +
              `${data.overview}\n\n` +
-             `${phasesSection}${summarySection}${keyDecisionsSection}${issuesResolvedSection}${issuesDeferredSection}${technicalDebtSection}`,
-    why: "Archives completed milestones with phases, decisions, issues. " +
+             `${chaptersSection}${summarySection}${keyDecisionsSection}${issuesResolvedSection}${issuesDeferredSection}${technicalDebtSection}`,
+    why: "Archives completed milestones with chapters, decisions, issues. " +
           "Provides historical record of project progress across versions. " +
           "Enables rollback understanding and decision traceability.",
     edges: [{
@@ -237,7 +237,7 @@ ${phase.details}`;
 // Query milestone by version
 const queryMilestone = async (version: string) => {
   const results = await megamemory_understand({
-    query: `Milestone v${version} with phases, decisions, issues resolved, technical debt`
+    query: `Milestone v${version} with chapters, decisions, issues resolved, technical debt`
   });
 
   if (results.length > 0) {
@@ -249,13 +249,13 @@ const queryMilestone = async (version: string) => {
       version,
       name: summary.match(/Milestone v\d+\.\d+: ([^\n]+)/)?.[1] || '',
       shippedDate: summary.match(/Shipped: ([^\n]+)/)?.[1] || '',
-      phases: summary.match(/Phases: ([^\n]+)/)?.[1] || '',
+      chapters: summary.match(/Chapters: ([^\n]+)/)?.[1] || '',
       totalPlans: summary.match(/Total plans: (\d+)/)?.[1] || '0',
       overview: summary.match(/(Total plans: \d+\n)([^\n]+)/)?.[2] || ''
     };
 
-    // Parse phases
-    const phases: Array<{
+    // Parse chapters
+    const chapters: Array<{
       number: string;
       name: string;
       goal: string;
@@ -264,9 +264,9 @@ const queryMilestone = async (version: string) => {
       details: string;
       isInserted: boolean;
     }> = [];
-    const phaseMatches = summary.matchAll(/### Phase ([\d.]+): ([^\(]+)(?: \(INSERTED\))?\n\*\*Goal\*\*: ([^\n]+)\n\*\*Depends on\*\*: ([^\n]+)\n\*\*Plans\*\*: (\d+) plans\n\n    Plans:\n\n([\s\S]*?)\n\n    \*\*Details\*\:\n([\s\S]*?)(?=\n\n### |\n\n\*\*[A-Z]|$)/g);
-    for (const match of phaseMatches) {
-      phases.push({
+    const chapterMatches = summary.matchAll(/### Chapter ([\d.]+): ([^\(]+)(?: \(INSERTED\))?\n\*\*Goal\*\*: ([^\n]+)\n\*\*Depends on\*\*: ([^\n]+)\n\*\*Plans\*\*: (\d+) plans\n\n    Plans:\n\n([\s\S]*?)\n\n    \*\*Details\*\:\n([\s\S]*?)(?=\n\n### |\n\n\*\*[A-Z]|$)/g);
+    for (const match of chapterMatches) {
+      chapters.push({
         number: match[1],
         name: match[2].trim(),
         goal: match[3],
@@ -311,13 +311,13 @@ const queryMilestone = async (version: string) => {
           .map(line => line.slice(2)) || []
       : [];
 
-    // Parse decimal phases
-    const decimalPhases = summary.includes('Decimal Phases:')
-      ? summary.match(/Decimal Phases:\n\n([\s\S]*?)(?=\n\n\*\*[A-Z]|$)/)?.[1]
+    // Parse decimal chapters
+    const decimalChapters = summary.includes('Decimal Chapters:')
+      ? summary.match(/Decimal Chapters:\n\n([\s\S]*?)(?=\n\n\*\*[A-Z]|$)/)?.[1]
           .split('\n')
           .filter(line => line.startsWith('- '))
           .map(line => {
-            const match = line.match(/- Phase ([^:]+): (.+) \((.+)\)/);
+            const match = line.match(/- Chapter ([^:]+): (.+) \((.+)\)/);
             return match ? { number: match[1], name: match[2], reason: match[3] } : null;
           })
           .filter(Boolean) || []
@@ -326,8 +326,8 @@ const queryMilestone = async (version: string) => {
     return {
       id: milestone.id,
       ...basicInfo,
-      phases,
-      decimalPhases,
+      chapters,
+      decimalChapters,
       keyDecisions,
       issuesResolved,
       issuesDeferred,
@@ -341,7 +341,7 @@ const queryMilestone = async (version: string) => {
 // Query all milestones
 const queryAllMilestones = async () => {
   const results = await megamemory_understand({
-    query: "All milestones with versions, shipped dates, phases"
+    query: "All milestones with versions, shipped dates, chapters"
   });
 
   return results.map(milestone => {
@@ -351,7 +351,7 @@ const queryAllMilestones = async () => {
       version: summary.match(/Milestone v(\d+\.\d+):/)?.[1] || '',
       name: summary.match(/Milestone v\d+\.\d+: ([^\n]+)/)?.[1] || '',
       shippedDate: summary.match(/Shipped: ([^\n]+)/)?.[1] || '',
-      phases: summary.match(/Phases: ([^\n]+)/)?.[1] || '',
+      chapters: summary.match(/Chapters: ([^\n]+)/)?.[1] || '',
       totalPlans: summary.match(/Total plans: (\d+)/)?.[1] || '0'
     };
   });
@@ -367,7 +367,7 @@ const queryAllMilestones = async () => {
 ```markdown
 **Create milestone archives when:**
 
-- After completing all phases in a milestone (v1.0, v1.1, v2.0, etc.)
+- After completing all chapters in a milestone (v1.0, v1.1, v2.0, etc.)
 - Triggered by complete-milestone workflow
 - Before planning next milestone work
 ```
@@ -380,8 +380,8 @@ const queryAllMilestones = async () => {
 **Steps:**
 
 1. Replace {{PLACEHOLDERS}} with actual values
-2. Extract phase details from ROADMAP.md
-3. Document decimal phases with (INSERTED) marker
+2. Extract chapter details from ROADMAP.md
+3. Document decimal chapters with (INSERTED) marker
 4. Include key decisions from PROJECT-STATE.md or SUMMARY files
 5. List issues resolved vs deferred
 6. Capture technical debt for future reference
@@ -402,5 +402,5 @@ const queryAllMilestones = async () => {
 
 1. Update ROADMAP.md to collapse completed milestone in <details> tag
 2. Update PROJECT.md to brownfield format with Current State section
-3. Continue phase numbering in next milestone (never restart at 01)
+3. Continue chapter numbering in next milestone (never restart at 01)
 ```

@@ -161,8 +161,8 @@ export class VersionHistory {
 export class VersionRetentionPolicy {
   static async apply(megamemory: MegaMemoryClient, projectId: string): Promise<{archived: number; retained: number}> {
     const stateResult = await megamemory.understand({ query: 'state' });
-    const currentPhase = stateResult.matches[0]?.summary ? JSON.parse(extractJson(stateResult.matches[0].summary)).current_phase : null;
-    const phaseNum = currentPhase?.match(/phase-(\d+)/)?.[1] ? parseInt(currentPhase.match(/phase-(\d+)/)![1]) : 1;
+    const currentChapter = stateResult.matches[0]?.summary ? JSON.parse(extractJson(stateResult.matches[0].summary)).current_chapter : null;
+    const chapterNum = currentChapter?.match(/chapter-(\d+)/)?.[1] ? parseInt(currentChapter.match(/chapter-(\d+)/)![1]) : 1;
 
     const allConcepts = await megamemory.understand({ query: '', top_k: 10000 });
     const versionConcepts = allConcepts.matches.filter(c => c.kind === 'component');
@@ -174,17 +174,17 @@ export class VersionRetentionPolicy {
       const data = JSON.parse(extractJson(concept.summary)) as VersionSnapshot;
       const parentConceptId = data.parent_concept;
 
-      if (parentConceptId.startsWith('phase-')) {
-        const parentPhaseNum = parseInt(parentConceptId.match(/phase-(\d+)/)?.[1] || '0');
-        const isActivePhase = parentPhaseNum >= phaseNum && parentPhaseNum <= phaseNum + 2;
+      if (parentConceptId.startsWith('chapter-')) {
+        const parentChapterNum = parseInt(parentConceptId.match(/chapter-(\d+)/)?.[1] || '0');
+        const isActiveChapter = parentChapterNum >= chapterNum && parentChapterNum <= chapterNum + 2;
         const version = data.version;
 
-        if (isActivePhase || version <= 10 || ['decision', 'config'].includes(parentConceptId)) {
+        if (isActiveChapter || version <= 10 || ['decision', 'config'].includes(parentConceptId)) {
           retained++;
         } else {
           await megamemory.remove_concept({
             id: concept.id,
-            reason: `Version retention policy: phase ${parentPhaseNum} is old and version ${version} exceeds limit`
+            reason: `Version retention policy: chapter ${parentChapterNum} is old and version ${version} exceeds limit`
           });
           archived++;
         }

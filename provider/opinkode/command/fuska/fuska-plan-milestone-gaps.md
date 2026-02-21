@@ -1,6 +1,6 @@
 ---
 name: fuska-plan-milestone-gaps
-description: Create phases to close all gaps identified by milestone audit using MegaMemory
+description: Create chapters to close all gaps identified by milestone audit using MegaMemory
 agent: @../../agents/fuska/fuska-planner.md
 tools:
   - read
@@ -17,11 +17,11 @@ tools:
 ---
 
 <objective>
-Create all phases necessary to close gaps identified by `/fuska-audit-milestone` using MegaMemory.
+Create all chapters necessary to close gaps identified by `/fuska-audit-milestone` using MegaMemory.
 
-Reads UAT concept (from audit), groups gaps into logical phases, creates phase concepts in MegaMemory, and offers to plan each phase.
+Reads UAT concept (from audit), groups gaps into logical chapters, creates chapter concepts in MegaMemory, and offers to plan each chapter.
 
-One command creates all fix phases — no manual `/fuska-add-phase` per gap.
+One command creates all fix chapters — no manual `/fuska-add-chapter` per gap.
 </objective>
 
 <execution_context>
@@ -37,7 +37,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -151,8 +151,8 @@ Group gaps by priority from requirements:
 
 | Priority | Action |
 |----------|--------|
-| `must` | Create phase, blocks milestone |
-| `should` | Create phase, recommended |
+| `must` | Create chapter, blocks milestone |
+| `should` | Create chapter, recommended |
 | `nice` | Ask user: include or defer? |
 
 **Step 3.1: Categorize gaps**
@@ -171,7 +171,7 @@ gaps.requirements.forEach(gap => {
 
 // Integration and flow gaps inherit priority from affected requirements
 gaps.integration.forEach(gap => {
-  // Determine priority from affected phases/requirements
+  // Determine priority from affected chapters/requirements
   const priority = inferPriority(gap, priorityMap)
   if (priority === 'must') mustGaps.push(gap)
   else if (priority === 'should') shouldGaps.push(gap)
@@ -186,43 +186,43 @@ gaps.flows.forEach(gap => {
 })
 ```
 
-## 4. Group Gaps into Phases
+## 4. Group Gaps into Chapters
 
-Cluster related gaps into logical phases:
+Cluster related gaps into logical chapters:
 
 **Grouping rules:**
-- Same affected phase → combine into one fix phase
+- Same affected chapter → combine into one fix chapter
 - Same subsystem (auth, API, UI) → combine
 - Dependency order (fix stubs before wiring)
-- Keep phases focused: 2-4 tasks each
+- Keep chapters focused: 2-4 tasks each
 
-**Step 4.1: Build phase proposals**
+**Step 4.1: Build chapter proposals**
 
 ```
-const phaseProposals = []
+const chapterProposals = []
 
 // Group must gaps
-const mustPhases = clusterGaps(mustGaps, "must")
-phaseProposals.push(...mustPhases)
+const mustChapters = clusterGaps(mustGaps, "must")
+chapterProposals.push(...mustChapters)
 
 // Group should gaps
-const shouldPhases = clusterGaps(shouldGaps, "should")
-phaseProposals.push(...shouldPhases)
+const shouldChapters = clusterGaps(shouldGaps, "should")
+chapterProposals.push(...shouldChapters)
 
 // Group nice gaps
-const nicePhases = clusterGaps(niceGaps, "nice")
-phaseProposals.push(...nicePhases)
+const niceChapters = clusterGaps(niceGaps, "nice")
+chapterProposals.push(...niceChapters)
 ```
 
 **Example grouping:**
 ```
 Gap: DASH-01 unsatisfied (Dashboard doesn't fetch)
-Gap: Integration Phase 1→3 (Auth not passed to API calls)
+Gap: Integration Chapter 1→3 (Auth not passed to API calls)
 Gap: Flow "View dashboard" broken at data fetch
 
-→ Phase: "Wire Dashboard to API"
+→ Chapter: "Wire Dashboard to API"
   - Gap: DASH-01 (requirement)
-  - Gap: Phase 1→3 (integration)
+  - Gap: Chapter 1→3 (integration)
   - Gap: "View dashboard" (flow)
   - Tasks:
     - Add fetch to Dashboard.tsx
@@ -231,18 +231,18 @@ Gap: Flow "View dashboard" broken at data fetch
     - Render user data
 ```
 
-## 5. Determine Phase Numbers
+## 5. Determine Chapter Numbers
 
-Find highest existing phase in roadmap:
+Find highest existing chapter in roadmap:
 ```
-const highestPhaseNumber = roadmapData.phases.reduce((max, phase) => {
-  const phaseNum = parseFloat(phase.number)
-  return phaseNum > max ? phaseNum : max
+const highestChapterNumber = roadmapData.chapters.reduce((max, chapter) => {
+  const chapterNum = parseFloat(chapter.number)
+  return chapterNum > max ? chapterNum : max
 }, 0)
 ```
 
-New phases continue from there:
-- If Phase 5 is highest, gaps become Phase 6, 7, 8...
+New chapters continue from there:
+- If Chapter 5 is highest, gaps become Chapter 6, 7, 8...
 
 ## 6. Present Gap Closure Plan
 
@@ -252,14 +252,14 @@ New phases continue from there:
 **Milestone:** ${uatData.version || 'current'}
 **Gaps to close:** ${gaps.requirements.length} requirements, ${gaps.integration.length} integration, ${gaps.flows.length} flows
 
-### Proposed Phases
+### Proposed Chapters
 
-${phaseProposals.filter(p => p.priority !== 'nice').map(phase => `
-**Phase ${phase.number}: ${phase.name}** (${phase.priority.toUpperCase()})
-Priority: ${phase.priority.toUpperCase()}
+${chapterProposals.filter(p => p.priority !== 'nice').map(chapter => `
+**Chapter ${chapter.number}: ${chapter.name}** (${chapter.priority.toUpperCase()})
+Priority: ${chapter.priority.toUpperCase()}
 Closes:
-${phase.gaps.map(g => `- ${gapDescription(g)}`).join('\n')}
-Estimated tasks: ${phase.taskCount}
+${chapter.gaps.map(g => `- ${gapDescription(g)}`).join('\n')}
+Estimated tasks: ${chapter.taskCount}
 `).join('\n')}
 
 ${niceGaps.length > 0 ? `
@@ -267,18 +267,18 @@ ${niceGaps.length > 0 ? `
 
 These gaps are optional. Include them?
 
-${nicePhases.map(phase => `
-**Phase ${phase.number}: ${phase.name}**
-${phase.gaps.map(g => `- ${gapDescription(g)}`).join('\n')}
+${niceChapters.map(chapter => `
+**Chapter ${chapter.number}: ${chapter.name}**
+${chapter.gaps.map(g => `- ${gapDescription(g)}`).join('\n')}
 `).join('\n')}
 
 ---
 
-Create these ${phaseProposals.filter(p => p.priority !== 'nice').length + (nicePhases.length || 0)} phases? (yes / adjust / defer all optional)
+Create these ${chapterProposals.filter(p => p.priority !== 'nice').length + (niceChapters.length || 0)} chapters? (yes / adjust / defer all optional)
 ` : `
 ---
 
-Create these ${phaseProposals.length} phases? (yes / adjust)
+Create these ${chapterProposals.length} chapters? (yes / adjust)
 `}
 ```
 
@@ -288,8 +288,8 @@ const gapResponse = question(questions=[{
   header: "Gap Closure Plan",
   question: "How would you like to proceed?",
   options: [
-    {label: "Create phases", description: "Create all proposed phases in MegaMemory"},
-    {label: "Adjust plan", description: "Modify phase groupings or priorities"},
+    {label: "Create chapters", description: "Create all proposed chapters in MegaMemory"},
+    {label: "Adjust plan", description: "Modify chapter groupings or priorities"},
     {label: "Defer nice-to-have", description: "Skip nice-to-have gaps for now"}
   ]
 }])
@@ -297,31 +297,31 @@ const gapResponse = question(questions=[{
 
 ## 7. Update Roadmap in MegaMemory
 
-**Step 7.1: Build new phase entries**
+**Step 7.1: Build new chapter entries**
 
 ```
-const newPhases = phaseProposals.filter(phase => includePhase(phase)).map(phase => ({
-  number: phase.number.toString(),
-  name: phase.name + " (Gap Closure)",
-  goal: `Close gaps: ${phase.gaps.map(g => gapDescription(g)).join(', ')}`,
-  depends_on: [], // Will be calculated based on existing phases
+const newChapters = chapterProposals.filter(chapter => includeChapter(chapter)).map(chapter => ({
+  number: chapter.number.toString(),
+  name: chapter.name + " (Gap Closure)",
+  goal: `Close gaps: ${chapter.gaps.map(g => gapDescription(g)).join(', ')}`,
+  depends_on: [], // Will be calculated based on existing chapters
   plans: [],
   status: "not_planned",
-  priority: phase.priority,
+  priority: chapter.priority,
   gap_closure: true
 }))
 ```
 
-**Step 7.2: Append to roadmap phases**
+**Step 7.2: Append to roadmap chapters**
 ```
-const updatedPhasesArray = [...roadmapData.phases, ...newPhases]
+const updatedChaptersArray = [...roadmapData.chapters, ...newChapters]
 ```
 
 **Step 7.3: Update roadmap concept**
 ```
 const updatedRoadmapData = {
   ...roadmapData,
-  phases: updatedPhasesArray
+  chapters: updatedChaptersArray
 }
 
 megamemory_update_concept(
@@ -332,31 +332,31 @@ megamemory_update_concept(
 )
 ```
 
-## 8. Create Phase Concepts
+## 8. Create Chapter Concepts
 
-**Step 8.1: For each new phase, create phase concept**
+**Step 8.1: For each new chapter, create chapter concept**
 
 ```
-newPhases.forEach(phase => {
-  const phaseSlug = `phase-${phase.number.toString().padStart(2, '0')}`
+newChapters.forEach(chapter => {
+  const chapterSlug = `chapter-${chapter.number.toString().padStart(2, '0')}`
 
-  const phaseData = {
-    number: phase.number.toString(),
-    name: phase.name,
-    goal: phase.goal,
-    depends_on: phase.depends_on || [],
+  const chapterData = {
+    number: chapter.number.toString(),
+    name: chapter.name,
+    goal: chapter.goal,
+    depends_on: chapter.depends_on || [],
     status: "not_planned",
     plans: [],
-    priority: phase.priority,
+    priority: chapter.priority,
     gap_closure: true,
-    gaps: phase.gaps
+    gaps: chapter.gaps
   }
 
   megamemory_create_concept(
-    name=phaseSlug,
+    name=chapterSlug,
     kind="feature",
-    summary=JSON.stringify(phaseData),
-    why=`Gap closure phase created from milestone audit`
+    summary=JSON.stringify(chapterData),
+    why=`Gap closure chapter created from milestone audit`
   )
 })
 ```
@@ -379,8 +379,8 @@ const stateData = JSON.parse(stateSummaryString)
 ```
 const updatedStateData = {
   ...stateData,
-  gap_closure_phases_created: true,
-  gap_closure_phase_count: newPhases.length
+  gap_closure_chapters_created: true,
+  gap_closure_chapter_count: newChapters.length
 }
 ```
 
@@ -397,30 +397,30 @@ megamemory_update_concept(
 ## 10. Offer Next Steps
 
 ```
-## [OK] Gap Closure Phases Created
+## [OK] Gap Closure Chapters Created
 
-**Phases added:** ${newPhases.map(p => p.number).join(', ')}
+**Chapters added:** ${newChapters.map(p => p.number).join(', ')}
 **Gaps addressed:** ${gaps.requirements.length} requirements, ${gaps.integration.length} integration, ${gaps.flows.length} flows
 
 ---
 
 ## > Next Up
 
-**Plan first gap closure phase**
+**Plan first gap closure chapter**
 
-/fuska-plan-phase ${newPhases[0].number}
+/fuska-plan-chapter ${newChapters[0].number}
 
 */new first → fresh context window*
 
 ---
 
 **Also available:**
-- /fuska-build-phase ${newPhases[0].number} — if plans already exist
+- /fuska-build-chapter ${newChapters[0].number} — if plans already exist
 - Query roadmap: megamemory:understand(query='roadmap') — see updated roadmap
 
 ---
 
-**After all gap phases complete:**
+**After all gap chapters complete:**
 
 /fuska-audit-milestone — re-audit to verify gaps closed
 /fuska-complete-milestone {version} — archive when audit passes
@@ -428,7 +428,7 @@ megamemory_update_concept(
 
 </process>
 
-<gap_to_phase_mapping>
+<gap_to_chapter_mapping>
 
 ## How Gaps Become Tasks
 
@@ -445,8 +445,8 @@ gap:
 
 becomes:
 
-phase: "Wire Dashboard Data"
-phaseData.gaps: [gap]
+chapter: "Wire Dashboard Data"
+chapterData.gaps: [gap]
 tasks:
   - name: "Add data fetching"
     files: [src/components/Dashboard.tsx]
@@ -464,8 +464,8 @@ tasks:
 **Integration gap → Tasks:**
 ```yaml
 gap:
-  from_phase: 1
-  to_phase: 3
+  from_chapter: 1
+  to_chapter: 3
   connection: "Auth token → API calls"
   reason: "Dashboard API calls don't include auth header"
   missing:
@@ -474,8 +474,8 @@ gap:
 
 becomes:
 
-phase: "Add Auth to Dashboard API Calls"
-phaseData.gaps: [gap]
+chapter: "Add Auth to Dashboard API Calls"
+chapterData.gaps: [gap]
 tasks:
   - name: "Add auth header to fetches"
     files: [src/components/Dashboard.tsx, src/lib/api.ts]
@@ -499,20 +499,20 @@ gap:
 
 becomes:
 
-# Usually same phase as requirement/integration gap
+# Usually same chapter as requirement/integration gap
 # Flow gaps often overlap with other gap types
 ```
 
-</gap_to_phase_mapping>
+</gap_to_chapter_mapping>
 
 <success_criteria>
 - [ ] UAT concept loaded and gaps parsed
 - [ ] Requirements queried for prioritization
 - [ ] Gaps prioritized (must/should/nice)
-- [ ] Gaps grouped into logical phases
-- [ ] User confirmed phase plan
-- [ ] Roadmap concept updated with new phases
-- [ ] Phase concepts created in MegaMemory
+- [ ] Gaps grouped into logical chapters
+- [ ] User confirmed chapter plan
+- [ ] Roadmap concept updated with new chapters
+- [ ] Chapter concepts created in MegaMemory
 - [ ] State concept updated with gap closure status
-- [ ] User knows to run `/fuska-plan-phase` next
+- [ ] User knows to run `/fuska-plan-chapter` next
 </success_criteria>

@@ -14,9 +14,9 @@ Reference file for @continuation-format.md - Learn standard continuation prompt 
 continuation-format (pattern)
 ├── continuation-variant (pattern)
 │   ├── execute-next-plan (pattern)
-│   ├── final-plan-in-phase (pattern)
-│   ├── plan-a-phase (pattern)
-│   ├── phase-complete (pattern)
+│   ├── final-plan-in-chapter (pattern)
+│   ├── plan-a-chapter (pattern)
+│   ├── chapter-complete (pattern)
 │   ├── multiple-options (pattern)
 │   └── milestone-complete (pattern)
 ├── format-rule (pattern)
@@ -77,18 +77,18 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Execute Next Plan Variant",
   kind: "pattern",
-  summary: "Standard plan execution with phase/plan ID, description from PLAN.md, /fuska-execute-phase command",
-  why: "Standard format for executing plans within a phase",
+  summary: "Standard plan execution with chapter/plan ID, description from PLAN.md, /fuska-execute-chapter command",
+  why: "Standard format for executing plans within a chapter",
   parent_id: "continuation-variant",
   file_refs: ["@continuation-format.md:38-58"]
 });
 
 // Store final plan variant
 await megamemory.createConcept({
-  name: "Final Plan in Phase Variant",
+  name: "Final Plan in Chapter Variant",
   kind: "pattern",
-  summary: "Same as Execute Next Plan but adds '*Final plan in Phase N*' note and 'After this completes:' transition info",
-  why: "Prepares user for phase transition, reduces context shock",
+  summary: "Same as Execute Next Plan but adds '*Final plan in Chapter N*' note and 'After this completes:' transition info",
+  why: "Prepares user for chapter transition, reduces context shock",
   parent_id: "continuation-variant",
   file_refs: ["@continuation-format.md:60-83"]
 });
@@ -99,7 +99,7 @@ await megamemory.createConcept({
 ```typescript
 // Find correct variant for current state
 const variant = await megamemory.understand({
-  query: "continuation format for phase complete with 3/3 plans executed"
+  query: "continuation format for chapter complete with 3/3 plans executed"
 });
 
 // Get format validation rules
@@ -117,16 +117,16 @@ const rules = await megamemory.understand({
 ```typescript
 // Store context extraction patterns
 await megamemory.createConcept({
-  name: "Phase Context Extraction",
+  name: "Chapter Context Extraction",
   kind: "pattern",
-  summary: "Extract from ROADMAP.md: '### Phase N: {Name}' → '**Phase N: {Name}** — {Goal}'",
-  why: "Pulls accurate phase name and goal for continuation prompts",
+  summary: "Extract from ROADMAP.md: '### Chapter N: {Name}' → '**Chapter N: {Name}** — {Goal}'",
+  why: "Pulls accurate chapter name and goal for continuation prompts",
   file_refs: ["@continuation-format.md:182-188"],
   edges: [
     {
       to: "execute-next-plan-variant",
       relation: "calls",
-      description: "Provides context for phase-level continuations"
+      description: "Provides context for chapter-level continuations"
     }
   ]
 });
@@ -182,19 +182,19 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Continuation Variant Selection",
   kind: "decision",
-  summary: "Decision tree: Phase complete? → Phase complete variant. Final plan? → Final plan variant. Multiple equal options? → Multiple options variant. Else → Standard execute variant",
+  summary: "Decision tree: Chapter complete? → Chapter complete variant. Final plan? → Final plan variant. Multiple equal options? → Multiple options variant. Else → Standard execute variant",
   why: "Ensures appropriate continuation format for workflow state",
   file_refs: ["@continuation-format.md:137-158"],
   edges: [
     {
-      to: "phase-complete-variant",
+      to: "chapter-complete-variant",
       relation: "calls",
-      description: "When phase marked complete"
+      description: "When chapter marked complete"
     },
     {
-      to: "final-plan-in-phase-variant",
+      to: "final-plan-in-chapter-variant",
       relation: "calls",
-      description: "When executing last plan in phase"
+      description: "When executing last plan in chapter"
     },
     {
       to: "multiple-options-variant",
@@ -236,7 +236,7 @@ Standard format for presenting next steps after completing a command or workflow
 ## Format Rules
 
 1. **Always show what it is** — name + description, never just a command path
-2. **Pull context from source** — ROADMAP.md for phases, PLAN.md `<objective>` for plans
+2. **Pull context from source** — ROADMAP.md for chapters, PLAN.md `<objective>` for plans
 3. **Command in inline code** — backticks, easy to copy-paste, renders as clickable link
 4. **`/new` explanation** — always include, keeps it concise but explains why
 5. **"Also available" not "Other options"** — sounds more app-like
@@ -253,7 +253,7 @@ Standard format for presenting next steps after completing a command or workflow
 
 **02-03: Refresh Token Rotation** — Add /api/auth/refresh with sliding expiry
 
-`/fuska-execute-phase 2`
+`/fuska-execute-chapter 2`
 
 *`/new` first → fresh context window*
 
@@ -261,12 +261,12 @@ Standard format for presenting next steps after completing a command or workflow
 
 **Also available:**
 - Review plan before executing
-- `/fuska-list-phase-assumptions 2` — check assumptions
+- `/fuska-list-chapter-assumptions 2` — check assumptions
 
 ---
 ```
 
-### Execute Final Plan in Phase
+### Execute Final Plan in Chapter
 
 Add note that this is the last plan and what comes after:
 
@@ -276,69 +276,69 @@ Add note that this is the last plan and what comes after:
 ## > Next Up
 
 **02-03: Refresh Token Rotation** — Add /api/auth/refresh with sliding expiry
-*Final plan in Phase 2*
+*Final plan in Chapter 2*
 
-`/fuska-execute-phase 2`
+`/fuska-execute-chapter 2`
 
 *`/new` first → fresh context window*
 
 ---
 
 **After this completes:**
-- Phase 2 → Phase 3 transition
-- Next: **Phase 3: Core Features** — User dashboard and settings
+- Chapter 2 → Chapter 3 transition
+- Next: **Chapter 3: Core Features** — User dashboard and settings
 
 ---
 ```
 
-### Plan a Phase
+### Plan a Chapter
 
 ```
 ---
 
 ## > Next Up
 
-**Phase 2: Authentication** — JWT login flow with refresh tokens
+**Chapter 2: Authentication** — JWT login flow with refresh tokens
 
-`/fuska-plan-phase 2`
+`/fuska-plan-chapter 2`
 
 *`/new` first → fresh context window*
 
 ---
 
 **Also available:**
-- `/fuska-design-phase 2` — gather context first
-- `/fuska-research-phase 2` — investigate unknowns
+- `/fuska-design-chapter 2` — gather context first
+- `/fuska-research-chapter 2` — investigate unknowns
 - Review roadmap
 
 ---
 ```
 
-### Phase Complete, Ready for Next
+### Chapter Complete, Ready for Next
 
 Show completion status before next action:
 
 ```
 ---
 
-## [OK] Phase 2 Complete
+## [OK] Chapter 2 Complete
 
 3/3 plans executed
 
 ## > Next Up
 
-**Phase 3: Core Features** — User dashboard, settings, and data export
+**Chapter 3: Core Features** — User dashboard, settings, and data export
 
-`/fuska-plan-phase 3`
+`/fuska-plan-chapter 3`
 
 *`/new` first → fresh context window*
 
 ---
 
 **Also available:**
-- `/fuska-design-phase 3` — gather context first
-- `/fuska-research-phase 3` — investigate unknowns
-- Review what Phase 2 built
+- `/fuska-design-chapter 3` — gather context first
+- `/fuska-research-chapter 3` — investigate unknowns
+- Review what Chapter 2 built
 
 ---
 ```
@@ -352,13 +352,13 @@ When there's no clear primary action:
 
 ## > Next Up
 
-**Phase 3: Core Features** — User dashboard, settings, and data export
+**Chapter 3: Core Features** — User dashboard, settings, and data export
 
-**To plan directly:** `/fuska-plan-phase 3`
+**To plan directly:** `/fuska-plan-chapter 3`
 
-**To discuss context first:** `/fuska-design-phase 3`
+**To discuss context first:** `/fuska-design-chapter 3`
 
-**To research unknowns:** `/fuska-research-phase 3`
+**To research unknowns:** `/fuska-research-chapter 3`
 
 *`/new` first → fresh context window*
 
@@ -372,7 +372,7 @@ When there's no clear primary action:
 
 ## [DONE] Milestone v1.0 Complete
 
-All 4 phases shipped
+All 4 chapters shipped
 
 ## > Next Up
 
@@ -387,14 +387,14 @@ All 4 phases shipped
 
 ## Pulling Context
 
-### For phases (from ROADMAP.md):
+### For chapters (from ROADMAP.md):
 
 ```markdown
-### Phase 2: Authentication
+### Chapter 2: Authentication
 **Goal**: JWT login flow with refresh tokens
 ```
 
-Extract: `**Phase 2: Authentication** — JWT login flow with refresh tokens`
+Extract: `**Chapter 2: Authentication** — JWT login flow with refresh tokens`
 
 ### For plans (from ROADMAP.md):
 
@@ -423,7 +423,7 @@ Extract: `**02-03: Refresh Token Rotation** — Add /api/auth/refresh with slidi
 ## To Continue
 
 Run `/new`, then paste:
-/fuska-execute-phase 2
+/fuska-execute-chapter 2
 ```
 
 User has no idea what 02-03 is about.
@@ -431,7 +431,7 @@ User has no idea what 02-03 is about.
 ### Don't: Missing /new explanation
 
 ```
-`/fuska-plan-phase 3`
+`/fuska-plan-chapter 3`
 
 Run /new first.
 ```
@@ -451,7 +451,7 @@ Sounds like an afterthought. Use "Also available:" instead.
 
 ```
 ```
-/fuska-plan-phase 3
+/fuska-plan-chapter 3
 ```
 ```
 

@@ -1,5 +1,5 @@
 ---
-name: fuska-design-chapter
+name: fuska-design
 description: Gather chapter context through adaptive questioning before planning using MegaMemory
 argument-hint: "<chapter>"
 tools:

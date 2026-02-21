@@ -1,5 +1,5 @@
 <purpose>
-Execute a phase prompt (PLAN.md) and create the outcome summary (SUMMARY.md), storing all state in MegaMemory instead of .planning/ files.
+Execute a chapter prompt (PLAN.md) and create the outcome summary (SUMMARY.md), storing all state in MegaMemory instead of .planning/ files.
 </purpose>
 
 <required_reading>
@@ -74,7 +74,7 @@ megamemory:understand({query: "project state"})
 
 **If state concept exists:** Parse and internalize:
 
-- Current position (phase, plan, status) - from `summary` JSON
+- Current position (chapter, plan, status) - from `summary` JSON
 - Accumulated decisions (constraints on this execution) - from `summary.decisions` array
 - Blockers/concerns (things to watch for) - from `summary.blockers` array
 - Brief alignment status - from `summary.alignment`
@@ -84,7 +84,7 @@ megamemory:understand({query: "project state"})
 ```
 State concept missing but planning artifacts exist in MegaMemory.
 Options:
-1. Reconstruct from existing phase concepts
+1. Reconstruct from existing chapter concepts
 2. Continue without project state (may lose accumulated context)
 ```
 
@@ -103,23 +103,23 @@ Find the next plan to execute from MegaMemory:
 megamemory:understand({query: "roadmap"})
 ```
 
-Parse roadmap concept summary for phase structure. Look for:
-- Phase marked as "In progress" or first unstarted phase
-- Phase number and directory name
+Parse roadmap concept summary for chapter structure. Look for:
+- Chapter marked as "In progress" or first unstarted chapter
+- Chapter number and directory name
 
-2. **Query phase plans:**
+2. **Query chapter plans:**
 
 ```
-megamemory:understand({query: "phase {X} plans"})
+megamemory:understand({query: "chapter {X} plans"})
 ```
 
-This returns all plan concepts for the phase (filter concepts by kind="feature" and name matching pattern "{phase}-*-Plan").
+This returns all plan concepts for the chapter (filter concepts by kind="feature" and name matching pattern "{chapter}-*-Plan").
 
 3. **Identify next plan:**
 
 - Compare plan concepts vs summary concepts
 - Find first plan without corresponding summary
-- Pattern: Plan concept name = "{phase}-{plan}-Plan", Summary concept name = "{phase}-{plan}-Summary"
+- Pattern: Plan concept name = "{chapter}-{plan}-Plan", Summary concept name = "{chapter}-{plan}-Summary"
 
 **Logic:**
 
@@ -127,19 +127,19 @@ This returns all plan concepts for the phase (filter concepts by kind="feature" 
 - If "01-01-Summary" exists but "01-02-Summary" doesn't → execute 01-02
 - Pattern: Find first Plan concept without matching Summary concept
 
-**Decimal phase handling:**
+**Decimal chapter handling:**
 
-Phase directories can be integer or decimal format:
+Chapter directories can be integer or decimal format:
 
 - Integer: "01-foundation" → "01-01-Plan"
 - Decimal: "01.1-hotfix" → "01.1-01-Plan"
 
-Parse phase number from concept name (handles both formats):
+Parse chapter number from concept name (handles both formats):
 
 ```
-// Extract phase number (handles XX or XX.Y format)
+// Extract chapter number (handles XX or XX.Y format)
 const match = planConceptName.match(/^(\d+(\.\d+)?)-(\d+)-Plan$/);
-const phase = match[1];  // "01" or "01.1"
+const chapter = match[1];  // "01" or "01.1"
 const plan = match[3];   // "01"
 ```
 
@@ -151,7 +151,7 @@ Summary naming follows same pattern:
 **Parse plan details:**
 
 ```
-megamemory:understand({query: "phase {phase} plan {plan}"})
+megamemory:understand({query: "chapter {chapter} plan {plan}"})
 ```
 
 This returns the plan concept with all task details in its `summary` field as JSON.
@@ -160,8 +160,8 @@ Confirm with user if ambiguous.
 
 <if mode="yolo">
 ```
-[AUTO] Auto-approved: Execute {phase}-{plan}-Plan
-[Plan X of Y for Phase Z]
+[AUTO] Auto-approved: Execute {chapter}-{plan}-Plan
+[Plan X of Y for Chapter Z]
 
 Starting execution...
 ```
@@ -173,8 +173,8 @@ Proceed directly to parse_segments step.
 Present:
 
 ```
-Found plan to execute: {phase}-{plan}-Plan
-[Plan X of Y for Phase Z]
+Found plan to execute: {chapter}-{plan}-Plan
+[Plan X of Y for Chapter Z]
 
 Proceed with execution?
 ```
@@ -292,8 +292,8 @@ No segmentation benefit - execute entirely in main
    // Build new history entry
    const newEntry = {
      agent_id: "[agent_id from Task response]",
-     task_description: "Execute full plan {phase}-{plan} (autonomous)",
-     phase: "{phase}",
+     task_description: "Execute full plan {chapter}-{plan} (autonomous)",
+     chapter: "{chapter}",
      plan: "{plan}",
      segment: null,
      timestamp: "[current ISO timestamp]",
@@ -474,7 +474,7 @@ For Pattern A (fully autonomous) and Pattern C (decision-dependent), skip this s
 
 ```
 1. Parse plan concept to identify segments:
-   - Query plan concept: megamemory:understand({query: "phase {phase} plan {plan}"})
+   - Query plan concept: megamemory:understand({query: "chapter {chapter} plan {plan}"})
    - Parse summary JSON for tasks array
    - Find checkpoint locations: tasks with type="checkpoint"
    - Identify checkpoint types: extract checkpoint type field
@@ -499,7 +499,7 @@ For Pattern A (fully autonomous) and Pattern C (decision-dependent), skip this s
       Prompt: "Execute tasks [task numbers/names] from plan concept {plan-concept-id}.
 
       **Context:**
-      - Query MegaMemory for full plan details: megamemory:understand({query: "phase {phase} plan {plan}"})
+      - Query MegaMemory for full plan details: megamemory:understand({query: "chapter {chapter} plan {plan}"})
       - You are executing a SEGMENT of this plan (not the full plan)
       - Other segments will be executed separately
 
@@ -530,8 +530,8 @@ For Pattern A (fully autonomous) and Pattern C (decision-dependent), skip this s
       // Build new history entry
       const newEntry = {
         agent_id: "[agent_id from Task response]",
-        task_description: "Execute tasks [X-Y] from plan {phase}-{plan}",
-        phase: "{phase}",
+        task_description: "Execute tasks [X-Y] from plan {chapter}-{plan}",
+        chapter: "{chapter}",
         plan: "{plan}",
         segment: [segment_number],
         timestamp: "[current ISO timestamp]",
@@ -684,7 +684,7 @@ Committing...
 Query MegaMemory for the plan prompt details:
 
 ```
-megamemory:understand({query: "phase {phase} plan {plan}"})
+megamemory:understand({query: "chapter {chapter} plan {plan}"})
 ```
 
 Parse the plan concept's summary JSON - this IS the execution instructions. Follow it exactly.
@@ -693,27 +693,27 @@ Parse the plan concept's summary JSON - this IS the execution instructions. Foll
 Query for context concept:
 
 ```
-megamemory:understand({query: "phase {phase} context"})
+megamemory:understand({query: "chapter {chapter} context"})
 ```
 
-The context concept provides the user's vision for this phase — how they imagine it working, what's essential, and what's out of scope. Honor this context throughout execution.
+The context concept provides the user's vision for this chapter — how they imagine it working, what's essential, and what's out of scope. Honor this context throughout execution.
 </step>
 
-<step name="previous_phase_check">
-Before executing, check if previous phase had issues:
+<step name="previous_chapter_check">
+Before executing, check if previous chapter had issues:
 
 ```
-megamemory:understand({query: "previous phase summary"})
+megamemory:understand({query: "previous chapter summary"})
 ```
 
-If previous phase summary concept has "Issues Encountered" != "None" or "Next Phase Readiness" mentions blockers:
+If previous chapter summary concept has "Issues Encountered" != "None" or "Next Chapter Readiness" mentions blockers:
 
 Use question:
 
 - header: "Previous Issues"
-- question: "Previous phase had unresolved items: [summary]. How to proceed?"
+- question: "Previous chapter had unresolved items: [summary]. How to proceed?"
 - options:
-  - "Proceed anyway" - Issues won't block this phase
+  - "Proceed anyway" - Issues won't block this chapter
   - "Address first" - Let's resolve before continuing
   - "Review previous" - Show me the full summary
 </step>
@@ -1077,36 +1077,36 @@ If no test framework configured:
 - Install minimal test framework (Jest, pytest, Go testing, etc.)
 - Create test config file
 - Verify: run empty test suite
-- This is part of the RED phase, not a separate task
+- This is part of the RED chapter, not a separate task
 
 **2. RED - write failing test:**
 - read `<behavior>` element for test specification
 - Create test file if doesn't exist (follow project conventions)
 - write test(s) that describe expected behavior
 - Run tests - MUST fail (if passes, test is wrong or feature exists)
-- Commit: `test({phase}-{plan}): add failing test for [feature]`
+- Commit: `test({chapter}-{plan}): add failing test for [feature]`
 
 **3. GREEN - Implement to pass:**
 - read `<implementation>` element for guidance
 - write minimal code to make test pass
 - Run tests - MUST pass
-- Commit: `feat({phase}-{plan}): implement [feature]`
+- Commit: `feat({chapter}-{plan}): implement [feature]`
 
 **4. REFACTOR (if needed):**
 - Clean up code if obvious improvements
 - Run tests - MUST still pass
-- Commit only if changes made: `refactor({phase}-{plan}): clean up [feature]`
+- Commit only if changes made: `refactor({chapter}-{plan}): clean up [feature]`
 
 **Commit pattern for TDD plans:**
 Each TDD plan produces 2-3 atomic commits:
-1. `test({phase}-{plan}): add failing test for X`
-2. `feat({phase}-{plan}): implement X`
-3. `refactor({phase}-{plan}): clean up X` (optional)
+1. `test({chapter}-{plan}): add failing test for X`
+2. `feat({chapter}-{plan}): implement X`
+3. `refactor({chapter}-{plan}): clean up X` (optional)
 
 **Error handling:**
-- If test doesn't fail in RED phase: Test is wrong or feature already exists. Investigate before proceeding.
-- If test doesn't pass in GREEN phase: Debug implementation, keep iterating until green.
-- If tests fail in REFACTOR phase: Undo refactor, commit was premature.
+- If test doesn't fail in RED chapter: Test is wrong or feature already exists. Investigate before proceeding.
+- If test doesn't pass in GREEN chapter: Debug implementation, keep iterating until green.
+- If tests fail in REFACTOR chapter: Undo refactor, commit was premature.
 
 **Verification:**
 After TDD plan completion, ensure:
@@ -1126,7 +1126,7 @@ See `~/.config/opencode/get-shit-done/references/tdd.md` for TDD plan structure.
 <task_commit>
 ## Task Commit Protocol
 
-**Commit behavior depends on `git.commit_strategy` from the config concept.** Default: `per-phase`.
+**Commit behavior depends on `git.commit_strategy` from the config concept.** Default: `per-chapter`.
 
 ### After each task completes (verification passed, done criteria met):
 
@@ -1148,7 +1148,7 @@ git add src/types/user.ts
 **If `per-task`:** Commit immediately.
 
 ```bash
-git commit -m "{type}({phase}-{plan}): {concise task description}
+git commit -m "{type}({chapter}-{plan}): {concise task description}
 
 - {high-level change 1}
 - {high-level change 2}
@@ -1158,14 +1158,14 @@ git commit -m "{type}({phase}-{plan}): {concise task description}
 **If `per-plan`:** Do NOT commit. Files stay staged. Commit once after ALL tasks in this plan complete:
 
 ```bash
-git commit -m "{type}({phase}-{plan}): {plan objective summary}
+git commit -m "{type}({chapter}-{plan}): {plan objective summary}
 
 - {task 1}: {one-line summary}
 - {task 2}: {one-line summary}
 "
 ```
 
-**If `per-phase`:** Do NOT commit. Files stay staged. The execute-phase orchestrator commits when the entire phase completes.
+**If `per-chapter`:** Do NOT commit. Files stay staged. The execute-chapter orchestrator commits when the entire chapter completes.
 
 **Step 3. Record commit hash (per-task and per-plan only):**
 
@@ -1203,7 +1203,7 @@ feat(02-02): parse discounts from API response
 - Assign parsed discounts to User after construction
 ```
 
-**Note:** TDD plans have their own commit pattern (test/feat/refactor for RED/GREEN/REFACTOR phases). See `<tdd_plan_execution>` section above.
+**Note:** TDD plans have their own commit pattern (test/feat/refactor for RED/GREEN/REFACTOR chapters). See `<tdd_plan_execution>` section above.
 
 </task_commit>
 
@@ -1290,7 +1290,7 @@ See ~/.config/opencode/get-shit-done/references/checkpoints.md for complete chec
 </step>
 
 <step name="checkpoint_return_for_orchestrator">
-**When spawned by an orchestrator (execute-phase or execute-plan command):**
+**When spawned by an orchestrator (execute-chapter or execute-plan command):**
 
 If you were spawned via Task tool and hit a checkpoint, you cannot directly interact with the user. Instead, RETURN to the orchestrator with structured checkpoint state so it can present to the user and spawn a fresh continuation agent.
 
@@ -1403,10 +1403,10 @@ Create a USER-SETUP concept using template from `~/.config/opencode/get-shit-don
 
 ```javascript
 megamemory:create_concept({
-  name: "{phase}-USER-SETUP",
+  name: "{chapter}-USER-SETUP",
   kind: "config",
   summary: JSON.stringify({
-    phase: "{phase}",
+    chapter: "{chapter}",
     status: "Incomplete",
     services: [
       {
@@ -1425,7 +1425,7 @@ megamemory:create_concept({
     verification: ["stripe login", "stripe listen --forward-to localhost:3000/api/webhooks/stripe"]
   }),
   why: "Captures manual setup requirements for external services",
-  parent_id: "phase-{phase}-concept-id"
+  parent_id: "chapter-{chapter}-concept-id"
 })
 ```
 
@@ -1444,7 +1444,7 @@ megamemory:create_concept({
 
 ```json
 {
-  "phase": "10",
+  "chapter": "10",
   "status": "Incomplete",
   "services": [
     {
@@ -1483,16 +1483,16 @@ Use ~/.config/opencode/get-shit-done/templates/summary.md for structure referenc
 
 ```javascript
 megamemory:create_concept({
-  name: "{phase}-{plan}-Summary",
+  name: "{chapter}-{plan}-Summary",
   kind: "feature",
   summary: JSON.stringify({
-    phase: "{phase}",
+    chapter: "{chapter}",
     plan: "{plan}",
-    subsystem: "auth", // Categorize based on phase focus
+    subsystem: "auth", // Categorize based on chapter focus
     tags: ["jwt", "refresh-token", "jose"], // Extract tech keywords
-    requires: ["00-01-Summary"], // Prior phases this built upon
+    requires: ["00-01-Summary"], // Prior chapters this built upon
     provides: ["authentication", "token-management"], // What was delivered
-    affects: ["02-api"], // Future phases that might need this
+    affects: ["02-api"], // Future chapters that might need this
     tech_stack: {
       added: ["jose"], // New libraries
       patterns: ["refresh-token-rotation"] // Architectural patterns
@@ -1513,14 +1513,14 @@ megamemory:create_concept({
       {rule: "Rule 1", description: "Added token expiry validation", files: ["src/auth/jwt.ts"], commit: "abc123f"}
     ],
     issues_encountered: "None",
-    next_phase_readiness: "Complete - all authentication primitives ready",
-    next_step: "Ready for {phase}-{next-plan}-Plan"
+    next_chapter_readiness: "Complete - all authentication primitives ready",
+    next_step: "Ready for {chapter}-{next-plan}-Plan"
   }),
-  why: "Captures execution results and deliverables for plan {phase}-{plan}",
-  parent_id: "phase-{phase}-concept-id",
+  why: "Captures execution results and deliverables for plan {chapter}-{plan}",
+  parent_id: "chapter-{chapter}-concept-id",
   edges: [
     {to: "project-state-id", relation: "configured_by", description: "Updates project progress and position"},
-    {to: "phase-00-summary-id", relation: "depends_on", description: "Built on previous phase foundation"}
+    {to: "chapter-00-summary-id", relation: "depends_on", description: "Built on previous chapter foundation"}
   ],
   file_refs: ["src/auth/jwt.ts:1-50", "tests/auth.test.ts:10-30"]
 })
@@ -1531,15 +1531,15 @@ megamemory:create_concept({
 Populate summary JSON fields from execution context:
 
 1. **Basic identification:**
-   - phase: From plan concept summary
+   - chapter: From plan concept summary
    - plan: From plan concept summary
-   - subsystem: Categorize based on phase focus (auth, payments, ui, api, database, infra, testing, etc.)
+   - subsystem: Categorize based on chapter focus (auth, payments, ui, api, database, infra, testing, etc.)
    - tags: Extract tech keywords (libraries, frameworks, tools used)
 
 2. **Dependency graph:**
-   - requires: List prior phases this built upon (check plan concept edges or query for prior phase summaries)
+   - requires: List prior chapters this built upon (check plan concept edges or query for prior chapter summaries)
    - provides: Extract from accomplishments - what was delivered
-   - affects: Infer from phase description/goal what future phases might need this
+   - affects: Infer from chapter description/goal what future chapters might need this
 
 3. **Tech tracking:**
    - tech-stack.added: New libraries from package.json changes or requirements
@@ -1552,9 +1552,9 @@ Populate summary JSON fields from execution context:
  5. **Decisions:**
     - key-decisions: Extract from "Decisions Made" section
 
- Note: If subsystem/affects are unclear, use best judgment based on phase name and accomplishments. Can be refined later.
+ Note: If subsystem/affects are unclear, use best judgment based on chapter name and accomplishments. Can be refined later.
 
-**Title format:** `# Phase [X] Plan [Y]: [Name] Summary`
+**Title format:** `# Chapter [X] Plan [Y]: [Name] Summary`
 
 The one-liner must be SUBSTANTIVE:
 
@@ -1563,8 +1563,8 @@ The one-liner must be SUBSTANTIVE:
 
 **Next Step section:**
 
-- If more plans exist in this phase: "Ready for {phase}-{next-plan}-Plan"
-- If this is the last plan: "Phase complete, ready for transition"
+- If more plans exist in this chapter: "Ready for {chapter}-{next-plan}-Plan"
+- If this is the last plan: "Chapter complete, ready for transition"
   </step>
 
 <step name="update_current_position">
@@ -1585,11 +1585,11 @@ megamemory:update_concept({
     summary: JSON.stringify({
       // Keep existing fields (decisions, blockers, alignment)
       // Update only position fields:
-      current_phase: "{current}", // X of total
-      current_phase_name: "{phase name}",
+      current_chapter: "{current}", // X of total
+      current_chapter_name: "{chapter name}",
       current_plan: "{just completed}",
-      current_plan_of_total: "{N} of {total in current phase}",
-      status: "In progress", // or "Phase complete"
+      current_plan_of_total: "{N} of {total in current chapter}",
+      status: "In progress", // or "Chapter complete"
       progress_percent: {calculate percentage}
       // Keep decisions, blockers, alignment arrays from existing state
     })
@@ -1599,7 +1599,7 @@ megamemory:update_concept({
 
 **Calculate progress bar:**
 
-- Query all phase concepts and count total plans
+- Query all chapter concepts and count total plans
 - Query all summary concepts and count completed plans
 - Progress = (completed / total) × 100%
 - Render: ░ for incomplete, █ for complete
@@ -1610,8 +1610,8 @@ Before state:
 
 ```json
 {
-  "current_phase": "2",
-  "current_phase_name": "Authentication",
+  "current_chapter": "2",
+  "current_chapter_name": "Authentication",
   "current_plan": "0",
   "current_plan_of_total": "0 of 2",
   "status": "Ready to execute",
@@ -1627,8 +1627,8 @@ After state:
 
 ```json
 {
-  "current_phase": "2",
-  "current_phase_name": "Authentication",
+  "current_chapter": "2",
+  "current_chapter_name": "Authentication",
   "current_plan": "1",
   "current_plan_of_total": "1 of 2",
   "status": "In progress",
@@ -1642,9 +1642,9 @@ After state:
 
 **Step complete when:**
 
-- [ ] Phase number shows current phase (X of total)
-- [ ] Plan number shows plans complete in current phase (N of total-in-phase)
-- [ ] Status reflects current state (In progress / Phase complete)
+- [ ] Chapter number shows current chapter (X of total)
+- [ ] Plan number shows plans complete in current chapter (N of total-in-chapter)
+- [ ] Status reflects current state (In progress / Chapter complete)
 - [ ] Progress bar calculated correctly from total completed plans
       </step>
 
@@ -1654,7 +1654,7 @@ Extract decisions, issues, and concerns from Summary concept into project state 
 **Query summary concept:**
 
 ```
-megamemory:understand({query: "phase {phase} plan {plan} summary"})
+megamemory:understand({query: "chapter {chapter} plan {plan} summary"})
 ```
 
 Parse summary concept summary JSON.
@@ -1669,7 +1669,7 @@ Parse summary concept summary JSON.
 
 **Blockers/Concerns:**
 
-- Extract from summary JSON: `next_phase_readiness` field
+- Extract from summary JSON: `next_chapter_readiness` field
 - If contains blockers or concerns:
   - Add to state's `blockers` array
   - Update state via megamemory:update_concept
@@ -1691,7 +1691,7 @@ megamemory:update_concept({
     summary: JSON.stringify({
       ...stateData,
       last_session: new Date().toISOString(),
-      stopped_at: "Completed {phase}-{plan}-Plan",
+      stopped_at: "Completed {chapter}-{plan}-Plan",
       resume_file: "None" // MegaMemory always tracks state, no resume file needed
     })
   }
@@ -1705,7 +1705,7 @@ megamemory:update_concept({
 Before proceeding, query Summary concept content.
 
 ```
-megamemory:understand({query: "phase {phase} plan {plan} summary"})
+megamemory:understand({query: "chapter {chapter} plan {plan} summary"})
 ```
 
 Parse summary JSON for `issues_encountered` field.
@@ -1744,11 +1744,11 @@ megamemory:update_concept({
   changes: {
     summary: JSON.stringify({
       // ... keep existing roadmap structure
-      phases: [
-        // ... update phase completion status
+      chapters: [
+        // ... update chapter completion status
         {
-          number: "{phase}",
-          name: "{phase name}",
+          number: "{chapter}",
+          name: "{chapter name}",
           status: "In progress", // or "Complete"
           plans_complete: "{N} of {total}"
         }
@@ -1759,14 +1759,14 @@ megamemory:update_concept({
 })
 ```
 
-**If more plans remain in this phase:**
+**If more plans remain in this chapter:**
 
 - Update plan count: "2/3 plans complete"
-- Keep phase status as "In progress"
+- Keep chapter status as "In progress"
 
-**If this was the last plan in the phase:**
+**If this was the last plan in the chapter:**
 
-- Mark phase complete: status → "Complete"
+- Mark chapter complete: status → "Complete"
 - Add completion date
 </step>
 
@@ -1778,7 +1778,7 @@ All planning state is in MegaMemory — no metadata commits needed.
 **If `per-plan`:** All tasks staged their files without committing. Now commit everything:
 
 ```bash
-git commit -m "{type}({phase}-{plan}): {plan objective summary}
+git commit -m "{type}({chapter}-{plan}): {plan objective summary}
 
 - {task 1}: {one-line summary}
 - {task 2}: {one-line summary}
@@ -1787,7 +1787,7 @@ git commit -m "{type}({phase}-{plan}): {plan objective summary}
 
 **If `per-task`:** All tasks already committed individually. Nothing to do here.
 
-**If `per-phase`:** Do NOT commit. Files stay staged for the execute-phase orchestrator.
+**If `per-chapter`:** Do NOT commit. Files stay staged for the execute-chapter orchestrator.
 
 **Commit message rules:** Max 2-4 bullets. Never list implementation details. See `git-integration.md` commit_message_rules.
 </step>
@@ -1803,7 +1803,7 @@ Check what changed across all task commits in this plan:
 
 ```bash
 # Find first task commit (right after previous plan's docs commit)
-FIRST_TASK=$(git log --oneline --grep="feat({phase}-{plan}):" --grep="fix({phase}-{plan}):" --grep="test({phase}-{plan}):" --reverse | head -1 | cut -d' ' -f1)
+FIRST_TASK=$(git log --oneline --grep="feat({chapter}-{plan}):" --grep="fix({chapter}-{plan}):" --grep="test({chapter}-{plan}):" --reverse | head -1 | cut -d' ' -f1)
 
 # Get all changes from first task through now
 git diff --name-only ${FIRST_TASK}^..HEAD 2>/dev/null
@@ -1838,7 +1838,7 @@ Skip this step.
 <step name="offer_next">
 **MANDATORY: Verify remaining work before presenting next steps.**
 
-Do NOT skip this verification. Do NOT assume phase or milestone completion without checking.
+Do NOT skip this verification. Do NOT assume chapter or milestone completion without checking.
 
 **Step 0: Check for USER-SETUP concept**
 
@@ -1847,11 +1847,11 @@ If `USER_SETUP_CREATED=true` (from generate_user_setup step), always include thi
 ```
 [WARN] USER SETUP REQUIRED
 
-This phase introduced external services requiring manual configuration:
+This chapter introduced external services requiring manual configuration:
 
-[TODO] USER-SETUP concept: {phase}-USER-SETUP
+[TODO] USER-SETUP concept: {chapter}-USER-SETUP
 
-Query: megamemory:understand({query: "phase {phase} user setup"})
+Query: megamemory:understand({query: "chapter {chapter} user setup"})
 
 Quick view:
 - [ ] {ENV_VAR_1}
@@ -1863,19 +1863,19 @@ Complete this setup for the integration to function.
 
 This warning appears BEFORE "Plan complete" messaging. User sees setup requirements prominently.
 
-**Step 1: Count plans and summaries in current phase**
+**Step 1: Count plans and summaries in current chapter**
 
-Query MegaMemory for phase concepts:
+Query MegaMemory for chapter concepts:
 
 ```
-megamemory:understand({query: "phase {phase} plans"})
+megamemory:understand({query: "chapter {chapter} plans"})
 ```
 
 Count plan concepts vs summary concepts:
-- Filter concepts by kind="feature" and name pattern "{phase}-*-Plan" → plan count
-- Filter concepts by kind="feature" and name pattern "{phase}-*-Summary" → summary count
+- Filter concepts by kind="feature" and name pattern "{chapter}-*-Plan" → plan count
+- Filter concepts by kind="feature" and name pattern "{chapter}-*-Summary" → summary count
 
-State the counts: "This phase has [X] plan concepts and [Y] summary concepts."
+State the counts: "This chapter has [X] plan concepts and [Y] summary concepts."
 
 **Step 2: Route based on plan completion**
 
@@ -1884,24 +1884,24 @@ Compare the counts from Step 1:
 | Condition | Meaning | Action |
 |-----------|---------|--------|
 | summaries < plans | More plans remain | Go to **Route A** |
-| summaries = plans | Phase complete | Go to Step 3 |
+| summaries = plans | Chapter complete | Go to Step 3 |
 
 ---
 
-**Route A: More plans remain in this phase**
+**Route A: More plans remain in this chapter**
 
 Identify the next unexecuted plan:
 - Find the first Plan concept that has no matching Summary concept
-- Query plan concept: megamemory:understand({query: "phase {phase} plan {next_plan}"})
+- Query plan concept: megamemory:understand({query: "chapter {chapter} plan {next_plan}"})
 
 <if mode="yolo">
 ```
-Plan {phase}-{plan} complete.
-Summary concept: {phase}-{plan}-Summary
+Plan {chapter}-{plan} complete.
+Summary concept: {chapter}-{plan}-Summary
 
-{Y} of {X} plan concepts complete for Phase {Z}.
+{Y} of {X} plan concepts complete for Chapter {Z}.
 
-[AUTO] Auto-continuing: Execute next plan ({phase}-{next_plan})
+[AUTO] Auto-continuing: Execute next plan ({chapter}-{next_plan})
 ```
 
 Loop back to identify_plan step automatically.
@@ -1909,25 +1909,25 @@ Loop back to identify_plan step automatically.
 
 <if mode="interactive" OR="custom with gates.execute_next_plan true">
 ```
-Plan {phase}-{plan} complete.
-Summary concept: {phase}-{plan}-Summary
+Plan {chapter}-{plan} complete.
+Summary concept: {chapter}-{plan}-Summary
 
-{Y} of {X} plan concepts complete for Phase {Z}.
+{Y} of {X} plan concepts complete for Chapter {Z}.
 
 ---
 
 ## > Next Up
 
-**{phase}-{next_plan}: [Plan Name]** — [objective from plan concept]
+**{chapter}-{next_plan}: [Plan Name]** — [objective from plan concept]
 
-`/fuska-execute-phase {phase}`
+`/fuska-execute-chapter {chapter}`
 
 *`/new` first → fresh context window*
 
 ---
 
 **Also available:**
-- `/fuska-verify-work {phase}-{plan}` — manual acceptance testing before continuing
+- `/fuska-verify-work {chapter}-{plan}` — manual acceptance testing before continuing
 - Review what was built before continuing
 
 ---
@@ -1940,7 +1940,7 @@ Wait for user to clear and run next command.
 
 ---
 
-**Step 3: Check milestone status (only when all plans in phase are complete)**
+**Step 3: Check milestone status (only when all plans in chapter are complete)**
 
 Query roadmap concept:
 
@@ -1949,31 +1949,31 @@ megamemory:understand({query: "roadmap"})
 ```
 
 Parse roadmap summary JSON and extract:
-1. Current phase number (from the plan just completed)
-2. All phase numbers listed in the current milestone section
+1. Current chapter number (from the plan just completed)
+2. All chapter numbers listed in the current milestone section
 
-Count total phases in the current milestone and identify the highest phase number.
+Count total chapters in the current milestone and identify the highest chapter number.
 
-State: "Current phase is {X}. Milestone has {N} phases (highest: {Y})."
+State: "Current chapter is {X}. Milestone has {N} chapters (highest: {Y})."
 
 **Step 4: Route based on milestone status**
 
 | Condition | Meaning | Action |
 |-----------|---------|--------|
-| current phase < highest phase | More phases remain | Go to **Route B** |
-| current phase = highest phase | Milestone complete | Go to **Route C** |
+| current chapter < highest chapter | More chapters remain | Go to **Route B** |
+| current chapter = highest chapter | Milestone complete | Go to **Route C** |
 
 ---
 
-**Route B: Phase complete, more phases remain in milestone**
+**Route B: Chapter complete, more chapters remain in milestone**
 
-Query roadmap concept to get the next phase's name and goal.
+Query roadmap concept to get the next chapter's name and goal.
 
 ```
-Plan {phase}-{plan} complete.
-Summary concept: {phase}-{plan}-Summary
+Plan {chapter}-{plan} complete.
+Summary concept: {chapter}-{plan}-Summary
 
-## [OK] Phase {Z}: {Phase Name} Complete
+## [OK] Chapter {Z}: {Chapter Name} Complete
 
 All {Y} plans finished.
 
@@ -1981,9 +1981,9 @@ All {Y} plans finished.
 
 ## > Next Up
 
-**Phase {Z+1}: {Next Phase Name}** — {Goal from roadmap}
+**Chapter {Z+1}: {Next Chapter Name}** — {Goal from roadmap}
 
-`/fuska-plan-phase {Z+1}`
+`/fuska-plan-chapter {Z+1}`
 
 *`/new` first → fresh context window*
 
@@ -1991,28 +1991,28 @@ All {Y} plans finished.
 
 **Also available:**
 - `/fuska-verify-work {Z}` — manual acceptance testing before continuing
-- `/fuska-discuss-phase {Z+1}` — gather context first
-- Review phase accomplishments before continuing
+- `/fuska-discuss-chapter {Z+1}` — gather context first
+- Review chapter accomplishments before continuing
 
 ---
 ```
 
 ---
 
-**Route C: Milestone complete (all phases done)**
+**Route C: Milestone complete (all chapters done)**
 
 ```
 [DONE] MILESTONE COMPLETE!
 
-Plan {phase}-{plan} complete.
-Summary concept: {phase}-{plan}-Summary
+Plan {chapter}-{plan} complete.
+Summary concept: {chapter}-{plan}-Summary
 
-## [OK] Phase {Z}: {Phase Name} Complete
+## [OK] Chapter {Z}: {Chapter Name} Complete
 
 All {Y} plans finished.
 
 ╔═══════════════════════════════════════════════════════╗
-║  All {N} phases complete! Milestone is 100% done.     ║
+║  All {N} chapters complete! Milestone is 100% done.     ║
 ╚═══════════════════════════════════════════════════════╝
 
 ---
@@ -2029,7 +2029,7 @@ All {Y} plans finished.
 
 **Also available:**
 - `/fuska-verify-work` — manual acceptance testing before completing milestone
-- `/fuska-add-phase <description>` — add another phase before completing
+- `/fuska-add-chapter <description>` — add another chapter before completing
 - Review accomplishments before archiving
 
 ---

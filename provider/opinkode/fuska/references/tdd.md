@@ -40,13 +40,13 @@ interface TDDPatternConcept {
 }
 ```
 
-**3. `tdd:phase-record`**
+**3. `tdd:chapter-record`**
 ```typescript
-interface TDDPhaseRecordConcept {
+interface TDDChapterRecordConcept {
   kind: "component";
-  name: string;  // "tdd:08-02-red-phase", "tdd:08-02-green-phase"
+  name: string;  // "tdd:08-02-red-chapter", "tdd:08-02-green-chapter"
   summary: string;
-  phase: "RED" | "GREEN" | "REFACTOR";
+  chapter: "RED" | "GREEN" | "REFACTOR";
   plan_id: string;  // Reference to tdd:feature-plan
   test_written: string;  // Test description
   implementation: string;  // Code that made test pass
@@ -76,8 +76,8 @@ interface TDDFrameworkConfigConcept {
 All TDD concepts must:
 - Define `why` rationale (design benefit of using TDD)
 - Include concrete file references with line ranges
-- Link phases to parent plan via `plan_id`
-- Track commit hashes for each phase
+- Link chapters to parent plan via `plan_id`
+- Track commit hashes for each chapter
 - Provide executable verification commands
 </megamemory_schema>
 
@@ -123,18 +123,18 @@ const patternGuidance = await megamemory_understand({
   query: "TDD red-green-refactor cycle execution steps",
   top_k: 5
 });
-// Returns pattern with phases, commit patterns, error handling
+// Returns pattern with chapters, commit patterns, error handling
 ```
 
-### 2. Recording TDD Phases
+### 2. Recording TDD Chapters
 
 ```typescript
-// RED Phase: Write failing test
-const redPhase = await megamemory_create_concept({
-  name: "tdd:08-02-red-phase",
+// RED Chapter: Write failing test
+const redChapter = await megamemory_create_concept({
+  name: "tdd:08-02-red-chapter",
   kind: "component",
-  summary: "RED phase for email validation. Test written: should accept valid email formats (user@domain.com, user.name@domain.co.uk), should reject invalid formats (no @, no domain), should reject empty/null input. Test fails because validateEmail function not yet implemented.",
-  phase: "RED",
+  summary: "RED chapter for email validation. Test written: should accept valid email formats (user@domain.com, user.name@domain.co.uk), should reject invalid formats (no @, no domain), should reject empty/null input. Test fails because validateEmail function not yet implemented.",
+  chapter: "RED",
   plan_id: "tdd:08-02-email-validation",
   test_written: "describe('emailValidator', () => {\n  it('should accept valid email formats', () => {\n    expect(validateEmail('user@domain.com')).toBe(true);\n    expect(validateEmail('user.name@domain.co.uk')).toBe(true);\n  });\n  \n  it('should reject invalid formats', () => {\n    expect(validateEmail('invalid')).toBe(false);\n    expect(validateEmail('no@symbol')).toBe(false);\n  });\n  \n  it('should reject empty and null input', () => {\n    expect(validateEmail('')).toBe(false);\n    expect(validateEmail(null)).toBe(false);\n  });\n});",
   implementation: "None - test fails as expected",
@@ -147,18 +147,18 @@ const redPhase = await megamemory_create_concept({
   edges: [{
     to: "tdd:08-02-email-validation",
     relation: "implements",
-    description: "RED phase of email validation TDD plan"
+    description: "RED chapter of email validation TDD plan"
   }]
 });
 
-// GREEN Phase: Implement to pass
-const greenPhase = await megamemory_create_concept({
-  name: "tdd:08-02-green-phase",
+// GREEN Chapter: Implement to pass
+const greenChapter = await megamemory_create_concept({
+  name: "tdd:08-02-green-chapter",
   kind: "component",
-  summary: "GREEN phase for email validation. Implementation: RFC 5322 regex pattern. Function handles string input, trims whitespace, returns boolean for validity. Tests pass: valid formats accepted, invalid rejected, empty/null handled correctly.",
-  phase: "GREEN",
+  summary: "GREEN chapter for email validation. Implementation: RFC 5322 regex pattern. Function handles string input, trims whitespace, returns boolean for validity. Tests pass: valid formats accepted, invalid rejected, empty/null handled correctly.",
+  chapter: "GREEN",
   plan_id: "tdd:08-02-email-validation",
-  test_written: "Same as RED phase - tests verified passing",
+  test_written: "Same as RED chapter - tests verified passing",
   implementation: "export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;\n\nexport const validateEmail = (email: string | null): boolean => {\n  if (!email || email.trim() === '') return false;\n  return EMAIL_REGEX.test(email.trim());\n};",
   refactor_notes: "",
   commit_hash: "def456ghi789",
@@ -170,16 +170,16 @@ const greenPhase = await megamemory_create_concept({
   edges: [{
     to: "tdd:08-02-email-validation",
     relation: "implements",
-    description: "GREEN phase of email validation TDD plan"
+    description: "GREEN chapter of email validation TDD plan"
   }]
 });
 
-// REFACTOR Phase (optional)
-const refactorPhase = await megamemory_create_concept({
-  name: "tdd:08-02-refactor-phase",
+// REFACTOR Chapter (optional)
+const refactorChapter = await megamemory_create_concept({
+  name: "tdd:08-02-refactor-chapter",
   kind: "component",
-  summary: "REFACTOR phase for email validation. Extracted EMAIL_REGEX to named export constant for reusability and testability. No behavior changes. Tests still pass.",
-  phase: "REFACTOR",
+  summary: "REFACTOR chapter for email validation. Extracted EMAIL_REGEX to named export constant for reusability and testability. No behavior changes. Tests still pass.",
+  chapter: "REFACTOR",
   plan_id: "tdd:08-02-email-validation",
   test_written: "",
   implementation: "Refactored: moved regex pattern to EMAIL_REGEX constant at module level. Improved testability by making pattern exportable.",
@@ -190,29 +190,29 @@ const refactorPhase = await megamemory_create_concept({
     ".git/refs/heads/main"
   ],
   edges: [{
-    to: "tdd:08-02-green-phase",
+    to: "tdd:08-02-green-chapter",
     relation: "calls",
-    description: "REFACTOR phase after GREEN phase"
+    description: "REFACTOR chapter after GREEN chapter"
   }]
 });
 ```
 
-### 3. Linking Phases and Patterns
+### 3. Linking Chapters and Patterns
 
 ```typescript
-// Link all phases to parent plan
+// Link all chapters to parent plan
 await megamemory_link({
-  from: "tdd:08-02-red-phase",
+  from: "tdd:08-02-red-chapter",
   to: "tdd:08-02-email-validation",
   relation: "implements",
-  description: "RED phase is first phase of email validation TDD plan"
+  description: "RED chapter is first chapter of email validation TDD plan"
 });
 
 await megamemory_link({
-  from: "tdd:08-02-green-phase",
-  to: "tdd:08-02-red-phase",
+  from: "tdd:08-02-green-chapter",
+  to: "tdd:08-02-red-chapter",
   relation: "calls",
-  description: "GREEN phase follows RED phase"
+  description: "GREEN chapter follows RED chapter"
 });
 
 // Link pattern to plan
@@ -298,20 +298,20 @@ await megamemory_create_concept({
 ### 7. Querying Execution History
 
 ```typescript
-// Query all TDD phases for a plan
+// Query all TDD chapters for a plan
 const planHistory = await megamemory_understand({
-  query: "all phases for tdd:08-02-email-validation with commits and test results"
+  query: "all chapters for tdd:08-02-email-validation with commits and test results"
 });
 // Returns:
-// - tdd:08-02-red-phase (commit abc123, test written)
-// - tdd:08-02-green-phase (commit def456, implementation)
-// - tdd:08-02-refactor-phase (commit ghi789, refactor notes)
+// - tdd:08-02-red-chapter (commit abc123, test written)
+// - tdd:08-02-green-chapter (commit def456, implementation)
+// - tdd:08-02-refactor-chapter (commit ghi789, refactor notes)
 
 // Query all completed TDD features
 const completedFeatures = await megamemory_understand({
-  query: "all completed TDD features with green phase and passing tests"
+  query: "all completed TDD features with green chapter and passing tests"
 });
-// Returns list of tdd:feature-plan concepts where GREEN phase exists
+// Returns list of tdd:feature-plan concepts where GREEN chapter exists
 
 // Query test patterns
 const testPatterns = await megamemory_understand({
@@ -351,7 +351,7 @@ const emailValidationPlan = await megamemory_create_concept({
   verification: "npm test -- emailValidator.test.ts"
 });
 
-// Step 3: Execute RED phase
+// Step 3: Execute RED chapter
 await bash({ command: "npm install -D jest @types/jest ts-jest", description: "Install Jest" });
 await write({
   filePath: "src/utils/emailValidator.test.ts",
@@ -359,11 +359,11 @@ await write({
 });
 await bash({ command: "npm test -- emailValidator.test.ts", description: "Run test - should fail" });
 
-const redPhase = await megamemory_create_concept({
-  name: "tdd:08-02-red-phase",
+const redChapter = await megamemory_create_concept({
+  name: "tdd:08-02-red-chapter",
   kind: "component",
   summary: "RED: Test written for email validation. Test fails as expected - validateEmail returns true for all input.",
-  phase: "RED",
+  chapter: "RED",
   plan_id: "tdd:08-02-email-validation",
   test_written: "Tests for valid/invalid email formats",
   implementation: "None - deliberate failure",
@@ -373,21 +373,21 @@ const redPhase = await megamemory_create_concept({
 
 await bash({
   command: "git add src/utils/emailValidator.test.ts && git commit -m 'test(08-02): add failing test for email validation'",
-  description: "Commit RED phase"
+  description: "Commit RED chapter"
 });
 
-// Step 4: Execute GREEN phase
+// Step 4: Execute GREEN chapter
 await write({
   filePath: "src/utils/emailValidator.ts",
   content: "export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;\n\nexport const validateEmail = (email: string | null): boolean => {\n  if (!email || email.trim() === '') return false;\n  return EMAIL_REGEX.test(email.trim());\n};"
 });
 await bash({ command: "npm test -- emailValidator.test.ts", description: "Run test - should pass" });
 
-const greenPhase = await megamemory_create_concept({
-  name: "tdd:08-02-green-phase",
+const greenChapter = await megamemory_create_concept({
+  name: "tdd:08-02-green-chapter",
   kind: "component",
   summary: "GREEN: Implementation passes all tests. RFC 5322 regex validates email format. Handles empty/null correctly.",
-  phase: "GREEN",
+  chapter: "GREEN",
   plan_id: "tdd:08-02-email-validation",
   implementation: "Regex pattern with trim and null check",
   commit_hash: (await bash({ command: "git rev-parse HEAD", description: "Get commit hash" })).output.trim(),
@@ -396,13 +396,13 @@ const greenPhase = await megamemory_create_concept({
 
 await bash({
   command: "git add src/utils/emailValidator.ts && git commit -m 'feat(08-02): implement email validation'",
-  description: "Commit GREEN phase"
+  description: "Commit GREEN chapter"
 });
 
 // Step 5: Optionally refactor
 await megamemory_link({
-  from: "tdd:08-02-green-phase",
-  to: "tdd:08-02-red-phase",
+  from: "tdd:08-02-green-chapter",
+  to: "tdd:08-02-red-chapter",
   relation: "calls",
   description: "GREEN follows RED"
 });
@@ -476,12 +476,12 @@ const similarTDD = await megamemory_understand({
 
 // Agent can learn patterns from these:
 const emailValidation = await megamemory_understand({
-  query: "tdd:08-02-email-validation full details with phases and commits"
+  query: "tdd:08-02-email-validation full details with chapters and commits"
 });
 
-// Learn from RED phase: how test was structured
-// Learn from GREEN phase: minimal implementation approach
-// Learn from REFACTOR phase: what cleanup was done
+// Learn from RED chapter: how test was structured
+// Learn from GREEN chapter: minimal implementation approach
+// Learn from REFACTOR chapter: what cleanup was done
 
 // Apply patterns to new validation feature
 const newValidationPlan = await megamemory_create_concept({
@@ -529,7 +529,7 @@ const qualityGuidance = await megamemory_understand({
 // - tdd:pattern:descriptive-test-names
 // - tdd:pattern:no-implementation-details
 
-// Agent applies guidance when writing RED phase test
+// Agent applies guidance when writing RED chapter test
 const testContent = `
 describe('userAuth', () => {
   it('should return user object for valid credentials', () => {  // Descriptive name
@@ -590,20 +590,20 @@ await megamemory_create_concept({
 const existingFramework = await megamemory_understand({
   query: "test framework configuration for current project"
 });
-// Returns tdd:framework:jest-project-xyz, skipping setup phase
+// Returns tdd:framework:jest-project-xyz, skipping setup chapter
 ```
 
 ## Example 6: Error Handling and Recovery
 
 ```typescript
-// RED phase test doesn't fail - what happened?
+// RED chapter test doesn't fail - what happened?
 try {
   await bash({ command: "npm test -- emailValidator.test.ts", description: "Run test" });
 } catch (error) {
   if (error.message.includes("All tests passed")) {
     // Test should have failed but passed
     const errorPattern = await megamemory_understand({
-      query: "TDD error handling: test doesn't fail in RED phase"
+      query: "TDD error handling: test doesn't fail in RED chapter"
     });
 
     // Returns guidance:
@@ -613,12 +613,12 @@ try {
 
     // Record error analysis
     await megamemory_create_concept({
-      name: "tdd:error:08-02-red-phase-passed",
+      name: "tdd:error:08-02-red-chapter-passed",
       kind: "component",
-      summary: "ERROR: RED phase test passed unexpectedly. Likely cause: validateEmail function already exists in codebase. Action: Investigate existing implementation, update test to cover missing behavior or delete TDD plan if feature exists.",
-      why: "RED phase must fail - if test passes, TDD cycle breaks. Record errors to learn from and avoid repetition.",
+      summary: "ERROR: RED chapter test passed unexpectedly. Likely cause: validateEmail function already exists in codebase. Action: Investigate existing implementation, update test to cover missing behavior or delete TDD plan if feature exists.",
+      why: "RED chapter must fail - if test passes, TDD cycle breaks. Record errors to learn from and avoid repetition.",
       file_refs: ["get-shit-done-mm/references/tdd.md:188-210"],
-      error_type: "red_phase_passed",
+      error_type: "red_chapter_passed",
       resolution: "Check if validateEmail exists, update test or cancel TDD plan"
     });
 
@@ -651,7 +651,7 @@ try {
 const tddContextPattern = await megamemory_create_concept({
   name: "tdd:pattern:context-budget-40-percent",
   kind: "pattern",
-  summary: "TDD plans target ~40% context usage (lower than standard ~50%). Reason: RED phase (write test, run, debug if doesn't fail), GREEN phase (implement, run, iterate on failures), REFACTOR phase (modify, run, verify no regressions). Each phase involves reading files, running commands, analyzing output. Back-and-forth is inherently heavier than linear task execution.",
+  summary: "TDD plans target ~40% context usage (lower than standard ~50%). Reason: RED chapter (write test, run, debug if doesn't fail), GREEN chapter (implement, run, iterate on failures), REFACTOR chapter (modify, run, verify no regressions). Each chapter involves reading files, running commands, analyzing output. Back-and-forth is inherently heavier than linear task execution.",
   why: "Context awareness prevents over-batching TDD features. Single feature per plan ensures full quality throughout cycle, even with heavier execution.",
   file_refs: ["get-shit-done-mm/references/tdd.md:250-264"],
   examples: [
@@ -688,24 +688,24 @@ const singleFeaturePlan = await megamemory_create_concept({
 ```typescript
 // Get overview of all TDD work
 const tddOverview = await megamemory.understand({
-  query: "all TDD plans and phases in current initiative",
+  query: "all TDD plans and chapters in current initiative",
   top_k: 50
 });
 
 // Returns tree structure:
 // tdd:08-02-email-validation
-//   ├─ tdd:08-02-red-phase (commit abc123)
-//   ├─ tdd:08-02-green-phase (commit def456)
-//   └─ tdd:08-02-refactor-phase (commit ghi789)
+//   ├─ tdd:08-02-red-chapter (commit abc123)
+//   ├─ tdd:08-02-green-chapter (commit def456)
+//   └─ tdd:08-02-refactor-chapter (commit ghi789)
 // tdd:08-03-phone-validation
-//   ├─ tdd:08-03-red-phase (commit jkl012)
-//   └─ tdd:08-03-green-phase (commit mno345)
+//   ├─ tdd:08-03-red-chapter (commit jkl012)
+//   └─ tdd:08-03-green-chapter (commit mno345)
 
-// Query specific plan with all phases
+// Query specific plan with all chapters
 const fullPlan = await megamemory_understand({
-  query: "tdd:08-02-email-validation with all phases RED GREEN REFACTOR"
+  query: "tdd:08-02-email-validation with all chapters RED GREEN REFACTOR"
 });
-// Returns plan + all linked phase concepts with full details
+// Returns plan + all linked chapter concepts with full details
 
 // Query patterns used across all TDD work
 const patternsUsed = await megamemory.understand({
@@ -756,7 +756,7 @@ Each TDD plan implements **one feature** through the full RED-GREEN-REFACTOR cyc
 
 ```markdown
 ---
-phase: XX-name
+chapter: XX-name
 plan: NN
 type: tdd
 ---
@@ -819,18 +819,18 @@ After completion, create SUMMARY.md with:
 2. write test describing expected behavior (from `<behavior>` element)
 3. Run test - it MUST fail
 4. If test passes: feature exists or test is wrong. Investigate.
-5. Commit: `test({phase}-{plan}): add failing test for [feature]`
+5. Commit: `test({chapter}-{plan}): add failing test for [feature]`
 
 **GREEN - Implement to pass:**
 1. write minimal code to make test pass
 2. No cleverness, no optimization - just make it work
 3. Run test - it MUST pass
-4. Commit: `feat({phase}-{plan}): implement [feature]`
+4. Commit: `feat({chapter}-{plan}): implement [feature]`
 
 **REFACTOR (if needed):**
 1. Clean up implementation if obvious improvements exist
 2. Run tests - MUST still pass
-3. Only commit if changes made: `refactor({phase}-{plan}): clean up [feature]`
+3. Only commit if changes made: `refactor({chapter}-{plan}): clean up [feature]`
 
 **Result:** Each TDD plan produces 2-3 atomic commits.
 </execution_flow>
@@ -859,7 +859,7 @@ After completion, create SUMMARY.md with:
 <framework_setup>
 ## Test Framework Setup (If None Exists)
 
-When executing a TDD plan but no test framework is configured, set it up as part of the RED phase:
+When executing a TDD plan but no test framework is configured, set it up as part of the RED chapter:
 
 **1. Detect project type:**
 ```bash
@@ -905,23 +905,23 @@ Follow project conventions for test location:
 - `__tests__/` directory
 - `tests/` directory at root
 
-Framework setup is a one-time cost included in the first TDD plan's RED phase.
+Framework setup is a one-time cost included in the first TDD plan's RED chapter.
 </framework_setup>
 
 <error_handling>
 ## Error Handling
 
-**Test doesn't fail in RED phase:**
+**Test doesn't fail in RED chapter:**
 - Feature may already exist - investigate
 - Test may be wrong (not testing what you think)
 - Fix before proceeding
 
-**Test doesn't pass in GREEN phase:**
+**Test doesn't pass in GREEN chapter:**
 - Debug implementation
 - Don't skip to refactor
 - Keep iterating until green
 
-**Tests fail in REFACTOR phase:**
+**Tests fail in REFACTOR chapter:**
 - Undo refactor
 - Commit was premature
 - Refactor in smaller steps
@@ -935,7 +935,7 @@ Framework setup is a one-time cost included in the first TDD plan's RED phase.
 <commit_pattern>
 ## Commit Pattern for TDD Plans
 
-TDD plans produce 2-3 atomic commits (one per phase):
+TDD plans produce 2-3 atomic commits (one per chapter):
 
 ```
 test(08-02): add failing test for email validation
@@ -961,7 +961,7 @@ refactor(08-02): extract regex to constant (optional)
 - Standard plans: 1 commit per task, 2-4 commits per plan
 - TDD plans: 2-3 commits for single feature
 
-Both follow same format: `{type}({phase}-{plan}): {description}`
+Both follow same format: `{type}({chapter}-{plan}): {description}`
 
 **Benefits:**
 - Each commit independently revertable
@@ -976,11 +976,11 @@ Both follow same format: `{type}({phase}-{plan}): {description}`
 TDD plans target **~40% context usage** (lower than standard plans' ~50%).
 
 Why lower:
-- RED phase: write test, run test, potentially debug why it didn't fail
-- GREEN phase: implement, run test, potentially iterate on failures
-- REFACTOR phase: modify code, run tests, verify no regressions
+- RED chapter: write test, run test, potentially debug why it didn't fail
+- GREEN chapter: implement, run test, potentially iterate on failures
+- REFACTOR chapter: modify code, run tests, verify no regressions
 
-Each phase involves reading files, running commands, analyzing output. The back-and-forth is inherently heavier than linear task execution.
+Each chapter involves reading files, running commands, analyzing output. The back-and-forth is inherently heavier than linear task execution.
 
 Single feature focus ensures full quality throughout the cycle.
 </context_budget>

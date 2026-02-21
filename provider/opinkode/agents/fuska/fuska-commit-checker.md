@@ -37,7 +37,7 @@ If you need to check `commit_strategy`, query MegaMemory:
 megamemory_understand(query="config", top_k=5)
 ```
 
-Parse the `summary` field to extract `git.commit_strategy` (default: `per-phase`).
+Parse the `summary` field to extract `git.commit_strategy` (default: `per-chapter`).
 
 </megamemory_guide>
 
@@ -63,29 +63,29 @@ Valid types: `feat`, `fix`, `test`, `refactor`, `perf`, `chore`, `docs`, `wip`
 
 ## 3. Scope Format
 
-**Rule:** Scope MUST be a semantic area. NEVER accept task/phase/plan numbers as scope.
+**Rule:** Scope MUST be a semantic area. NEVER accept task/chapter/plan numbers as scope.
 
 Valid scopes: `auth`, `api`, `checkout`, `ui`, `db`, `middleware`, `jose`, `stripe`, `benchmark`, `pricing`, `data`, `config`, `booking`, etc.
 
 **INVALID scopes (MUST REJECT):**
 - `task-002`, `task-001`, `task-*` — these are task identifiers, NOT areas
-- `02-01`, `04-02`, `\d{2}-\d{2}` — these are phase-plan identifiers, NOT areas
-- `phase-02`, `phase-*` — these are phase identifiers, NOT areas
-- Any pattern matching `/^(phase-\d+|task-\d+|\d{2}-\d{2})$/`
+- `02-01`, `04-02`, `\d{2}-\d{2}` — these are chapter-plan identifiers, NOT areas
+- `chapter-02`, `chapter-*` — these are chapter identifiers, NOT areas
+- Any pattern matching `/^(chapter-\d+|task-\d+|\d{2}-\d{2})$/`
 
-**Check:** Scope should describe the feature area being changed, not the project structure. If scope matches a task/phase pattern, ALWAYS reject with `[scope-format]`.
+**Check:** Scope should describe the feature area being changed, not the project structure. If scope matches a task/chapter pattern, ALWAYS reject with `[scope-format]`.
 
 ## 4. Trailer Format
 
-**Rule:** Last non-empty line must be a phase/plan trailer.
+**Rule:** Last non-empty line must be a chapter/plan trailer.
 
-Load `git.commit_strategy` from config (default: `per-phase`):
+Load `git.commit_strategy` from config (default: `per-chapter`):
 
 | Strategy | Valid Trailer Format | Example |
 |----------|---------------------|---------|
-| `per-phase` | `phase-{NN}` | `phase-02` |
-| `per-plan` | `{phase}-{plan}` | `02-01` |
-| `per-task` | `{phase}-{plan}` | `02-01` |
+| `per-chapter` | `chapter-{NN}` | `chapter-02` |
+| `per-plan` | `{chapter}-{plan}` | `02-01` |
+| `per-task` | `{chapter}-{plan}` | `02-01` |
 
 **Check:**
 - Extract last non-empty line
@@ -145,8 +145,8 @@ The commit message to verify will be provided in the prompt as:
 ```
 
 Additional context may include:
-- `<commit_strategy>` — The active commit strategy (per-phase, per-plan, per-task)
-- `<phase_plan>` — The expected phase-plan identifier (e.g., "02-01")
+- `<commit_strategy>` — The active commit strategy (per-chapter, per-plan, per-task)
+- `<chapter_plan>` — The expected chapter-plan identifier (e.g., "02-01")
 
 </input_format>
 
@@ -168,9 +168,9 @@ Message follows all guidelines.
 ## ISSUES FOUND
 
 - [subject-line-length] Subject is {N} chars, max is 72
-- [scope-format] Scope "{scope}" should be semantic (auth, api, checkout), not phase/plan
+- [scope-format] Scope "{scope}" should be semantic (auth, api, checkout), not chapter/plan
 - [trailer-format] Trailer "{trailer}" should be "{expected}" per commit_strategy={strategy}
-- [trailer-missing] Missing phase/plan trailer
+- [trailer-missing] Missing chapter/plan trailer
 - [body-bullet-count] Body has {N} bullets, max is 4
 - [content-quality] Bullet {N} contains implementation detail: "{quote}"
 - [imperative-mood] "{word}" should be "{imperative_form}"
@@ -190,8 +190,8 @@ Include `### Suggested fix:` with a corrected version of the message.
 
 Extract from prompt:
 1. `<commit_message>` content
-2. `<commit_strategy>` if provided (default: `per-phase`)
-3. `<phase_plan>` if provided
+2. `<commit_strategy>` if provided (default: `per-chapter`)
+3. `<chapter_plan>` if provided
 
 ```
 const lines = commitMessage.split('\n')
@@ -206,7 +206,7 @@ If `commit_strategy` not provided:
 ```
 megamemory_understand(query="config", top_k=5)
 const configData = JSON.parse(response.matches[0]?.summary || '{}')
-const commitStrategy = configData?.git?.commit_strategy || 'per-phase'
+const commitStrategy = configData?.git?.commit_strategy || 'per-chapter'
 ```
 
 ## Step 3: Run Verification Checks
@@ -236,10 +236,10 @@ if (subjectLine.length > 72) {
 
 ```
 const scope = match?.[2]
-const invalidScopePattern = /^(phase-\d+|task-\d+|\d{2}-\d{2})$/
+const invalidScopePattern = /^(chapter-\d+|task-\d+|\d{2}-\d{2})$/
 
 if (scope && invalidScopePattern.test(scope)) {
-  issues.push(`[scope-format] Scope "${scope}" is a task/phase identifier, NOT a semantic area. Use: auth, api, benchmark, pricing, data, etc.`)
+  issues.push(`[scope-format] Scope "${scope}" is a task/chapter identifier, NOT a semantic area. Use: auth, api, benchmark, pricing, data, etc.`)
 }
 ```
 
@@ -247,15 +247,15 @@ if (scope && invalidScopePattern.test(scope)) {
 
 ```
 const expectedTrailerFormat = {
-  'per-phase': /^phase-\d{2}$/,
+  'per-chapter': /^chapter-\d{2}$/,
   'per-plan': /^\d{2}-\d{2}$/,
   'per-task': /^\d{2}-\d{2}$/
 }
 
 if (!trailerLine) {
-  issues.push('[trailer-missing] Missing phase/plan trailer')
+  issues.push('[trailer-missing] Missing chapter/plan trailer')
 } else if (!expectedTrailerFormat[commitStrategy].test(trailerLine.trim())) {
-  const expectedExample = commitStrategy === 'per-phase' ? 'phase-02' : '02-01'
+  const expectedExample = commitStrategy === 'per-chapter' ? 'chapter-02' : '02-01'
   issues.push(`[trailer-format] Trailer "${trailerLine}" should be "${expectedExample}" per commit_strategy=${commitStrategy}`)
 }
 ```
@@ -347,7 +347,7 @@ feat(02-01): add item-discount mapping and price calculation to ServiceItem
 </commit_message>
 
 <commit_strategy>per-task</commit_strategy>
-<phase_plan>02-01</phase_plan>
+<chapter_plan>02-01</chapter_plan>
 ```
 
 **Output:**
@@ -355,8 +355,8 @@ feat(02-01): add item-discount mapping and price calculation to ServiceItem
 ## ISSUES FOUND
 
 - [subject-line-length] Subject is 79 chars, max is 72
-- [scope-format] Scope "02-01" should be semantic (auth, api, checkout), not phase/plan
-- [trailer-missing] Missing phase/plan trailer
+- [scope-format] Scope "02-01" should be semantic (auth, api, checkout), not chapter/plan
+- [trailer-missing] Missing chapter/plan trailer
 - [body-bullet-count] Body has 5 bullets, max is 4
 - [content-quality] Bullet 1 contains implementation detail: "nullable Discount? discount field"
 - [content-quality] Bullet 2 contains implementation detail: "double calculatePrice(Booking) method"
@@ -384,7 +384,7 @@ feat(api): add discount and price calculation to ServiceItem
 </commit_message>
 
 <commit_strategy>per-task</commit_strategy>
-<phase_plan>02-01</phase_plan>
+<chapter_plan>02-01</chapter_plan>
 ```
 
 **Output:**
@@ -403,7 +403,7 @@ Message follows all guidelines.
 - [ ] Includes suggested fix when issues found
 - [ ] Subject line format checked
 - [ ] Subject line length checked (max 72)
-- [ ] Scope validated as semantic (not phase/plan)
+- [ ] Scope validated as semantic (not chapter/plan)
 - [ ] Trailer format validated against commit_strategy
 - [ ] Trailer presence checked
 - [ ] Body bullet count checked (max 4)

@@ -8,7 +8,7 @@ Template for shallow research for library/option decisions - stored in MegaMemor
 
 ```markdown
 ---
-phase: XX-name
+chapter: XX-name
 type: discovery
 topic: [discovery-topic]
 ---
@@ -22,7 +22,7 @@ Example: If today is 2025-11-22, search for "2025" not "2024".
 </session_initialization>
 
 <discovery_objective>
-Discover [topic] to inform [phase name] implementation.
+Discover [topic] to inform [chapter name] implementation.
 
 Purpose: [What decision/implementation this enables]
 Scope: [Boundaries]
@@ -38,7 +38,7 @@ Output: DISCOVERY.md with recommendation
 
 <exclude>
 - [Out of scope for this discovery]
-- [Defer to implementation phase]
+- [Defer to implementation chapter]
 </exclude>
 </discovery_scope>
 ```
@@ -98,21 +98,21 @@ Output: DISCOVERY.md with recommendation
 concept_kind: "discovery"
 
 summary: |
-  Discovery: {topic} for Phase {phase_number}: {phase_name}
+  Discovery: {topic} for Chapter {chapter_number}: {chapter_name}
   Recommendation: {primary_recommendation}
   Confidence: {high|medium|low}
   {2-3 sentence executive summary}
 
 why: |
-  Shallow research for library/option decisions during mandatory discovery in plan-phase.
+  Shallow research for library/option decisions during mandatory discovery in plan-chapter.
   Answers "which library/option should we use" questions.
   Enables informed implementation decisions.
 
 edges: [
   {
-    to: "phase-{phase_number}",
+    to: "chapter-{chapter_number}",
     relation: "connects_to",
-    description: "Discovery informs this phase implementation"
+    description: "Discovery informs this chapter implementation"
   }
 ]
 </megamemory_schema>
@@ -128,7 +128,7 @@ edges: [
 
 1. Create concept with topic, objective, scope
 2. Set confidence to "low" (will be updated)
-3. Link to parent phase
+3. Link to parent chapter
 4. Return concept ID for updates
 
 **Update Findings (during research):**
@@ -144,11 +144,11 @@ edges: [
 2. List alternatives considered with rationale
 3. Set overall confidence level (high/medium/low)
 4. Document open_questions and validation_checkpoints if needed
-5. Link to phase concept
+5. Link to chapter concept
 
 **Query Discovery (when planning):**
 
-1. Query by phase number or topic
+1. Query by chapter number or topic
 2. Read recommendation, confidence, findings
 3. Use findings to inform PLAN.md creation
 </megamemory_operations>
@@ -162,23 +162,23 @@ edges: [
 <megamemory_examples>
 ```typescript
 // Create a new discovery
-const createDiscovery = async (phaseNumber: string, phaseName: string, topic: string, objective: string) => {
+const createDiscovery = async (chapterNumber: string, chapterName: string, topic: string, objective: string) => {
   const concept = await megamemory_create_concept({
     name: `Discovery: ${topic}`,
     kind: "discovery",
-    summary: `Discovery: ${topic} for Phase ${phaseNumber}: ${phaseName}\n` +
+    summary: `Discovery: ${topic} for Chapter ${chapterNumber}: ${chapterName}\n` +
              `Objective: ${objective}\n` +
              `Confidence: low\n` +
              `Status: in_progress`,
-    why: "Shallow research for library/option decisions during mandatory discovery in plan-phase. " +
+    why: "Shallow research for library/option decisions during mandatory discovery in plan-chapter. " +
           "Answers 'which library/option should we use' questions. " +
           "Enables informed implementation decisions.",
     edges: [{
-      to: `phase-${phaseNumber}`,
+      to: `chapter-${chapterNumber}`,
       relation: "connects_to",
-      description: "Discovery informs this phase implementation"
+      description: "Discovery informs this chapter implementation"
     }],
-    created_by_task: `Discovery for Phase ${phaseNumber}`
+    created_by_task: `Discovery for Chapter ${chapterNumber}`
   });
 
   return concept.id;
@@ -261,9 +261,9 @@ const finalizeDiscovery = async (discoveryId: string, recommendation: {
 };
 
 // Query discovery for planning
-const queryDiscovery = async (phaseNumber: string) => {
+const queryDiscovery = async (chapterNumber: string) => {
   const results = await megamemory_understand({
-    query: `Discovery for Phase ${phaseNumber} with recommendations, findings, confidence level`
+    query: `Discovery for Chapter ${chapterNumber} with recommendations, findings, confidence level`
   });
 
   if (results.length > 0) {
@@ -308,7 +308,7 @@ const queryDiscovery = async (phaseNumber: string) => {
 
     return {
       id: discovery.id,
-      phase: phaseNumber,
+      chapter: chapterNumber,
       recommendation,
       findings,
       codeExamples,
@@ -373,7 +373,7 @@ Before completing discovery, verify:
 - Niche/complex domains (3D, games, audio, shaders)
 - Need ecosystem knowledge, not just library choice
 - "How do experts build this" questions
-- Use `/fuska-research-phase` for these
+- Use `/fuska-research-chapter` for these
 ```
 
 ---

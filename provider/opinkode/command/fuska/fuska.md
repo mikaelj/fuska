@@ -25,14 +25,14 @@ tools:
 Universal dispatch for Fuska. One command for everything.
 
 - `/fuska` — show where you are and what to do next
-- `/fuska plan` — plan the current phase (auto-detects phase number)
-- `/fuska build` — build the current phase
+- `/fuska plan` — plan the current chapter (auto-detects chapter number)
+- `/fuska build` — build the current chapter
 - `/fuska do fix the bug` — quick ad-hoc task
 - `/fuska [verb] [args]` — any Fuska action
 
-**Bare invocation:** Read MegaMemory state. Show the full phase pipeline with current position marked. Explain what each step does and show the command to run it.
+**Bare invocation:** Read MegaMemory state. Show the full chapter pipeline with current position marked. Explain what each step does and show the command to run it.
 
-**Verb invocation:** Parse verb, auto-detect missing arguments (phase number), read the target command file, resolve its `@` references, follow its process.
+**Verb invocation:** Parse verb, auto-detect missing arguments (chapter number), read the target command file, resolve its `@` references, follow its process.
 
 All `/fuska-*` commands remain available for direct use. This command is the universal entry point that routes to them.
 
@@ -46,7 +46,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -146,24 +146,24 @@ If a handoff concept exists with status that is NOT "resolved" → state is `PAU
 
 Extract from state:
 ```
-const currentPhaseSlug = stateData.current_phase
-const phaseNumber = parseInt(currentPhaseSlug?.replace("phase-", "")) || 1
+const currentChapterSlug = stateData.current_chapter
+const chapterNumber = parseInt(currentChapterSlug?.replace("chapter-", "")) || 1
 ```
 
-Query current phase and related concepts:
+Query current chapter and related concepts:
 ```
-megamemory:understand({ query: currentPhaseSlug, top_k: 20 })
+megamemory:understand({ query: currentChapterSlug, top_k: 20 })
 ```
 
 From results, look for:
-- Phase concept itself (name matches `phase-NN`, kind is "feature")
-- Context concept (name is `${currentPhaseSlug}-context`)
-- Plan concepts (name contains `${currentPhaseSlug}` and contains `-plan-`)
-- Summary concepts (name contains `${currentPhaseSlug}` and contains `-summary`)
+- Chapter concept itself (name matches `chapter-NN`, kind is "feature")
+- Context concept (name is `${currentChapterSlug}-context`)
+- Plan concepts (name contains `${currentChapterSlug}` and contains `-plan-`)
+- Summary concepts (name contains `${currentChapterSlug}` and contains `-summary`)
 
 Extract:
-- `phaseName` — from phase concept summary
-- `phaseGoal` — from phase concept summary
+- `chapterName` — from chapter concept summary
+- `chapterGoal` — from chapter concept summary
 - `contextExists` — whether context concept was found
 - `planConcepts` — array of plan concepts
 - `summaryConcepts` — array of summary concepts
@@ -171,33 +171,33 @@ Extract:
 - `summaryCount` = summaryConcepts.length
 
 From roadmap:
-- `totalPhases` — number of phases in roadmap
-- `completedPhases` — phases with status "complete"
+- `totalChapters` — number of chapters in roadmap
+- `completedChapters` — chapters with status "complete"
 
 **Classification:**
 
 ```
 if (!configExists || !roadmapExists)     → INIT_ONLY
 if (handoffExists && !handoffResolved)   → PAUSED
-if (planCount === 0 && !contextExists)   → PHASE_START
+if (planCount === 0 && !contextExists)   → CHAPTER_START
 if (planCount === 0 && contextExists)    → DISCUSSED
 if (planCount > 0 && summaryCount < planCount) → PLANNED
-if (planCount > 0 && summaryCount >= planCount) → PHASE_DONE
-if (all roadmap phases complete)         → MILESTONE_DONE
+if (planCount > 0 && summaryCount >= planCount) → CHAPTER_DONE
+if (all roadmap chapters complete)         → MILESTONE_DONE
 ```
 
 ### 1.5 Display pipeline
 
 Output depends on classified state. Use the exact format below — no markdown headers in the pipeline area, no decorative borders, no progress bars. Plain indented text.
 
-The pipeline always shows four steps for the current phase. `>` marks the current position. `done` marks completed steps. Future steps show their `/fuska` command.
+The pipeline always shows four steps for the current chapter. `>` marks the current position. `done` marks completed steps. Future steps show their `/fuska` command.
 
 **INIT_ONLY:**
 
 ```
 Fuska: ${projectName} — needs configuration
 
-    /fuska configure
+    /fuska-configure
 
 This walks you through questioning, research,
 requirements, and roadmap creation.
@@ -210,27 +210,27 @@ requirements, and roadmap creation.
 ```
 Fuska: ${projectName} — paused
 
-You left off at Phase ${phaseNumber}: ${phaseName}
+You left off at Chapter ${chapterNumber}: ${chapterName}
 ${handoffData.mental_context ? handoffData.mental_context : ''}
 
-    /fuska resume
+    /fuska-resume
 ```
 
 → Stop
 
-**PHASE_START:**
+**CHAPTER_START:**
 
 ```
-Fuska: ${projectName}${completedPhases > 0 ? ' -- ' + completedPhases + '/' + totalPhases + ' phases complete' : ''}
+Fuska: ${projectName}${completedChapters > 0 ? ' -- ' + completedChapters + '/' + totalChapters + ' chapters complete' : ''}
 
-Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
+Chapter ${chapterNumber} of ${totalChapters}: ${chapterName}
 
-    share your vision    /fuska design    (optional, helps me plan better)
-  > plan into tasks      /fuska plan
-    build it             /fuska build
-    check it works       /fuska review
+    share your vision    /fuska-design    (optional, helps me plan better)
+  > plan into tasks      /fuska-plan
+    build it             /fuska-build
+    check it works       /fuska-review
 
-You can tell me how you imagine this phase working, or I'll plan
+You can tell me how you imagine this chapter working, or I'll plan
 directly from the requirements. Either way, planning is next.
 ```
 
@@ -239,14 +239,14 @@ directly from the requirements. Either way, planning is next.
 **DISCUSSED:**
 
 ```
-Fuska: ${projectName}${completedPhases > 0 ? ' -- ' + completedPhases + '/' + totalPhases + ' phases complete' : ''}
+Fuska: ${projectName}${completedChapters > 0 ? ' -- ' + completedChapters + '/' + totalChapters + ' chapters complete' : ''}
 
-Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
+Chapter ${chapterNumber} of ${totalChapters}: ${chapterName}
 
     share your vision    done
-  > plan into tasks      /fuska plan
-    build it             /fuska build
-    check it works       /fuska review
+  > plan into tasks      /fuska-plan
+    build it             /fuska-build
+    check it works       /fuska-review
 
 Your thinking is captured. Next: I'll break this into concrete tasks.
 ```
@@ -255,31 +255,31 @@ Your thinking is captured. Next: I'll break this into concrete tasks.
 
 **PLANNED:**
 
-Derive wave count from plan concepts (max wave number).
+Derive batch count from plan concepts (max batch number).
 
 ```
-Fuska: ${projectName}${completedPhases > 0 ? ' -- ' + completedPhases + '/' + totalPhases + ' phases complete' : ''}
+Fuska: ${projectName}${completedChapters > 0 ? ' -- ' + completedChapters + '/' + totalChapters + ' chapters complete' : ''}
 
-Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
+Chapter ${chapterNumber} of ${totalChapters}: ${chapterName}
 
     share your vision    ${contextExists ? 'done' : 'skipped'}
-    plan into tasks      done -- ${planCount} tasks${waveCount > 1 ? ' in ' + waveCount + ' waves' : ''}
-  > build it             /fuska build
-    check it works       /fuska review
+    plan into tasks      done -- ${planCount} tasks${batchCount > 1 ? ' in ' + batchCount + ' batches' : ''}
+  > build it             /fuska-build
+    check it works       /fuska-review
 
-Ready to build.${waveCount > 1 ? ' Tasks run grouped by wave.' : ''}
+Ready to build.${batchCount > 1 ? ' Tasks run grouped by batch.' : ''}
 ```
 
 → Stop
 
-**PHASE_DONE:**
+**CHAPTER_DONE:**
 
-Check if there is a next phase in the roadmap.
+Check if there is a next chapter in the roadmap.
 
 ```
-Fuska: ${projectName} -- ${completedPhases + 1}/${totalPhases} phases complete
+Fuska: ${projectName} -- ${completedChapters + 1}/${totalChapters} chapters complete
 
-Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
+Chapter ${chapterNumber} of ${totalChapters}: ${chapterName}
 
     share your vision    ${contextExists ? 'done' : 'skipped'}
     plan into tasks      done
@@ -288,7 +288,7 @@ Phase ${phaseNumber} of ${totalPhases}: ${phaseName}
 
 Built. Walk through what was created and verify it works.
 
-${nextPhaseExists ? 'Or move to the next phase:\n    /fuska plan ' + (phaseNumber + 1) : ''}
+${nextChapterExists ? 'Or move to the next chapter:\n    /fuska plan ' + (chapterNumber + 1) : ''}
 ```
 
 → Stop
@@ -296,7 +296,7 @@ ${nextPhaseExists ? 'Or move to the next phase:\n    /fuska plan ' + (phaseNumbe
 **MILESTONE_DONE:**
 
 ```
-Fuska: ${projectName} -- all ${totalPhases} phases complete
+Fuska: ${projectName} -- all ${totalChapters} chapters complete
 
     /fuska complete
 
@@ -314,29 +314,29 @@ Or audit first:
 
 ### 2.1 Dispatch table
 
-| Verb | Target file | Auto-detect phase |
+| Verb | Target file | Auto-detect chapter |
 |------|------------|-------------------|
-| plan | fuska-plan-phase.md | yes |
-| design | fuska-design-phase.md | yes |
-| build | fuska-build-phase.md | yes |
-| review | fuska-review-phase.md | yes |
-| research | fuska-research-phase.md | yes |
-| assumptions | fuska-list-phase-assumptions.md | yes |
+| plan | fuska-plan.md | yes |
+| design | fuska-design.md | yes |
+| build | fuska-build.md | yes |
+| review | fuska-review.md | yes |
+| research | fuska-research-chapter.md | yes |
+| assumptions | fuska-list-chapter-assumptions.md | yes |
 | do | fuska-do.md | no |
 | debug | fuska-debug.md | no |
 | pause | fuska-pause-work.md | no |
-| resume | fuska-resume-work.md | no |
+| resume | fuska-resume.md | no |
 | todo | fuska-add-todo.md | no |
 | todos | fuska-check-todos.md | no |
-| configure | fuska-configure-initiative.md | no |
+| configure | fuska-configure.md | no |
 | map | fuska-map-codebase.md | no |
 | help | fuska-help.md | no |
-| add | fuska-add-phase.md | no |
-| insert | fuska-insert-phase.md | no |
-| remove | fuska-remove-phase.md | no |
-| complete | fuska-complete-milestone.md | no |
+| add | fuska-add-chapter.md | no |
+| insert | fuska-insert-chapter.md | no |
+| remove | fuska-remove-chapter.md | no |
+| complete | fuska-complete.md | no |
 | milestone | fuska-new-milestone.md | no |
-| audit | fuska-audit-milestone.md | no |
+| audit | fuska-audit.md | no |
 | gaps | fuska-plan-milestone-gaps.md | no |
 | doc | fuska-doc.md | no |
 | export | fuska-export-md.md | no |
@@ -344,15 +344,15 @@ Or audit first:
 | refresh | fuska-refresh.md | no |
 | ask | fuska-ask.md | no |
 
-### 2.2 Auto-detect phase number
+### 2.2 Auto-detect chapter number
 
-If the verb has "Auto-detect phase: yes" AND effectiveArgs does not start with a number:
+If the verb has "Auto-detect chapter: yes" AND effectiveArgs does not start with a number:
 
 ```
 megamemory:understand({ query: "state", top_k: 5 })
 const stateData = JSON.parse(response.matches[0].summary)
-const phaseNumber = parseInt(stateData.current_phase?.replace("phase-", "")) || 1
-effectiveArgs = phaseNumber + (effectiveArgs ? " " + effectiveArgs : "")
+const chapterNumber = parseInt(stateData.current_chapter?.replace("chapter-", "")) || 1
+effectiveArgs = chapterNumber + (effectiveArgs ? " " + effectiveArgs : "")
 ```
 
 ### 2.3 Read target command file
@@ -360,7 +360,7 @@ effectiveArgs = phaseNumber + (effectiveArgs ? " " + effectiveArgs : "")
 Read the target file from: ~/.config/opencode/commands/fuska/{target}
 
 For example, if verb is "design", read:
-    ~/.config/opencode/commands/fuska/fuska-design-phase.md
+    ~/.config/opencode/commands/fuska/fuska-design.md
 
 ### 2.4 Resolve @ references
 
@@ -418,14 +418,14 @@ Unknown verb: "${verb}".
 - [ ] MegaMemory connectivity verified
 - [ ] Project state loaded (config, state, roadmap)
 - [ ] Lifecycle position correctly classified
-- [ ] Full phase pipeline displayed with current position marked
+- [ ] Full chapter pipeline displayed with current position marked
 - [ ] Each pipeline step shows human description + command
 - [ ] Explanatory text matches current state
 - [ ] No decorative borders, no progress bar graphics
 
 **Verb dispatch:**
 - [ ] Verb correctly parsed from $ARGUMENTS
-- [ ] Phase number auto-detected from MegaMemory state when needed
+- [ ] Chapter number auto-detected from MegaMemory state when needed
 - [ ] Target command file read successfully
 - [ ] All @ references from target resolved and read
 - [ ] Target process executed with effectiveArgs as $ARGUMENTS

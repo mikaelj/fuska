@@ -116,7 +116,7 @@ Walks through initiative configuration:
 - Workflow preferences (mode, depth, parallelization, commits)
 - Research domain ecosystem (optional)
 - Define requirements
-- Create roadmap with phases
+- Create roadmap with chapters
 
 ### Map the Codebase
 

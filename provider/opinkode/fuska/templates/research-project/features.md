@@ -234,10 +234,10 @@ await megamemory.link({
 });
 
 await megamemory.link({
-  from: "[phase-concept-id]",
+  from: "[chapter-concept-id]",
   to: "[feature-concept-id]",
   relation: "implements",
-  description: "Phase implements this feature"
+  description: "Chapter implements this feature"
 });
 ```
 
@@ -414,20 +414,20 @@ async function getFeaturePriorities(domain: string) {
   };
 }
 
-// Agent uses to inform roadmap phase creation
+// Agent uses to inform roadmap chapter creation
 const apiFeatures = await getFeaturePriorities('REST API');
 if (apiFeatures) {
   const p1Features = apiFeatures.priorities.filter(p => p.priority === 'P1');
-  console.log('Phase 1 should deliver:', p1Features);
+  console.log('Chapter 1 should deliver:', p1Features);
 }
 ```
 
-### Example 3: Feature-to-Phase Mapping
+### Example 3: Feature-to-Chapter Mapping
 
 ```typescript
-// Map features to roadmap phases
+// Map features to roadmap chapters
 
-async function mapFeaturesToPhases(featuresConceptId: string) {
+async function mapFeaturesToChapters(featuresConceptId: string) {
   const features = await megamemory_understand({
     query: `features research`,
     top_k: 10
@@ -605,9 +605,9 @@ Features to defer until product-market fit is established.
 - Example: "Real-time everything" often creates complexity without value
 
 **Feature Dependencies:**
-- Critical for roadmap phase ordering
-- If A requires B, B must be in an earlier phase
-- Conflicts inform what NOT to combine in same phase
+- Critical for roadmap chapter ordering
+- If A requires B, B must be in an earlier chapter
+- Conflicts inform what NOT to combine in same chapter
 
 **MVP Definition:**
 - Be ruthless about what's truly minimum

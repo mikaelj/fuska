@@ -1,5 +1,5 @@
 ---
-name: fuska-configure-initiative
+name: fuska-configure
 description: Configure an existing initiative through questioning and preferences
 tools:
   - read
@@ -28,10 +28,10 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 - `config` — workflow preferences (root-level)
 - `research/*` — domain research (optional)
 - `requirements/*` — scoped requirements
-- `roadmap` and `phase-N` — phase structure
+- `roadmap` and `chapter-N` — chapter structure
 - Updates `state` — initiative memory
 
-**After this command:** Run `/fuska-design-phase 1` to start execution.
+**After this command:** Run `/fuska-design-chapter 1` to start execution.
 
 </objective>
 
@@ -43,7 +43,7 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/initiative-templates.ts
-@../../fuska/scripts/phase-templates.ts
+@../../fuska/scripts/chapter-templates.ts
 @../../fuska/scripts/helpers.ts
 
 </execution_context>
@@ -56,7 +56,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "concepts": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "concepts": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `concepts` is empty, the concept doesn't exist.
@@ -71,7 +71,7 @@ The important field is **`summary`** — it's a JSON string containing the conce
 
 <process>
 
-## Phase 0: Preflight
+## Chapter 0: Preflight
 
 1. Get current initiative from config:
    ```
@@ -98,7 +98,7 @@ The important field is **`summary`** — it's a JSON string containing the conce
    -----------------------------------------------------
    ```
 
-## Phase 1: Deep Questioning
+## Chapter 1: Deep Questioning
 
 **If HAS_DESCRIPTION:**
 
@@ -117,7 +117,7 @@ The user provided a description during `fuska init`. Use it to derive context:
      ]
    }
    ```
-5. Skip to Phase 2 (Workflow Preferences)
+5. Skip to Chapter 2 (Workflow Preferences)
 
 **If no description:**
 
@@ -190,7 +190,7 @@ megamemory:update_concept({
 })
 ```
 
-## Phase 2: Workflow Preferences
+## Chapter 2: Workflow Preferences
 
 **Ask interactive questions:**
 
@@ -212,9 +212,9 @@ questions: [
     question: "How thorough should planning be?",
     multiSelect: false,
     options: [
-      { label: "Quick", description: "Ship fast (3-5 phases, 1-3 plans each)" },
-      { label: "Standard", description: "Balanced scope and speed (5-8 phases, 3-5 plans each)" },
-      { label: "Comprehensive", description: "Thorough coverage (8-12 phases, 5-10 plans each)" }
+      { label: "Quick", description: "Ship fast (3-5 chapters, 1-3 plans each)" },
+      { label: "Standard", description: "Balanced scope and speed (5-8 chapters, 3-5 plans each)" },
+      { label: "Comprehensive", description: "Thorough coverage (8-12 chapters, 5-10 plans each)" }
     ]
   },
   {
@@ -231,7 +231,7 @@ questions: [
     question: "How should git commits be structured?",
     multiSelect: false,
     options: [
-      { label: "Per phase (Recommended)", description: "One commit when all plans in a phase complete" },
+      { label: "Per chapter (Recommended)", description: "One commit when all plans in a chapter complete" },
       { label: "Per plan", description: "One commit per plan (groups all tasks in a plan)" },
       { label: "Per task", description: "One commit per task (most granular)" }
     ]
@@ -247,7 +247,7 @@ These spawn additional agents during planning/execution. They add tokens and tim
 questions: [
   {
     header: "Research",
-    question: "Research before planning each phase? (adds tokens/time)",
+    question: "Research before planning each chapter? (adds tokens/time)",
     multiSelect: false,
     options: [
       { label: "Yes (Recommended)", description: "Investigate domain, find patterns, surface gotchas" },
@@ -265,10 +265,10 @@ questions: [
   },
   {
     header: "Reviewer",
-    question: "Review work satisfies requirements after each phase? (adds tokens/time)",
+    question: "Review work satisfies requirements after each chapter? (adds tokens/time)",
     multiSelect: false,
     options: [
-      { label: "Yes (Recommended)", description: "Confirm deliverables match phase goals" },
+      { label: "Yes (Recommended)", description: "Confirm deliverables match chapter goals" },
       { label: "No", description: "Trust execution, skip verification" }
     ]
   }
@@ -296,7 +296,7 @@ megamemory:update_concept({
         verifier: true|false
       },
       git: {
-        commit_strategy: "per-phase|per-plan|per-task"
+        commit_strategy: "per-chapter|per-plan|per-task"
       }
     })
   }
@@ -312,7 +312,7 @@ megamemory:create_concept({
 })
 ```
 
-## Phase 3: Research Decision
+## Chapter 3: Research Decision
 
 Use question:
 - header: "Research"
@@ -411,7 +411,7 @@ Project description: ${projectDescription}
 
 <output>
 Create research concept: ${initiativeSlug}-pitfalls-research
-For each pitfall: warning signs, prevention strategy, which phase should address
+For each pitfall: warning signs, prevention strategy, which chapter should address
 </output>
 ", subagent_type="fuska-initiative-researcher", description="Pitfalls research")
 ```
@@ -438,9 +438,9 @@ Each researcher creates MegaMemory concepts:
 
 After all researchers complete, gather all research findings by calling `megamemory:understand` with `query="research stack features architecture pitfalls"` and `top_k=20`. Parse their `summary` JSON to synthesize findings.
 
-**If "Skip research":** Continue to Phase 4.
+**If "Skip research":** Continue to Chapter 4.
 
-## Phase 4: Define Requirements
+## Chapter 4: Define Requirements
 
 Display stage banner:
 ```
@@ -483,7 +483,7 @@ For each requirement, create in MegaMemory:
 
 Query all requirements: `megamemory:understand({ query: "requirements", top_k: 50 })`. Filter for `kind="feature"` with `parent_id` ending in `/requirements`. Present for user confirmation.
 
-## Phase 5: Create Roadmap
+## Chapter 5: Create Roadmap
 
 Display stage banner:
 ```
@@ -518,12 +518,12 @@ Query: 'config'
 
 <instructions>
 Create roadmap using MegaMemory:
-1. Derive phases from requirements (don't impose structure)
-2. Map every v1 requirement to exactly one phase
-3. Derive 2-5 success criteria per phase
+1. Derive chapters from requirements (don't impose structure)
+2. Map every v1 requirement to exactly one chapter
+3. Derive 2-5 success criteria per chapter
 4. Validate 100% coverage
-5. Create/update phase concepts in MegaMemory
-6. Update state concept with current phase info
+5. Create/update chapter concepts in MegaMemory
+6. Update state concept with current chapter info
 7. Return ROADMAP CREATED with summary
 
 Create concepts using InitiativeConceptTemplates.
@@ -537,17 +537,17 @@ Create concepts using InitiativeConceptTemplates.
 
 **If `## ROADMAP CREATED`:**
 
-Load the generated roadmap by calling `megamemory:understand` with `query="phase"` and `top_k=20`. Filter for `kind="feature"` with `parent_id` ending in `/roadmap`. Sort by number and present.
+Load the generated roadmap by calling `megamemory:understand` with `query="chapter"` and `top_k=20`. Filter for `kind="feature"` with `parent_id` ending in `/roadmap`. Sort by number and present.
 
 **CRITICAL: Ask for approval:**
 
 Use question tool as before.
 
-**If "Approve":** Phase concepts already created. Continue.
+**If "Approve":** Chapter concepts already created. Continue.
 
-**If "Adjust phases":** Re-spawn roadmapper with revision context.
+**If "Adjust chapters":** Re-spawn roadmapper with revision context.
 
-## Phase 6: Done
+## Chapter 6: Done
 
 Present completion with next steps:
 
@@ -561,18 +561,18 @@ Present completion with next steps:
 | Concept Type | Count |
 |-------------|--------|
 | Requirements | [X] |
-| Phases      | [N] |
+| Chapters      | [N] |
 | Research     | [4 or 0] |
 
-All v1 requirements mapped to phases [OK]
+All v1 requirements mapped to chapters [OK]
 
 ───────────────────────────────────────────────────────
 
 ## > Next Up
 
-**Phase 1: [Phase Name]** — [Goal]
+**Chapter 1: [Chapter Name]** — [Goal]
 
-/fuska-design-phase 1 — gather context and clarify approach
+/fuska-design-chapter 1 — gather context and clarify approach
 
 */new first → fresh context window*
 
@@ -589,7 +589,7 @@ All concepts updated/created in MegaMemory knowledge graph:
 - `research/*` (created if research selected)
 - `requirements/*` (created)
 - `roadmap` (module exists)
-- `phase-N` (created)
+- `chapter-N` (created)
 - `state` (updated)
 
 </output>
@@ -604,8 +604,8 @@ All concepts updated/created in MegaMemory knowledge graph:
 - [ ] Research completed (if selected)
 - [ ] Requirements gathered and scoped
 - [ ] fuska-roadmapper spawned
-- [ ] Phase concepts created
+- [ ] Chapter concepts created
 - [ ] State concept updated
-- [ ] User knows next step is `/fuska-design-phase 1`
+- [ ] User knows next step is `/fuska-design-chapter 1`
 
 </success_criteria>

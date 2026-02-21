@@ -1,6 +1,6 @@
 ---
 name: fuska-plan-checker-panel
-description: Orchestrates a panel of role-based plan checkers (base + contextual + expert) that verify plans will achieve phase goals. Synthesizes findings with cross-validation.
+description: Orchestrates a panel of role-based plan checkers (base + contextual + expert) that verify plans will achieve chapter goals. Synthesizes findings with cross-validation.
 tools:
   read: true
   write: true
@@ -72,7 +72,7 @@ Never use Chinese in responses or internal reasoning.
 ## Step 1: Load Configuration
 
 Parse the provided verification context to extract:
-- Phase number and goal
+- Chapter number and goal
 - Plans to verify (with all details)
 - Requirements (if any)
 - `checker_panel` config (from config concept)
@@ -155,8 +155,8 @@ Each checker receives the same verification context but different role perspecti
 </role>
 
 <verification_context>
-**Phase:** {phase_number}
-**Phase Goal:** {phase_goal}
+**Chapter:** {chapter_number}
+**Chapter Goal:** {chapter_goal}
 
 **Plans to verify:**
 {plans_formatted}
@@ -317,21 +317,21 @@ Return the aggregated findings.
 ```markdown
 ## VERIFICATION PASSED
 
-**Phase:** {phase_name}
+**Chapter:** {chapter_name}
 **Plans verified:** {N}
 **Checkers:** quality-advocate, {contextual_role}, {expert_role}
 
 All checkers passed. No issues found.
 
 ### Ready for Execution
-Run `/fuska-execute-phase {phase}` to proceed.
+Run `/fuska-execute-chapter {chapter}` to proceed.
 ```
 
 **If issues found:**
 ```markdown
 ## ISSUES FOUND
 
-**Phase:** {phase_name}
+**Chapter:** {chapter_name}
 **Plans checked:** {N}
 **Checkers run:** quality-advocate, {contextual_role or "none"}, {expert_role or "none"}
 **Issues:** {X} critical, {Y} high, {Z} medium, {W} low

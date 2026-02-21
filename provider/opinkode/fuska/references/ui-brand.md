@@ -51,7 +51,7 @@ await megamemory.createConcept({
   name: "Stage Banner",
   kind: "pattern",
   summary: "Major workflow transition display with Fuska: prefix, 62-char width",
-  why: "Provides clear visual separation between workflow phases",
+  why: "Provides clear visual separation between workflow chapters",
   parent_id: "ui-brand",
   file_refs: ["@ui-brand.md:10-13"],
   edges: [
@@ -115,7 +115,7 @@ const antiPatterns = await megamemory.understand({
 await megamemory.createConcept({
   name: "QUESTIONING Banner",
   kind: "pattern",
-  summary: "Stage banner for questioning phase: 'Fuska: QUESTIONING'",
+  summary: "Stage banner for questioning chapter: 'Fuska: QUESTIONING'",
   why: "Indicates active workflow stage",
   parent_id: "stage-banner",
   file_refs: ["@ui-brand.md:10-13", "@ui-brand.md:16"],
@@ -132,7 +132,7 @@ await megamemory.createConcept({
 await megamemory.createConcept({
   name: "Stage Names",
   kind: "config",
-  summary: "Standard stage names: QUESTIONING, RESEARCHING, DEFINING REQUIREMENTS, CREATING ROADMAP, PLANNING PHASE {N}, EXECUTING WAVE {N}, VERIFYING, PHASE {N} COMPLETE [OK], MILESTONE COMPLETE [DONE]",
+  summary: "Standard stage names: QUESTIONING, RESEARCHING, DEFINING REQUIREMENTS, CREATING ROADMAP, PLANNING CHAPTER {N}, EXECUTING BATCH {N}, VERIFYING, CHAPTER {N} COMPLETE [OK], MILESTONE COMPLETE [DONE]",
   why: "Ensures consistent stage naming across workflow",
   file_refs: ["@ui-brand.md:16-24"]
 });
@@ -211,10 +211,10 @@ Use for major workflow transitions.
 - `RESEARCHING`
 - `DEFINING REQUIREMENTS`
 - `CREATING ROADMAP`
-- `PLANNING PHASE {N}`
-- `EXECUTING WAVE {N}`
+- `PLANNING CHAPTER {N}`
+- `EXECUTING BATCH {N}`
 - `VERIFYING`
-- `PHASE {N} COMPLETE [OK]`
+- `CHAPTER {N} COMPLETE [OK]`
 - `MILESTONE COMPLETE [DONE]`
 
 ---
@@ -258,7 +258,7 @@ User action required. 62-character width.
 
 ## Progress Display
 
-**Phase/milestone level:**
+**Chapter/milestone level:**
 ```
 Progress: ████████░░ 80%
 ```
@@ -334,7 +334,7 @@ Always at end of major completions.
 ## Tables
 
 ```
-| Phase | Status      | Plans | Progress |
+| Chapter | Status      | Plans | Progress |
 |-------|-------------|-------|----------|
 | 1     | [OK]        | 3/3   | 100%     |
 | 2     | [IN_PROGRESS] | 1/4   | 25%      |

@@ -49,4 +49,4 @@ To generate the message:
 4. Or extract scope from path: lib/benchmark/ → benchmark
 5. Trailer = original scope/footer (task-002, 02-01)
 
-SCOPE IS NEVER task-002 OR phase-02. Those are TRAILERS.
+SCOPE IS NEVER task-002 OR chapter-02. Those are TRAILERS.

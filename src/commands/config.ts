@@ -18,7 +18,7 @@ import { getCurrentInitiativeSlug, checkInitiativeIntegrity, setCurrentInitiativ
 
 type WorkflowMode = 'standard' | 'thorough' | 'balanced' | 'fast' | 'quick' | 'direct';
 type ProfileType = 'quality' | 'balanced' | 'budget';
-type CommitStrategy = 'per-phase' | 'per-plan' | 'per-task';
+type CommitStrategy = 'per-chapter' | 'per-plan' | 'per-task';
 type ContextualCheckerRole = 'security-auditor' | 'resource-guardian' | 'portability-watcher' | null;
 
 interface ProfilePreset {
@@ -857,11 +857,11 @@ class ConfigRunner {
         name: 'strategy',
         message: 'Which commit strategy?',
         choices: [
-          { name: 'per-phase - One commit per phase (cleanest history)', value: 'per-phase' },
+          { name: 'per-chapter - One commit per chapter (cleanest history)', value: 'per-chapter' },
           { name: 'per-plan - One commit per plan (moderate granularity)', value: 'per-plan' },
           { name: 'per-task - One commit per task (most granular)', value: 'per-task' }
         ],
-        default: this.config.git?.commit_strategy || 'per-phase'
+        default: this.config.git?.commit_strategy || 'per-chapter'
       }
     ]);
 
@@ -1101,7 +1101,7 @@ class ConfigRunner {
       "fuska-initiative-researcher": { "model": effective.design },
       "fuska-research-synthesizer": { "model": effective.design },
       "fuska-plan-checker": { "model": effective.plan },
-      "fuska-phase-researcher": { "model": effective.plan },
+      "fuska-chapter-researcher": { "model": effective.plan },
       "fuska-codebase-mapper": { "model": effective.plan },
       "fuska-executor": { "model": effective.build },
       "fuska-debugger": { "model": effective.build },

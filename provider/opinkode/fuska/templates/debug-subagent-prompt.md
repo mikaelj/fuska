@@ -169,7 +169,7 @@ const createDebugSession = async (slug: string, issueSummary: string, goal: 'fin
   return concept.id;
 };
 
-// Update session with symptoms (gathering phase)
+// Update session with symptoms (gathering chapter)
 const updateSymptoms = async (sessionId: string, symptoms: {
   expected: string;
   actual: string;

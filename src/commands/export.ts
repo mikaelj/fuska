@@ -15,8 +15,8 @@ interface OrganizedConcepts {
   projectRoot: ConceptMatch | null;
   requirements: ConceptMatch | null;
   roadmap: ConceptMatch | null;
-  phases: Map<string, ConceptMatch>;
-  phaseChildren: Map<string, PhaseChildren>;
+  chapters: Map<string, ConceptMatch>;
+  chapterChildren: Map<string, ChapterChildren>;
   research: ConceptMatch | null;
   researchDocs: Map<string, ConceptMatch>;
   milestones: ConceptMatch | null;
@@ -28,7 +28,7 @@ interface OrganizedConcepts {
   reqItems: ConceptMatch[];
 }
 
-interface PhaseChildren {
+interface ChapterChildren {
   context: ConceptMatch | null;
   plans: Map<number, ConceptMatch>;
   research: ConceptMatch | null;
@@ -73,7 +73,7 @@ class ExportToMarkdown {
       console.log(`Project Root: ${organized.projectRoot?.name || 'None'}`);
       console.log(`Requirements: ${organized.requirements?.name || 'None'}`);
       console.log(`Roadmap: ${organized.roadmap?.name || 'None'}`);
-      console.log(`Phases: ${organized.phases.size}`);
+      console.log(`Chapters: ${organized.chapters.size}`);
       console.log(`Research: ${organized.research?.name || 'None'}`);
       console.log(`Research Docs: ${organized.researchDocs.size}`);
       console.log(`Milestones: ${organized.milestones?.name || 'None'}`);
@@ -170,8 +170,8 @@ class ExportToMarkdown {
       projectRoot: null,
       requirements: null,
       roadmap: null,
-      phases: new Map(),
-      phaseChildren: new Map(),
+      chapters: new Map(),
+      chapterChildren: new Map(),
       research: null,
       researchDocs: new Map(),
       milestones: null,
@@ -208,17 +208,17 @@ class ExportToMarkdown {
         continue;
       }
 
-      if (concept.kind === 'feature' && concept.name.match(/^phase-\d+$/)) {
-        organized.phases.set(concept.name, concept);
+      if (concept.kind === 'feature' && concept.name.match(/^chapter-\d+$/)) {
+        organized.chapters.set(concept.name, concept);
         continue;
       }
 
       if (concept.kind === 'config' && concept.name.match(/^-context$/)) {
-        const phaseName = concept.parent?.id || '';
-        if (!organized.phaseChildren.has(phaseName)) {
-          organized.phaseChildren.set(phaseName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+        const chapterName = concept.parent?.id || '';
+        if (!organized.chapterChildren.has(chapterName)) {
+          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
         }
-        organized.phaseChildren.get(phaseName)!.context = concept;
+        organized.chapterChildren.get(chapterName)!.context = concept;
         continue;
       }
 
@@ -226,21 +226,21 @@ class ExportToMarkdown {
         const match = concept.name.match(/^-plan-(\d+)$/);
         if (match) {
           const planNum = parseInt(match[1]);
-          const phaseName = concept.parent?.id || '';
-          if (!organized.phaseChildren.has(phaseName)) {
-            organized.phaseChildren.set(phaseName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+          const chapterName = concept.parent?.id || '';
+          if (!organized.chapterChildren.has(chapterName)) {
+            organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
           }
-          organized.phaseChildren.get(phaseName)!.plans.set(planNum, concept);
+          organized.chapterChildren.get(chapterName)!.plans.set(planNum, concept);
         }
         continue;
       }
 
       if (concept.kind === 'pattern' && concept.name.match(/^-research$/)) {
-        const phaseName = concept.parent?.id || '';
-        if (!organized.phaseChildren.has(phaseName)) {
-          organized.phaseChildren.set(phaseName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+        const chapterName = concept.parent?.id || '';
+        if (!organized.chapterChildren.has(chapterName)) {
+          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
         }
-        organized.phaseChildren.get(phaseName)!.research = concept;
+        organized.chapterChildren.get(chapterName)!.research = concept;
         continue;
       }
 
@@ -248,21 +248,21 @@ class ExportToMarkdown {
         const match = concept.name.match(/^-plan-(\d+)-summary$/);
         if (match) {
           const planNum = parseInt(match[1]);
-          const phaseName = concept.parent?.id || '';
-          if (!organized.phaseChildren.has(phaseName)) {
-            organized.phaseChildren.set(phaseName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+          const chapterName = concept.parent?.id || '';
+          if (!organized.chapterChildren.has(chapterName)) {
+            organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
           }
-          organized.phaseChildren.get(phaseName)!.summaries.set(planNum, concept);
+          organized.chapterChildren.get(chapterName)!.summaries.set(planNum, concept);
         }
         continue;
       }
 
       if (concept.kind === 'component' && concept.name.match(/^-uat$/)) {
-        const phaseName = concept.parent?.id || '';
-        if (!organized.phaseChildren.has(phaseName)) {
-          organized.phaseChildren.set(phaseName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+        const chapterName = concept.parent?.id || '';
+        if (!organized.chapterChildren.has(chapterName)) {
+          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
         }
-        organized.phaseChildren.get(phaseName)!.uat = concept;
+        organized.chapterChildren.get(chapterName)!.uat = concept;
         continue;
       }
 
@@ -310,19 +310,19 @@ class ExportToMarkdown {
     return organized;
   }
 
-  determinePhaseDirName(phaseConcept: ConceptMatch): string {
-    const data = this.extractJson(phaseConcept.summary);
+  determineChapterDirName(chapterConcept: ConceptMatch): string {
+    const data = this.extractJson(chapterConcept.summary);
     if (data.number && data.slug) {
       return `${data.number}-${data.slug}`;
     }
 
-    const match = phaseConcept.summary.match(/phase\s+(\d+):\s+([a-z0-9-]+)/i);
+    const match = chapterConcept.summary.match(/(?:chapter|phase)\s+(\d+):\s+([a-z0-9-]+)/i);
     if (match) {
       return `${match[1]}-${match[2]}`;
     }
 
-    const phaseNum = phaseConcept.name.replace('phase-', '');
-    return `${phaseNum}-unknown`;
+    const chapterNum = chapterConcept.name.replace('chapter-', '');
+    return `${chapterNum}-unknown`;
   }
 
   generateProjectMarkdown(concept: ConceptMatch, reqItems: ConceptMatch[]): string {
@@ -399,7 +399,7 @@ class ExportToMarkdown {
     const dirs = [
       path.join(this.options.outputDir, '.planning'),
       path.join(this.options.outputDir, '.planning', 'research'),
-      path.join(this.options.outputDir, '.planning', 'phases'),
+      path.join(this.options.outputDir, '.planning', 'chapters'),
       path.join(this.options.outputDir, '.planning', 'todos', 'pending')
     ];
 
@@ -462,24 +462,24 @@ class ExportToMarkdown {
     }
 
     const { generateContextMarkdown: genContextMarkdown, generateSummaryMarkdown } = require('../scripts/helpers');
-    for (const [phaseName, phaseConcept] of organized.phases) {
-      const dirName = this.determinePhaseDirName(phaseConcept);
-      const phaseDir = path.join(this.options.outputDir, '.planning', 'phases', dirName);
-      const children = organized.phaseChildren.get(phaseName);
+    for (const [chapterName, chapterConcept] of organized.chapters) {
+      const dirName = this.determineChapterDirName(chapterConcept);
+      const chapterDir = path.join(this.options.outputDir, '.planning', 'chapters', dirName);
+      const children = organized.chapterChildren.get(chapterName);
 
       if (children) {
         if (children.context) {
           const data = this.extractJson(children.context.summary);
           const content = genContextMarkdown(data, []);
           if (content.trim()) {
-            this.safeWrite(path.join(phaseDir, 'CONTEXT.md'), content);
+            this.safeWrite(path.join(chapterDir, 'CONTEXT.md'), content);
           }
         }
 
         for (const [planNum, plan] of children.plans) {
           const content = this.generatePlanMarkdown(plan, []);
           if (content.trim()) {
-            this.safeWrite(path.join(phaseDir, `PLAN-${planNum}.md`), content);
+            this.safeWrite(path.join(chapterDir, `PLAN-${planNum}.md`), content);
           }
         }
 
@@ -487,7 +487,7 @@ class ExportToMarkdown {
           const data = this.extractJson(children.research.summary);
           const content = generateResearchMarkdown(data);
           if (content.trim()) {
-            this.safeWrite(path.join(phaseDir, 'RESEARCH.md'), content);
+            this.safeWrite(path.join(chapterDir, 'RESEARCH.md'), content);
           }
         }
 
@@ -495,14 +495,14 @@ class ExportToMarkdown {
           const data = this.extractJson(summary.summary);
           const content = generateSummaryMarkdown(data);
           if (content.trim()) {
-            this.safeWrite(path.join(phaseDir, `PLAN-${planNum}-SUMMARY.md`), content);
+            this.safeWrite(path.join(chapterDir, `PLAN-${planNum}-SUMMARY.md`), content);
           }
         }
 
         if (children.uat) {
           const content = this.generateVerificationMarkdown(children.uat);
           if (content.trim()) {
-            this.safeWrite(path.join(phaseDir, 'VERIFICATION.md'), content);
+            this.safeWrite(path.join(chapterDir, 'VERIFICATION.md'), content);
           }
         }
       }

@@ -33,45 +33,45 @@ fuska init → /fuska configure → /fuska plan → /fuska build → repeat
 
 **`/fuska`** is the universal entry point. Run it bare to see where you are, or with a verb to act:
 \* `/fuska` — show current position and what to do next
-\* `/fuska plan` — plan the current phase (auto-detects phase number)
-\* `/fuska build` — build the current phase
+\* `/fuska plan` — plan the current chapter (auto-detects chapter number)
+\* `/fuska build` — build the current chapter
 \* `/fuska do [mode] [desc]` — quick ad-hoc task
 
 All `/fuska-*` commands below also work directly.
 
 ## Project Initialization
 
-\* `fuska init` — Initialize project foundation: git, .megamemory/, MCP registration (then `/fuska-configure-initiative`).
-\* `/fuska-configure-initiative` — Configure initiative through unified flow.
+\* `fuska init` — Initialize project foundation: git, .megamemory/, MCP registration (then `/fuska-configure`).
+\* `/fuska-configure` — Configure initiative through unified flow.
 \* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
 
-## Phase Planning
+## Chapter Planning
 
-\* `/fuska-design-phase <number>` — Articulate your vision for a phase before planning.
-\* `/fuska-research-phase <number>` — Ecosystem research for niche/complex domains.
-\* `/fuska-list-phase-assumptions <number>` — See what's planned before execution.
-\* `/fuska-plan-phase <number>` — Create detailed execution plan.
+\* `/fuska-design <number>` — Articulate your vision for a chapter before planning.
+\* `/fuska-research-chapter <number>` — Ecosystem research for niche/complex domains.
+\* `/fuska-list-chapter-assumptions <number>` — See what's planned before execution.
+\* `/fuska-plan <number>` — Create detailed execution plan.
 
 ## Execution
 
-\* `/fuska-build-phase <phase-number>` — Execute all plans in a phase with wave-based parallelization.
+\* `/fuska-build <chapter-number>` — Execute all plans in a chapter with batch-based parallelization.
 
 ## Roadmap Management
 
-\* `/fuska-add-phase <description>` — Add new phase to end of current milestone.
-\* `/fuska-insert-phase <after> <description>` — Insert urgent work as decimal phase.
-\* `/fuska-remove-phase <number>` — Remove a future phase and renumber subsequent phases.
+\* `/fuska-add-chapter <description>` — Add new chapter to end of current milestone.
+\* `/fuska-insert-chapter <after> <description>` — Insert urgent work as decimal chapter.
+\* `/fuska-remove-chapter <number>` — Remove a future chapter and renumber subsequent chapters.
 
 ## Milestone Management
 
 \* `/fuska-new-milestone <name>` — Start a new milestone through unified flow.
-\* `/fuska-complete-milestone <version>` — Archive completed milestone and prepare for next version.
+\* `/fuska-complete <version>` — Archive completed milestone and prepare for next version.
 
 ## Progress Tracking
 
 \* `fuska progress` — Check project status and intelligently route to next action.
-\* `/fuska-resume-work` — Resume work from previous session with full context restoration.
-\* `/fuska-pause-work` — Capture mental context when pausing work mid-phase.
+\* `/fuska-resume` — Resume work from previous session with full context restoration.
+\* `/fuska-pause-work` — Capture mental context when pausing work mid-chapter.
 
 ## Debugging
 
@@ -84,25 +84,34 @@ All `/fuska-*` commands below also work directly.
 
 ## User Acceptance Testing
 
-\* `/fuska-review-phase [phase]` — Validate built features through conversational UAT.
+\* `/fuska-review [chapter]` — Validate built features through conversational UAT.
 
 ## Milestone Auditing
 
-\* `/fuska-audit-milestone [version]` — Audit milestone completion against original intent.
-\* `/fuska-plan-milestone-gaps` — Create phases to close gaps identified by audit.
+\* `/fuska-audit [version]` — Audit milestone completion against original intent.
+\* `/fuska-plan-milestone-gaps` — Create chapters to close gaps identified by audit.
 
 ## Configuration
 
 \* `fuska config [project-dir]` — Manage Fuska settings interactively.
 
+## Migration Utilities
+
+\* `fuska migrate planning [dir]` — Migrate `.planning/` directory to MegaMemory.
+\* `fuska migrate terminology [dir]` — Rename phase→chapter and wave→batch in an existing MegaMemory database.
+
 ## Quick Tasks
 
-\* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees.
+\* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees. **Flags:** --review, --no-review, --auto-commit
 
 ## Codebase Analysis
 
-\* `/fuska-refresh [--full] [--dead-code] [--json] [--prune]` — Refresh import graph with symbol indexing.
+\* `/fuska-refresh` — Refresh import graph with symbol indexing. **Flags:** --full, --dead-code, --json, --prune
 \* `/fuska-ask [question]` — Ask questions about the codebase using import graph data.
+
+## Documentation
+
+\* `/fuska-doc [mode] <topic>` — Create documentation as deliverables. **Flags:** --type, --audience, --depth, --output
 
 ## Utility Commands
 
@@ -124,7 +133,7 @@ Configure in your OpenCode model definition under `"variants"`. See `fuska confi
 \* Run `/fuska` to see where you are and what to do next
 \* Run `fuska progress` for detailed project status
 \* Query `state` concept for current context
-\* Query `roadmap` concept for phase status
+\* Query `roadmap` concept for chapter status
 
 ---
 
@@ -138,8 +147,8 @@ Configure in your OpenCode model definition under `"variants"`. See `fuska confi
 
 1. `fuska init "My Project"` - Initialize project foundation (git, .megamemory/)
 2. `/fuska` - See what to do next (or `/fuska configure` directly)
-3. `/fuska plan` - Plan the current phase (auto-detects phase number)
-4. `/fuska build` - Build the current phase
+3. `/fuska plan` - Plan the current chapter (auto-detects chapter number)
+4. `/fuska build` - Build the current chapter
 
 ## Core Workflow
 
@@ -163,24 +172,24 @@ Also registers MegaMemory as an MCP server (`megamemory install --target <target
 
 Usage: `fuska init "My Project Name"`
 
-**`/fuska-configure-initiative`**
+**`/fuska-configure`**
 Configure existing initiative through unified flow.
 
 One command takes you from idea to ready-for-planning:
 - Deep questioning to understand what you're building
 - Optional domain research (spawns 4 parallel researcher agents)
 - Requirements definition with v1/v2/out-of-scope scoping
-- Roadmap creation with phase breakdown and success criteria
+- Roadmap creation with chapter breakdown and success criteria
 
 Creates all MegaMemory concepts:
 - `project` — root concept for the project
 - `config` — workflow mode (interactive/yolo), model profile
 - `research/*` — domain research (if selected)
 - `requirements/*` — scoped requirements with REQ-IDs
-- `roadmap` — phases mapped to requirements
+- `roadmap` — chapters mapped to requirements
 - `state` — project memory and context
 
-Usage: `/fuska-configure-initiative`
+Usage: `/fuska-configure`
 
 **`/fuska-map-codebase`**
 Map an existing codebase for brownfield projects.
@@ -188,22 +197,22 @@ Map an existing codebase for brownfield projects.
 - Analyzes codebase with parallel Explore agents
 - Creates MegaMemory codebase concepts with 7 focused documents
 - Covers stack, architecture, structure, conventions, testing, integrations, concerns
-- Use before `/fuska-configure-initiative` on existing codebases
+- Use before `/fuska-configure` on existing codebases
 
 Usage: `/fuska-map-codebase`
 
-### Phase Planning
+### Chapter Planning
 
-**`/fuska-design-phase <number>`**
-Help articulate your vision for a phase before planning.
+**`/fuska-design <number>`**
+Help articulate your vision for a chapter before planning.
 
-- Captures how you imagine this phase working
+- Captures how you imagine this chapter working
 - Creates context concept with your vision, essentials, and boundaries
 - Use when you have ideas about how something should look/feel
 
-Usage: `/fuska-design-phase 2`
+Usage: `/fuska-design 2`
 
-**`/fuska-research-phase <number>`**
+**`/fuska-research-chapter <number>`**
 Comprehensive ecosystem research for niche/complex domains.
 
 - Discovers standard stack, architecture patterns, pitfalls
@@ -211,71 +220,71 @@ Comprehensive ecosystem research for niche/complex domains.
 - Use for 3D, games, audio, shaders, ML, and other specialized domains
 - Goes beyond "which library" to ecosystem knowledge
 
-Usage: `/fuska-research-phase 3`
+Usage: `/fuska-research-chapter 3`
 
-**`/fuska-list-phase-assumptions <number>`**
+**`/fuska-list-chapter-assumptions <number>`**
 See what OpenCode is planning to do before it starts.
 
-- Shows OpenCode's intended approach for a phase
+- Shows OpenCode's intended approach for a chapter
 - Lets you course-correct if OpenCode misunderstood your vision
 - No concepts created - conversational output only
 
-Usage: `/fuska-list-phase-assumptions 3`
+Usage: `/fuska-list-chapter-assumptions 3`
 
-**`/fuska-plan-phase <number>`**
-Create detailed execution plan for a specific phase.
+**`/fuska-plan <number>`**
+Create detailed execution plan for a specific chapter.
 
-- Generates plan concepts in MegaMemory (e.g., `phase-01-01-plan`)
-- Breaks phase into concrete, actionable tasks
+- Generates plan concepts in MegaMemory (e.g., `chapter-01-01-plan`)
+- Breaks chapter into concrete, actionable tasks
 - Includes verification criteria and success measures
-- Multiple plans per phase supported (01, 02, etc.)
+- Multiple plans per chapter supported (01, 02, etc.)
 
-Usage: `/fuska-plan-phase 1`
-Result: Creates plan concepts like `phase-01-01-plan`, `phase-01-02-plan`
+Usage: `/fuska-plan 1`
+Result: Creates plan concepts like `chapter-01-01-plan`, `chapter-01-02-plan`
 
 ### Execution
 
-**`/fuska-build-phase <phase-number>`**
-Execute all plans in a phase.
+**`/fuska-build <chapter-number>`**
+Execute all plans in a chapter.
 
-- Groups plans by wave (from concept data), executes waves sequentially
-- Plans within each wave run in parallel via Task tool
-- Verifies phase goal after all plans complete
+- Groups plans by batch (from concept data), executes batches sequentially
+- Plans within each batch run in parallel via Task tool
+- Verifies chapter goal after all plans complete
 - Updates requirements, roadmap, and state concepts
 
-Usage: `/fuska-build-phase 5`
+Usage: `/fuska-build 5`
 
 ### Roadmap Management
 
-**`/fuska-add-phase <description>`**
-Add new phase to end of current milestone.
+**`/fuska-add-chapter <description>`**
+Add new chapter to end of current milestone.
 
 - Updates roadmap concept
 - Uses next sequential number
-- Creates phase concept
+- Creates chapter concept
 
-Usage: `/fuska-add-phase "Add admin dashboard"`
+Usage: `/fuska-add-chapter "Add admin dashboard"`
 
-**`/fuska-insert-phase <after> <description>`**
-Insert urgent work as decimal phase between existing phases.
+**`/fuska-insert-chapter <after> <description>`**
+Insert urgent work as decimal chapter between existing chapters.
 
-- Creates intermediate phase concept (e.g., phase-07-1 between phase-07 and phase-08)
+- Creates intermediate chapter concept (e.g., chapter-07-1 between chapter-07 and chapter-08)
 - Useful for discovered work that must happen mid-milestone
-- Maintains phase ordering
+- Maintains chapter ordering
 
-Usage: `/fuska-insert-phase 7 "Fix critical auth bug"`
-Result: Creates Phase 7.1 concept
+Usage: `/fuska-insert-chapter 7 "Fix critical auth bug"`
+Result: Creates Chapter 7.1 concept
 
-**`/fuska-remove-phase <number>`**
-Remove a future phase and renumber subsequent phases.
+**`/fuska-remove-chapter <number>`**
+Remove a future chapter and renumber subsequent chapters.
 
-- Deletes phase concept and all references
-- Renumbers all subsequent phases to close the gap
-- Only works on future (unstarted) phases
+- Deletes chapter concept and all references
+- Renumbers all subsequent chapters to close the gap
+- Only works on future (unstarted) chapters
 - Git commit preserves historical record
 
-Usage: `/fuska-remove-phase 17`
-Result: Phase 17 deleted, phases 18-20 become 17-19
+Usage: `/fuska-remove-chapter 17`
+Result: Chapter 17 deleted, chapters 18-20 become 17-19
 
 ### Milestone Management
 
@@ -285,13 +294,13 @@ Start a new milestone through unified flow.
 - Deep questioning to understand what you're building next
 - Optional domain research (spawns 4 parallel researcher agents)
 - Requirements definition with scoping
-- Roadmap creation with phase breakdown
+- Roadmap creation with chapter breakdown
 
-Similar to `/fuska-configure-initiative` flow for brownfield projects (existing initiative concept).
+Similar to `/fuska-configure` flow for brownfield projects (existing initiative concept).
 
 Usage: `/fuska-new-milestone "v2.0 Features"`
 
-**`/fuska-complete-milestone <version>`**
+**`/fuska-complete <version>`**
 Archive completed milestone and prepare for next version.
 
 - Creates milestone concept with stats
@@ -299,7 +308,7 @@ Archive completed milestone and prepare for next version.
 - Creates git tag for the release
 - Prepares workspace for next version
 
-Usage: `/fuska-complete-milestone 1.0.0`
+Usage: `/fuska-complete 1.0.0`
 
 ### Progress Tracking
 
@@ -317,7 +326,7 @@ Usage: `fuska progress`
 
 ### Session Management
 
-**`/fuska-resume-work`**
+**`/fuska-resume`**
 Resume work from previous session with full context restoration.
 
 - Shows exact task position from state (e.g., "Task 4 of 7")
@@ -325,10 +334,10 @@ Resume work from previous session with full context restoration.
 - Detects incomplete work and checkpoints
 - Routes to appropriate next action
 
-Usage: `/fuska-resume-work`
+Usage: `/fuska-resume`
 
 **`/fuska-pause-work`**
-Capture mental context when pausing work mid-phase.
+Capture mental context when pausing work mid-chapter.
 
 - Asks for your mental context (approach, next steps)
 - Creates handoff concept with mental context + modified files
@@ -371,7 +380,7 @@ List pending todos and select one to work on.
 - Lists all pending todo concepts with title, area, age
 - Optional area filter (e.g., `/fuska-check-todos api`)
 - Loads full context for selected todo
-- Routes to appropriate action (work now, add to phase, brainstorm)
+- Routes to appropriate action (work now, add to chapter, brainstorm)
 - Moves todo to done when work begins
 
 Usage: `/fuska-check-todos`
@@ -379,7 +388,7 @@ Usage: `/fuska-check-todos api`
 
 ### User Acceptance Testing
 
-**`/fuska-review-phase [phase]`**
+**`/fuska-review [chapter]`**
 Validate built features through conversational UAT.
 
 - Extracts testable deliverables from summary concepts
@@ -387,27 +396,27 @@ Validate built features through conversational UAT.
 - Automatically diagnoses failures and creates fix plans
 - Ready for re-execution if issues found
 
-Usage: `/fuska-review-phase 3`
+Usage: `/fuska-review 3`
 
 ### Milestone Auditing
 
-**`/fuska-audit-milestone [version]`**
+**`/fuska-audit [version]`**
 Audit milestone completion against original intent.
 
 - Queries all verification concepts
 - Checks requirements coverage
-- Spawns integration checker for cross-phase wiring
+- Spawns integration checker for cross-chapter wiring
 - Creates audit concept with gaps and tech debt
 
-Usage: `/fuska-audit-milestone`
+Usage: `/fuska-audit`
 
 **`/fuska-plan-milestone-gaps`**
-Create phases to close gaps identified by audit.
+Create chapters to close gaps identified by audit.
 
-- Queries audit concept and groups gaps into phases
+- Queries audit concept and groups gaps into chapters
 - Prioritizes by requirement priority (must/should/nice)
-- Adds gap closure phases to roadmap concept
-- Ready for `/fuska-plan-phase` on new phases
+- Adds gap closure chapters to roadmap concept
+- Ready for `/fuska-plan` on new chapters
 
 Usage: `/fuska-plan-milestone-gaps`
 
@@ -418,12 +427,33 @@ Manage Fuska settings interactively.
 
 - Quick settings: switch model profile + workflow mode
 - Configure model aliases (quality/balanced/budget/explore)
-- Git commit strategy (per-phase/per-plan/per-task)
+- Git commit strategy (per-chapter/per-plan/per-task)
 - Set/clear stage model overrides
 - Reset presets (full wizard)
 
 Usage: `fuska config`
 Usage: `fuska config --view` (non-interactive display)
+
+### Migration Utilities
+
+**`fuska migrate planning [project-dir]`**
+Migrate `.planning/` directory format to MegaMemory knowledge graph.
+
+- Copies `.planning/` to `.planning.backup`, then creates MegaMemory concepts from all markdown files
+- Use `--clean` to delete existing database before migrating
+
+Usage: `fuska migrate planning`
+Usage: `fuska migrate planning [project-dir] --clean`
+
+**`fuska migrate terminology [project-dir]`**
+Rename `phase`→`chapter` and `wave`→`batch` in an existing MegaMemory database.
+
+- Updates concept IDs, names, summaries, and edge references in-place
+- Run this if your database was created before Fuska renamed these concepts
+- Prints a summary of renamed IDs, updated nodes, and fixed edges
+
+Usage: `fuska migrate terminology`
+Usage: `fuska migrate terminology [project-dir]`
 
 ### Quick Tasks
 
@@ -488,16 +518,16 @@ All project data lives in MegaMemory concepts:
 initiative (root)
 ├── config              # Workflow mode & gates
 ├── state               # Project memory & context
-├── roadmap             # Current phase breakdown
+├── roadmap             # Current chapter breakdown
 ├── requirements/*      # Scoped requirements
 ├── codebase/*          # Codebase map (brownfield)
 ├── research/*          # Domain research
-├── phases/
-│   ├── phase-01        # Phase concept
-│   ├── phase-01-context # Phase context
-│   ├── phase-01-research # Phase research
-│   ├── phase-01-01-plan  # Plan concept
-│   ├── phase-01-01-summary # Summary concept
+├── chapters/
+│   ├── chapter-01        # Chapter concept
+│   ├── chapter-01-context # Chapter context
+│   ├── chapter-01-research # Chapter research
+│   ├── chapter-01-01-plan  # Plan concept
+│   ├── chapter-01-01-summary # Summary concept
 │   └── ...
 ├── todos/
 │   ├── pending/*       # Pending todo concepts
@@ -511,7 +541,7 @@ initiative (root)
 
 ## Workflow Modes
 
-Set during `/fuska-configure-initiative`:
+Set during `/fuska-configure`:
 
 **Interactive Mode**
 
@@ -559,9 +589,9 @@ Without variants, all agents use the model's default thinking budget.
 fuska init "My Project"    # Initialize project foundation
 /fuska configure           # Questioning, research, requirements, roadmap
 /new
-/fuska plan                # Plan current phase (auto-detects phase 1)
+/fuska plan                # Plan current chapter (auto-detects chapter 1)
 /new
-/fuska build               # Build the current phase
+/fuska build               # Build the current chapter
 ```
 
 Or just `/fuska` at any point to see where you are.
@@ -612,7 +642,7 @@ Or just `/fuska` at any point to see where you are.
 - `/fuska` — see where you are and what to do next
 - Query initiative concept for initiative vision
 - Query state concept for current context
-- Query roadmap concept for phase status
+- Query roadmap concept for chapter status
 - Run `fuska progress` to check where you're up to
 
 ## MegaMemory Query Examples
@@ -629,11 +659,11 @@ megamemory_understand(query="roadmap", top_k=5)
 # Get all requirements
 megamemory_understand(query="requirements", top_k=50)
 
-# Get phase plans
-megamemory_understand(query="phase-01-plan", top_k=20)
+# Get chapter plans
+megamemory_understand(query="chapter-01-plan", top_k=20)
 
-# Get phase research
-megamemory_understand(query="phase-01-research", top_k=1)
+# Get chapter research
+megamemory_understand(query="chapter-01-research", top_k=1)
 
 # List all debug sessions
 megamemory_understand(query="debug session", top_k=20)

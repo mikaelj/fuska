@@ -1048,7 +1048,7 @@ response = question({
 
 ## Agent Flow
 
-- [ ] Research phase runs in researched/verified modes (skipped in planned/checked)
+- [ ] Research chapter runs in researched/verified modes (skipped in planned/checked)
 - [ ] Research blocked handled with skip/abort options
 - [ ] Planner creates outline, updates concept
 - [ ] Checker validates with expert panel (checked/researched/verified modes)
@@ -1063,7 +1063,7 @@ response = question({
 - [ ] Document includes proper frontmatter (doc_id, slug, type, audience, depth, generated, mode)
 - [ ] Final concept status = "complete"
 - [ ] Git commit offered after completion
-- [ ] Completion banner displays all required info (document, topic, type, audience, output, words, sections, mode, phases)
+- [ ] Completion banner displays all required info (document, topic, type, audience, output, words, sections, mode, chapters)
 
 ## Edge Cases
 

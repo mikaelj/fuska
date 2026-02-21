@@ -700,7 +700,7 @@ This template is for @-reference only. When agents need to understand or update 
 - Document environment-specific differences (dev/staging/prod)
 - Include auth patterns for each service
 
-**Useful for phase planning when:**
+**Useful for chapter planning when:**
 - Adding new external service integrations
 - Debugging authentication issues
 - Understanding data flow outside the application

@@ -5,16 +5,16 @@
 1. STATE concept (kind="config" or kind="decision")
 2. PROJECT concept (kind="module" or kind="config")
 3. ROADMAP concept (kind="config")
-4. Current phase's concept and its plan children
-5. Current phase's summary concepts
+4. Current chapter's concept and its plan children
+5. Current chapter's summary concepts
 
 </required_reading>
 
 <purpose>
 
-Mark current phase complete and advance to next. This is the natural point where progress tracking and PROJECT concept evolution happen.
+Mark current chapter complete and advance to next. This is the natural point where progress tracking and PROJECT concept evolution happen.
 
-"Planning next phase" = "current phase is done"
+"Planning next chapter" = "current chapter is done"
 
 </purpose>
 
@@ -36,7 +36,7 @@ STATE_CONCEPT=$(megamemory:understand(query="project state"))
 PROJECT_CONCEPT=$(megamemory:understand(query="project requirements decisions"))
 
 # Query ROADMAP concept
-ROADMAP_CONCEPT=$(megamemory:understand(query="roadmap phases progress"))
+ROADMAP_CONCEPT=$(megamemory:understand(query="roadmap chapters progress"))
 
 # Parse JSON summaries
 STATE_DATA=$(echo "$STATE_CONCEPT" | jq '.summary')
@@ -44,10 +44,10 @@ PROJECT_DATA=$(echo "$PROJECT_CONCEPT" | jq '.summary')
 ROADMAP_DATA=$(echo "$ROADMAP_CONCEPT" | jq '.summary')
 
 # Get current position
-CURRENT_PHASE=$(echo "$STATE_DATA" | jq '.current_position.phase')
+CURRENT_CHAPTER=$(echo "$STATE_DATA" | jq '.current_position.chapter')
 ```
 
-Parse current position to verify we're transitioning the right phase.
+Parse current position to verify we're transitioning the right chapter.
 Note accumulated context that may need updating after transition.
 
 If concepts don't exist, query with different terms or check for legacy naming:
@@ -56,7 +56,7 @@ If concepts don't exist, query with different terms or check for legacy naming:
 # Try alternative queries
 megamemory:understand(query="project state config")
 megamemory:understand(query="project configuration")
-megamemory:understand(query="roadmap phases")
+megamemory:understand(query="roadmap chapters")
 
 # If still missing, create them with appropriate defaults
 megamemory:create_concept(...)
@@ -66,14 +66,14 @@ megamemory:create_concept(...)
 
 <step name="verify_completion">
 
-Check current phase has all plan summaries:
+Check current chapter has all plan summaries:
 
 ```bash
-# Query MegaMemory for phase's plan children
-PHASE_PLANS=$(megamemory:understand({query: "Phase ${CURRENT_PHASE} plans", top_k: 100})
+# Query MegaMemory for chapter's plan children
+CHAPTER_PLANS=$(megamemory:understand({query: "Chapter ${CURRENT_CHAPTER} plans", top_k: 100})
 
 # Also query for summary concepts
-PHASE_SUMMARIES=$(megamemory:understand({query: "Phase ${CURRENT_PHASE} summaries", top_k: 100})
+CHAPTER_SUMMARIES=$(megamemory:understand({query: "Chapter ${CURRENT_CHAPTER} summaries", top_k: 100})
 ```
 
 **Verification logic:**
@@ -100,8 +100,8 @@ Parse the result:
 <if mode="yolo">
 
 ```
-[AUTO] Auto-approved: Transition Phase [X] → Phase [X+1]
-Phase [X] complete — all [Y] plans finished.
+[AUTO] Auto-approved: Transition Chapter [X] → Chapter [X+1]
+Chapter [X] complete — all [Y] plans finished.
 
 Proceeding to mark done and advance...
 ```
@@ -112,7 +112,7 @@ Proceed directly to cleanup_handoff step.
 
 <if mode="interactive" OR="custom with gates.confirm_transition true">
 
-Ask: "Phase [X] complete — all [Y] plans finished. Ready to mark done and move to Phase [X+1]?"
+Ask: "Chapter [X] complete — all [Y] plans finished. Ready to mark done and move to Chapter [X+1]?"
 
 Wait for confirmation before proceeding.
 
@@ -126,15 +126,15 @@ Skipping incomplete plans is destructive — ALWAYS prompt regardless of mode.
 Present:
 
 ```
-Phase [X] has incomplete plans:
-- {phase}-01-SUMMARY.md [OK] Complete
-- {phase}-02-SUMMARY.md [FAIL] Missing
-- {phase}-03-SUMMARY.md [FAIL] Missing
+Chapter [X] has incomplete plans:
+- {chapter}-01-SUMMARY.md [OK] Complete
+- {chapter}-02-SUMMARY.md [FAIL] Missing
+- {chapter}-03-SUMMARY.md [FAIL] Missing
 
 [WARN] Safety rail: Skipping plans requires confirmation (destructive action)
 
 Options:
-1. Continue current phase (execute remaining plans)
+1. Continue current chapter (execute remaining plans)
 2. Mark complete anyway (skip remaining plans)
 3. Review what's left
 ```
@@ -155,7 +155,7 @@ If `current_agent_id` is not null:
 - A previous session was interrupted mid-execution
 - Clear `current_agent_id` to null (set in init_agent_tracking during next execution)
 
-This ensures clean state for the next phase.
+This ensures clean state for the next chapter.
 </step>
 
 <step name="update_roadmap">
@@ -166,7 +166,7 @@ Parse current ROADMAP concept.summary JSON:
 
 ```json
 {
-  "phases": [...],
+  "chapters": [...],
   "milestones": [...],
   "progress": [...],
   "updated": "..."
@@ -175,17 +175,17 @@ Parse current ROADMAP concept.summary JSON:
 
 Update the JSON:
 
-- Mark current phase: status: "complete", completed_date: "[today]"
+- Mark current chapter: status: "complete", completed_date: "[today]"
 - Update plans_complete to final (e.g., 3, plans_total: 3)
 - Update progress array with completion date
-- Keep next phase as status: "not_started"
+- Keep next chapter as status: "not_started"
 - Update updated timestamp
 
 **Example update:**
 
 ```json
 {
-  "phases": [
+  "chapters": [
     {
       "number": 1,
       "name": "Foundation",
@@ -206,14 +206,14 @@ Update the JSON:
   ],
   "progress": [
     {
-      "phase": 1,
+      "chapter": 1,
       "plans_complete": 3,
       "plans_total": 3,
       "status": "Complete",
       "completed": "2025-01-15"
     },
     {
-      "phase": 2,
+      "chapter": 2,
       "plans_complete": 0,
       "plans_total": 2,
       "status": "Not started",
@@ -236,19 +236,19 @@ megamemory:update_concept(
 
 <step name="archive_prompts">
 
-If prompts were generated for the phase, they stay in place.
+If prompts were generated for the chapter, they stay in place.
 The `completed/` subfolder pattern from create-meta-prompts handles archival.
 </step>
 
 <step name="evolve_project">
 
-Evolve PROJECT concept to reflect learnings from completed phase.
+Evolve PROJECT concept to reflect learnings from completed chapter.
 
-**Read phase summaries:**
+**Read chapter summaries:**
 
 ```bash
 # Query MegaMemory for summary concepts
-megamemory:understand({query: "Phase ${CURRENT_PHASE} summaries", top_k: 100})
+megamemory:understand({query: "Chapter ${CURRENT_CHAPTER} summaries", top_k: 100})
 ```
 
 **Assess requirement changes:**
@@ -270,8 +270,8 @@ Parse current PROJECT concept.summary JSON:
 ```
 
 1. **Requirements validated?**
-   - Any Active requirements shipped in this phase?
-   - Move to validated array: `- [OK] [Requirement] — Phase X`
+   - Any Active requirements shipped in this chapter?
+   - Move to validated array: `- [OK] [Requirement] — Chapter X`
 
 2. **Requirements invalidated?**
    - Any Active requirements discovered to be unnecessary or wrong?
@@ -312,7 +312,7 @@ Before:
 }
 ```
 
-After (Phase 2 shipped JWT auth, discovered rate limiting needed):
+After (Chapter 2 shipped JWT auth, discovered rate limiting needed):
 ```json
 {
   "requirements": {
@@ -322,7 +322,7 @@ After (Phase 2 shipped JWT auth, discovered rate limiting needed):
       "- [ ] Rate limiting on sync endpoint"
     ],
     "validated": [
-      "- [OK] JWT authentication — Phase 2"
+      "- [OK] JWT authentication — Chapter 2"
     ],
     "out_of_scope": [
       "- OAuth2 — complexity not needed for v1"
@@ -341,7 +341,7 @@ megamemory:update_concept(
 
 **Step complete when:**
 
-- [ ] Phase summaries reviewed for learnings
+- [ ] Chapter summaries reviewed for learnings
 - [ ] Validated requirements moved from active to validated
 - [ ] Invalidated requirements moved to out_of_scope with reason
 - [ ] Emerged requirements added to active
@@ -353,17 +353,17 @@ megamemory:update_concept(
 
 <step name="update_current_position_after_transition">
 
-Update current_position in STATE concept.summary to reflect phase completion and transition.
+Update current_position in STATE concept.summary to reflect chapter completion and transition.
 
 **Parse current STATE JSON:**
 ```json
 {
   "current_position": {
-    "phase": 2,
-    "total_phases": 4,
-    "phase_name": "Authentication",
+    "chapter": 2,
+    "total_chapters": 4,
+    "chapter_name": "Authentication",
     "plan": "2 of 2",
-    "status": "Phase complete",
+    "status": "Chapter complete",
     "progress_percent": 60
   },
   "updated": "..."
@@ -372,22 +372,22 @@ Update current_position in STATE concept.summary to reflect phase completion and
 
 **Instructions:**
 
-- Increment phase number to next phase
+- Increment chapter number to next chapter
 - Reset plan to "Not started"
 - Set status to "Ready to plan"
 - Recalculate progress_percent based on completed plans
 
-**Example — transitioning from Phase 2 to Phase 3:**
+**Example — transitioning from Chapter 2 to Chapter 3:**
 
 Before:
 ```json
 {
   "current_position": {
-    "phase": 2,
-    "total_phases": 4,
-    "phase_name": "Authentication",
+    "chapter": 2,
+    "total_chapters": 4,
+    "chapter_name": "Authentication",
     "plan": "2 of 2",
-    "status": "Phase complete",
+    "status": "Chapter complete",
     "progress_percent": 60
   }
 }
@@ -397,9 +397,9 @@ After:
 ```json
 {
   "current_position": {
-    "phase": 3,
-    "total_phases": 4,
-    "phase_name": "Core Features",
+    "chapter": 3,
+    "total_chapters": 4,
+    "chapter_name": "Core Features",
     "plan": "Not started",
     "status": "Ready to plan",
     "progress_percent": 60
@@ -417,7 +417,7 @@ megamemory:update_concept(
 
 **Step complete when:**
 
-- [ ] Phase number incremented to next phase
+- [ ] Chapter number incremented to next chapter
 - [ ] Plan status reset to "Not started"
 - [ ] Status shows "Ready to plan"
 - [ ] Progress percent reflects total completed plans
@@ -466,15 +466,15 @@ Update accumulated_context in STATE concept.summary.
 
 **Decisions:**
 
-- Note recent decisions from this phase (3-5 max) in recent_decisions array
+- Note recent decisions from this chapter (3-5 max) in recent_decisions array
 - Full log lives in PROJECT concept's key_decisions
 
 **Blockers/Concerns:**
 
-- Review blockers from completed phase
-- If addressed in this phase: Remove from list
-- If still relevant for future: Keep with "Phase X" prefix
-- Add any new concerns from completed phase's summaries
+- Review blockers from completed chapter
+- If addressed in this chapter: Remove from list
+- If still relevant for future: Keep with "Chapter X" prefix
+- Add any new concerns from completed chapter's summaries
 
 **Example:**
 
@@ -483,19 +483,19 @@ Before:
 {
   "accumulated_context": {
     "blockers": [
-      "[WARN] [Phase 1] Database schema not indexed for common queries",
-      "[WARN] [Phase 2] WebSocket reconnection behavior on flaky networks unknown"
+      "[WARN] [Chapter 1] Database schema not indexed for common queries",
+      "[WARN] [Chapter 2] WebSocket reconnection behavior on flaky networks unknown"
     ]
   }
 }
 ```
 
-After (if database indexing was addressed in Phase 2):
+After (if database indexing was addressed in Chapter 2):
 ```json
 {
   "accumulated_context": {
     "blockers": [
-      "[WARN] [Phase 2] WebSocket reconnection behavior on flaky networks unknown"
+      "[WARN] [Chapter 2] WebSocket reconnection behavior on flaky networks unknown"
     ]
   }
 }
@@ -513,8 +513,8 @@ megamemory:update_concept(
 
 - [ ] Recent decisions noted in array
 - [ ] Resolved blockers removed from list
-- [ ] Unresolved blockers kept with phase prefix
-- [ ] New concerns from completed phase added
+- [ ] Unresolved blockers kept with chapter prefix
+- [ ] New concerns from completed chapter added
 
 </step>
 
@@ -527,7 +527,7 @@ Update session_continuity in STATE concept.summary to reflect transition complet
 {
   "session_continuity": {
     "last_session": "2025-01-20",
-    "stopped_at": "Phase 2 complete, ready to plan Phase 3",
+    "stopped_at": "Chapter 2 complete, ready to plan Chapter 3",
     "resume_file": null
   }
 }
@@ -544,20 +544,20 @@ megamemory:update_concept(
 **Step complete when:**
 
 - [ ] Last session timestamp updated to current date and time
-- [ ] Stopped at describes phase completion and next phase
+- [ ] Stopped at describes chapter completion and next chapter
 - [ ] Resume file confirmed as null (transitions don't use resume files)
 
 </step>
 
-<step name="offer_next_phase">
+<step name="offer_next_chapter">
 
 **MANDATORY: Verify milestone status before presenting next steps.**
 
-**Step 1: Query ROADMAP concept and identify phases in current milestone**
+**Step 1: Query ROADMAP concept and identify chapters in current milestone**
 
 Parse ROADMAP concept.summary JSON to extract:
-1. Current phase number (the phase just transitioned from)
-2. All phase numbers in the current milestone section
+1. Current chapter number (the chapter just transitioned from)
+2. All chapter numbers in the current milestone section
 
 From milestones array:
 ```json
@@ -565,66 +565,66 @@ From milestones array:
   "milestones": [
     {
       "version": "v1.0",
-      "phases": [1, 2, 3],
+      "chapters": [1, 2, 3],
       "status": "in_progress"
     }
   ]
 }
 ```
 
-Count total phases and identify the highest phase number in the milestone.
+Count total chapters and identify the highest chapter number in the milestone.
 
-State: "Current phase is {X}. Milestone has {N} phases (highest: {Y})."
+State: "Current chapter is {X}. Milestone has {N} chapters (highest: {Y})."
 
 **Step 2: Route based on milestone status**
 
 | Condition | Meaning | Action |
 |-----------|---------|--------|
-| current phase < highest phase | More phases remain | Go to **Route A** |
-| current phase = highest phase | Milestone complete | Go to **Route B** |
+| current chapter < highest chapter | More chapters remain | Go to **Route A** |
+| current chapter = highest chapter | Milestone complete | Go to **Route B** |
 
 ---
 
-**Route A: More phases remain in milestone**
+**Route A: More chapters remain in milestone**
 
-Query ROADMAP concept for next phase's name and description from phases array.
+Query ROADMAP concept for next chapter's name and description from chapters array.
 
-**If next phase exists:**
+**If next chapter exists:**
 
 <if mode="yolo">
 
 ```
-Phase [X] marked complete.
+Chapter [X] marked complete.
 
-Next: Phase [X+1] — [Name]
+Next: Chapter [X+1] — [Name]
 
-[AUTO] Auto-continuing: Plan Phase [X+1] in detail
+[AUTO] Auto-continuing: Plan Chapter [X+1] in detail
 ```
 
-Exit skill and invoke Command("/fuska-plan-phase [X+1]")
+Exit skill and invoke Command("/fuska-plan-chapter [X+1]")
 
 </if>
 
 <if mode="interactive" OR="custom with gates.confirm_transition true">
 
 ```
-## [OK] Phase [X] Complete
+## [OK] Chapter [X] Complete
 
 ---
 
 ## > Next Up
 
-**Phase [X+1]: [Name]** — [Goal from ROADMAP]
+**Chapter [X+1]: [Name]** — [Goal from ROADMAP]
 
-`/fuska-plan-phase [X+1]`
+`/fuska-plan-chapter [X+1]`
 
 *`/new` first → fresh context window*
 
 ---
 
 **Also available:**
-- `/fuska-discuss-phase [X+1]` — gather context first
-- `/fuska-research-phase [X+1]` — investigate unknowns
+- `/fuska-discuss-chapter [X+1]` — gather context first
+- `/fuska-research-chapter [X+1]` — investigate unknowns
 - Review roadmap
 
 ---
@@ -635,14 +635,14 @@ Exit skill and invoke Command("/fuska-plan-phase [X+1]")
 
 ---
 
-**Route B: Milestone complete (all phases done)**
+**Route B: Milestone complete (all chapters done)**
 
 <if mode="yolo">
 
 ```
-Phase {X} marked complete.
+Chapter {X} marked complete.
 
-[DONE] Milestone {version} is 100% complete — all {N} phases finished!
+[DONE] Milestone {version} is 100% complete — all {N} chapters finished!
 
 [AUTO] Auto-continuing: Complete milestone and archive
 ```
@@ -654,9 +654,9 @@ Exit skill and invoke Command("/fuska-complete-milestone {version}")
 <if mode="interactive" OR="custom with gates.confirm_transition true">
 
 ```
-## [OK] Phase {X}: {Phase Name} Complete
+## [OK] Chapter {X}: {Chapter Name} Complete
 
-[DONE] Milestone {version} is 100% complete — all {N} phases finished!
+[DONE] Milestone {version} is 100% complete — all {N} chapters finished!
 
 ---
 
@@ -687,8 +687,8 @@ Exit skill and invoke Command("/fuska-complete-milestone {version}")
 
 Progress tracking is IMPLICIT:
 
-- "Plan phase 2" → Phase 1 must be done (or ask)
-- "Plan phase 3" → Phases 1-2 must be done (or ask)
+- "Plan chapter 2" → Chapter 1 must be done (or ask)
+- "Plan chapter 3" → Chapters 1-2 must be done (or ask)
 - Transition workflow makes it explicit in ROADMAP concept
 
 No separate "update progress" step. Forward motion IS progress.
@@ -697,17 +697,17 @@ No separate "update progress" step. Forward motion IS progress.
 
 <partial_completion>
 
-If user wants to move on but phase isn't fully complete:
+If user wants to move on but chapter isn't fully complete:
 
 ```
-Phase [X] has incomplete plans:
-- {phase}-02-PLAN.md (not executed)
-- {phase}-03-PLAN.md (not executed)
+Chapter [X] has incomplete plans:
+- {chapter}-02-PLAN.md (not executed)
+- {chapter}-03-PLAN.md (not executed)
 
 Options:
 1. Mark complete anyway (plans weren't needed)
-2. Defer work to later phase
-3. Stay and finish current phase
+2. Defer work to later chapter
+3. Stay and finish current chapter
 ```
 
 Respect user judgment — they know if work matters.
@@ -723,7 +723,7 @@ Respect user judgment — they know if work matters.
 
 Transition is complete when:
 
-- [ ] Current phase plan summaries verified (all exist or user chose to skip)
+- [ ] Current chapter plan summaries verified (all exist or user chose to skip)
 - [ ] Any stale handoffs deleted from file system
 - [ ] ROADMAP concept updated with completion status and plan count
 - [ ] PROJECT concept evolved (requirements, decisions, description if needed)

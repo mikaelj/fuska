@@ -1,5 +1,5 @@
 ---
-name: fuska-complete-milestone
+name: fuska-complete
 description: Archive completed milestone and prepare for next version using MegaMemory
 argument-hint: "<version>"
 tools:
@@ -38,7 +38,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/roadmap", "name": "roadmap", "kind": "module", "summary": "{\"phases\":[...],\"current_milestone\":\"v1.0\",...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/roadmap", "name": "roadmap", "kind": "module", "summary": "{\"chapters\":[...],\"current_milestone\":\"v1.0\",...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -84,7 +84,7 @@ If response.matches.length === 0:
 ## Pre-flight Check
 
 [WARN] No milestone audit found. Run /fuska-audit-milestone first to verify
-requirements coverage, cross-phase integration, and E2E flows.
+requirements coverage, cross-chapter integration, and E2E flows.
 
 ────────────────────────────────────────────────────────────
 ```
@@ -98,7 +98,7 @@ If audit exists and has gaps:
 ## Pre-flight Check
 
 [WARN] Milestone audit found gaps. Run /fuska-plan-milestone-gaps to create
-phases that close the gaps, or proceed anyway to accept as tech debt.
+chapters that close the gaps, or proceed anyway to accept as tech debt.
 
 ────────────────────────────────────────────────────────────
 ```
@@ -146,7 +146,7 @@ const roadmapId = response.matches[0].id
 const roadmapSummaryString = response.matches[0].summary
 const roadmapData = JSON.parse(roadmapSummaryString)
 const currentMilestone = roadmapData.current_milestone
-const phases = roadmapData.phases
+const chapters = roadmapData.chapters
 ```
 
 **Step 2.3: Verify version matches current milestone**
@@ -155,11 +155,11 @@ If currentMilestone !== `v${{version}}`:
 → Display: `Warning: Current milestone is ${currentMilestone}, but you're trying to complete v${{version}}`
 → Ask confirmation
 
-**Step 2.4: Extract milestone phases**
+**Step 2.4: Extract milestone chapters**
 
 ```
-const milestonePhases = phases.filter(phase => phase.milestone === currentMilestone)
-const milestonePhaseNumbers = milestonePhases.map(p => parseInt(p.number || p.name.replace('phase-', '')))
+const milestoneChapters = chapters.filter(chapter => chapter.milestone === currentMilestone)
+const milestoneChapterNumbers = milestoneChapters.map(p => parseInt(p.number || p.name.replace('chapter-', '')))
 ```
 
 **Step 2.5: Query requirements concept**
@@ -186,39 +186,39 @@ const requirements = response.matches.map(match => {
 
 ## 3. Verify Milestone Readiness
 
-**Step 3.1: Check all phases completed**
+**Step 3.1: Check all chapters completed**
 
-For each phase in milestonePhases:
+For each chapter in milestoneChapters:
 ```
-const phaseSlug = `phase-${phaseNumber.toString().padStart(2, '0')}`
+const chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
 
-// Query phase concept
-megamemory_understand(query=phaseSlug, top_k=1)
+// Query chapter concept
+megamemory_understand(query=chapterSlug, top_k=1)
 if (response.matches.length > 0) {
-  const phaseSummaryString = response.matches[0].summary
-  const phaseData = JSON.parse(phaseSummaryString)
-  const phaseStatus = phaseData.status
+  const chapterSummaryString = response.matches[0].summary
+  const chapterData = JSON.parse(chapterSummaryString)
+  const chapterStatus = chapterData.status
 }
 
-// Query all plan concepts for this phase
-megamemory_understand(query=`${phaseSlug}-plan`, top_k=20)
+// Query all plan concepts for this chapter
+megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
 if (response.matches.length > 0) {
   const totalPlans = response.matches.length
 }
 
-// Query all summary concepts for this phase
-megamemory_understand(query=`${phaseSlug}-summary`, top_k=20)
+// Query all summary concepts for this chapter
+megamemory_understand(query=`${chapterSlug}-summary`, top_k=20)
 if (response.matches.length > 0) {
   const completedSummaries = response.matches.length
 }
 ```
 
-**Step 3.2: Verify each phase has completed plans**
+**Step 3.2: Verify each chapter has completed plans**
 
-For each phase:
+For each chapter:
 ```
-if (phaseStatus !== "complete" || completedSummaries < totalPlans) {
-  incompletePhases.push(phaseSlug)
+if (chapterStatus !== "complete" || completedSummaries < totalPlans) {
+  incompleteChapters.push(chapterSlug)
 }
 ```
 
@@ -231,10 +231,10 @@ if (phaseStatus !== "complete" || completedSummaries < totalPlans) {
 
 **Milestone:** v${{version}}
 
-**Phases in milestone:** ${milestonePhases.length}
-**Phases completed:** ${milestonePhases.length - incompletePhases.length}
+**Chapters in milestone:** ${milestoneChapters.length}
+**Chapters completed:** ${milestoneChapters.length - incompleteChapters.length}
 
-${incompletePhases.length > 0 ? `Incomplete phases:\n${incompletePhases.map(p => `- ${p}`).join('\n')}` : 'All phases complete [OK]'}
+${incompleteChapters.length > 0 ? `Incomplete chapters:\n${incompleteChapters.map(p => `- ${p}`).join('\n')}` : 'All chapters complete [OK]'}
 
 ────────────────────────────────────────────────────────────
 
@@ -252,9 +252,9 @@ Wait for user confirmation. If "No", stop.
 **Step 4.1: Count total metrics**
 
 ```
-const totalPhases = milestonePhases.length
-const totalPlans = milestonePhases.reduce((sum, phase) => sum + phase.planCount, 0)
-const totalTasks = milestonePhases.reduce((sum, phase) => sum + phase.taskCount, 0)
+const totalChapters = milestoneChapters.length
+const totalPlans = milestoneChapters.reduce((sum, chapter) => sum + chapter.planCount, 0)
+const totalTasks = milestoneChapters.reduce((sum, chapter) => sum + chapter.taskCount, 0)
 ```
 
 **Step 4.2: Query all summary concepts for accomplishments**
@@ -266,12 +266,12 @@ const allSummaries = response.matches.map(match => {
   const summaryData = JSON.parse(summaryString)
   return {
     id: match.id,
-    phase: summaryData.phase,
+    chapter: summaryData.chapter,
     plan: summaryData.plan,
     accomplishments: summaryData.accomplishments || [],
     decisions: summaryData.decisions || []
   }
-}).filter(s => milestonePhases.some(p => p.number.toString() === s.phase || p.name === s.phase))
+}).filter(s => milestoneChapters.some(p => p.number.toString() === s.chapter || p.name === s.chapter))
 ```
 
 **Step 4.3: Calculate git stats**
@@ -300,7 +300,7 @@ const timeline = bash("git log --format='%ai %s' --date=short | head -20")
 **Milestone:** v${{version}}
 
 ### Scope
-- Phases: ${totalPhases}
+- Chapters: ${totalChapters}
 - Plans: ${totalPlans}
 - Tasks: ${totalTasks}
 
@@ -374,7 +374,7 @@ Wait for user response.
 const milestoneArchiveData = {
   version: `v${{version}}`,
   archivedAt: new Date().toISOString(),
-  phases: milestonePhases.map(p => ({
+  chapters: milestoneChapters.map(p => ({
     number: p.number,
     name: p.name,
     goal: p.goal,
@@ -383,7 +383,7 @@ const milestoneArchiveData = {
   accomplishments: keyAccomplishments,
   decisions: keyDecisions,
   stats: {
-    totalPhases,
+    totalChapters,
     totalPlans,
     totalTasks,
     fileChanges,
@@ -401,7 +401,7 @@ megamemory_create_concept(
   name=`milestone-v${{version}}`,
   kind="config",
   summary=JSON.stringify(milestoneArchiveData),
-  why="Archive completed milestone v${{version}} with all phase data, accomplishments, and requirements",
+  why="Archive completed milestone v${{version}} with all chapter data, accomplishments, and requirements",
   parent_id="project",
   edges=[
     {
@@ -420,22 +420,22 @@ megamemory_create_concept(
 
 **Step 6.2: Update roadmap concept**
 
-Collapse milestone phases to one-line summary:
+Collapse milestone chapters to one-line summary:
 ```
-const updatedRoadmapPhases = phases.map(phase => {
-  if (phase.milestone === currentMilestone) {
+const updatedRoadmapChapters = chapters.map(chapter => {
+  if (chapter.milestone === currentMilestone) {
     return {
-      ...phase,
+      ...chapter,
       archived: true,
       archiveReference: `milestone-v${{version}}`
     }
   }
-  return phase
+  return chapter
 })
 
 const updatedRoadmapData = {
   ...roadmapData,
-  phases: updatedRoadmapPhases,
+  chapters: updatedRoadmapChapters,
   current_milestone: null, // Milestone completed
   last_completed_milestone: currentMilestone
 }
@@ -490,7 +490,7 @@ const stateData = JSON.parse(stateSummaryString)
 
 const updatedStateData = {
   ...stateData,
-  current_phase: null,
+  current_chapter: null,
   current_plan: null,
   status: "milestone_complete",
   last_completed_milestone: `v${{version}}`,
@@ -527,23 +527,23 @@ If `branchingStrategy` is not set or is `"none"`:
 
 ---
 
-**Step 8.2: Check for feature/phase branches**
+**Step 8.2: Check for feature/chapter branches**
 
-For `branching_strategy === "phase"` or `"milestone"`:
+For `branching_strategy === "chapter"` or `"milestone"`:
 
 ```
 // List branches
 const branches = bash("git branch --list")
 const currentBranch = bash("git rev-parse --abbrev-ref HEAD")
 
-// Find feature/phase branches for this milestone
+// Find feature/chapter branches for this milestone
 const featureBranches = branches.filter(branch =>
-  branch.includes('phase-') || branch.includes('feature-')
+  branch.includes('chapter-') || branch.includes('feature-')
 )
 ```
 
 If no feature branches exist:
-→ Display: "No feature/phase branches found for this milestone"
+→ Display: "No feature/chapter branches found for this milestone"
 → Proceed to step 9 (Git Tag)
 
 ---
@@ -588,7 +588,7 @@ for (const branch of featureBranches) {
 **Mode:** branch-merge
 **Milestone:** v${{version}}
 **Branch:** ${branch}
-**Commit Strategy:** per-phase
+**Commit Strategy:** per-chapter
 
 **Merge Type:** Squash merge
 </commit_context>`
@@ -612,7 +612,7 @@ for (const branch of featureBranches) {
 **Mode:** branch-merge
 **Milestone:** v${{version}}
 **Branch:** ${branch}
-**Commit Strategy:** per-phase
+**Commit Strategy:** per-chapter
 
 **Merge Type:** Merge with history
 </commit_context>`
@@ -677,7 +677,7 @@ git push origin v${{version}}
 
 ### Archive Created
 - MegaMemory concept: milestone-v${{version}}
-- ${totalPhases} phases archived
+- ${totalChapters} chapters archived
 - ${requirements.length} requirements marked complete
 - Git tag: v${{version}}
 
@@ -702,7 +702,7 @@ git push origin v${{version}}
 ```
 **Also available:**
 - fuska progress — View detailed project progress
-- /fuska-review-phase — Verify work before starting next milestone
+- /fuska-review-chapter — Verify work before starting next milestone
 ────────────────────────────────────────────────────────────
 ```
 
@@ -712,7 +712,7 @@ git push origin v${{version}}
 
 - Audit missing → recommend /fuska-audit-milestone
 - Audit has gaps → recommend /fuska-plan-milestone-gaps or offer to proceed as tech debt
-- Incomplete phases → list incomplete phases, ask to complete first
+- Incomplete chapters → list incomplete chapters, ask to complete first
 - Git tag already exists → ask to force update or use different tag
 - Push fails → show error, suggest manual push
 
@@ -722,7 +722,7 @@ git push origin v${{version}}
 
 - [ ] Milestone audit checked (passed or user override)
 - [ ] MegaMemory validated (roots exist)
-- [ ] Milestone readiness verified (all phases complete)
+- [ ] Milestone readiness verified (all chapters complete)
 - [ ] Milestone stats gathered and presented
 - [ ] Key accomplishments extracted and approved
 - [ ] Milestone archive concept created in MegaMemory
@@ -738,7 +738,7 @@ git push origin v${{version}}
 <critical_rules>
 
 - **Load workflow first:** read complete-milestone.md before executing
-- **Verify completion:** All phases must have completed plans (summary concepts exist)
+- **Verify completion:** All chapters must have completed plans (summary concepts exist)
 - **User confirmation:** Wait for approval at verification gates
 - **Archive before modifying:** Always create archive concept before updating/deleting originals
 - **Context efficiency:** Archive keeps roadmap and requirements concepts clean per milestone

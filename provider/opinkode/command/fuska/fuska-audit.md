@@ -1,5 +1,5 @@
 ---
-name: fuska-audit-milestone
+name: fuska-audit
 description: Audit milestone completion against original intent using MegaMemory
 argument-hint: "[version]"
 tools:
@@ -15,15 +15,15 @@ tools:
 ---
 
 <objective>
-Verify milestone achieved its definition of done using MegaMemory. Check requirements coverage, cross-phase integration, and end-to-end flows.
+Verify milestone achieved its definition of done using MegaMemory. Check requirements coverage, cross-chapter integration, and end-to-end flows.
 
-This command reads existing verification concepts (phases already verified during execute-phase), aggregates tech debt and deferred gaps, then spawns integration checker for cross-phase wiring.
+This command reads existing verification concepts (chapters already verified during execute-chapter), aggregates tech debt and deferred gaps, then spawns integration checker for cross-chapter wiring.
 </objective>
 
 <execution_context>
 @../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
-@../../fuska/scripts/phase-templates.ts
+@../../fuska/scripts/chapter-templates.ts
 </execution_context>
 
 <megamemory_guide>
@@ -34,7 +34,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -127,7 +127,7 @@ const roadmapSummaryString = response.matches[0].summary
 const roadmapData = JSON.parse(roadmapSummaryString)
 
 const currentMilestone = roadmapData.current_milestone
-const phases = roadmapData.phases || []
+const chapters = roadmapData.chapters || []
 ```
 
 **Step 2.4: Resolve milestone version**
@@ -138,14 +138,14 @@ The variable `input` contains the raw argument string provided by the user.
 const milestoneVersion = input.trim() || currentMilestone
 ```
 
-**Step 2.5: Identify phases in milestone scope**
+**Step 2.5: Identify chapters in milestone scope**
 
 ```
-const milestonePhases = phases.filter(p => p.milestone === milestoneVersion)
+const milestoneChapters = chapters.filter(p => p.milestone === milestoneVersion)
 ```
 
-If milestonePhases.length === 0:
-→ Display: "No phases found for milestone ${milestoneVersion}"
+If milestoneChapters.length === 0:
+→ Display: "No chapters found for milestone ${milestoneVersion}"
 → Stop
 
 ---
@@ -178,25 +178,25 @@ const requirements = response.matches.map(match => {
 
 ---
 
-## 4. Read All Phase Verifications
+## 4. Read All Chapter Verifications
 
-**Step 4.1: For each phase, query verification concept**
+**Step 4.1: For each chapter, query verification concept**
 
 ```
-const phaseVerifications = []
+const chapterVerifications = []
 
-for (const phase of milestonePhases) {
-  const phaseSlug = `phase-${phase.number.toString().padStart(2, '0')}`
+for (const chapter of milestoneChapters) {
+  const chapterSlug = `chapter-${chapter.number.toString().padStart(2, '0')}`
 
-  megamemory_understand(query=`${phaseSlug}-verification`, top_k=5)
+  megamemory_understand(query=`${chapterSlug}-verification`, top_k=5)
 
   if (response.matches.length > 0) {
     const verificationSummaryString = response.matches[0].summary
     const verificationData = JSON.parse(verificationSummaryString)
 
-    phaseVerifications.push({
-      phase: phaseSlug,
-      phaseName: phase.name,
+    chapterVerifications.push({
+      chapter: chapterSlug,
+      chapterName: chapter.name,
       status: verificationData.status || 'unverified',
       criticalGaps: verificationData.critical_gaps || [],
       nonCriticalGaps: verificationData.tech_debt || [],
@@ -204,11 +204,11 @@ for (const phase of milestonePhases) {
       requirementsCoverage: verificationData.requirements_coverage || {}
     })
   } else {
-    phaseVerifications.push({
-      phase: phaseSlug,
-      phaseName: phase.name,
+    chapterVerifications.push({
+      chapter: chapterSlug,
+      chapterName: chapter.name,
       status: 'unverified',
-      criticalGaps: [{ description: 'Phase not verified' }],
+      criticalGaps: [{ description: 'Chapter not verified' }],
       nonCriticalGaps: [],
       antiPatterns: [],
       requirementsCoverage: {}
@@ -219,31 +219,31 @@ for (const phase of milestonePhases) {
 
 ---
 
-## 5. Check for Unverified Phases
+## 5. Check for Unverified Chapters
 
 ```
-const unverifiedPhases = phaseVerifications.filter(v => v.status === 'unverified')
+const unverifiedChapters = chapterVerifications.filter(v => v.status === 'unverified')
 ```
 
-If unverifiedPhases.length > 0:
-→ Display: "Warning: ${unverifiedPhases.length} phase(s) not verified"
-→ List unverified phases
+If unverifiedChapters.length > 0:
+→ Display: "Warning: ${unverifiedChapters.length} chapter(s) not verified"
+→ List unverified chapters
 
 ---
 
 ## 6. Spawn Integration Checker
 
-**Step 6.1: Gather phase summaries**
+**Step 6.1: Gather chapter summaries**
 
 ```
-const phaseSummaries = phaseVerifications.map(v => {
-  megamemory_understand(query=`${v.phase}-summary`, top_k=5)
+const chapterSummaries = chapterVerifications.map(v => {
+  megamemory_understand(query=`${v.chapter}-summary`, top_k=5)
 
   if (response.matches.length > 0) {
     const summaryString = response.matches[0].summary
-    return { phase: v.phase, summary: JSON.parse(summaryString) }
+    return { chapter: v.chapter, summary: JSON.parse(summaryString) }
   }
-  return { phase: v.phase, summary: null }
+  return { chapter: v.chapter, summary: null }
 })
 ```
 
@@ -262,14 +262,14 @@ const phaseSummaries = phaseVerifications.map(v => {
 ```
 Task(
   prompt="<objective>
-Check cross-phase integration and end-to-end flows for milestone ${milestoneVersion}.
+Check cross-chapter integration and end-to-end flows for milestone ${milestoneVersion}.
 
-Phases: ${milestonePhases.map(p => `phase-${p.number}: ${p.name}`).join(', ')}
+Chapters: ${milestoneChapters.map(p => `chapter-${p.number}: ${p.name}`).join(', ')}
 
-Phase exports (from summaries):
-${phaseSummaries.filter(s => s.summary).map(s => `${s.phase}: ${JSON.stringify(s.summary)}`).join('\n')}
+Chapter exports (from summaries):
+${chapterSummaries.filter(s => s.summary).map(s => `${s.chapter}: ${JSON.stringify(s.summary)}`).join('\n')}
 
-Verify cross-phase wiring and E2E user flows.
+Verify cross-chapter wiring and E2E user flows.
 </objective>
 
 <output>
@@ -316,15 +316,15 @@ requirements.forEach(req => {
   const coveredBy = []
   const blockers = []
 
-  phaseVerifications.forEach(v => {
+  chapterVerifications.forEach(v => {
     const coverage = v.requirementsCoverage[req.name] || v.requirementsCoverage[req.id]
     if (coverage) {
       if (coverage.status === 'satisfied') {
-        coveredBy.push(v.phase)
+        coveredBy.push(v.chapter)
       } else if (coverage.status === 'partial') {
-        blockers.push(`${v.phase}: ${coverage.reason}`)
+        blockers.push(`${v.chapter}: ${coverage.reason}`)
       } else if (coverage.status === 'blocked') {
-        blockers.push(`${v.phase}: ${coverage.reason}`)
+        blockers.push(`${v.chapter}: ${coverage.reason}`)
       }
     }
   })
@@ -346,9 +346,9 @@ requirements.forEach(req => {
 
 ```
 const criticalGaps = [
-  ...unverifiedPhases.map(p => ({ phase: p.phase, description: 'Phase not verified' })),
-  ...phaseVerifications.filter(v => v.criticalGaps.length > 0).flatMap(v =>
-    v.criticalGaps.map(g => ({ phase: v.phase, description: g.description || g }))
+  ...unverifiedChapters.map(p => ({ chapter: p.chapter, description: 'Chapter not verified' })),
+  ...chapterVerifications.filter(v => v.criticalGaps.length > 0).flatMap(v =>
+    v.criticalGaps.map(g => ({ chapter: v.chapter, description: g.description || g }))
   )
 ]
 ```
@@ -356,9 +356,9 @@ const criticalGaps = [
 **Step 9.2: Collect tech debt**
 
 ```
-const techDebt = phaseVerifications.filter(v => v.nonCriticalGaps.length > 0).map(v => ({
-  phase: v.phase,
-  phaseName: v.phaseName,
+const techDebt = chapterVerifications.filter(v => v.nonCriticalGaps.length > 0).map(v => ({
+  chapter: v.chapter,
+  chapterName: v.chapterName,
   items: v.nonCriticalGaps
 }))
 ```
@@ -388,7 +388,7 @@ const auditData = {
   status: auditStatus,
   scores: {
     requirements: `${requirements.filter(r => requirementsCoverage[r.name].status === 'satisfied').length}/${requirements.length}`,
-    phases: `${phaseVerifications.filter(v => v.status === 'passed').length}/${phaseVerifications.length}`,
+    chapters: `${chapterVerifications.filter(v => v.status === 'passed').length}/${chapterVerifications.length}`,
     integration: auditStatus === 'passed' ? '1/1' : '0/1',
     flows: criticalGaps.filter(g => g.description.includes('flow')).length === 0 ? '1/1' : '0/1'
   },
@@ -399,7 +399,7 @@ const auditData = {
   },
   tech_debt: techDebt,
   requirements_coverage: requirementsCoverage,
-  phases: phaseVerifications
+  chapters: chapterVerifications
 }
 ```
 
@@ -438,7 +438,7 @@ Output this markdown directly (not as a code block). Route based on status:
 
 **Score:** {N}/{M} requirements satisfied
 
-All requirements covered. Cross-phase integration verified. E2E flows complete.
+All requirements covered. Cross-chapter integration verified. E2E flows complete.
 
 ──────────────────────────────────────────────────────────────
 
@@ -463,10 +463,10 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 ### Unsatisfied Requirements
 
 {For each unsatisfied requirement:}
-- **{REQ-ID}: {description}** (Phase {X})
+- **{REQ-ID}: {description}** (Chapter {X})
   - {reason}
 
-### Cross-Phase Issues
+### Cross-Chapter Issues
 
 {For each integration gap:}
 - **{from} → {to}:** {issue}
@@ -480,9 +480,9 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 ## > Next Up
 
-**Plan gap closure** — create phases to complete milestone
+**Plan gap closure** — create chapters to complete milestone
 
-/fuska-plan-phase --gaps
+/fuska-plan-chapter --gaps
 
 */new first → fresh context window*
 
@@ -503,14 +503,14 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 All requirements met. No critical blockers. Accumulated tech debt needs review.
 
-### Tech Debt by Phase
+### Tech Debt by Chapter
 
-{For each phase with debt:}
-**Phase {X}: {name}**
+{For each chapter with debt:}
+**Chapter {X}: {name}**
 - {item 1}
 - {item 2}
 
-### Total: {N} items across {M} phases
+### Total: {N} items across {M} chapters
 
 ──────────────────────────────────────────────────────────────
 
@@ -520,9 +520,9 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 /fuska-complete-milestone {version}
 
-**B. Plan cleanup phase** — address debt before completing
+**B. Plan cleanup chapter** — address debt before completing
 
-/fuska-plan-phase --gaps
+/fuska-plan-chapter --gaps
 
 */new first → fresh context window*
 
@@ -534,9 +534,9 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 - [ ] MegaMemory validated (roots exist)
 - [ ] Milestone scope identified from roadmap
-- [ ] All phase verification concepts queried
+- [ ] All chapter verification concepts queried
 - [ ] Tech debt and deferred gaps aggregated
-- [ ] Integration checker spawned for cross-phase wiring
+- [ ] Integration checker spawned for cross-chapter wiring
 - [ ] Milestone audit concept created
 - [ ] Results presented with actionable next steps
 

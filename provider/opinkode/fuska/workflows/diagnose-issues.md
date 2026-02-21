@@ -1,7 +1,7 @@
 <purpose>
 Orchestrate parallel debug agents to investigate UAT gaps and find root causes.
 
-After UAT finds gaps, spawn one debug agent per gap. Each agent investigates autonomously with symptoms pre-filled from UAT. Collect root causes, create diagnosis concept in MegaMemory, then hand off to plan-phase --gaps with actual diagnoses.
+After UAT finds gaps, spawn one debug agent per gap. Each agent investigates autonomously with symptoms pre-filled from UAT. Collect root causes, create diagnosis concept in MegaMemory, then hand off to plan-chapter --gaps with actual diagnoses.
 
 Orchestrator stays lean: parse gaps, spawn agents, collect results, create MM concepts.
 </purpose>
@@ -14,7 +14,7 @@ Orchestrator stays lean: parse gaps, spawn agents, collect results, create MM co
 **Before spawning debug agents, query MegaMemory for existing diagnoses:**
 
 ```
-megamemory:understand with query: "diagnosis [phase] gap [gap-name] root cause"
+megamemory:understand with query: "diagnosis [chapter] gap [gap-name] root cause"
 ```
 
 If relevant diagnosis concept exists:
@@ -27,10 +27,10 @@ If relevant diagnosis concept exists:
 <step name="parse_gaps">
 **Extract gaps from MM UAT concept:**
 
-Query the UAT concept for current phase:
+Query the UAT concept for current chapter:
 
 ```
-megamemory:understand with query: "[phase] UAT test results gaps"
+megamemory:understand with query: "[chapter] UAT test results gaps"
 ```
 
 Parse the concept.summary as JSON to extract gaps:
@@ -109,7 +109,7 @@ Template placeholders:
 - `{errors}`: Any error messages from UAT (or "None reported")
 - `{reproduction}`: "Test {test_num} in UAT"
 - `{timeline}`: "Discovered during UAT"
-- `{goal}`: `find_root_cause_only` (UAT flow - plan-phase --gaps handles fixes)
+- `{goal}`: `find_root_cause_only` (UAT flow - plan-chapter --gaps handles fixes)
 - `{slug}`: Generated from truth
 
 **Debug agent MegaMemory operations:**
@@ -186,7 +186,7 @@ Each agent returns with:
 - {file1}: {what's wrong}
 - {file2}: {related issue}
 
-**Suggested Fix Direction:** {brief hint for plan-phase --gaps}
+**Suggested Fix Direction:** {brief hint for plan-chapter --gaps}
 ```
 
 Parse each return to extract:
@@ -208,11 +208,11 @@ For each diagnosed gap, create a concept:
 
 ```
 megamemory:create_concept with:
-- name: "[Phase] [gap-slug] diagnosis"
+- name: "[Chapter] [gap-slug] diagnosis"
 - kind: "feature"
 - summary: JSON with:
   {
-    "phase": "XX",
+    "chapter": "XX",
     "gap_name": "short gap name",
     "root_cause": "specific root cause with evidence",
     "symptoms": {
@@ -224,14 +224,14 @@ megamemory:create_concept with:
       {"file": "path/to/file", "issue": "what's wrong"},
       {"file": "path/to/file2", "issue": "related issue"}
     ],
-    "suggested_fix": "brief hint for plan-phase",
+    "suggested_fix": "brief hint for plan-chapter",
     "missing": ["action 1", "action 2"],
     "confidence": "HIGH|MEDIUM|LOW",
     "debug_session_concept": "debug-{slug}"
   }
 - why: "Root cause diagnosed for [gap name]"
 - edges: [
-  {relation: "depends_on", to: "[phase-concept-id]"},
+  {relation: "depends_on", to: "[chapter-concept-id]"},
   {relation: "connects_to", to: "[feature-component-id]"}
 ]
 - file_refs: ["src/file1.ts", "src/file2.ts"]
@@ -248,7 +248,7 @@ megamemory:create_concept with:
 Query the existing UAT concept:
 
 ```
-megamemory:understand with query: "[phase] UAT test results"
+megamemory:understand with query: "[chapter] UAT test results"
 ```
 
 Parse the concept.summary as JSON, then update it:
@@ -274,7 +274,7 @@ megamemory:update_concept with:
           "Add commentCount to useEffect dependency array",
           "Trigger re-render when new comment added"
         ],
-        "diagnosis_concept": "[Phase] comment-not-refreshing diagnosis"
+        "diagnosis_concept": "[Chapter] comment-not-refreshing diagnosis"
       }
     ],
     "tests": [...]
@@ -328,7 +328,7 @@ Do NOT offer manual next steps - verify-work handles the rest.
 - Returns root cause
 
 **No symptom gathering.** Agents start with symptoms pre-filled from UAT.
-**No fix application.** Agents only diagnose - plan-phase --gaps handles fixes.
+**No fix application.** Agents only diagnose - plan-chapter --gaps handles fixes.
 </context_efficiency>
 
 <failure_handling>
@@ -346,7 +346,7 @@ Do NOT offer manual next steps - verify-work handles the rest.
 **All agents fail:**
 - Something systemic (permissions, git, etc.)
 - Report for manual investigation
-- Fall back to plan-phase --gaps without root causes (less precise)
+- Fall back to plan-chapter --gaps without root causes (less precise)
 </failure_handling>
 
 <success_criteria>

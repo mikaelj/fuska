@@ -4,9 +4,9 @@
 ~/.config/opencode/fuska/scratch/
 
 ## Naming Convention
-{initiativeSlug}-{phaseSlug}-{type}-{YYYYMMDD}_{HHMM}.md
+{initiativeSlug}-{chapterSlug}-{type}-{YYYYMMDD}_{HHMM}.md
 
-Example: myinitiative-phase01-analysis-20260213_1430.md
+Example: myinitiative-chapter01-analysis-20260213_1430.md
 
 ## Types
 - analysis - Investigation findings

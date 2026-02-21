@@ -8,7 +8,7 @@ MegaMemory is a persistent knowledge graph for Fuska projects. Unlike file-based
 
 1. **Semantic Understanding**: Concepts are indexed with embeddings, enabling natural language queries like "What authentication patterns exist?" instead of searching file names.
 
-2. **Relationship Tracing**: Edges connect concepts, so you can traverse dependencies (phase → plan → summary → research) automatically.
+2. **Relationship Tracing**: Edges connect concepts, so you can traverse dependencies (chapter → plan → summary → research) automatically.
 
 3. **Persistence Across Sessions**: All project state survives restarts without needing to parse JSON/YAML files.
 
@@ -20,12 +20,12 @@ MegaMemory is a persistent knowledge graph for Fuska projects. Unlike file-based
 
 ### Concepts
 
-Concepts are the atomic units of storage. Each concept represents a project entity (phase, plan, summary, requirement, etc.).
+Concepts are the atomic units of storage. Each concept represents a project entity (chapter, plan, summary, requirement, etc.).
 
 ```typescript
 interface FuskaConcept {
   id?: string;              // Auto-generated on create
-  name: string;             // Unique identifier (e.g., 'phase-01', 'auth-service')
+  name: string;             // Unique identifier (e.g., 'chapter-01', 'auth-service')
   kind: ConceptKind;        // Type: feature, module, pattern, component, config, decision
   summary: string;          // Content: JSON + markdown
   why?: string;            // Rationale for this concept
@@ -40,11 +40,11 @@ interface FuskaConcept {
 
 | Kind | Usage | Examples |
 |------|-------|----------|
-| `feature` | User-facing functionality | phase-01, req-AUTH-01, todo-login |
+| `feature` | User-facing functionality | chapter-01, req-AUTH-01, todo-login |
 | `module` | Organizational containers | requirements, roadmap, todos |
-| `pattern` | Reusable knowledge | phase-01-research, auth-pattern |
-| `component` | Implementation details | phase-01-plan-1-summary, auth-service |
-| `config` | Configuration/state | state, config, phase-01-context |
+| `pattern` | Reusable knowledge | chapter-01-research, auth-pattern |
+| `component` | Implementation details | chapter-01-plan-1-summary, auth-service |
+| `config` | Configuration/state | state, config, chapter-01-context |
 | `decision` | Architectural decisions | use-typescript, use-postgres |
 
 ### Relationships (Edges)
@@ -81,14 +81,14 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`. Con
 
 | Component | Uses Import Graph? | How |
 |-----------|-------------------|-----|
-| `fuska-plan-phase` | Direct | Step 6.7.3: Check freshness, auto-refresh if stale, query and format for planner |
+| `fuska-plan-chapter` | Direct | Step 6.7.3: Check freshness, auto-refresh if stale, query and format for planner |
 | `fuska-planner` | Direct | `load_import_graph_context` step: artifact existence, pattern discovery |
 | `fuska-debug` | Direct | Step 3.3: Query related files/symbols, pass to debugger |
 | `fuska-executor` | Direct | `load_import_graph` step: disambiguation, impact analysis |
 | `fuska-ask` | Direct | Main command for querying import graph |
 | `fuska-refresh` | Creates | Creates `file:`, `symbol:`, `dead-code:` concepts |
 | `fuska-debugger` | Indirect | Receives context from `fuska-debug` orchestrator |
-| `fuska-build-phase` | Indirect | Via spawned `fuska-executor` |
+| `fuska-build-chapter` | Indirect | Via spawned `fuska-executor` |
 
 ### Planner Import Graph Patterns
 
@@ -160,14 +160,14 @@ interface UnderstandResult {
 **Usage:**
 
 ```typescript
-// Find all phases
-const phases = await megamemory.understand({ query: 'phase', top_k: 100 });
+// Find all chapters
+const chapters = await megamemory.understand({ query: 'chapter', top_k: 100 });
 
 // Find authentication-related concepts
 const authConcepts = await megamemory.understand({ query: 'authentication login JWT' });
 
 // Find specific plan
-const plan = await megamemory.understand({ query: 'phase-01-plan-1' });
+const plan = await megamemory.understand({ query: 'chapter-01-plan-1' });
 
 // Get everything for context
 const allConcepts = await megamemory.understand({ query: '', top_k: 10000 });
@@ -205,18 +205,18 @@ async function loadInitiativeState(megamemory: MegaMemoryClient, initiativeSlug:
   const state = await megamemory.understand({ query: 'state' });
   const stateData = JSON.parse(state.concepts[0].summary);
 
-  // Get current phase
-  const currentPhase = await megamemory.understand({ query: stateData.current_phase });
-  const phaseData = JSON.parse(currentPhase.concepts[0].summary);
+  // Get current chapter
+  const currentChapter = await megamemory.understand({ query: stateData.current_chapter });
+  const chapterData = JSON.parse(currentChapter.concepts[0].summary);
 
   // Get roadmap for progress
-  const phases = await megamemory.understand({ query: 'phase-', top_k: 100 });
+  const chapters = await megamemory.understand({ query: 'chapter-', top_k: 100 });
 
   return {
     initiative: initiative.concepts[0],
     state: stateData,
-    currentPhase: phaseData,
-    allPhases: phases.concepts.map(p => JSON.parse(p.summary))
+    currentChapter: chapterData,
+    allChapters: chapters.concepts.map(p => JSON.parse(p.summary))
   };
 }
 
@@ -230,25 +230,25 @@ async function findRelevantPatterns(megamemory: MegaMemoryClient, domain: string
   return patterns.concepts.filter(m => m.kind === 'pattern');
 }
 
-// Query phase's full context
-async function loadPhaseContext(megamemory: MegaMemoryClient, phaseSlug: string) {
-  // Get phase
-  const phase = await megamemory.understand({ query: phaseSlug });
+// Query chapter's full context
+async function loadChapterContext(megamemory: MegaMemoryClient, chapterSlug: string) {
+  // Get chapter
+  const chapter = await megamemory.understand({ query: chapterSlug });
 
   // Get context
-  const context = await megamemory.understand({ query: `${phaseSlug}-context` });
+  const context = await megamemory.understand({ query: `${chapterSlug}-context` });
 
   // Get research
-  const research = await megamemory.understand({ query: `${phaseSlug}-research` });
+  const research = await megamemory.understand({ query: `${chapterSlug}-research` });
 
-  // Get all summaries for this phase
+  // Get all summaries for this chapter
   const summaries = await megamemory.understand({
-    query: `${phaseSlug}-summary`,
+    query: `${chapterSlug}-summary`,
     top_k: 100
   });
 
   return {
-    phase: JSON.parse(phase.concepts[0].summary),
+    chapter: JSON.parse(chapter.concepts[0].summary),
     context: context.concepts.length > 0 ? JSON.parse(context.concepts[0].summary) : null,
     research: research.concepts.length > 0 ? JSON.parse(research.concepts[0].summary) : null,
     summaries: summaries.concepts.map(s => JSON.parse(s.summary))
@@ -284,13 +284,13 @@ const initiative = await megamemory.create_concept({
   edges: []
 });
 
-// Create phase
-const phase = await megamemory.create_concept({
-  name: 'phase-1',
+// Create chapter
+const chapter = await megamemory.create_concept({
+  name: 'chapter-1',
   kind: 'feature',
   summary: JSON.stringify({
     number: 1,
-    slug: 'phase-01',
+    slug: 'chapter-01',
     name: 'Authentication',
     goal: 'Implement JWT authentication',
     status: 'planned'
@@ -301,7 +301,7 @@ const phase = await megamemory.create_concept({
 
 // Create with markdown
 const plan = await megamemory.create_concept({
-  name: 'phase-01-plan-1',
+  name: 'chapter-01-plan-1',
   kind: 'feature',
   summary: `{
     "objective": "Implement JWT login",
@@ -313,17 +313,17 @@ Implement JWT login
 
 ## Purpose
 Secure authentication`,
-  parent_id: 'phase-1',
+  parent_id: 'chapter-1',
   edges: [
-    { to: 'phase-1', relation: 'implements' },
-    { to: 'phase-01-research', relation: 'uses_pattern' }
+    { to: 'chapter-1', relation: 'implements' },
+    { to: 'chapter-01-research', relation: 'uses_pattern' }
   ]
 });
 ```
 
 **Best Practices:**
 
-- Use descriptive, unique names (e.g., `phase-01-plan-1`, not `plan`)
+- Use descriptive, unique names (e.g., `chapter-01-plan-1`, not `plan`)
 - Include structured JSON in summary for programmatic access
 - Add markdown for human readability
 - Set appropriate parent_id for hierarchy
@@ -356,13 +356,13 @@ interface UpdateConceptResult {
 **Usage:**
 
 ```typescript
-// Update phase status
-const phase = await megamemory.understand({ query: 'phase-01' });
+// Update chapter status
+const chapter = await megamemory.understand({ query: 'chapter-01' });
 await megamemory.update_concept({
-  id: phase.concepts[0].id,
+  id: chapter.concepts[0].id,
   changes: {
     summary: JSON.stringify({
-      ...JSON.parse(phase.concepts[0].summary),
+      ...JSON.parse(chapter.concepts[0].summary),
       status: 'complete'
     })
   }
@@ -374,7 +374,7 @@ await megamemory.update_concept({
   id: state.concepts[0].id,
   changes: {
     summary: JSON.stringify({
-      current_phase: 'phase-02',
+      current_chapter: 'chapter-02',
       current_plan: null,
       status: 'ready_to_plan',
       progress: 33
@@ -385,7 +385,7 @@ await megamemory.update_concept({
 // Add edge — use link, NOT update_concept (edges can't be updated via changes)
 await megamemory.link({
   from: summaryId,
-  to: 'phase-01-context',
+  to: 'chapter-01-context',
   relation: 'uses_knowledge'
 });
 ```
@@ -419,22 +419,22 @@ interface LinkResult {
 ```typescript
 // Link plan to research pattern
 await megamemory.link({
-  from: 'phase-01-plan-1',
-  to: 'phase-01-research',
+  from: 'chapter-01-plan-1',
+  to: 'chapter-01-research',
   relation: 'uses_pattern'
 });
 
 // Link summary to plan
 await megamemory.link({
-  from: 'phase-01-plan-1-summary',
-  to: 'phase-01-plan-1',
+  from: 'chapter-01-plan-1-summary',
+  to: 'chapter-01-plan-1',
   relation: 'completes'
 });
 
-// Link milestone to phases
+// Link milestone to chapters
 await megamemory.link({
   from: 'milestone-v1',
-  to: 'phase-01',
+  to: 'chapter-01',
   relation: 'includes'
 });
 
@@ -470,11 +470,11 @@ interface RemoveConceptResult {
 
 ```typescript
 // Remove outdated plan
-const plan = await megamemory.understand({ query: 'phase-01-plan-1' });
+const plan = await megamemory.understand({ query: 'chapter-01-plan-1' });
 if (plan.concepts.length > 0) {
   await megamemory.remove_concept({
     id: plan.concepts[0].id,
-    reason: 'Replaced by phase-01-plan-2'
+    reason: 'Replaced by chapter-01-plan-2'
   });
 }
 
@@ -483,14 +483,14 @@ const pattern = await megamemory.understand({ query: 'auth-pattern-legacy' });
 if (pattern.concepts.length > 0) {
   await megamemory.remove_concept({
     id: pattern.concepts[0].id,
-    reason: 'Deprecated: Use phase-01-research instead'
+    reason: 'Deprecated: Use chapter-01-research instead'
   });
 }
 ```
 
 **When to Use:**
 
-- Refactoring phase plans (remove old versions)
+- Refactoring chapter plans (remove old versions)
 - Removing outdated research
 - Deleting completed todos
 - Cleaning up test concepts
@@ -561,29 +561,29 @@ async function loadFullInitiativeState(megamemory: MegaMemoryClient) {
 **Query with Context:**
 
 ```typescript
-async function loadContextForPhase(megamemory: MegaMemoryClient, phaseSlug: string) {
-  // Get phase
-  const phase = await megamemory.understand({ query: phaseSlug });
+async function loadContextForChapter(megamemory: MegaMemoryClient, chapterSlug: string) {
+  // Get chapter
+  const chapter = await megamemory.understand({ query: chapterSlug });
 
-  if (phase.concepts.length === 0) {
-    throw new Error(`Phase ${phaseSlug} not found`);
+  if (chapter.concepts.length === 0) {
+    throw new Error(`Chapter ${chapterSlug} not found`);
   }
 
-  const phaseData = JSON.parse(phase.concepts[0].summary);
+  const chapterData = JSON.parse(chapter.concepts[0].summary);
 
   // Get context if exists
-  const contextQuery = await megamemory.understand({ query: `${phaseSlug}-context` });
+  const contextQuery = await megamemory.understand({ query: `${chapterSlug}-context` });
   const context = contextQuery.concepts.length > 0
     ? JSON.parse(contextQuery.concepts[0].summary)
     : null;
 
   // Get research if exists
-  const researchQuery = await megamemory.understand({ query: `${phaseSlug}-research` });
+  const researchQuery = await megamemory.understand({ query: `${chapterSlug}-research` });
   const research = researchQuery.concepts.length > 0
     ? JSON.parse(researchQuery.concepts[0].summary)
     : null;
 
-  return { phaseData, context, research };
+  return { chapterData, context, research };
 }
 ```
 
@@ -591,12 +591,12 @@ async function loadContextForPhase(megamemory: MegaMemoryClient, phaseSlug: stri
 
 | Pattern | Example | Purpose |
 |---------|---------|---------|
-| `phase-{number}` | `phase-1`, `phase-2` | Sequential phases |
-| `{phaseSlug}-{concept}-{n}` | `phase-01-plan-1`, `phase-01-plan-2` | Versioned plans |
-| `{phaseSlug}-plan-{n}-summary` | `phase-01-plan-1-summary` | Plan completions |
-| `{phaseSlug}-research` | `phase-01-research` | Phase research |
-| `{phaseSlug}-context` | `phase-01-context` | Phase context |
-| `{phaseSlug}-uat` | `phase-01-uat` | Phase verification |
+| `chapter-{number}` | `chapter-1`, `chapter-2` | Sequential chapters |
+| `{chapterSlug}-{concept}-{n}` | `chapter-01-plan-1`, `chapter-01-plan-2` | Versioned plans |
+| `{chapterSlug}-plan-{n}-summary` | `chapter-01-plan-1-summary` | Plan completions |
+| `{chapterSlug}-research` | `chapter-01-research` | Chapter research |
+| `{chapterSlug}-context` | `chapter-01-context` | Chapter context |
+| `{chapterSlug}-uat` | `chapter-01-uat` | Chapter verification |
 | `req-{ID}` | `req-AUTH-01`, `req-DATA-02` | Requirements |
 | `decision-{topic}` | `decision-use-typescript` | Architectural decisions |
 | `milestone-{slug}` | `milestone-v1`, `milestone-mvp` | Milestones |
@@ -625,8 +625,8 @@ Details here...
 
 ```json
 {
-  "phase": "phase-01",
-  "plan": "phase-01-plan-1",
+  "chapter": "chapter-01",
+  "plan": "chapter-01-plan-1",
   "status": "complete",
   "duration_minutes": 60
 }
@@ -635,8 +635,8 @@ Details here...
 **Markdown for Human Readability:**
 
 ```markdown
-## Phase
-phase-01 - Authentication
+## Chapter
+chapter-01 - Authentication
 
 ## Status
 Complete
@@ -655,22 +655,22 @@ Complete
 
 **Always Create Edges:**
 
-- Phase → Roadmap (`part_of`)
-- Plan → Phase (`implements`)
+- Chapter → Roadmap (`part_of`)
+- Plan → Chapter (`implements`)
 - Summary → Plan (`completes`)
-- Summary → Phase (`updates`)
-- Context → Phase (`configures`)
-- Research → Phase (`informs`)
+- Summary → Chapter (`updates`)
+- Context → Chapter (`configures`)
+- Research → Chapter (`informs`)
 - Plan → Research (`uses_pattern`)
 - Plan → Context (`uses_knowledge`)
-- UAT → Phase (`verifies`)
+- UAT → Chapter (`verifies`)
 - UAT → Summary (`reviewed`)
 
 **Edge Relationship Rules:**
 
 1. **Direction matters**: `A → B` means "A relates to B"
    - Summary → Plan (summary completes plan)
-   - Plan → Phase (plan implements phase)
+   - Plan → Chapter (plan implements chapter)
 
 2. **Use specific relations**: `implements` not `connects_to`
    - Enables accurate traversals
@@ -688,8 +688,8 @@ Complete
 interface InitiativeState {
   initiative: NodeWithContext;
   state: StateData;
-  currentPhase: PhaseData | null;
-  allPhases: PhaseData[];
+  currentChapter: ChapterData | null;
+  allChapters: ChapterData[];
   progress: number;
 }
 
@@ -713,30 +713,30 @@ async function loadInitiativeState(
 
   const stateData: StateData = JSON.parse(stateQuery.concepts[0].summary);
 
-  // Get all phases
-  const phasesQuery = await megamemory.understand({ query: 'phase-', top_k: 100 });
-  const allPhases: PhaseData[] = phasesQuery.concepts
+  // Get all chapters
+  const chaptersQuery = await megamemory.understand({ query: 'chapter-', top_k: 100 });
+  const allChapters: ChapterData[] = chaptersQuery.concepts
     .filter(m => m.kind === 'feature')
     .map(m => JSON.parse(m.summary));
 
-  // Get current phase
-  let currentPhase: PhaseData | null = null;
-  if (stateData.current_phase) {
-    const currentPhaseQuery = await megamemory.understand({ query: stateData.current_phase });
-    if (currentPhaseQuery.concepts.length > 0) {
-      currentPhase = JSON.parse(currentPhaseQuery.concepts[0].summary);
+  // Get current chapter
+  let currentChapter: ChapterData | null = null;
+  if (stateData.current_chapter) {
+    const currentChapterQuery = await megamemory.understand({ query: stateData.current_chapter });
+    if (currentChapterQuery.concepts.length > 0) {
+      currentChapter = JSON.parse(currentChapterQuery.concepts[0].summary);
     }
   }
 
   // Calculate progress
-  const completedPhases = allPhases.filter(p => p.status === 'complete').length;
-  const progress = Math.round((completedPhases / allPhases.length) * 100);
+  const completedChapters = allChapters.filter(p => p.status === 'complete').length;
+  const progress = Math.round((completedChapters / allChapters.length) * 100);
 
   return {
     initiative,
     state: stateData,
-    currentPhase,
-    allPhases,
+    currentChapter,
+    allChapters,
     progress
   };
 }
@@ -771,7 +771,7 @@ async function createInitiative(
     name: 'state',
     kind: 'config',
     summary: JSON.stringify({
-      current_phase: null,
+      current_chapter: null,
       current_plan: null,
       status: 'initialized',
       progress: 0,
@@ -797,7 +797,7 @@ async function createInitiative(
   await megamemory.create_concept({
     name: 'roadmap',
     kind: 'module',
-    summary: 'Initiative roadmap with phases',
+    summary: 'Initiative roadmap with chapters',
     parent_id: config.slug,
     edges: [{ to: config.slug, relation: 'part_of' }]
   });
@@ -806,23 +806,23 @@ async function createInitiative(
 }
 ```
 
-### Create Phase Concept
+### Create Chapter Concept
 
 ```typescript
-interface PhaseConfig {
+interface ChapterConfig {
   number: number;
   slug: string;
   name: string;
   goal: string;
 }
 
-async function createPhase(
+async function createChapter(
   megamemory: MegaMemoryClient,
   initiativeSlug: string,
-  config: PhaseConfig
+  config: ChapterConfig
 ): Promise<string> {
-  const phaseConcept = await megamemory.create_concept({
-    name: `phase-${config.number}`,
+  const chapterConcept = await megamemory.create_concept({
+    name: `chapter-${config.number}`,
     kind: 'feature',
     summary: JSON.stringify({
       number: config.number,
@@ -835,7 +835,7 @@ async function createPhase(
     edges: [{ to: 'roadmap', relation: 'part_of' }]
   });
 
-  return phaseConcept.id;
+  return chapterConcept.id;
 }
 ```
 
@@ -885,22 +885,22 @@ async function updatePlan(
 ```typescript
 async function findRelatedConcepts(
   megamemory: MegaMemoryClient,
-  phaseSlug: string
+  chapterSlug: string
 ): Promise<{
-  phases: NodeWithContext[];
+  chapters: NodeWithContext[];
   plans: NodeWithContext[];
   summaries: NodeWithContext[];
   research: NodeWithContext[];
 }> {
-  // Get all related to phase
+  // Get all related to chapter
   const related = await megamemory.understand({
-    query: phaseSlug,
+    query: chapterSlug,
     top_k: 100
   });
 
   // Categorize by kind
   return {
-    phases: related.concepts.filter(m => m.kind === 'feature' && m.name.startsWith('phase-')),
+    chapters: related.concepts.filter(m => m.kind === 'feature' && m.name.startsWith('chapter-')),
     plans: related.concepts.filter(m => m.kind === 'feature' && m.name.includes('-plan-')),
     summaries: related.concepts.filter(m => m.kind === 'component' && m.name.includes('-summary')),
     research: related.concepts.filter(m => m.kind === 'pattern' && m.name.includes('-research'))
@@ -951,7 +951,7 @@ async function traverseEdges(
 
 ```typescript
 interface SummaryInput {
-  phaseSlug: string;
+  chapterSlug: string;
   planName: string;
   accomplishments: string[];
   durationMinutes: number;
@@ -966,9 +966,9 @@ async function createSummary(
   input: SummaryInput
 ): Promise<string> {
   const summaryData = {
-    phase: input.phaseSlug,
+    chapter: input.chapterSlug,
     plan: input.planName,
-    subsystem: extractSubsystem(input.phaseSlug),
+    subsystem: extractSubsystem(input.chapterSlug),
     tags: [],
     requires: [],
     provides: [],
@@ -984,17 +984,17 @@ async function createSummary(
     decisions_made: {},
     deviations: [],
     issues_encountered: [],
-    next_phase_readiness: 'Ready'
+    next_chapter_readiness: 'Ready'
   };
 
   const summaryConcept = await megamemory.create_concept({
-    name: `${input.phaseSlug}-plan-${extractPlanNumber(input.planName)}-summary`,
+    name: `${input.chapterSlug}-plan-${extractPlanNumber(input.planName)}-summary`,
     kind: 'component',
     summary: JSON.stringify(summaryData),
-    parent_id: input.phaseSlug,
+    parent_id: input.chapterSlug,
     edges: [
       { to: input.planName, relation: 'completes' },
-      { to: input.phaseSlug, relation: 'updates' }
+      { to: input.chapterSlug, relation: 'updates' }
     ],
     created_by_task: input.planName
   });
@@ -1002,8 +1002,8 @@ async function createSummary(
   return summaryConcept.id;
 }
 
-function extractSubsystem(phaseSlug: string): string {
-  return phaseSlug.replace('phase-', '').split('-')[0];
+function extractSubsystem(chapterSlug: string): string {
+  return chapterSlug.replace('chapter-', '').split('-')[0];
 }
 
 function extractPlanNumber(planName: string): string {
@@ -1016,8 +1016,8 @@ function extractPlanNumber(planName: string): string {
 
 ```typescript
 interface DependencyGraph {
-  getRelevantSummaries(phaseSlug: string): NodeWithContext[];
-  getDependentPhases(phaseSlug: string): NodeWithContext[];
+  getRelevantSummaries(chapterSlug: string): NodeWithContext[];
+  getDependentChapters(chapterSlug: string): NodeWithContext[];
   getTechStackHistory(): NodeWithContext[];
   getAllConcepts(): NodeWithContext[];
 }
@@ -1064,21 +1064,21 @@ async function buildDependencyGraph(
   }
 
   return {
-    getRelevantSummaries: (phaseSlug: string) => {
-      const phase = conceptMap.get(phaseSlug);
-      if (!phase) return [];
+    getRelevantSummaries: (chapterSlug: string) => {
+      const chapter = conceptMap.get(chapterSlug);
+      if (!chapter) return [];
 
-      return Array.from(traverse(phaseSlug))
+      return Array.from(traverse(chapterSlug))
         .filter(c => c.kind === 'component' && c.name.includes('-summary-'));
     },
 
-    getDependentPhases: (phaseSlug: string) => {
-      const phase = conceptMap.get(phaseSlug);
-      if (!phase) return [];
+    getDependentChapters: (chapterSlug: string) => {
+      const chapter = conceptMap.get(chapterSlug);
+      if (!chapter) return [];
 
-      return Array.from(traverse(phaseSlug))
-        .filter(c => c.kind === 'feature' && c.name.startsWith('phase-'))
-        .filter(c => c.id !== phaseSlug);
+      return Array.from(traverse(chapterSlug))
+        .filter(c => c.kind === 'feature' && c.name.startsWith('chapter-'))
+        .filter(c => c.id !== chapterSlug);
     },
 
     getTechStackHistory: () => {
@@ -1097,8 +1097,8 @@ async function buildDependencyGraph(
 
 ```typescript
 interface WorkState {
-  status: 'ready_to_start' | 'ready_to_plan' | 'ready_to_execute' | 'in_progress' | 'phase_complete';
-  currentPhase: string | null;
+  status: 'ready_to_start' | 'ready_to_plan' | 'ready_to_execute' | 'in_progress' | 'chapter_complete';
+  currentChapter: string | null;
   currentPlan: string | null;
   incompleteTask?: string;
 }
@@ -1112,7 +1112,7 @@ async function detectWorkState(
   if (stateQuery.concepts.length === 0) {
     return {
       status: 'ready_to_start',
-      currentPhase: null,
+      currentChapter: null,
       currentPlan: null
     };
   }
@@ -1129,40 +1129,40 @@ async function detectWorkState(
     });
 
     if (summaryQuery.concepts.length > 0) {
-      // Plan completed, ready for next phase
+      // Plan completed, ready for next chapter
       return {
-        status: 'phase_complete',
-        currentPhase: stateData.current_phase,
+        status: 'chapter_complete',
+        currentChapter: stateData.current_chapter,
         currentPlan: null
       };
     } else {
       // Plan in progress
       return {
         status: stateData.status === 'in_progress' ? 'in_progress' : 'ready_to_execute',
-        currentPhase: stateData.current_phase,
+        currentChapter: stateData.current_chapter,
         currentPlan: stateData.current_plan
       };
     }
   }
 
-  // Phase exists, no plan
-  if (stateData.current_phase) {
-    const phaseQuery = await megamemory.understand({ query: stateData.current_phase });
+  // Chapter exists, no plan
+  if (stateData.current_chapter) {
+    const chapterQuery = await megamemory.understand({ query: stateData.current_chapter });
 
-    if (phaseQuery.concepts.length > 0) {
-      const phaseData = JSON.parse(phaseQuery.concepts[0].summary);
+    if (chapterQuery.concepts.length > 0) {
+      const chapterData = JSON.parse(chapterQuery.concepts[0].summary);
 
-      if (phaseData.status === 'complete') {
+      if (chapterData.status === 'complete') {
         return {
-          status: 'phase_complete',
-          currentPhase: stateData.current_phase,
+          status: 'chapter_complete',
+          currentChapter: stateData.current_chapter,
           currentPlan: null
         };
       }
 
       return {
         status: 'ready_to_plan',
-        currentPhase: stateData.current_phase,
+        currentChapter: stateData.current_chapter,
         currentPlan: null
       };
     }
@@ -1170,7 +1170,7 @@ async function detectWorkState(
 
   return {
     status: 'ready_to_start',
-    currentPhase: null,
+    currentChapter: null,
     currentPlan: null
   };
 }
@@ -1187,11 +1187,11 @@ interface PatternMatch {
 
 async function findRelevantPatterns(
   megamemory: MegaMemoryClient,
-  phaseSlug: string,
+  chapterSlug: string,
   domain: string
 ): Promise<PatternMatch[]> {
-  // Get phase context
-  const contextQuery = await megamemory.understand({ query: `${phaseSlug}-context` });
+  // Get chapter context
+  const contextQuery = await megamemory.understand({ query: `${chapterSlug}-context` });
 
   let contextKeywords = '';
   if (contextQuery.concepts.length > 0) {
@@ -1249,51 +1249,51 @@ function calculateRelevance(
 }
 ```
 
-### Update Phase Status
+### Update Chapter Status
 
 ```typescript
-type PhaseStatus = 'planned' | 'in_progress' | 'complete' | 'blocked';
+type ChapterStatus = 'planned' | 'in_progress' | 'complete' | 'blocked';
 
-async function updatePhaseStatus(
+async function updateChapterStatus(
   megamemory: MegaMemoryClient,
-  phaseSlug: string,
-  status: PhaseStatus
+  chapterSlug: string,
+  status: ChapterStatus
 ): Promise<void> {
-  // Get phase
-  const phase = await megamemory.understand({ query: phaseSlug });
+  // Get chapter
+  const chapter = await megamemory.understand({ query: chapterSlug });
 
-  if (phase.concepts.length === 0) {
-    throw new Error(`Phase ${phaseSlug} not found`);
+  if (chapter.concepts.length === 0) {
+    throw new Error(`Chapter ${chapterSlug} not found`);
   }
 
   // Parse and update
-  const phaseData = JSON.parse(phase.concepts[0].summary);
-  phaseData.status = status;
+  const chapterData = JSON.parse(chapter.concepts[0].summary);
+  chapterData.status = status;
 
   // Update concept
   await megamemory.update_concept({
-    id: phase.concepts[0].id,
+    id: chapter.concepts[0].id,
     changes: {
-      summary: JSON.stringify(phaseData)
+      summary: JSON.stringify(chapterData)
     }
   });
 
-  // Update state if phase changed
+  // Update state if chapter changed
   if (status === 'complete' || status === 'in_progress') {
     const stateQuery = await megamemory.understand({ query: 'state' });
 
     if (stateQuery.concepts.length > 0) {
       const stateData = JSON.parse(stateQuery.concepts[0].summary);
-      stateData.status = status === 'complete' ? 'phase_complete' : 'in_progress';
+      stateData.status = status === 'complete' ? 'chapter_complete' : 'in_progress';
 
       // Calculate progress
-      const allPhases = await megamemory.understand({ query: 'phase-', top_k: 100 });
-      const completed = allPhases.concepts.filter(p => {
+      const allChapters = await megamemory.understand({ query: 'chapter-', top_k: 100 });
+      const completed = allChapters.concepts.filter(p => {
         const data = JSON.parse(p.summary);
         return data.status === 'complete';
       }).length;
 
-      stateData.progress = Math.round((completed / allPhases.concepts.length) * 100);
+      stateData.progress = Math.round((completed / allChapters.concepts.length) * 100);
 
       await megamemory.update_concept({
         id: stateQuery.concepts[0].id,
@@ -1310,7 +1310,7 @@ async function updatePhaseStatus(
 
 ```typescript
 interface UATInput {
-  phaseSlug: string;
+  chapterSlug: string;
   verificationResults: string[];
   issuesFound: string[];
   recommendations: string[];
@@ -1329,12 +1329,12 @@ async function createUAT(
   };
 
   const uatConcept = await megamemory.create_concept({
-    name: `${input.phaseSlug}-uat`,
+    name: `${input.chapterSlug}-uat`,
     kind: 'component',
     summary: JSON.stringify(uatData),
-    parent_id: input.phaseSlug,
+    parent_id: input.chapterSlug,
     edges: [
-      { to: input.phaseSlug, relation: 'verifies' },
+      { to: input.chapterSlug, relation: 'verifies' },
       ...input.conceptsReviewed.map(c => ({
         to: c,
         relation: 'reviewed' as const
@@ -1350,7 +1350,7 @@ async function createUAT(
 
 ```typescript
 interface ResearchInput {
-  phaseSlug: string;
+  chapterSlug: string;
   domain: string;
   confidence: string;
   sources: string[];
@@ -1373,11 +1373,11 @@ async function createResearch(
   };
 
   const researchConcept = await megamemory.create_concept({
-    name: `${input.phaseSlug}-research`,
+    name: `${input.chapterSlug}-research`,
     kind: 'pattern',
     summary: JSON.stringify(researchData),
-    parent_id: input.phaseSlug,
-    edges: [{ to: input.phaseSlug, relation: 'informs' }]
+    parent_id: input.chapterSlug,
+    edges: [{ to: input.chapterSlug, relation: 'informs' }]
   });
 
   return researchConcept.id;
@@ -1404,11 +1404,11 @@ async function getConcept(
 
 // Usage with try/catch
 try {
-  const phase = await getConcept(megamemory, 'phase-01');
-  // Use phase
+  const chapter = await getConcept(megamemory, 'chapter-01');
+  // Use chapter
 } catch (error) {
-  console.error('Phase not found:', error);
-  // Handle missing phase
+  console.error('Chapter not found:', error);
+  // Handle missing chapter
 }
 ```
 
@@ -1425,8 +1425,8 @@ function safeParseSummary<T>(summary: string, fallback: T): T {
 }
 
 // Usage
-const phase = await getConcept(megamemory, 'phase-01');
-const phaseData = safeParseSummary(phase.summary, {
+const chapter = await getConcept(megamemory, 'chapter-01');
+const chapterData = safeParseSummary(chapter.summary, {
   number: 1,
   status: 'unknown',
   goal: 'Unknown'
@@ -1483,7 +1483,7 @@ async function retryOperation<T>(
 }
 
 // Usage
-const phase = await retryOperation(() => getConcept(megamemory, 'phase-01'));
+const chapter = await retryOperation(() => getConcept(megamemory, 'chapter-01'));
 ```
 
 ### Validation
@@ -1509,7 +1509,7 @@ function validateConcept(concept: FuskaConcept): string[] {
       'implements', 'part_of', 'depends_on', 'configures', 'completes',
       'uses_pattern', 'updates', 'verifies', 'version_of', 'calls',
       'connects_to', 'configured_by', 'informs', 'uses_knowledge',
-      'reviewed', 'includes', 'for_phase'
+      'reviewed', 'includes', 'for_chapter'
     ];
 
     for (const edge of concept.edges) {

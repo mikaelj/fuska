@@ -40,15 +40,15 @@ export class InitiativeConceptTemplates {
     return {
       name: 'roadmap',
       kind: 'module',
-      summary: 'Initiative roadmap with phases',
+      summary: 'Initiative roadmap with chapters',
       parent_id: initiativeSlug,
       edges: [{ to: initiativeSlug, relation: 'part_of' }]
     };
   }
 
-  static createPhase(initiativeSlug: string, number: number, slug: string, name: string, goal: string): FuskaConcept {
+  static createChapter(initiativeSlug: string, number: number, slug: string, name: string, goal: string): FuskaConcept {
     return {
-      name: `phase-${number}`,
+      name: `chapter-${number}`,
       kind: 'feature',
       summary: generateSummary({
         number,
@@ -112,7 +112,7 @@ export class InitiativeConceptTemplates {
       parent_id: `${initiativeSlug}/milestones`,
       edges: [
         { to: 'milestones', relation: 'part_of' },
-        ...milestone.phases.map(phase => ({ to: phase, relation: 'includes' as const }))
+        ...milestone.chapters.map(chapter => ({ to: chapter, relation: 'includes' as const }))
       ]
     };
   }
@@ -127,19 +127,19 @@ export class InitiativeConceptTemplates {
     };
   }
 
-  static createTodo(initiativeSlug: string, id: string, description: string, phaseRef?: string): FuskaConcept {
+  static createTodo(initiativeSlug: string, id: string, description: string, chapterRef?: string): FuskaConcept {
     return {
       name: `todo-${id}`,
       kind: 'feature',
       summary: generateSummary({
         description,
-        phase_ref: phaseRef,
+        chapter_ref: chapterRef,
         status: 'pending'
       }),
       parent_id: `${initiativeSlug}/todos`,
       edges: [
         { to: 'todos', relation: 'part_of' },
-        ...(phaseRef ? [{ to: phaseRef, relation: 'connects_to' as const }] : [])
+        ...(chapterRef ? [{ to: chapterRef, relation: 'connects_to' as const }] : [])
       ]
     };
   }

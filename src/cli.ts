@@ -18,6 +18,7 @@ import { providerCommand } from './commands/provider';
 import { helpCommand } from './commands/help';
 import { infoCommand } from './commands/info';
 import { migrateMultiInitiativeCommand } from './commands/migrate-multi-initiative';
+import { migrateTerminologyCommand } from './commands/migrate-terminology';
 import { initiativeSwitchCommand } from './commands/initiative-switch';
 import { refreshCommand } from './commands/refresh';
 import { askCommand } from './commands/ask';
@@ -58,5 +59,6 @@ initiativeSwitchCommand(initiativeCmd);
 const migrateCmd = program.command('migrate').description('Migration utilities');
 migrateCommand(migrateCmd);
 migrateMultiInitiativeCommand(migrateCmd);
+migrateTerminologyCommand(migrateCmd);
 
 program.parse(process.argv);

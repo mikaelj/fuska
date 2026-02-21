@@ -1,6 +1,6 @@
 ---
 name: fuska-pause-work
-description: Create context handoff when pausing work mid-phase using MegaMemory
+description: Create context handoff when pausing work mid-chapter using MegaMemory
 tools:
   - read
   - bash
@@ -29,7 +29,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "phase-01", "name": "phase-01", "kind": "feature", "summary": "{\"name\":\"Foundation\",\"goal\":\"...\",\"status\":\"in_progress\"}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "chapter-01", "name": "chapter-01", "kind": "feature", "summary": "{\"name\":\"Foundation\",\"goal\":\"...\",\"status\":\"in_progress\"}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -78,14 +78,14 @@ If response.matches.length > 0:
 const stateSummaryString = response.matches[0].summary
 const stateData = JSON.parse(stateSummaryString)
 
-const currentPhase = stateData.current_phase
+const currentChapter = stateData.current_chapter
 const currentPlan = stateData.current_plan
 const status = stateData.status
 ```
 
 **Step 1.4: Validate work in progress**
 
-If status === "phase_complete" OR status === "ready_to_plan":
+If status === "chapter_complete" OR status === "ready_to_plan":
 → Display: "No work in progress to pause"
 → Suggest: "Run /fuska-resume-work to see current status"
 → Stop
@@ -98,7 +98,7 @@ From stateData extracted in step 1.3:
 ```
 const currentTask = stateData.current_task || 1
 const totalTasks = stateData.total_tasks || 0
-const currentPhase = stateData.current_phase
+const currentChapter = stateData.current_chapter
 const currentPlan = stateData.current_plan
 ```
 
@@ -106,23 +106,23 @@ const currentPlan = stateData.current_plan
 
 If current_task is undefined:
 ```
-megamemory_understand(query=`${currentPhase}-summary`, top_k=20)
+megamemory_understand(query=`${currentChapter}-summary`, top_k=20)
 const completedCount = response.matches.length
 const currentTask = completedCount + 1
 ```
 
-**Step 2.3: Get phase/plan names**
+**Step 2.3: Get chapter/plan names**
 
-If currentPhase exists:
+If currentChapter exists:
 ```
-megamemory_understand(query=currentPhase, top_k=5)
+megamemory_understand(query=currentChapter, top_k=5)
 ```
 
 If response.matches.length > 0:
 ```
-const phaseSummaryString = response.matches[0].summary
-const phaseData = JSON.parse(phaseSummaryString)
-const phaseName = phaseData.name
+const chapterSummaryString = response.matches[0].summary
+const chapterData = JSON.parse(chapterSummaryString)
+const chapterName = chapterData.name
 ```
 
 If currentPlan exists:
@@ -173,7 +173,7 @@ const modifiedFiles = gitStatusOutput
 
 ```
 const handoffData = {
-  phase: currentPhase,
+  chapter: currentChapter,
   plan: currentPlan,
   task: currentTask,
   total_tasks: totalTasks,
@@ -194,7 +194,7 @@ const handoffData = {
 
 ```
 megamemory_create_concept(
-  name=`${currentPhase}-handoff`,
+  name=`${currentChapter}-handoff`,
   kind="config",
   summary=JSON.stringify(handoffData),
   why="Preserve work state for seamless session resumption",
@@ -217,7 +217,7 @@ const updatedStateData = {
   session_continuity: {
     handoff_concept: handoffConceptId,
     paused_at: new Date().toISOString(),
-    phase: currentPhase,
+    chapter: currentChapter,
     plan: currentPlan,
     task: currentTask
   }
@@ -244,7 +244,7 @@ Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kin
   Fuska: Work paused
 ----------------------------------------------------
 
-**Phase:** {phaseName}
+**Chapter:** {chapterName}
 **Plan:** {currentPlan}
 **Task:** {currentTask} of {totalTasks}
 **Status:** {status}
@@ -259,7 +259,7 @@ Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kin
 
 ────────────────────────────────────────────────────────────
 
-Handoff concept created: {currentPhase}-handoff
+Handoff concept created: {currentChapter}-handoff
 
 To resume: /fuska-resume-work
 
@@ -280,10 +280,10 @@ Task(
   subagent_type="fuska-git-message",
   prompt=`<commit_context>
 **Mode:** handoff-commit
-**Phase:** ${currentPhase}
+**Chapter:** ${currentChapter}
 **Plan:** ${currentPlan}
 **Task:** ${currentTask}/${totalTasks}
-**Commit Strategy:** per-phase
+**Commit Strategy:** per-chapter
 
 **Context:**
 Work paused at task ${currentTask} of ${totalTasks}
@@ -315,7 +315,7 @@ Update confirmation message:
  Fuska: Work paused
 -----------------------------------------------------
 
-**Phase:** {phaseName}
+**Chapter:** {chapterName}
 **Plan:** {currentPlan}
 **Task:** {currentTask} of {totalTasks}
 **Status:** {status}
@@ -330,7 +330,7 @@ Update confirmation message:
 
 ────────────────────────────────────────────────────
 
-Handoff concept created: {currentPhase}-handoff
+Handoff concept created: {currentChapter}-handoff
 Committed as WIP: {commit_hash}
 
 To resume: /fuska-resume-work
@@ -342,7 +342,7 @@ To resume: /fuska-resume-work
 
 <success_criteria>
 
-- [ ] Current phase and plan detected from state concept
+- [ ] Current chapter and plan detected from state concept
 - [ ] Handoff concept created with all sections filled
 - [ ] State concept updated with session continuity
 - [ ] User knows location and how to resume

@@ -44,7 +44,7 @@ Your research synthesis is consumed by fuska-roadmapper agent which queries it f
 | Executive Summary | Read from research concept summary |
 | Key Findings | Extract from research concept JSON |
 | Implications for Roadmap | Derived from synthesis in concept |
-| Research Flags | Identified gaps for phases |
+| Research Flags | Identified gaps for chapters |
 | Gaps to Address | Items needing validation |
 
 **Be opinionated.** The roadmapper needs clear recommendations from synthesized research concept, not wishy-washy summaries.
@@ -74,7 +74,7 @@ Parse each concept to extract:
 - **{project}-research-stack:** Recommended technologies, versions, rationale
 - **{project}-research-features:** Table stakes, differentiators, anti-features
 - **{project}-research-architecture:** Patterns, component boundaries, data flow
-- **{project}-research-pitfalls:** Critical/moderate/minor pitfalls, phase warnings
+- **{project}-research-pitfalls:** Critical/moderate/minor pitfalls, chapter warnings
 
 ## Step 2: Synthesize Executive Summary
 
@@ -120,20 +120,20 @@ const featuresData = extractJson(featuresConcept.summary);
 
 This is the most important section. Based on combined research:
 
-**Suggest phase structure:**
+**Suggest chapter structure:**
 - What should come first based on dependencies?
 - What groupings make sense based on architecture?
 - Which features belong together?
 
-**For each suggested phase, include:**
+**For each suggested chapter, include:**
 - Rationale (why this order)
 - What it delivers
 - Which features from FEATURES.md
 - Which pitfalls it must avoid
 
 **Add research flags:**
-- Which phases likely need `/fuska-research-phase` during planning?
-- Which phases have well-documented patterns (skip research)?
+- Which chapters likely need `/fuska-research-chapter` during planning?
+- Which chapters have well-documented patterns (skip research)?
 
 ## Step 5: Assess Confidence
 
@@ -172,7 +172,7 @@ Structure the research-summary concept with these sections:
 Key sections:
 - Executive Summary (2-3 paragraphs)
 - Key Findings (summaries from each research file)
-- Implications for Roadmap (phase suggestions with rationale)
+- Implications for Roadmap (chapter suggestions with rationale)
 - Confidence Assessment (honest evaluation)
 - Sources (aggregated from research files)
 
@@ -201,16 +201,16 @@ When research concept is updated:
 
 ### Roadmap Implications
 
-Suggested phases: [N]
+Suggested chapters: [N]
 
-1. **[Phase name]** — [one-liner rationale]
-2. **[Phase name]** — [one-liner rationale]
-3. **[Phase name]** — [one-liner rationale]
+1. **[Chapter name]** — [one-liner rationale]
+2. **[Chapter name]** — [one-liner rationale]
+3. **[Chapter name]** — [one-liner rationale]
 
 ### Research Flags
 
-Needs research: Phase [X], Phase [Y]
-Standard patterns: Phase [Z]
+Needs research: Chapter [X], Chapter [Y]
+Standard patterns: Chapter [Z]
 
 ### Confidence
 
@@ -246,8 +246,8 @@ Synthesis is complete when:
 - [ ] All 4 research concepts queried from MegaMemory
 - [ ] Executive summary captures key conclusions
 - [ ] Key findings extracted from each concept
-- [ ] Roadmap implications include phase suggestions
-- [ ] Research flags identify which phases need deeper research
+- [ ] Roadmap implications include chapter suggestions
+- [ ] Research flags identify which chapters need deeper research
 - [ ] Confidence assessed honestly
 - [ ] Gaps identified for later attention
 - [ ] Research concept updated in MegaMemory
@@ -258,6 +258,6 @@ Quality indicators:
 
 - **Synthesized, not concatenated:** Findings are integrated, not just copied
 - **Opinionated:** Clear recommendations emerge from combined research
-- **Actionable:** Roadmapper can structure phases based on implications
+- **Actionable:** Roadmapper can structure chapters based on implications
 - **Honest:** Confidence levels reflect actual source quality
 </success_criteria>

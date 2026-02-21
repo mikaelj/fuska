@@ -8,7 +8,7 @@ import matter from 'gray-matter';
 import { InitiativeData, FuskaConcept } from '../scripts/types';
 import type { RelationType as MMRelationType } from 'megamemory/dist/types';
 import { InitiativeConceptTemplates } from '../scripts/initiative-templates';
-import { PhaseConceptTemplates as PhaseTemplates } from '../scripts/phase-templates';
+import { ChapterConceptTemplates as ChapterTemplates } from '../scripts/chapter-templates';
 import { extractJson } from '../scripts/helpers';
 import { KnowledgeDB } from 'megamemory/dist/db.js';
 import { understand, createConcept, updateConcept, link, removeConcept, listRoots, makeId } from 'megamemory/dist/tools.js';
@@ -30,12 +30,12 @@ interface PlanningFiles {
   milestones: string | null;
   milestoneRoadmaps: Map<string, string>;
   config: any;
-  phases: Map<string, PhaseFiles>;
+  chapters: Map<string, ChapterFiles>;
   research: Map<string, string>;
   todos: string[];
 }
 
-interface PhaseFiles {
+interface ChapterFiles {
   context: { content: string; path: string } | null;
   plans: Map<number, { content: string; path: string }>;
   research: { content: string; path: string } | null;
@@ -81,7 +81,7 @@ interface MigrationStats {
   atSymbolsQuoted: number;
   embeddedQuotesFixed: number;
   skippedDirectories: number;
-  phasesMerged: number;
+  chaptersMerged: number;
   referencePatternsMigrated: number;
   templateSchemasMigrated: number;
   rollbackPerformed: boolean;
@@ -127,7 +127,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       atSymbolsQuoted: 0,
       embeddedQuotesFixed: 0,
       skippedDirectories: 0,
-      phasesMerged: 0,
+      chaptersMerged: 0,
       referencePatternsMigrated: 0,
       templateSchemasMigrated: 0,
       rollbackPerformed: false,
@@ -466,30 +466,30 @@ class EnhancedPlanningToMegaMemoryMigration {
       this.scanFileForDuplicates(content, `milestones/${name}-ROADMAP.md`);
     }
 
-    for (const [phaseDir, phaseFiles] of planningFiles.phases) {
-      if (phaseFiles.context) {
-        const basename = path.basename(phaseFiles.context.path);
-        this.scanFileForDuplicates(phaseFiles.context.content, `phases/${basename}`);
+    for (const [chapterDir, chapterFiles] of planningFiles.chapters) {
+      if (chapterFiles.context) {
+        const basename = path.basename(chapterFiles.context.path);
+        this.scanFileForDuplicates(chapterFiles.context.content, `chapters/${basename}`);
       }
 
-      for (const [planNum, fileData] of phaseFiles.plans) {
+      for (const [planNum, fileData] of chapterFiles.plans) {
         const basename = path.basename(fileData.path);
-        this.scanFileForDuplicates(fileData.content, `phases/${basename}`);
+        this.scanFileForDuplicates(fileData.content, `chapters/${basename}`);
       }
 
-      if (phaseFiles.research) {
-        const basename = path.basename(phaseFiles.research.path);
-        this.scanFileForDuplicates(phaseFiles.research.content, `phases/${basename}`);
+      if (chapterFiles.research) {
+        const basename = path.basename(chapterFiles.research.path);
+        this.scanFileForDuplicates(chapterFiles.research.content, `chapters/${basename}`);
       }
 
-      for (const [summaryNum, fileData] of phaseFiles.summaries) {
+      for (const [summaryNum, fileData] of chapterFiles.summaries) {
         const basename = path.basename(fileData.path);
-        this.scanFileForDuplicates(fileData.content, `phases/${basename}`);
+        this.scanFileForDuplicates(fileData.content, `chapters/${basename}`);
       }
 
-      if (phaseFiles.uat) {
-        const basename = path.basename(phaseFiles.uat.path);
-        this.scanFileForDuplicates(phaseFiles.uat.content, `phases/${basename}`);
+      if (chapterFiles.uat) {
+        const basename = path.basename(chapterFiles.uat.path);
+        this.scanFileForDuplicates(chapterFiles.uat.content, `chapters/${basename}`);
       }
     }
 
@@ -587,7 +587,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       this.stats.yamlErrors++;
       this.stats.parseErrorsEncountered++;
 
-      const shortPath = filename.replace(/^.*\.planning\//, '').replace(/^phases\/[^/]+\//, '');
+      const shortPath = filename.replace(/^.*\.planning\//, '').replace(/^chapters\/[^/]+\//, '');
       const errorMsg = e.message.split('\n')[0].substring(0, 70);
       console.log(`  [FIX] ${shortPath}: ${errorMsg}`);
 
@@ -965,7 +965,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       await this.migrateReferencePatterns();
       await this.migrateTemplateSchemas();
       await this.migrateProject(planningFiles);
-      await this.migratePhases(planningFiles);
+      await this.migrateChapters(planningFiles);
       await this.migrateResearch(planningFiles);
       await this.migrateTodos(planningFiles);
 
@@ -1008,7 +1008,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       milestones: null,
       milestoneRoadmaps: new Map(),
       config: {},
-      phases: new Map(),
+      chapters: new Map(),
       research: new Map(),
       todos: []
     };
@@ -1054,16 +1054,16 @@ class EnhancedPlanningToMegaMemoryMigration {
       files.config = await fs.readJson(configFile);
     }
 
-    const phasesDir = path.join(this.planningDir, 'phases');
-    if (await fs.pathExists(phasesDir)) {
-      const phaseDirs = await fs.readdir(phasesDir);
+    const chaptersDir = path.join(this.planningDir, 'chapters');
+    if (await fs.pathExists(chaptersDir)) {
+      const chapterDirs = await fs.readdir(chaptersDir);
 
-      for (const phaseDir of phaseDirs) {
-        const phasePath = path.join(phasesDir, phaseDir);
-        const stat = await fs.stat(phasePath);
+      for (const chapterDir of chapterDirs) {
+        const chapterPath = path.join(chaptersDir, chapterDir);
+        const stat = await fs.stat(chapterPath);
 
         if (stat.isDirectory()) {
-          files.phases.set(phaseDir, await this.readPhaseFiles(phasePath));
+          files.chapters.set(chapterDir, await this.readChapterFiles(chapterPath));
         }
       }
     }
@@ -1085,7 +1085,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       }
     }
 
-    console.log(`Read ${files.phases.size} phases, ${files.research.size} research docs, ${files.todos.length} todos\n`);
+    console.log(`Read ${files.chapters.size} chapters, ${files.research.size} research docs, ${files.todos.length} todos\n`);
     return files;
   }
 
@@ -1124,25 +1124,25 @@ class EnhancedPlanningToMegaMemoryMigration {
       await processFile(path.join(this.planningDir, 'milestones', `${name}-ROADMAP.md`), content);
     }
 
-    for (const [phaseDir, phaseFiles] of planningFiles.phases) {
-      if (phaseFiles.context) {
-        await processFile(phaseFiles.context.path, phaseFiles.context.content);
+    for (const [chapterDir, chapterFiles] of planningFiles.chapters) {
+      if (chapterFiles.context) {
+        await processFile(chapterFiles.context.path, chapterFiles.context.content);
       }
 
-      for (const [planNum, fileData] of phaseFiles.plans) {
+      for (const [planNum, fileData] of chapterFiles.plans) {
         await processFile(fileData.path, fileData.content);
       }
 
-      if (phaseFiles.research) {
-        await processFile(phaseFiles.research.path, phaseFiles.research.content);
+      if (chapterFiles.research) {
+        await processFile(chapterFiles.research.path, chapterFiles.research.content);
       }
 
-      for (const [summaryNum, fileData] of phaseFiles.summaries) {
+      for (const [summaryNum, fileData] of chapterFiles.summaries) {
         await processFile(fileData.path, fileData.content);
       }
 
-      if (phaseFiles.uat) {
-        await processFile(phaseFiles.uat.path, phaseFiles.uat.content);
+      if (chapterFiles.uat) {
+        await processFile(chapterFiles.uat.path, chapterFiles.uat.content);
       }
     }
 
@@ -1153,8 +1153,8 @@ class EnhancedPlanningToMegaMemoryMigration {
     console.log('Cleaning complete.\n');
   }
 
-  private async readPhaseFiles(phasePath: string): Promise<PhaseFiles> {
-    const files: PhaseFiles = {
+  private async readChapterFiles(chapterPath: string): Promise<ChapterFiles> {
+    const files: ChapterFiles = {
       context: null,
       plans: new Map(),
       research: null,
@@ -1162,7 +1162,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       uat: null
     };
 
-    const allFiles = await glob.glob('*.md', { cwd: phasePath, absolute: true });
+    const allFiles = await glob.glob('*.md', { cwd: chapterPath, absolute: true });
 
     for (const file of allFiles) {
       const basename = path.basename(file);
@@ -1191,31 +1191,31 @@ class EnhancedPlanningToMegaMemoryMigration {
     return files;
   }
 
-  private mergeDuplicatePhases(phases: Map<string, PhaseFiles>): Map<string, PhaseFiles> {
-    const phaseNumberMap = new Map<number, string[]>();
-    const merged = new Map<string, PhaseFiles>();
+  private mergeDuplicateChapters(chapters: Map<string, ChapterFiles>): Map<string, ChapterFiles> {
+    const chapterNumberMap = new Map<number, string[]>();
+    const merged = new Map<string, ChapterFiles>();
 
-    for (const [dir, files] of phases) {
+    for (const [dir, files] of chapters) {
       const match = dir.match(/^(\d+)-/);
       if (match) {
         const num = parseInt(match[1]);
-        if (!phaseNumberMap.has(num)) {
-          phaseNumberMap.set(num, []);
+        if (!chapterNumberMap.has(num)) {
+          chapterNumberMap.set(num, []);
         }
-        phaseNumberMap.get(num)!.push(dir);
+        chapterNumberMap.get(num)!.push(dir);
       } else {
         merged.set(dir, files);
       }
     }
 
-    for (const [num, dirs] of phaseNumberMap) {
+    for (const [num, dirs] of chapterNumberMap) {
       if (dirs.length === 1) {
-        merged.set(dirs[0], phases.get(dirs[0])!);
+        merged.set(dirs[0], chapters.get(dirs[0])!);
       } else {
-        console.log(`Merging ${dirs.length} phases with number ${num}: ${dirs.join(', ')}`);
-        this.stats.phasesMerged++;
-        const mergedFiles = this.mergePhaseFiles(
-          dirs.map(d => phases.get(d)!)
+        console.log(`Merging ${dirs.length} chapters with number ${num}: ${dirs.join(', ')}`);
+        this.stats.chaptersMerged++;
+        const mergedFiles = this.mergeChapterFiles(
+          dirs.map(d => chapters.get(d)!)
         );
         merged.set(dirs[0], mergedFiles);
       }
@@ -1224,8 +1224,8 @@ class EnhancedPlanningToMegaMemoryMigration {
     return merged;
   }
 
-  private mergePhaseFiles(phaseFiles: PhaseFiles[]): PhaseFiles {
-    const merged: PhaseFiles = {
+  private mergeChapterFiles(chapterFiles: ChapterFiles[]): ChapterFiles {
+    const merged: ChapterFiles = {
       context: null,
       plans: new Map(),
       research: null,
@@ -1233,7 +1233,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       uat: null
     };
 
-    for (const files of phaseFiles) {
+    for (const files of chapterFiles) {
       if (files.context) merged.context = files.context;
       if (files.research && !merged.research) merged.research = files.research;
       if (files.uat && !merged.uat) merged.uat = files.uat;
@@ -1276,31 +1276,31 @@ class EnhancedPlanningToMegaMemoryMigration {
     const roadmapModule = InitiativeConceptTemplates.createRoadmapModule(projectData.slug);
     await this.createConcept(roadmapModule);
 
-    const allPhases = new Map<number, any>();
+    const allChapters = new Map<number, any>();
 
     if (files.roadmap) {
-      const phases = this.parseRoadmapFile(files.roadmap);
-      for (const phase of phases) {
-        allPhases.set(phase.number, phase);
+      const chapters = this.parseRoadmapFile(files.roadmap);
+      for (const chapter of chapters) {
+        allChapters.set(chapter.number, chapter);
       }
     }
 
     for (const [name, content] of files.milestoneRoadmaps) {
-      const phases = this.parseRoadmapFile(content);
-      for (const phase of phases) {
-        if (!allPhases.has(phase.number)) {
-          allPhases.set(phase.number, phase);
+      const chapters = this.parseRoadmapFile(content);
+      for (const chapter of chapters) {
+        if (!allChapters.has(chapter.number)) {
+          allChapters.set(chapter.number, chapter);
         }
       }
     }
 
-    for (const phase of allPhases.values()) {
-      const concept = InitiativeConceptTemplates.createPhase(
+    for (const chapter of allChapters.values()) {
+      const concept = InitiativeConceptTemplates.createChapter(
         projectData.slug,
-        phase.number,
-        phase.slug,
-        phase.name,
-        phase.goal
+        chapter.number,
+        chapter.slug,
+        chapter.name,
+        chapter.goal
       );
       await this.createConcept(concept);
     }
@@ -1334,85 +1334,85 @@ class EnhancedPlanningToMegaMemoryMigration {
     console.log('Project-level concepts migrated.\n');
   }
 
-  private async migratePhases(files: PlanningFiles): Promise<void> {
-    console.log('Migrating phase-level concepts...');
+  private async migrateChapters(files: PlanningFiles): Promise<void> {
+    console.log('Migrating chapter-level concepts...');
 
     const projectData = this.parseProjectFile(files.project, files.config);
 
-    const mergedPhases = this.mergeDuplicatePhases(files.phases);
+    const mergedChapters = this.mergeDuplicateChapters(files.chapters);
 
-    const createdPhaseNumbers = new Set<number>();
+    const createdChapterNumbers = new Set<number>();
 
-    for (const [phaseDir, phaseFiles] of mergedPhases) {
-      if (!/^\d+-.+/.test(phaseDir)) {
-        console.log(`Skipping non-phase directory: ${phaseDir}`);
+    for (const [chapterDir, chapterFiles] of mergedChapters) {
+      if (!/^\d+-.+/.test(chapterDir)) {
+        console.log(`Skipping non-chapter directory: ${chapterDir}`);
         this.stats.skippedDirectories++;
         continue;
       }
 
-      const phaseNum = parseInt(phaseDir.split('-')[0]);
-      const phaseSuffix = phaseDir.substring(phaseDir.split('-')[0].length + 1);
-      const phaseName = `phase-${phaseNum}`;
-      const phaseParentId = makeId(phaseName, `${projectData.slug}/roadmap`);
+      const chapterNum = parseInt(chapterDir.split('-')[0]);
+      const chapterSuffix = chapterDir.substring(chapterDir.split('-')[0].length + 1);
+      const chapterName = `chapter-${chapterNum}`;
+      const chapterParentId = makeId(chapterName, `${projectData.slug}/roadmap`);
 
-      if (createdPhaseNumbers.has(phaseNum)) {
-        console.warn(`Duplicate phase number detected: ${phaseNum} (directory: ${phaseDir})`);
-        console.warn(`  Using unique name: phase-${phaseNum}-${phaseSuffix}`);
+      if (createdChapterNumbers.has(chapterNum)) {
+        console.warn(`Duplicate chapter number detected: ${chapterNum} (directory: ${chapterDir})`);
+        console.warn(`  Using unique name: chapter-${chapterNum}-${chapterSuffix}`);
       }
-      createdPhaseNumbers.add(phaseNum);
+      createdChapterNumbers.add(chapterNum);
 
-      if (phaseFiles.context) {
-        const relativePath = phaseFiles.context.path.replace(/^.*\.planning\//, '.planning/');
-        const contextData = this.parseContextFile(phaseFiles.context.content, relativePath);
-        const concept = PhaseTemplates.createContext(phaseName, contextData);
-        concept.parent_id = phaseParentId;
+      if (chapterFiles.context) {
+        const relativePath = chapterFiles.context.path.replace(/^.*\.planning\//, '.planning/');
+        const contextData = this.parseContextFile(chapterFiles.context.content, relativePath);
+        const concept = ChapterTemplates.createContext(chapterName, contextData);
+        concept.parent_id = chapterParentId;
         await this.createConcept(concept);
       }
 
-      for (const [planNum, fileData] of phaseFiles.plans) {
+      for (const [planNum, fileData] of chapterFiles.plans) {
         const relativePath = fileData.path.replace(/^.*\.planning\//, '.planning/');
         const planData = this.parsePlanFile(fileData.content, relativePath);
         if (planData && Object.keys(planData).length > 0) {
-          const concept = PhaseTemplates.createPlan(phaseName, planNum, planData);
-          concept.parent_id = phaseParentId;
-          concept.edges = [{ to: phaseParentId, relation: 'implements' as const }];
+          const concept = ChapterTemplates.createPlan(chapterName, planNum, planData);
+          concept.parent_id = chapterParentId;
+          concept.edges = [{ to: chapterParentId, relation: 'implements' as const }];
           await this.createConcept(concept);
         }
       }
 
-      if (phaseFiles.research) {
-        const relativePath = phaseFiles.research.path.replace(/^.*\.planning\//, '.planning/');
-        const researchData = this.parseResearchFile(phaseFiles.research.content, relativePath);
+      if (chapterFiles.research) {
+        const relativePath = chapterFiles.research.path.replace(/^.*\.planning\//, '.planning/');
+        const researchData = this.parseResearchFile(chapterFiles.research.content, relativePath);
         if (researchData && Object.keys(researchData).length > 0) {
-          const concept = PhaseTemplates.createResearch(phaseName, researchData);
-          concept.parent_id = phaseParentId;
-          concept.edges = [{ to: phaseParentId, relation: 'connects_to' as const }];
+          const concept = ChapterTemplates.createResearch(chapterName, researchData);
+          concept.parent_id = chapterParentId;
+          concept.edges = [{ to: chapterParentId, relation: 'connects_to' as const }];
           await this.createConcept(concept);
         }
       }
 
-      for (const [summaryNum, fileData] of phaseFiles.summaries) {
+      for (const [summaryNum, fileData] of chapterFiles.summaries) {
         const relativePath = fileData.path.replace(/^.*\.planning\//, '.planning/');
         const summaryData = this.parseSummaryFile(fileData.content, relativePath);
         if (summaryData && Object.keys(summaryData).length > 0) {
-          const concept = PhaseTemplates.createSummary(phaseName, summaryNum, summaryData);
-          concept.parent_id = phaseParentId;
+          const concept = ChapterTemplates.createSummary(chapterName, summaryNum, summaryData);
+          concept.parent_id = chapterParentId;
           concept.edges = [
-            { to: makeId(`${phaseName}-plan-${summaryNum}`, phaseParentId), relation: 'connects_to' as const },
-            { to: phaseParentId, relation: 'connects_to' as const }
+            { to: makeId(`${chapterName}-plan-${summaryNum}`, chapterParentId), relation: 'connects_to' as const },
+            { to: chapterParentId, relation: 'connects_to' as const }
           ];
           await this.createConcept(concept);
         }
       }
 
-      if (phaseFiles.uat) {
-        const relativePath = phaseFiles.uat.path.replace(/^.*\.planning\//, '.planning/');
-        const uatData = this.parseUATFile(phaseFiles.uat.content, relativePath);
+      if (chapterFiles.uat) {
+        const relativePath = chapterFiles.uat.path.replace(/^.*\.planning\//, '.planning/');
+        const uatData = this.parseUATFile(chapterFiles.uat.content, relativePath);
         if (uatData) {
-          const concept = PhaseTemplates.createUAT(phaseName, uatData);
-          concept.parent_id = phaseParentId;
+          const concept = ChapterTemplates.createUAT(chapterName, uatData);
+          concept.parent_id = chapterParentId;
           concept.edges = [
-            { to: phaseParentId, relation: 'connects_to' as const },
+            { to: chapterParentId, relation: 'connects_to' as const },
             ...uatData.concepts_reviewed.map((c: string) => ({ to: c, relation: 'connects_to' as const }))
           ];
           await this.createConcept(concept);
@@ -1420,7 +1420,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       }
     }
 
-    console.log('Phase-level concepts migrated.\n');
+    console.log('Chapter-level concepts migrated.\n');
   }
 
   private async migrateResearch(files: PlanningFiles): Promise<void> {
@@ -1469,10 +1469,10 @@ class EnhancedPlanningToMegaMemoryMigration {
         }
       }
 
-      const phaseRefMatch = todoContent.match(/Phase:\s+(.+)$/m);
-      const phaseRef = phaseRefMatch ? phaseRefMatch[1] : undefined;
+      const chapterRefMatch = todoContent.match(/Chapter:\s+(.+)$/m);
+      const chapterRef = chapterRefMatch ? chapterRefMatch[1] : undefined;
 
-      const concept = InitiativeConceptTemplates.createTodo(projectData.slug, (i + 1).toString(), description, phaseRef);
+      const concept = InitiativeConceptTemplates.createTodo(projectData.slug, (i + 1).toString(), description, chapterRef);
       await this.createConcept(concept);
     }
 
@@ -1530,7 +1530,7 @@ class EnhancedPlanningToMegaMemoryMigration {
 
     const testQueries = [
       'project requirements',
-      'roadmap phases',
+      'roadmap chapters',
       'state',
       'milestones',
       'todos',
@@ -1615,8 +1615,8 @@ class EnhancedPlanningToMegaMemoryMigration {
       console.log(`\nSkipped directories: ${this.stats.skippedDirectories}`);
     }
     
-    if (this.stats.phasesMerged > 0) {
-      console.log(`\nPhases merged: ${this.stats.phasesMerged}`);
+    if (this.stats.chaptersMerged > 0) {
+      console.log(`\nChapters merged: ${this.stats.chaptersMerged}`);
     }
     
     if (this.stats.rollbackPerformed) {
@@ -1634,7 +1634,7 @@ class EnhancedPlanningToMegaMemoryMigration {
         what_this_is: 'Project documentation',
         core_value: '',
         requirements: [],
-        phases: []
+        chapters: []
       };
     }
 
@@ -1645,7 +1645,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       what_this_is: '',
       core_value: '',
       requirements: [],
-      phases: []
+      chapters: []
     };
 
     for (let i = 0; i < lines.length; i++) {
@@ -1697,27 +1697,27 @@ class EnhancedPlanningToMegaMemoryMigration {
   }
 
   private parseRoadmapFile(content: string): Array<{number: number; slug: string; name: string; goal: string}> {
-    const phases: Array<{number: number; slug: string; name: string; goal: string}> = [];
+    const chapters: Array<{number: number; slug: string; name: string; goal: string}> = [];
     const lines = content.split('\n');
 
     for (const line of lines) {
-      let match = line.match(/^### Phase (\d+):\s+(.+)$/);
+      let match = line.match(/^### Chapter (\d+):\s+(.+)$/);
       if (!match) {
-        match = line.match(/^-\s+\[[x ]\]\s+Phase (\d+):\s+(.+)$/);
+        match = line.match(/^-\s+\[[x ]\]\s+Chapter (\d+):\s+(.+)$/);
       }
 
       if (match) {
         const num = parseInt(match[1]);
-        phases.push({
+        chapters.push({
           number: num,
-          slug: `phase-${num.toString().padStart(2, '0')}`,
+          slug: `chapter-${num.toString().padStart(2, '0')}`,
           name: match[2],
           goal: ''
         });
       }
     }
 
-    return phases;
+    return chapters;
   }
 
   private parseStateMarkdown(content: string): any {
@@ -1727,18 +1727,18 @@ class EnhancedPlanningToMegaMemoryMigration {
     if (currentPosMatch) {
       const section = currentPosMatch[0];
 
-      const phaseMatch = section.match(/\*\*Phase:\*\*\s*(\d+)/);
-      if (phaseMatch) {
-        result.current_phase = `phase-${phaseMatch[1].padStart(2, '0')}`;
+      const chapterMatch = section.match(/\*\*Chapter:\*\*\s*(\d+)/);
+      if (chapterMatch) {
+        result.current_chapter = `chapter-${chapterMatch[1].padStart(2, '0')}`;
       }
 
       const statusMatch = section.match(/\*\*Status:\*\*\s*(\d+)\/(\d+)\s+plans\s+executed/);
       if (statusMatch) {
         const completed = parseInt(statusMatch[1]);
         const total = parseInt(statusMatch[2]);
-        const phaseNumMatch = section.match(/\*\*Phase:\*\*\s*(\d+)/);
-        const phaseNum = phaseNumMatch ? parseInt(phaseNumMatch[1]) : 1;
-        result.current_plan = completed < total ? `phase-${phaseNum.toString().padStart(2, '0')}-01` : null;
+        const chapterNumMatch = section.match(/\*\*Chapter:\*\*\s*(\d+)/);
+        const chapterNum = chapterNumMatch ? parseInt(chapterNumMatch[1]) : 1;
+        result.current_plan = completed < total ? `chapter-${chapterNum.toString().padStart(2, '0')}-01` : null;
         result.status = completed > 0 ? 'executing' : 'ready_to_plan';
       }
 
@@ -1755,7 +1755,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       
       const milestoneLines = lines.filter((line: string) => {
         const trimmed = line.trim();
-        return trimmed && !trimmed.startsWith('Phase ') && trimmed.includes('%');
+        return trimmed && !trimmed.startsWith('Chapter ') && trimmed.includes('%');
       });
       
       if (milestoneLines.length > 0) {
@@ -1768,7 +1768,7 @@ class EnhancedPlanningToMegaMemoryMigration {
     }
 
     return {
-      current_phase: result.current_phase || 'phase-01',
+      current_chapter: result.current_chapter || 'chapter-01',
       current_plan: result.current_plan ?? null,
       status: result.status || 'ready_to_plan',
       progress: result.progress ?? 0,
@@ -1785,8 +1785,8 @@ class EnhancedPlanningToMegaMemoryMigration {
     return this.parseStateMarkdown(content);
   }
 
-  private parseMilestonesFile(content: string): Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; phases: string[]; description: string}> {
-    const milestones: Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; phases: string[]; description: string}> = [];
+  private parseMilestonesFile(content: string): Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; chapters: string[]; description: string}> {
+    const milestones: Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; chapters: string[]; description: string}> = [];
     const lines = content.split('\n');
 
     for (const line of lines) {
@@ -1800,7 +1800,7 @@ class EnhancedPlanningToMegaMemoryMigration {
         milestones.push({
           name: match[1],
           status: validStatus,
-          phases: [],
+          chapters: [],
           description: ''
         });
       }
@@ -1813,7 +1813,7 @@ class EnhancedPlanningToMegaMemoryMigration {
     const cleaned = this.cleanYamlContent(content, filename);
     const parsed = matter(cleaned);
     return {
-      phase_boundary: parsed.data?.phase_boundary || '',
+      chapter_boundary: parsed.data?.chapter_boundary || '',
       decisions: parsed.data?.decisions || {},
       open_code_discretion: parsed.data?.open_code_discretion || [],
       specifics: parsed.data?.specifics || [],

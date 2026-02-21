@@ -16,7 +16,7 @@ fuska config [project-dir]
 From this menu you can configure:
 - **Quick settings** — switch model profile (quality/balanced/budget) and workflow mode
 - **Model aliases** — configure which models map to quality/balanced/budget/explore
-- **Git commit strategy** — switch between per-phase / per-plan / per-task
+- **Git commit strategy** — switch between per-chapter / per-plan / per-task
 - **Import graph settings** — auto-refresh mode and staleness threshold
 - **Stage overrides** — set a specific model for planning, execution, or verification
 - **Reset presets** — reconfigure all profiles from scratch
@@ -112,7 +112,7 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 
 | Stage | Agents | Purpose |
 |-------|--------|---------|
-| **Planning** | planner, plan-checker, researcher, roadmapper, project-researcher, research-synthesizer, codebase-mapper | Phase decomposition, dependency analysis, goal-backward verification |
+| **Planning** | planner, plan-checker, researcher, roadmapper, project-researcher, research-synthesizer, codebase-mapper | Chapter decomposition, dependency analysis, goal-backward verification |
 | **Build** | builder, debugger | Implementing plan tasks with atomic commits, deviation handling |
 | **Review** | reviewer, integration-checker | Goal-backward verification, quality assurance |
 
@@ -126,7 +126,7 @@ Controls how often Fuska creates git commits during execution. Set during `/fusk
 
 ### Commit Message Format
 
-All commits follow semantic commit format with a phase/plan trailer:
+All commits follow semantic commit format with a chapter/plan trailer:
 
 ```
 {type}({scope}): {concise description}
@@ -134,19 +134,19 @@ All commits follow semantic commit format with a phase/plan trailer:
 - {high-level change 1}
 - {high-level change 2}
 
-{phase-plan}
+{chapter-plan}
 ```
 
 - **Type:** `feat`, `fix`, `test`, `refactor`, `perf`, `chore`, `docs`, `wip`
-- **Scope:** Semantic area being changed (e.g., `auth`, `checkout`, `jose`, `api`) — NOT phase numbers
+- **Scope:** Semantic area being changed (e.g., `auth`, `checkout`, `jose`, `api`) — NOT chapter numbers
 - **Body:** 2-4 bullets, high-level *what* and *why* only
-- **Trailer:** Phase-plan identifier (e.g., `02-01` for plan 1 in phase 2)
+- **Trailer:** Chapter-plan identifier (e.g., `02-01` for plan 1 in chapter 2)
 
 ### Example: Same Work, Different Strategies
 
 Three tasks in plan 02-01 (JWT auth): set up jose library, add refresh token rotation, protect routes with middleware.
 
-*per-phase* — 1 commit for the entire phase:
+*per-chapter* — 1 commit for the entire chapter:
 ```
 feat(auth): add JWT authentication with refresh tokens
 
@@ -154,7 +154,7 @@ feat(auth): add JWT authentication with refresh tokens
 - Implement refresh token rotation with secure storage
 - Protect routes with auth middleware
 
-phase-02
+chapter-02
 ```
 
 *per-plan* — 1 commit for the plan:
@@ -201,18 +201,18 @@ feat(middleware): protect routes with auth middleware
 - **Subject line:** max 72 characters, imperative mood ("add" not "added")
 - **Scope:** semantic area (`auth`, `checkout`, `api`, `ui`, etc.)
 - **Body:** 2-4 bullets max — never list implementation details (imports, field names, types)
-- **Trailer:** phase-plan identifier (`02-01`, `phase-02`) based on commit strategy
+- **Trailer:** chapter-plan identifier (`02-01`, `chapter-02`) based on commit strategy
 - **The git diff** is the source of truth for *how* — the message explains *what* and *why*
 
 ### Trailer Format by Strategy
 
 | Strategy | Trailer Format | Example |
 |----------|---------------|---------|
-| **per-phase** (default) | `phase-{NN}` | `phase-02` |
-| **per-plan** | `{phase}-{plan}` | `02-01` |
-| **per-task** | `{phase}-{plan}` | `02-01` |
+| **per-chapter** (default) | `chapter-{NN}` | `chapter-02` |
+| **per-plan** | `{chapter}-{plan}` | `02-01` |
+| **per-task** | `{chapter}-{plan}` | `02-01` |
 
-**Why per-phase is the default:** For solo dev + AI workflows, MegaMemory already tracks granular task completion. Per-phase gives the cleanest git history while MegaMemory handles the detailed context. Use per-task if you need fine-grained `git bisect` or work with other developers who rely on git log.
+**Why per-chapter is the default:** For solo dev + AI workflows, MegaMemory already tracks granular task completion. Per-chapter gives the cleanest git history while MegaMemory handles the detailed context. Use per-task if you need fine-grained `git bisect` or work with other developers who rely on git log.
 
 ---
 
@@ -281,14 +281,14 @@ fuska config
 
 Where `<stage>` is one of: `planning`, `execution`, or `verification`.
 
-You can also override per-phase with flags on `/fuska plan`:
-- `--mode <MODE>` — Override workflow mode for this phase only (one-off, doesn't persist)
+You can also override per-chapter with flags on `/fuska plan`:
+- `--mode <MODE>` — Override workflow mode for this chapter only (one-off, doesn't persist)
 - `--research` — Enable researcher (augments the selected mode)
 - `--skip-research` — Skip researcher
 - `--skip-verify` — Skip plan verification
 
-You can override per-phase with flags on `/fuska build`:
-- `--mode <MODE>` — Override workflow mode for this phase only (one-off, doesn't persist)
+You can override per-chapter with flags on `/fuska build`:
+- `--mode <MODE>` — Override workflow mode for this chapter only (one-off, doesn't persist)
 - `--verify` — Force verifier to run (even in modes that normally skip it)
 
 ---
@@ -387,7 +387,7 @@ fuska config
   "refresh": {
     "mode": "hybrid",
     "age_hours": 24,
-    "auto_before": ["plan-phase", "execute-phase", "debug"],
+    "auto_before": ["plan-chapter", "execute-chapter", "debug"],
     "last_sha": "abc123",
     "last_refresh": "2026-02-17T10:00:00Z",
     "files_scanned": 147,

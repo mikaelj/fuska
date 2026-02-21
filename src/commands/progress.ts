@@ -19,7 +19,7 @@ interface Edge {
 }
 
 interface StateData {
-  current_phase: string;
+  current_chapter: string;
   current_plan: string | null;
   status: string;
   progress: number;
@@ -33,7 +33,7 @@ interface ConfigData {
   current_initiative?: string | null;
 }
 
-interface PhaseData {
+interface ChapterData {
   number: number;
   slug: string;
   name: string;
@@ -43,7 +43,7 @@ interface PhaseData {
 }
 
 interface RoadmapData {
-  phases: PhaseData[];
+  chapters: ChapterData[];
   current_milestone: string;
 }
 
@@ -56,11 +56,11 @@ interface RequirementData {
 interface PlanData {
   objective: string;
   purpose: string;
-  wave?: number;
+  batch?: number;
 }
 
 interface SummaryData {
-  phase: string;
+  chapter: string;
   plan: string;
   accomplishments: string[];
   completed?: string;
@@ -71,7 +71,7 @@ interface UATData {
   gaps?: string[];
 }
 
-interface PhaseContextData {
+interface ChapterContextData {
   status: string;
   decisions: Record<string, any>;
 }
@@ -99,11 +99,11 @@ interface StructuredContext {
   roadmap: RoadmapData | null;
   config: ConfigData | null;
   requirements: RequirementData[];
-  currentPhase: PhaseData | null;
-  phaseContext: PhaseContextData | null;
-  phasePlans: Array<{ name: string; data: PlanData }>;
-  phaseSummaries: Array<{ name: string; data: SummaryData }>;
-  phaseUat: UATData | null;
+  currentChapter: ChapterData | null;
+  chapterContext: ChapterContextData | null;
+  chapterPlans: Array<{ name: string; data: PlanData }>;
+  chapterSummaries: Array<{ name: string; data: SummaryData }>;
+  chapterUat: UATData | null;
   recentSummaries: Array<{ name: string; data: SummaryData }>;
   pendingTodos: TodoItem[];
   activeDebugSessions: DebugSession[];
@@ -117,8 +117,8 @@ interface AdHocContext {
 }
 
 interface NextAction {
-  route: 'execute' | 'plan' | 'discuss' | 'gaps' | 'complete-milestone' | 'next-phase';
-  phaseNumber?: number;
+  route: 'execute' | 'plan' | 'discuss' | 'gaps' | 'complete-milestone' | 'next-chapter';
+  chapterNumber?: number;
   planName?: string;
   objective?: string;
 }
@@ -131,10 +131,10 @@ interface JsonOutput {
     total: number;
     percentage: number;
   };
-  currentPhase?: PhaseData | null;
+  currentChapter?: ChapterData | null;
   status?: string;
   nextAction?: NextAction;
-  recentWork?: Array<{ phase: string; plan: string; accomplishment: string }>;
+  recentWork?: Array<{ chapter: string; plan: string; accomplishment: string }>;
   pendingTodos?: number;
   activeDebugSessions?: number;
 }
@@ -274,37 +274,37 @@ class ProgressRunner {
     return '';
   }
 
-  private findPhaseData(phaseSlug: string): PhaseData | null {
-    const roadmapNode = this.nodes.find(n => 
+  private findChapterData(chapterSlug: string): ChapterData | null {
+    const roadmapNode = this.nodes.find(n =>
       n.name === 'roadmap' && n.parent_id === this.currentInitiativeId
     );
     if (!roadmapNode) return null;
-    
-    const phaseNode = this.nodes.find(n => 
-      n.name === phaseSlug && n.parent_id === roadmapNode.id
+
+    const chapterNode = this.nodes.find(n =>
+      n.name === chapterSlug && n.parent_id === roadmapNode.id
     );
-    return phaseNode ? this.parseSummary<PhaseData>(phaseNode.summary) : null;
+    return chapterNode ? this.parseSummary<ChapterData>(chapterNode.summary) : null;
   }
 
-  private findPhaseContext(phaseSlug: string): PhaseContextData | null {
-    const contextNode = this.nodes.find(n => n.name === `${phaseSlug}-context`);
-    return contextNode ? this.parseSummary<PhaseContextData>(contextNode.summary) : null;
+  private findChapterContext(chapterSlug: string): ChapterContextData | null {
+    const contextNode = this.nodes.find(n => n.name === `${chapterSlug}-context`);
+    return contextNode ? this.parseSummary<ChapterContextData>(contextNode.summary) : null;
   }
 
-  private findPhasePlans(phaseSlug: string): Array<{ name: string; data: PlanData }> {
+  private findChapterPlans(chapterSlug: string): Array<{ name: string; data: PlanData }> {
     return this.nodes
-      .filter(n => n.name.startsWith(phaseSlug) && n.name.includes('-plan-'))
+      .filter(n => n.name.startsWith(chapterSlug) && n.name.includes('-plan-'))
       .map(n => {
         const data = this.parseSummary<PlanData>(n.summary);
         return data ? { name: n.name, data } : null;
       })
       .filter((p): p is { name: string; data: PlanData } => p !== null)
-      .sort((a, b) => (a.data.wave || 0) - (b.data.wave || 0));
+      .sort((a, b) => (a.data.batch || 0) - (b.data.batch || 0));
   }
 
-  private findPhaseSummaries(phaseSlug: string): Array<{ name: string; data: SummaryData }> {
+  private findChapterSummaries(chapterSlug: string): Array<{ name: string; data: SummaryData }> {
     return this.nodes
-      .filter(n => n.name.startsWith(phaseSlug) && n.name.includes('-summary'))
+      .filter(n => n.name.startsWith(chapterSlug) && n.name.includes('-summary'))
       .map(n => {
         const data = this.parseSummary<SummaryData>(n.summary);
         return data ? { name: n.name, data } : null;
@@ -312,8 +312,8 @@ class ProgressRunner {
       .filter((s): s is { name: string; data: SummaryData } => s !== null);
   }
 
-  private findPhaseUat(phaseSlug: string): UATData | null {
-    const uatNode = this.nodes.find(n => n.name === `${phaseSlug}-uat`);
+  private findChapterUat(chapterSlug: string): UATData | null {
+    const uatNode = this.nodes.find(n => n.name === `${chapterSlug}-uat`);
     return uatNode ? this.parseSummary<UATData>(uatNode.summary) : null;
   }
 
@@ -362,20 +362,20 @@ class ProgressRunner {
   }
 
   private buildStructuredContext(state: StateData, roadmap: RoadmapData): StructuredContext {
-    const currentPhaseSlug = state.current_phase;
-    const currentPhase = currentPhaseSlug ? this.findPhaseData(currentPhaseSlug) : null;
-    
+    const currentChapterSlug = state.current_chapter;
+    const currentChapter = currentChapterSlug ? this.findChapterData(currentChapterSlug) : null;
+
     return {
       projectName: this.findProjectName(),
       state,
       roadmap,
       config: this.findConfig(),
       requirements: this.findRequirements(),
-      currentPhase,
-      phaseContext: currentPhaseSlug ? this.findPhaseContext(currentPhaseSlug) : null,
-      phasePlans: currentPhaseSlug ? this.findPhasePlans(currentPhaseSlug) : [],
-      phaseSummaries: currentPhaseSlug ? this.findPhaseSummaries(currentPhaseSlug) : [],
-      phaseUat: currentPhaseSlug ? this.findPhaseUat(currentPhaseSlug) : null,
+      currentChapter,
+      chapterContext: currentChapterSlug ? this.findChapterContext(currentChapterSlug) : null,
+      chapterPlans: currentChapterSlug ? this.findChapterPlans(currentChapterSlug) : [],
+      chapterSummaries: currentChapterSlug ? this.findChapterSummaries(currentChapterSlug) : [],
+      chapterUat: currentChapterSlug ? this.findChapterUat(currentChapterSlug) : null,
       recentSummaries: this.findRecentSummaries(3),
       pendingTodos: this.getPendingTodos(),
       activeDebugSessions: this.getActiveDebugSessions()
@@ -420,64 +420,64 @@ class ProgressRunner {
   }
 
   private determineNextAction(ctx: StructuredContext): NextAction {
-    const phaseSlug = ctx.state?.current_phase;
-    const phaseNum = phaseSlug ? parseInt(phaseSlug.replace('phase-', '')) : 0;
-    
-    if (ctx.phaseUat?.status === 'diagnosed' && ctx.phaseUat.gaps && ctx.phaseUat.gaps.length > 0) {
-      return { route: 'gaps', phaseNumber: phaseNum };
+    const chapterSlug = ctx.state?.current_chapter;
+    const chapterNum = chapterSlug ? parseInt(chapterSlug.replace('chapter-', '')) : 0;
+
+    if (ctx.chapterUat?.status === 'diagnosed' && ctx.chapterUat.gaps && ctx.chapterUat.gaps.length > 0) {
+      return { route: 'gaps', chapterNumber: chapterNum };
     }
-    
-    const totalPlans = ctx.phasePlans.length;
-    const completedSummaries = ctx.phaseSummaries.length;
-    
+
+    const totalPlans = ctx.chapterPlans.length;
+    const completedSummaries = ctx.chapterSummaries.length;
+
     if (totalPlans > 0 && completedSummaries < totalPlans) {
-      const executedPlanNames = new Set(ctx.phaseSummaries.map(s => {
+      const executedPlanNames = new Set(ctx.chapterSummaries.map(s => {
         const match = s.name.match(/(.+)-summary/);
         return match ? match[1] : s.name;
       }));
-      
-      const nextPlan = ctx.phasePlans.find(p => {
+
+      const nextPlan = ctx.chapterPlans.find(p => {
         const planBase = p.name;
-        return !executedPlanNames.has(planBase) && !ctx.phaseSummaries.some(s => s.name.includes(p.name));
+        return !executedPlanNames.has(planBase) && !ctx.chapterSummaries.some(s => s.name.includes(p.name));
       });
-      
+
       if (nextPlan) {
         return {
           route: 'execute',
-          phaseNumber: phaseNum,
+          chapterNumber: chapterNum,
           planName: nextPlan.name,
           objective: nextPlan.data.objective
         };
       }
     }
-    
+
     if (totalPlans > 0 && completedSummaries >= totalPlans) {
       const currentMilestone = ctx.roadmap?.current_milestone;
-      const milestonePhases = ctx.roadmap?.phases.filter(p => p.milestone === currentMilestone) || [];
-      const maxPhaseNum = milestonePhases.length > 0 
-        ? Math.max(...milestonePhases.map(p => p.number))
-        : (ctx.roadmap?.phases.length || 0);
-      
-      if (phaseNum < maxPhaseNum) {
-        const nextPhase = ctx.roadmap?.phases.find(p => p.number === phaseNum + 1);
+      const milestoneChapters = ctx.roadmap?.chapters.filter(c => c.milestone === currentMilestone) || [];
+      const maxChapterNum = milestoneChapters.length > 0
+        ? Math.max(...milestoneChapters.map(c => c.number))
+        : (ctx.roadmap?.chapters.length || 0);
+
+      if (chapterNum < maxChapterNum) {
+        const nextChapter = ctx.roadmap?.chapters.find(c => c.number === chapterNum + 1);
         return {
-          route: 'next-phase',
-          phaseNumber: phaseNum + 1,
-          objective: nextPhase?.goal
+          route: 'next-chapter',
+          chapterNumber: chapterNum + 1,
+          objective: nextChapter?.goal
         };
       }
-      
+
       return { route: 'complete-milestone' };
     }
-    
+
     if (totalPlans === 0) {
-      if (ctx.phaseContext) {
-        return { route: 'plan', phaseNumber: phaseNum };
+      if (ctx.chapterContext) {
+        return { route: 'plan', chapterNumber: chapterNum };
       }
-      return { route: 'discuss', phaseNumber: phaseNum };
+      return { route: 'discuss', chapterNumber: chapterNum };
     }
-    
-    return { route: 'plan', phaseNumber: phaseNum };
+
+    return { route: 'plan', chapterNumber: chapterNum };
   }
 
   private out(text: string): void {
@@ -485,19 +485,19 @@ class ProgressRunner {
   }
 
   private renderStructuredReport(ctx: StructuredContext, nextAction: NextAction): void {
-    const completedPhases = ctx.roadmap?.phases.filter(p => p.status === 'complete').length || 0;
-    const totalPhases = ctx.roadmap?.phases.length || 0;
+    const completedChapters = ctx.roadmap?.chapters.filter(c => c.status === 'complete').length || 0;
+    const totalChapters = ctx.roadmap?.chapters.length || 0;
     const projectName = ctx.projectName;
 
-    this.out(`Progress on ${projectName}, ${completedPhases}/${totalPhases} phases complete.`);
+    this.out(`Progress on ${projectName}, ${completedChapters}/${totalChapters} chapters complete.`);
     this.out('');
 
     this.out('Done:');
     if (ctx.recentSummaries.length > 0) {
       for (const s of ctx.recentSummaries) {
         const acc = s.data.accomplishments?.[0] || 'No summary';
-        const phaseNum = s.data.phase?.replace('phase-', '') || '?';
-        this.out(`* Phase ${phaseNum}: ${acc}`);
+        const chapterNum = s.data.chapter?.replace('chapter-', '') || '?';
+        this.out(`* Chapter ${chapterNum}: ${acc}`);
       }
     } else {
       this.out('* (none)');
@@ -505,25 +505,25 @@ class ProgressRunner {
     this.out('');
 
     this.out('Next:');
-    if (ctx.currentPhase) {
-      this.out(`* Phase ${ctx.currentPhase.number}: ${ctx.currentPhase.goal}`);
+    if (ctx.currentChapter) {
+      this.out(`* Chapter ${ctx.currentChapter.number}: ${ctx.currentChapter.goal}`);
       this.out(`  - Status: ${ctx.state?.status || 'unknown'}`);
-      this.out(`  - Context: ${ctx.phaseContext ? 'OK' : '-'}`);
+      this.out(`  - Context: ${ctx.chapterContext ? 'OK' : '-'}`);
     }
     this.out('');
 
     this.out('Future:');
-    if (ctx.roadmap?.phases) {
-      const currentNum = ctx.currentPhase?.number || 0;
-      const futurePhases = ctx.roadmap.phases
-        .filter(p => p.number > currentNum)
+    if (ctx.roadmap?.chapters) {
+      const currentNum = ctx.currentChapter?.number || 0;
+      const futureChapters = ctx.roadmap.chapters
+        .filter(c => c.number > currentNum)
         .sort((a, b) => a.number - b.number);
 
-      for (const phase of futurePhases) {
-        this.out(`* Phase ${phase.number}: ${phase.goal}`);
+      for (const chapter of futureChapters) {
+        this.out(`* Chapter ${chapter.number}: ${chapter.goal}`);
       }
-      if (futurePhases.length === 0) {
-        this.out('* (no more phases)');
+      if (futureChapters.length === 0) {
+        this.out('* (no more chapters)');
       }
     }
     this.out('');
@@ -555,38 +555,38 @@ class ProgressRunner {
   }
 
   private renderActions(action: NextAction, ctx: StructuredContext): void {
-    const phaseNum = action.phaseNumber || ctx.currentPhase?.number || 1;
+    const chapterNum = action.chapterNumber || ctx.currentChapter?.number || 1;
 
     switch (action.route) {
       case 'execute':
         this.out(`Execute plan ${action.planName} by running:`);
-        this.out(`* /fuska-build-phase ${phaseNum}`);
+        this.out(`* /fuska-build-chapter ${chapterNum}`);
         break;
 
       case 'plan':
-        this.out(`Plan phase ${phaseNum} by running:`);
-        this.out(`* /fuska-plan-phase ${phaseNum}`);
+        this.out(`Plan chapter ${chapterNum} by running:`);
+        this.out(`* /fuska-plan-chapter ${chapterNum}`);
         break;
 
       case 'discuss':
-        this.out(`Gather context for phase ${phaseNum} and clarify approach by running:`);
-        this.out(`* /fuska-design-phase ${phaseNum}`);
+        this.out(`Gather context for chapter ${chapterNum} and clarify approach by running:`);
+        this.out(`* /fuska-design-chapter ${chapterNum}`);
         this.out('');
-        this.out(`or skip design of phase ${phaseNum} and plan directly by running:`);
-        this.out(`* /fuska-plan-phase ${phaseNum}`);
+        this.out(`or skip design of chapter ${chapterNum} and plan directly by running:`);
+        this.out(`* /fuska-plan-chapter ${chapterNum}`);
         break;
 
       case 'gaps':
-        this.out(`Fix UAT gaps in phase ${phaseNum} by running:`);
-        this.out(`* /fuska-plan-phase ${phaseNum} --gaps`);
+        this.out(`Fix UAT gaps in chapter ${chapterNum} by running:`);
+        this.out(`* /fuska-plan-chapter ${chapterNum} --gaps`);
         break;
 
-      case 'next-phase':
-        this.out(`Start phase ${action.phaseNumber} by running:`);
-        this.out(`* /fuska-design-phase ${action.phaseNumber}`);
+      case 'next-chapter':
+        this.out(`Start chapter ${action.chapterNumber} by running:`);
+        this.out(`* /fuska-design-chapter ${action.chapterNumber}`);
         this.out('');
         this.out(`or skip design and plan directly by running:`);
-        this.out(`* /fuska-plan-phase ${action.phaseNumber}`);
+        this.out(`* /fuska-plan-chapter ${action.chapterNumber}`);
         break;
 
       case 'complete-milestone':
@@ -598,7 +598,7 @@ class ProgressRunner {
 
   private renderAdHocReport(ctx: AdHocContext): void {
     const desc = ctx.projectDescription ? ` (${ctx.projectDescription})` : '';
-    this.out(`Progress on ${ctx.projectName}${desc}, ad-hoc mode (no phases).`);
+    this.out(`Progress on ${ctx.projectName}${desc}, ad-hoc mode (no chapters).`);
     this.out('');
 
     if (ctx.taskConcepts.length > 0) {
@@ -625,22 +625,22 @@ class ProgressRunner {
   }
 
   private buildStructuredJson(ctx: StructuredContext, nextAction: NextAction): JsonOutput {
-    const completedPhases = ctx.roadmap?.phases.filter(p => p.status === 'complete').length || 0;
-    const totalPhases = ctx.roadmap?.phases.length || 0;
-    
+    const completedChapters = ctx.roadmap?.chapters.filter(c => c.status === 'complete').length || 0;
+    const totalChapters = ctx.roadmap?.chapters.length || 0;
+
     return {
       mode: 'structured',
       projectName: ctx.projectName,
       progress: {
-        completed: completedPhases,
-        total: totalPhases,
-        percentage: totalPhases > 0 ? Math.round((completedPhases / totalPhases) * 100) : 0
+        completed: completedChapters,
+        total: totalChapters,
+        percentage: totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0
       },
-      currentPhase: ctx.currentPhase,
+      currentChapter: ctx.currentChapter,
       status: ctx.state?.status || 'unknown',
       nextAction,
       recentWork: ctx.recentSummaries.map(s => ({
-        phase: s.data.phase,
+        chapter: s.data.chapter,
         plan: s.data.plan,
         accomplishment: s.data.accomplishments?.[0] || ''
       })),
@@ -655,7 +655,7 @@ class ProgressRunner {
       projectName: ctx.projectName,
       status: 'ad-hoc',
       recentWork: ctx.taskConcepts.map(t => ({
-        phase: '',
+        chapter: '',
         plan: t.name,
         accomplishment: t.data.description || t.data.summary || ''
       }))

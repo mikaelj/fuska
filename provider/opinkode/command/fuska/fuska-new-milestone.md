@@ -24,16 +24,16 @@ This is the brownfield equivalent of new-project. The project exists, project co
 - Project concept — updated with new milestone goals
 - Research concepts — domain research (optional, focuses on NEW features)
 - Requirements concepts — scoped requirements for this milestone
-- Roadmap concept — phase structure (continues numbering)
+- Roadmap concept — chapter structure (continues numbering)
 - State concept — reset for new milestone
 
-**After this command:** Run `/fuska-plan-phase [N]` to start execution.
+**After this command:** Run `/fuska-plan-chapter [N]` to start execution.
 </objective>
 
 <execution_context>
 @../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
-@../../fuska/scripts/phase-templates.ts
+@../../fuska/scripts/chapter-templates.ts
 </execution_context>
 
 <megamemory_guide>
@@ -44,7 +44,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -270,7 +270,7 @@ megamemory_update_concept(
 ```
 const updatedStateData = {
   ...stateData,
-  current_phase: null,
+  current_chapter: null,
   current_plan: null,
   status: 'defining_requirements',
   milestone_version: nextVersion
@@ -320,7 +320,7 @@ Display spawning indicator:
   → Pitfalls research
 ```
 
-Spawn 4 parallel fuska-phase-researcher agents with milestone-aware context:
+Spawn 4 parallel fuska-chapter-researcher agents with milestone-aware context:
 
 ```
 Task(prompt="
@@ -345,7 +345,7 @@ Include specific libraries with versions for NEW capabilities
 Include integration points with existing stack
 Include what NOT to add and why
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Stack research")
+", subagent_type="fuska-chapter-researcher", model="${models.researcher}", variant="plan", description="Stack research")
 
 Task(prompt="
 <objective>
@@ -366,7 +366,7 @@ Create/update research concept: ${nextVersion}-features-research
 Categorize clearly: table stakes, differentiators, anti-features
 Note complexity and dependencies
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Features research")
+", subagent_type="fuska-chapter-researcher", model="${models.researcher}", variant="plan", description="Features research")
 
 Task(prompt="
 <objective>
@@ -387,7 +387,7 @@ Include integration points with existing components
 Include new components needed
 Include data flow changes and suggested build order
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Architecture research")
+", subagent_type="fuska-chapter-researcher", model="${models.researcher}", variant="plan", description="Architecture research")
 
 Task(prompt="
 <objective>
@@ -402,9 +402,9 @@ Focus on common mistakes when ADDING these features to an existing system.
 
 <output>
 Create/update research concept: ${nextVersion}-pitfalls-research
-For each pitfall: warning signs, prevention strategy, which phase should address
+For each pitfall: warning signs, prevention strategy, which chapter should address
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="plan", description="Pitfalls research")
+", subagent_type="fuska-chapter-researcher", model="${models.researcher}", variant="plan", description="Pitfalls research")
 ```
 
 After all 4 agents complete, spawn synthesizer to create summary concept:
@@ -427,7 +427,7 @@ Query these concepts:
 Create/update research concept: ${nextVersion}-research-summary
 Include key findings, stack additions, feature table stakes, watch-outs
 </output>
-", subagent_type="fuska-phase-researcher", model="${models.researcher}", variant="amend", description="Synthesize research")
+", subagent_type="fuska-chapter-researcher", model="${models.researcher}", variant="amend", description="Synthesize research")
 ```
 
 Display research complete banner and key findings:
@@ -585,17 +585,17 @@ Display stage banner:
 [IN_PROGRESS] Spawning roadmapper...
 ```
 
-**Determine starting phase number:**
+**Determine starting chapter number:**
 
 Re-use roadmapData from step 2 or query:
 ```
 megamemory_understand(query="roadmap", top_k=5)
 ```
 
-Find the last phase number from previous milestone:
+Find the last chapter number from previous milestone:
 ```
-const lastPhaseNumber = phases.length > 0 ? Math.max(...phases.map(p => p.number)) : 0
-const startPhaseNumber = lastPhaseNumber + 1
+const lastChapterNumber = chapters.length > 0 ? Math.max(...chapters.map(p => p.number)) : 0
+const startChapterNumber = lastChapterNumber + 1
 ```
 
 Spawn fuska-planner agent with context:
@@ -616,19 +616,19 @@ Query requirements concepts with milestone=${nextVersion}
 **Research (if exists):**
 Query ${nextVersion}-research-summary
 
-**Previous milestone (for phase numbering):**
-Last phase number: ${lastPhaseNumber}
-Start new phases from: ${startPhaseNumber}
+**Previous milestone (for chapter numbering):**
+Last chapter number: ${lastChapterNumber}
+Start new chapters from: ${startChapterNumber}
 </context>
 
 <instructions>
-1. Start phase numbering from ${startPhaseNumber}
-2. Derive phases from THIS MILESTONE's requirements (don't include validated/existing)
-3. Map every requirement to exactly one phase
-4. Derive 2-5 success criteria per phase (observable user behaviors)
+1. Start chapter numbering from ${startChapterNumber}
+2. Derive chapters from THIS MILESTONE's requirements (don't include validated/existing)
+3. Map every requirement to exactly one chapter
+4. Derive 2-5 success criteria per chapter (observable user behaviors)
 5. Validate 100% coverage of new requirements
-6. Create phase concepts in MegaMemory
-7. Update roadmap concept with new phases
+6. Create chapter concepts in MegaMemory
+7. Update roadmap concept with new chapters
 8. Return ROADMAP CREATED with summary
 </instructions>
 ", subagent_type="fuska-planner", model="${models.planner}", variant="plan", description="Create roadmap")
@@ -650,24 +650,24 @@ Query the updated roadmap concept and present it nicely inline:
 
 ## Proposed Roadmap
 
-**[N] phases** | **[X] requirements mapped** | All milestone requirements covered [OK]
+**[N] chapters** | **[X] requirements mapped** | All milestone requirements covered [OK]
 
-| # | Phase | Goal | Requirements | Success Criteria |
+| # | Chapter | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
 | [N] | [Name] | [Goal] | [REQ-IDs] | [count] |
 | [N+1] | [Name] | [Goal] | [REQ-IDs] | [count] |
 ...
 
-### Phase Details
+### Chapter Details
 
-**Phase [N]: [Name]**
+**Chapter [N]: [Name]**
 Goal: [goal]
 Requirements: [REQ-IDs]
 Success criteria:
 1. [criterion]
 2. [criterion]
 
-[... continue for all phases ...]
+[... continue for all chapters ...]
 
 ---
 ```
@@ -679,12 +679,12 @@ Use question:
 - question: "Does this roadmap structure work for you?"
 - options:
   - "Approve" — Continue
-  - "Adjust phases" — Tell me what to change
+  - "Adjust chapters" — Tell me what to change
   - "Review full concept" — Show raw roadmap concept
 
 If "Approve": Continue to step 10.
 
-If "Adjust phases":
+If "Adjust chapters":
 - Get user's adjustment notes
 - Re-spawn planner with revision context:
   ```
@@ -723,22 +723,22 @@ Present completion with next steps:
 | Requirements   | project/requirements |
 | Roadmap        | roadmap            |
 
-**[N] phases** | **[X] requirements** | Ready to build [OK]
+**[N] chapters** | **[X] requirements** | Ready to build [OK]
 
 ──────────────────────────────────────────────────────────────
 
 ## > Next Up
 
-**Phase [N]: [Phase Name]** — [Goal from roadmap]
+**Chapter [N]: [Chapter Name]** — [Goal from roadmap]
 
-/fuska-design-phase [N]
+/fuska-design-chapter [N]
 
 */new first → fresh context window*
 
 ---
 
 **Also available:**
-- /fuska-plan-phase [N] — skip design, plan directly
+- /fuska-plan-chapter [N] — skip design, plan directly
 
 ──────────────────────────────────────────────────────────────
 ```
@@ -775,11 +775,11 @@ Present completion summary from step 10.
 - [ ] Requirements gathered (from research or conversation)
 - [ ] User scoped each category
 - [ ] Requirement concepts created in MegaMemory
-- [ ] fuska-planner spawned with phase numbering context
-- [ ] Phase concepts created in MegaMemory
-- [ ] Roadmap concept updated with phases continuing from previous milestone
+- [ ] fuska-planner spawned with chapter numbering context
+- [ ] Chapter concepts created in MegaMemory
+- [ ] Roadmap concept updated with chapters continuing from previous milestone
 - [ ] User feedback incorporated (if any)
-- [ ] User knows next step is `/fuska-design-phase [N]`
+- [ ] User knows next step is `/fuska-design-chapter [N]`
 
 **Atomic persistence:** All concepts are created/updated immediately. If context is lost, artifacts persist in MegaMemory.
 

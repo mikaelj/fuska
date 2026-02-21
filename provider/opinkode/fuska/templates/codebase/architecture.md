@@ -238,7 +238,7 @@ Key Abstractions:
 
   Command:
     - Purpose: CLI command definition
-    - Examples: src/commands/new-project.ts, src/commands/plan-phase.ts
+    - Examples: src/commands/new-project.ts, src/commands/plan-chapter.ts
     - Pattern: Commander.js command registration
 
   Template:
@@ -590,7 +590,7 @@ Cross-Cutting Concerns:
 
 **Command:**
 - Purpose: CLI command definition
-- Examples: `src/commands/new-project.ts`, `src/commands/plan-phase.ts`
+- Examples: `src/commands/new-project.ts`, `src/commands/plan-chapter.ts`
 - Pattern: Commander.js command registration
 
 **Template:**
@@ -676,7 +676,7 @@ This template is for @-reference only. When agents need to understand or update 
 - Note recurring patterns (services, controllers, repositories)
 - Keep descriptions conceptual, not mechanical
 
-**Useful for phase planning when:**
+**Useful for chapter planning when:**
 - Adding new features (where does it fit in the layers?)
 - Refactoring (understanding current patterns)
 - Identifying where to add code (which layer handles X?)

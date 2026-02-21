@@ -321,7 +321,7 @@ class WorktreeAddRunner {
 
     const stateId = randomUUID();
     const stateSummary = JSON.stringify({
-      phase: 1,
+      chapter: 1,
       plan: 0,
       status: 'Ready to plan',
       last_activity: `Worktree initialized: ${name}`,

@@ -116,13 +116,13 @@ const commandsDirConcept = await megamemory_create_concept({
 Purpose: Slash command definitions for OpenCode
 Contains: *.md files (one per command)
 Location: commands/fuska/
-Key files: new-project.md, plan-phase.md, execute-plan.md
+Key files: new-project.md, plan-chapter.md, execute-plan.md
 Structure: Flat (no subdirectories)
 `,
   why: "Centralized command definitions for easy discovery",
   file_refs: [
     "commands/fuska/new-project.md",
-    "commands/fuska/plan-phase.md"
+    "commands/fuska/plan-chapter.md"
   ],
   edges: [
     {
@@ -213,7 +213,7 @@ bin/:
 commands/fuska/:
   - Purpose: Slash command definitions for OpenCode
   - Contains: *.md files (one per command)
-  - Key files: new-project.md, plan-phase.md, execute-plan.md
+  - Key files: new-project.md, plan-chapter.md, execute-plan.md
   - Subdirectories: None (flat structure)
 
 get-shit-done/references/:
@@ -231,7 +231,7 @@ get-shit-done/templates/:
 get-shit-done/workflows/:
   - Purpose: Reusable multi-step procedures
   - Contains: Workflow definitions called by commands
-  - Key files: execute-plan.md, research-phase.md
+  - Key files: execute-plan.md, research-chapter.md
   - Subdirectories: None
 
 Key File Locations:
@@ -614,7 +614,7 @@ get-shit-done/
 **commands/fuska/**
 - Purpose: Slash command definitions for OpenCode
 - Contains: *.md files (one per command)
-- Key files: new-project.md, plan-phase.md, execute-plan.md
+- Key files: new-project.md, plan-chapter.md, execute-plan.md
 - Subdirectories: None (flat structure)
 
 **get-shit-done/references/**
@@ -632,7 +632,7 @@ get-shit-done/
 **get-shit-done/workflows/**
 - Purpose: Reusable multi-step procedures
 - Contains: Workflow definitions called by commands
-- Key files: execute-plan.md, research-phase.md
+- Key files: execute-plan.md, research-chapter.md
 - Subdirectories: None
 
 ## Key File Locations
@@ -750,7 +750,7 @@ root/
 └── file.ts        # Purpose
 ```
 
-**Useful for phase planning when:**
+**Useful for chapter planning when:**
 - Adding new features (where should files go?)
 - Understanding project organization
 - Finding where specific logic lives

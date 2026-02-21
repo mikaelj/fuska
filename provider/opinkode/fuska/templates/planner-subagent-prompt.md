@@ -9,7 +9,7 @@ Template for spawning fuska-planner agent. Planning context and plans stored in 
 ```markdown
 <planning_context>
 
-**Phase:** {phase_number}
+**Chapter:** {chapter_number}
 **Mode:** {standard | gap_closure}
 
 **Project State:**
@@ -21,22 +21,22 @@ megamemory:understand({query: "roadmap"})
 **Requirements (if exists):**
 megamemory:understand({query: "requirements"})
 
-**Phase Context (if exists):**
-megamemory:understand({query: "phase {phase} context"})
+**Chapter Context (if exists):**
+megamemory:understand({query: "chapter {chapter} context"})
 
 **Research (if exists):**
-megamemory:understand({query: "phase {phase} research"})
+megamemory:understand({query: "chapter {chapter} research"})
 
 **Gap Closure (if --gaps mode):**
-megamemory:understand({query: "phase {phase} verification"})
-megamemory:understand({query: "phase {phase} uat"})
+megamemory:understand({query: "chapter {chapter} verification"})
+megamemory:understand({query: "chapter {chapter} uat"})
 
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /fuska-execute-phase
+Output consumed by /fuska-execute-chapter
 Plans must be executable prompts with:
-- Frontmatter (wave, depends_on, files_modified, autonomous)
+- Frontmatter (batch, depends_on, files_modified, autonomous)
 - Tasks in XML format
 - Verification criteria
 - must_haves for goal-backward verification
@@ -44,12 +44,12 @@ Plans must be executable prompts with:
 
 <quality_gate>
 Before returning PLANNING COMPLETE:
-- [ ] PLAN.md files created in phase directory
+- [ ] PLAN.md files created in chapter directory
 - [ ] Each plan has valid frontmatter
 - [ ] Tasks are specific and actionable
 - [ ] Dependencies correctly identified
-- [ ] Waves assigned for parallel execution
-- [ ] must_haves derived from phase goal
+- [ ] Batchs assigned for parallel execution
+- [ ] must_haves derived from chapter goal
 </quality_gate>
 ```
 
@@ -57,9 +57,9 @@ Before returning PLANNING COMPLETE:
 
 | Placeholder | Source | Example |
 |-------------|--------|---------|
-| `{phase_number}` | From roadmap/arguments | `5` or `2.1` |
-| `{phase_dir}` | Phase directory name | `05-user-profiles` |
-| `{phase}` | Phase prefix | `05` |
+| `{chapter_number}` | From roadmap/arguments | `5` or `2.1` |
+| `{chapter_dir}` | Chapter directory name | `05-user-profiles` |
+| `{chapter}` | Chapter prefix | `05` |
 | `{standard \| gap_closure}` | Mode flag | `standard` |
 
 ## Continuation Template
@@ -68,12 +68,12 @@ For checkpoints, spawn fresh agent with:
 
 ```markdown
 <objective>
-Continue planning for Phase {phase_number}: {phase_name}
+Continue planning for Chapter {chapter_number}: {chapter_name}
 </objective>
 
 <prior_state>
-Existing phase: megamemory:understand({query: "phase {phase_number}"})
-Existing plans: megamemory:understand({query: "phase {phase_number} plans"})
+Existing chapter: megamemory:understand({query: "chapter {chapter_number}"})
+Existing plans: megamemory:understand({query: "chapter {chapter_number} plans"})
 </prior_state>
 
 <checkpoint_response>
@@ -95,21 +95,21 @@ Continue: {standard | gap_closure}
 concept_kind: "plan"
 
 summary: |
-  Plan {plan_id}: {plan_name} for Phase {phase_number}: {phase_name}
-  Wave: {wave_number} (of {total_waves})
+  Plan {plan_id}: {plan_name} for Chapter {chapter_number}: {chapter_name}
+  Batch: {batch_number} (of {total_batches})
   Tasks: {task_count} tasks
   {One-sentence overview of what this plan delivers}
 
 why: |
-  Stores executable plans for phase implementation.
+  Stores executable plans for chapter implementation.
   Plans contain tasks, dependencies, verification criteria, and must-haves.
-  Consumed by /fuska-execute-phase for execution.
+  Consumed by /fuska-execute-chapter for execution.
 
 edges: [
   {
-    to: "phase-{phase_number}",
+    to: "chapter-{chapter_number}",
     relation: "connects_to",
-    description: "Plan belongs to this phase"
+    description: "Plan belongs to this chapter"
   },
   {
     to: "plan-{depends_on_plan_id}",
@@ -126,13 +126,13 @@ edges: [
 
 ```markdown
 <megamemory_operations>
-**Create Plan (during phase planning):**
+**Create Plan (during chapter planning):**
 
-1. Create concept with plan_id, plan_name, wave, tasks
+1. Create concept with plan_id, plan_name, batch, tasks
 2. Set mode (standard or gap_closure)
 3. List all tasks with dependencies
 4. Include verification criteria and must_haves
-5. Link to parent phase and dependent plans
+5. Link to parent chapter and dependent plans
 6. Return concept ID for execution
 
 **Update Plan (rare - retrospective corrections):**
@@ -145,7 +145,7 @@ edges: [
 
 1. Query plan by plan_id
 2. Read tasks, dependencies, verification criteria
-3. Execute tasks in wave order
+3. Execute tasks in batch order
 </megamemory_operations>
 ```
 
@@ -157,10 +157,10 @@ edges: [
 <megamemory_examples>
 ```typescript
 // Create a plan
-const createPlan = async (planId: string, phaseNumber: string, phaseName: string, data: {
+const createPlan = async (planId: string, chapterNumber: string, chapterName: string, data: {
   planName: string;
-  wave: number;
-  totalWaves: number;
+  batch: number;
+  totalBatchs: number;
   tasks: Array<{
     id: string;
     description: string;
@@ -182,8 +182,8 @@ const createPlan = async (planId: string, phaseNumber: string, phaseName: string
   }).join('\n\n  ');
 
   const summary =
-    `Plan ${planId}: ${data.planName} for Phase ${phaseNumber}: ${phaseName}\n` +
-    `Wave: ${data.wave} of ${data.totalWaves}\n` +
+    `Plan ${planId}: ${data.planName} for Chapter ${chapterNumber}: ${chapterName}\n` +
+    `Batch: ${data.batch} of ${data.totalBatchs}\n` +
     `Tasks: ${data.tasks.length} tasks\n` +
     `Files modified: ${data.filesModified.join(', ')}\n` +
     `Autonomous: ${data.autonomous || false}\n\n` +
@@ -196,9 +196,9 @@ const createPlan = async (planId: string, phaseNumber: string, phaseName: string
 
   const edges = [
     {
-      to: `phase-${phaseNumber}`,
+      to: `chapter-${chapterNumber}`,
       relation: "connects_to" as const,
-      description: "Plan belongs to this phase"
+      description: "Plan belongs to this chapter"
     },
     ...(data.dependsOn || []).map(depId => ({
       to: `plan-${depId}`,
@@ -211,11 +211,11 @@ const createPlan = async (planId: string, phaseNumber: string, phaseName: string
     name: `Plan ${planId}: ${data.planName}`,
     kind: "plan",
     summary,
-    why: "Stores executable plans for phase implementation. " +
+    why: "Stores executable plans for chapter implementation. " +
           "Plans contain tasks, dependencies, verification criteria, and must-haves. " +
-          "Consumed by /fuska-execute-phase for execution.",
+          "Consumed by /fuska-execute-chapter for execution.",
     edges,
-    created_by_task: `Planning for Phase ${phaseNumber}`
+    created_by_task: `Planning for Chapter ${chapterNumber}`
   });
 
   return concept.id;
@@ -235,10 +235,10 @@ const queryPlan = async (planId: string) => {
     const planData = {
       id: planId,
       planName: summary.match(/Plan [^:]+: ([^\n]+)/)?.[1] || '',
-      phaseNumber: summary.match(/Phase ([\d.]+):/)?.[1] || '',
-      phaseName: summary.match(/Phase [\d.]+: ([^\n]+)/)?.[1] || '',
-      wave: parseInt(summary.match(/Wave: (\d+) of/)?.[1] || '0'),
-      totalWaves: parseInt(summary.match(/Wave: \d+ of (\d+)/)?.[1] || '0'),
+      chapterNumber: summary.match(/Chapter ([\d.]+):/)?.[1] || '',
+      chapterName: summary.match(/Chapter [\d.]+: ([^\n]+)/)?.[1] || '',
+      batch: parseInt(summary.match(/Batch: (\d+) of/)?.[1] || '0'),
+      totalBatchs: parseInt(summary.match(/Batch: \d+ of (\d+)/)?.[1] || '0'),
       tasksCount: parseInt(summary.match(/Tasks: (\d+) tasks/)?.[1] || '0'),
       filesModified: summary.match(/Files modified: ([^\n]+)/)?.[1]?.split(', ') || [],
       autonomous: summary.includes('Autonomous: true'),
@@ -279,10 +279,10 @@ const queryPlan = async (planId: string) => {
   return null;
 };
 
-// Query all plans for a phase
-const queryPhasePlans = async (phaseNumber: string) => {
+// Query all plans for a chapter
+const queryChapterPlans = async (chapterNumber: string) => {
   const results = await megamemory:understand({
-    query: `All plans for Phase ${phaseNumber} with wave assignments, dependencies`
+    query: `All plans for Chapter ${chapterNumber} with batch assignments, dependencies`
   });
 
   return results.concepts.map(plan => {
@@ -292,19 +292,19 @@ const queryPhasePlans = async (phaseNumber: string) => {
       id: plan.id,
       planId: summary.match(/^Plan ([^:]+):/)?.[1] || '',
       planName: summary.match(/Plan [^:]+: ([^\n]+)/)?.[1] || '',
-      wave: parseInt(summary.match(/Wave: (\d+) of/)?.[1] || '0'),
+      batch: parseInt(summary.match(/Batch: (\d+) of/)?.[1] || '0'),
       tasksCount: parseInt(summary.match(/Tasks: (\d+) tasks/)?.[1] || '0'),
       dependsOn: plan.edges
         .filter(e => e.relation === 'depends_on')
         .map(e => e.to.replace('plan-', ''))
     };
-  }).sort((a, b) => a.wave - b.wave);
+  }).sort((a, b) => a.batch - b.batch);
 };
 
 // Resume planning (find existing plans)
-const resumePlanning = async (phaseNumber: string) => {
+const resumePlanning = async (chapterNumber: string) => {
   const results = await megamemory:understand({
-    query: `Phase ${phaseNumber} existing plans with tasks, wave assignments`
+    query: `Chapter ${chapterNumber} existing plans with tasks, batch assignments`
   });
 
   return results.concepts.map(plan => {
@@ -314,7 +314,7 @@ const resumePlanning = async (phaseNumber: string) => {
       id: plan.id,
       planId: summary.match(/^Plan ([^:]+):/)?.[1] || '',
       planName: summary.match(/Plan [^:]+: ([^\n]+)/)?.[1] || '',
-      wave: parseInt(summary.match(/Wave: (\d+) of/)?.[1] || '0'),
+      batch: parseInt(summary.match(/Batch: (\d+) of/)?.[1] || '0'),
       tasksCount: parseInt(summary.match(/Tasks: (\d+) tasks/)?.[1] || '0'),
       tasks: summary.includes('Tasks:')
         ? summary.match(/Tasks:\n([\s\S]*?)(?=\n\nVerification)/)?.[1]
@@ -328,7 +328,7 @@ const resumePlanning = async (phaseNumber: string) => {
             }) || []
         : []
     };
-  }).sort((a, b) => a.wave - b.wave);
+  }).sort((a, b) => a.batch - b.batch);
 };
 ```
 </megamemory_examples>
@@ -339,26 +339,26 @@ const resumePlanning = async (phaseNumber: string) => {
 ## Usage Pattern for Agents
 
 ```markdown
-**When /fuska-plan-phase is called:**
+**When /fuska-plan-chapter is called:**
 
-1. Check for existing plans via `megamemory:understand({query: "phase {phase_number} plans"})`
+1. Check for existing plans via `megamemory:understand({query: "chapter {chapter_number} plans"})`
 2. If exists → resume planning with existing state
 3. If not exists → create new plans with tasks and dependencies
 
-**Subagent receives prompt with phase number:**
+**Subagent receives prompt with chapter number:**
 
-1. Read existing plans via `megamemory:understand({query: "phase {phase_number} plans"})`
-2. Read phase context, research, discoveries (if any)
-3. Create/update plans with wave assignments
+1. Read existing plans via `megamemory:understand({query: "chapter {chapter_number} plans"})`
+2. Read chapter context, research, discoveries (if any)
+3. Create/update plans with batch assignments
 4. Link plans to dependencies
 
 **During planning:**
 
 1. Create each plan as a separate concept
-2. Assign wave numbers for parallel execution
+2. Assign batch numbers for parallel execution
 3. Define dependencies between plans
 4. Set verification criteria and must-haves
-5. Link to parent phase concept
+5. Link to parent chapter concept
 
 **Quality gate before returning PLANNING COMPLETE:**
 
@@ -366,12 +366,12 @@ const resumePlanning = async (phaseNumber: string) => {
 - [ ] Each plan has valid frontmatter in summary
 - [ ] Tasks are specific and actionable
 - [ ] Dependencies correctly identified via edges
-- [ ] Waves assigned for parallel execution
-- [ ] must_haves derived from phase goal
+- [ ] Batchs assigned for parallel execution
+- [ ] must_haves derived from chapter goal
 ```
 
 ---
 
 ## Note
 
-Planning methodology, task breakdown, dependency analysis, wave assignment, TDD detection, and goal-backward derivation are baked into the fuska-planner agent. This template only passes context.
+Planning methodology, task breakdown, dependency analysis, batch assignment, TDD detection, and goal-backward derivation are baked into the fuska-planner agent. This template only passes context.

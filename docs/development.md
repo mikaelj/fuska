@@ -142,8 +142,8 @@ done
 OpenCode commands have this frontmatter:
 ```yaml
 ---
-name: fuska-plan-phase
-description: Create execution plan for phase
+name: fuska-plan-chapter
+description: Create execution plan for chapter
 tools:
   - read
   - bash
@@ -154,8 +154,8 @@ tools:
 Claude skills need:
 ```yaml
 ---
-name: fuska-plan-phase
-description: Create execution plan for phase
+name: fuska-plan-chapter
+description: Create execution plan for chapter
 allowed-tools: read, bash, megamemory:understand
 ---
 ```
@@ -234,17 +234,17 @@ MegaMemory's semantic search with embeddings turns N file reads into a single da
 
 ```typescript
 // One call returns everything
-const result = await megamemory.understand({ query: 'phase-01 plans', top_k: 20 });
+const result = await megamemory.understand({ query: 'chapter-01 plans', top_k: 20 });
 // Each match includes: .children, .edges, .incoming_edges, .parent
 ```
 
 `.planning/` requires:
 ```typescript
 // Must read each file separately
-await read('.planning/phase-01/phase.md');
-await read('.planning/phase-01/context.md');
-await read('.planning/phase-01/plans/01.md');
-await read('.planning/phase-01/plans/02.md');
+await read('.planning/chapter-01/chapter.md');
+await read('.planning/chapter-01/context.md');
+await read('.planning/chapter-01/plans/01.md');
+await read('.planning/chapter-01/plans/02.md');
 // ... more files as project grows
 ```
 
@@ -257,7 +257,7 @@ Each tool call carries ~105-210ms overhead (network + context switch). For 100 i
 | Get 50 requirements | 51 | 1 | ~10.2s |
 | Filter 50 requirements | 51 | 1 | ~10.2s |
 | Search 100 concepts | 101 | 1 | ~20.8s |
-| Aggregate stats (10 phases) | 60+ | 1 | ~12.3s |
+| Aggregate stats (10 chapters) | 60+ | 1 | ~12.3s |
 
 ### Semantic Search
 
@@ -292,7 +292,7 @@ grep -r "authentication" .planning/
 
 Result: **700x faster**
 
-**Joins / Relationship Traversals** ("Get all plans for phase-01 with dependencies" — 5 plans, 2 deps each):
+**Joins / Relationship Traversals** ("Get all plans for chapter-01 with dependencies" — 5 plans, 2 deps each):
 
 | Approach | Operations | Time |
 |----------|-----------|------|
@@ -301,7 +301,7 @@ Result: **700x faster**
 
 Result: **56-112x faster**
 
-**Aggregate Queries** ("Get progress statistics" — 10 phases, 50 plans):
+**Aggregate Queries** ("Get progress statistics" — 10 chapters, 50 plans):
 
 | Approach | Operations | Time |
 |----------|-----------|------|

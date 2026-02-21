@@ -1,21 +1,163 @@
 import { Command } from 'commander';
-import { runOpenCodeJson } from './utils/json-output';
+import chalk from 'chalk';
+
+const commandHelp: Record<string, string> = {
+  do: `
+${chalk.bold('/fuska-do [mode] [description]')}
+
+Execute unplanned tasks with mode-aware agent chain.
+
+${chalk.bold('Modes:')}
+  planned    Planner → Builder (auto-build)
+  checked    + Plan Checker (ask first)
+  researched + Researcher (ask first)
+  verified   Full pipeline + Reviewer (auto-build)
+
+${chalk.bold('Flags:')}
+  --review       Force plan review before executing
+  --no-review    Skip plan review (auto-execute)
+  --auto-commit  Auto-commit without prompt
+
+${chalk.bold('Examples:')}
+  /fuska-do planned fix typo in README
+  /fuska-do checked "add input validation"
+  /fuska-do verified "implement auth" --auto-commit
+`,
+
+  refresh: `
+${chalk.bold('/fuska-refresh [--flags]')}
+
+Refresh import graph with file and symbol-level indexing.
+
+${chalk.bold('Flags:')}
+  --full       Force full re-scan (default: incremental)
+  --dead-code  Show dead code report only
+  --json       Output as JSON for scripts
+  --prune      Remove dead code concepts that are no longer dead
+
+${chalk.bold('Examples:')}
+  /fuska-refresh
+  /fuska-refresh --full
+  /fuska-refresh --dead-code
+`,
+
+  doc: `
+${chalk.bold('/fuska-doc [mode] <topic> [--flags]')}
+
+Create documentation as deliverables.
+
+${chalk.bold('Modes:')}
+  planned   Plan → Write (default)
+  checked   Plan → Check → Write
+  researched Research → Plan → Check → Write
+  verified  Full pipeline + Review
+
+${chalk.bold('Flags:')}
+  --type       Document type: architecture, implementation, guide, design, migration, story-breakdown
+  --audience   Target: self, team, stakeholder, contractor
+  --depth      Length: brief, standard, comprehensive
+  --output     Output file path (default: docs/<slug>.md)
+
+${chalk.bold('Examples:')}
+  /fuska-doc "Authentication Architecture" --type architecture --audience team
+  /fuska-doc researched "API Migration Guide" --depth comprehensive
+`,
+
+  debug: `
+${chalk.bold('/fuska-debug [issue description]')}
+
+Debug issues using scientific method with persistent state.
+
+${chalk.bold('Flow:')}
+  1. Gather symptoms (expected, actual, errors, reproduction)
+  2. Spawn fuska-debugger agent to investigate
+  3. Root cause found → Select fix mode
+
+${chalk.bold('Fix Modes:')}
+  planned    Planner → Builder (auto-build)
+  checked    + Plan Checker (ask first)
+  researched + Researcher (ask first)
+  verified   Full pipeline + Reviewer (auto-build)
+  manual     Display findings, I'll fix it myself
+
+${chalk.bold('Examples:')}
+  /fuska-debug "login button doesn't work"
+  /fuska-debug  # Resume active session
+`,
+
+  ask: `
+${chalk.bold('/fuska-ask [question]')}
+
+Ask questions about the codebase using the import graph.
+
+${chalk.bold('Supported questions:')}
+  "What imports X?" / "Who imports X?"
+  "Who uses Symbol?" / "What calls X?"
+  "Is X dead code?"
+  "What if I delete X?"
+  "Where is Symbol defined?"
+  "What does X export?"
+
+${chalk.bold('Examples:')}
+  /fuska-ask "Who uses AuthService?"
+  /fuska-ask "Is ItemSelectionSheet dead code?"
+`,
+};
+
+const allCommands = `
+${chalk.bold('Fuska Commands')}
+
+Run ${chalk.cyan('fuska help <command>')} for detailed help.
+
+${chalk.bold('Quick Tasks:')}
+  do          Execute unplanned tasks
+
+${chalk.bold('Planning:')}
+  configure   Configure initiative
+  plan        Plan current chapter
+  design      Design chapter vision
+  research    Research chapter domain
+
+${chalk.bold('Execution:')}
+  build       Build current chapter
+
+${chalk.bold('Analysis:')}
+  refresh     Refresh import graph
+  ask         Query codebase
+
+${chalk.bold('Documentation:')}
+  doc         Create documentation
+
+${chalk.bold('Debugging:')}
+  debug       Debug issues
+
+${chalk.bold('Progress:')}
+  resume      Resume work
+  pause       Pause work
+  progress    Show progress (CLI)
+
+${chalk.bold('Milestone:')}
+  milestone   Start new milestone
+  complete    Complete milestone
+  audit       Audit milestone
+`;
 
 export function helpCommand(program: Command) {
   program
-    .command('help [args...]')
-    .description('Show Fuska usage guide and available commands')
-    .action(async (args: string[]) => {
-      try {
-        const code = await runOpenCodeJson({
-          command: '/fuska-help',
-          args,
-          progressLabel: 'Loading help'
-        });
-        process.exit(code);
-      } catch (err: any) {
-        console.error(`\nError: ${err.message}`);
-        process.exit(1);
+    .command('help [command]')
+    .description('Show help for Fuska commands')
+    .action((command?: string) => {
+      if (!command) {
+        console.log(allCommands);
+        return;
+      }
+
+      const help = commandHelp[command.toLowerCase()];
+      if (help) {
+        console.log(help);
+      } else {
+        console.log(chalk.yellow(`No detailed help for '${command}'.`));
+        console.log(`Run ${chalk.cyan('fuska help')} to see all commands.`);
       }
     });
 }

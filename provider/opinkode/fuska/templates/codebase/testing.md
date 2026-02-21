@@ -1190,7 +1190,7 @@ This template is for @-reference only. When agents need to understand or update 
 - Check for coverage configuration
 - Document actual patterns used, not ideal patterns
 
-**Useful for phase planning when:**
+**Useful for chapter planning when:**
 - Adding new features (write matching tests)
 - Refactoring (maintain test patterns)
 - Fixing bugs (add regression tests)

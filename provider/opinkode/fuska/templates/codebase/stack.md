@@ -373,7 +373,7 @@ This template is for @-reference only. When agents need to understand or update 
 2. Create/update stack: `megamemory_create_concept()` or `megamemory_update_concept()`
 3. Store in MegaMemory, not in this file
 
-**Useful for phase planning when:**
+**Useful for chapter planning when:**
 - Adding new dependencies (check compatibility)
 - Upgrading frameworks (know what's in use)
 - Choosing implementation approach (must work with existing stack)

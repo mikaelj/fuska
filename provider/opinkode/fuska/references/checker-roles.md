@@ -1,6 +1,6 @@
 # Plan Checker Role Library
 
-Role definitions for the plan checker panel. Each role provides a specialized perspective for verifying plans will achieve phase goals.
+Role definitions for the plan checker panel. Each role provides a specialized perspective for verifying plans will achieve chapter goals.
 
 ---
 
@@ -96,7 +96,7 @@ issue:
 | "Then we'll add tests" | Tests never come | Make tests part of the task |
 | "Handle errors later" | Errors become edge-case bugs | Explicit error task or action item |
 | "Just like X but simpler" | Ambiguity, corners cut | Reference specific patterns |
-| "Refactor in phase N" | Debt compounds | Do it right or document the cost |
+| "Refactor in chapter N" | Debt compounds | Do it right or document the cost |
 | 5+ tasks in one plan | Context overflow, quality drop | Split the plan |
 | No verification step | Can't confirm completion | Add explicit verify criteria |
 </role>

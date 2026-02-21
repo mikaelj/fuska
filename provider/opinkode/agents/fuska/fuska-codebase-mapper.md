@@ -43,8 +43,8 @@ Never use Chinese in responses or internal reasoning.
 | concerns | `codebase-concerns` | Technical debt, issues |
 | domains | `domain-{name}` (multiple) | Business areas with file_refs |
 
-**`/fuska-plan-phase`** loads codebase concepts from MegaMemory when creating implementation plans:
-| Phase Type | Concepts Queried |
+**`/fuska-plan-chapter`** loads codebase concepts from MegaMemory when creating implementation plans:
+| Chapter Type | Concepts Queried |
 |------------|------------------|
 | UI, frontend, components | codebase-quality, codebase-arch |
 | API, backend, endpoints | codebase-arch, codebase-quality |
@@ -54,7 +54,7 @@ Never use Chinese in responses or internal reasoning.
 | refactor, cleanup | codebase-concerns, codebase-arch |
 | setup, config | codebase-tech, codebase-arch |
 
-**`/fuska-execute-phase`** queries codebase concepts to:
+**`/fuska-execute-chapter`** queries codebase concepts to:
 - Follow existing conventions when writing code
 - Know where to place new files (from codebase-arch)
 - Match testing patterns (from codebase-quality)
@@ -68,7 +68,7 @@ Never use Chinese in responses or internal reasoning.
 
 3. **Be prescriptive** - "Use camelCase for functions" helps executor write correct code. "Some functions use camelCase" doesn't.
 
-4. **CONCERNS concept drives priorities** - Issues you identify may become future phases. Be specific about impact and fix approach.
+4. **CONCERNS concept drives priorities** - Issues you identify may become future chapters. Be specific about impact and fix approach.
 
 5. **ARCH concept answers "where do I put this?"** - Include guidance for adding new code, not just describing what exists.
 </why_this_matters>
@@ -343,7 +343,7 @@ Store the classification result for inclusion in the codebase-tech concept.
 </step>
 
 <step name="create_concepts">
-Create codebase concept(s) in MegaMemory using PhaseConceptTemplates.createCodebase().
+Create codebase concept(s) in MegaMemory using ChapterConceptTemplates.createCodebase().
 
 **Concept selection based on focus:**
 - `tech` → create/update `codebase-tech` concept
@@ -361,7 +361,7 @@ await megamemory:create_concept({
   parent_id: 'project-root',
   edges: [
     { to: 'project-root', relation: 'informs' },
-    ...informs_phases_edge
+    ...informs_chapters_edge
   ]
 });
 
@@ -413,7 +413,7 @@ Ready for planner to query from MegaMemory.
 
 ## Codebase Concept Schema
 
-All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
+All codebase concepts follow `ChapterConceptTemplates.createCodebase()` structure.
 
 **Concept naming:**
 - `codebase-tech` - Technology stack, dependencies, integrations
@@ -427,7 +427,7 @@ All codebase concepts follow `PhaseConceptTemplates.createCodebase()` structure.
 
 **Edges:**
 - `informs` → `project-root`
-- `informs` → all phase concepts
+- `informs` → all chapter concepts
 
 **Summary structure (JSON + markdown):**
 
@@ -1186,7 +1186,7 @@ await megamemory:create_concept({
 - [ ] Codebase explored thoroughly for focus area
 - [ ] Codebase concept(s) created/updated in MegaMemory
 - [ ] Concepts named: codebase-tech, codebase-arch, codebase-quality, codebase-concerns, domain-* (based on focus)
-- [ ] MegaMemory edges: informs → project-root, informs → all phases
+- [ ] MegaMemory edges: informs → project-root, informs → all chapters
 - [ ] Summary contains JSON data + markdown sections
 - [ ] All codebase data stored as MegaMemory concepts (not files)
 - [ ] Confirmation returned (not concept contents)

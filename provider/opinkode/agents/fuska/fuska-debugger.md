@@ -45,7 +45,7 @@ Debug sessions are stored as MegaMemory concepts for persistent state across con
 **Concept schema:**
 - **Name:** `debug-session-{slug}` (e.g., `debug-session-auth-failure`)
 - **Kind:** `feature`
-- **Parent:** `project-root` (or specific phase concept)
+- **Parent:** `project-root` (or specific chapter concept)
 - **Summary:** JSON data + markdown content
 - **Status:** `open` | `in_progress` | `resolved`
 
@@ -154,7 +154,7 @@ Consider starting over when:
 2. write down what you know for certain
 3. write down what you've ruled out
 4. List new hypotheses (different from before)
-5. Begin again from Phase 1: Evidence Gathering
+5. Begin again from Chapter 1: Evidence Gathering
 
 </philosophy>
 
@@ -838,7 +838,7 @@ Debug sessions are managed in MegaMemory as concepts. No directory needed — us
 
 | Field | Rule | When |
 |--------|------|------|
-| status | OVERWRITE | Each phase transition |
+| status | OVERWRITE | Each chapter transition |
 | updated | OVERWRITE | Every update |
 | current_focus | OVERWRITE | Before every action |
 | symptoms | IMMUTABLE | After gathering complete |
@@ -940,7 +940,7 @@ Gather symptoms through questioning. Update file after EACH answer.
 <step name="investigation_loop">
 **Autonomous investigation. Update file continuously.**
 
-**Phase 1: Initial evidence gathering**
+**Chapter 1: Initial evidence gathering**
 - Update Current Focus with "gathering initial evidence"
 - If errors exist, search codebase for error text
 - Identify relevant code area from symptoms
@@ -948,19 +948,19 @@ Gather symptoms through questioning. Update file after EACH answer.
 - Run app/tests to observe behavior
 - APPEND to Evidence after each finding
 
-**Phase 2: Form hypothesis**
+**Chapter 2: Form hypothesis**
 - Based on evidence, form SPECIFIC, FALSIFIABLE hypothesis
 - Update Current Focus with hypothesis, test, expecting, next_action
 
-**Phase 3: Test hypothesis**
+**Chapter 3: Test hypothesis**
 - Execute ONE test at a time
 - Append result to Evidence
 
-**Phase 4: Evaluate**
+**Chapter 4: Evaluate**
 - **CONFIRMED:** Update Resolution.root_cause
   - If `goal: find_root_cause_only` -> proceed to return_diagnosis
   - Otherwise -> proceed to fix_and_verify
-- **ELIMINATED:** Append to Eliminated section, form new hypothesis, return to Phase 2
+- **ELIMINATED:** Append to Eliminated section, form new hypothesis, return to Chapter 2
 
 **Context management:** After 5+ evidence entries, ensure Current Focus is updated. Suggest "/new - run /fuska-debug to resume" if context filling up.
 </step>
@@ -1266,7 +1266,7 @@ Check for mode flags in prompt context:
 - Diagnose but don't fix
 - Stop after confirming root cause
 - Skip fix_and_verify step
-- Return root cause to caller (for plan-phase --gaps to handle)
+- Return root cause to caller (for plan-chapter --gaps to handle)
 
 **goal: find_and_fix** (default)
 - Find root cause, then fix and verify
@@ -1283,7 +1283,7 @@ Check for mode flags in prompt context:
 <success_criteria>
 - [ ] Debug session concept created in MegaMemory (not file written)
 - [ ] Session has unique slug (debug-session-{slug})
-- [ ] Parent set to project-root or phase concept
+- [ ] Parent set to project-root or chapter concept
 - [ ] Status tracks: open → in_progress → resolved
 - [ ] Concept updated after EACH piece of information
 - [ ] Current Focus always reflects NOW

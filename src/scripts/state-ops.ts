@@ -1,7 +1,7 @@
 import type { StateData } from './types';
 
 export interface ExecutionMetric {
-  phase: string;
+  chapter: string;
   plan: string;
   duration: string;
   tasks: number;
@@ -10,12 +10,12 @@ export interface ExecutionMetric {
 
 export interface Decision {
   summary: string;
-  phase: string;
+  chapter: string;
   rationale?: string;
 }
 
 /**
- * Advance state to the next plan in a phase.
+ * Advance state to the next plan in a chapter.
  * If all plans are exhausted, sets current_plan to null.
  */
 export function advancePlan(stateData: StateData, plans: string[]): StateData {
@@ -35,8 +35,8 @@ export function advancePlan(stateData: StateData, plans: string[]): StateData {
   return {
     ...stateData,
     current_plan: null,
-    status: 'phase_complete',
-    last_activity: `All plans complete for ${stateData.current_phase}`,
+    status: 'chapter_complete',
+    last_activity: `All plans complete for ${stateData.current_chapter}`,
   };
 }
 

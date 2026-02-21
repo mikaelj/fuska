@@ -49,8 +49,8 @@ export function validateSummaryConcept(data: unknown): ValidationResult {
     return { valid: false, errors: ['Summary data is not an object'] };
   }
 
-  if (!d.phase || typeof d.phase !== 'string') {
-    errors.push('Missing or invalid "phase" (string required)');
+  if (!d.chapter || typeof d.chapter !== 'string') {
+    errors.push('Missing or invalid "chapter" (string required)');
   }
   if (!d.plan || typeof d.plan !== 'string') {
     errors.push('Missing or invalid "plan" (string required)');
@@ -70,8 +70,8 @@ export function validateSummaryConcept(data: unknown): ValidationResult {
   if (typeof d.duration_minutes !== 'number') {
     errors.push('Missing or invalid "duration_minutes" (number required)');
   }
-  if (!d.next_phase_readiness || typeof d.next_phase_readiness !== 'string') {
-    errors.push('Missing or invalid "next_phase_readiness" (string required)');
+  if (!d.next_chapter_readiness || typeof d.next_chapter_readiness !== 'string') {
+    errors.push('Missing or invalid "next_chapter_readiness" (string required)');
   }
 
   return { valid: errors.length === 0, errors };
@@ -86,8 +86,8 @@ export function validateStateConcept(data: unknown): ValidationResult {
     return { valid: false, errors: ['State data is not an object'] };
   }
 
-  if (!d.current_phase || typeof d.current_phase !== 'string') {
-    errors.push('Missing or invalid "current_phase" (string required)');
+  if (!d.current_chapter || typeof d.current_chapter !== 'string') {
+    errors.push('Missing or invalid "current_chapter" (string required)');
   }
   if (!d.status || typeof d.status !== 'string') {
     errors.push('Missing or invalid "status" (string required)');

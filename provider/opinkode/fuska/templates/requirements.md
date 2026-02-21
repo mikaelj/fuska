@@ -35,7 +35,7 @@ name: "[CATEGORY]-[NUMBER]: [Requirement description]"
 kind: "feature"
 summary: "User-centric, testable, atomic requirement"
 parent_id: "[Project Name] Requirements"
-edges: [{to: "Phase [N]: [Phase Name]", relation: "configured_by", description: "Requirement covered in Phase [N]"}]
+edges: [{to: "Chapter [N]: [Chapter Name]", relation: "configured_by", description: "Requirement covered in Chapter [N]"}]
 ```
 
 ### Category Concept
@@ -68,7 +68,7 @@ parent_id: "[Project Name] Requirements"
 ```
 name: "Requirement Traceability"
 kind: "config"
-summary: "Coverage: v1 requirements [X] total, mapped to phases [Y], unmapped [Z]\n[REQ-ID] → Phase [N]: [status]"
+summary: "Coverage: v1 requirements [X] total, mapped to chapters [Y], unmapped [Z]\n[REQ-ID] → Chapter [N]: [status]"
 parent_id: "[Project Name] Requirements"
 ```
 
@@ -280,37 +280,37 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: "Requirement Traceability",
   kind: "config",
-  summary: "Coverage: v1 requirements 18 total, mapped to phases 18, unmapped 0\nAUTH-01 → Phase 1: Pending\nAUTH-02 → Phase 1: Pending\nAUTH-03 → Phase 1: Pending\nAUTH-04 → Phase 1: Pending",
+  summary: "Coverage: v1 requirements 18 total, mapped to chapters 18, unmapped 0\nAUTH-01 → Chapter 1: Pending\nAUTH-02 → Chapter 1: Pending\nAUTH-03 → Chapter 1: Pending\nAUTH-04 → Chapter 1: Pending",
   parent_id: requirements.id
 });
 ```
 
-## Map Requirement to Phase
+## Map Requirement to Chapter
 
 ```typescript
-const phase1 = await megamemory.understand({
-  query: "Phase 1"
+const chapter1 = await megamemory.understand({
+  query: "Chapter 1"
 });
 
 await megamemory.link({
   from: "AUTH-01: User can sign up with email and password",
-  to: phase1[0].id,
+  to: chapter1[0].id,
   relation: "configured_by",
-  description: "Requirement covered in Phase 1"
+  description: "Requirement covered in Chapter 1"
 });
 
 await megamemory.link({
   from: "AUTH-02: User receives email verification after signup",
-  to: phase1[0].id,
+  to: chapter1[0].id,
   relation: "configured_by",
-  description: "Requirement covered in Phase 1"
+  description: "Requirement covered in Chapter 1"
 });
 
 // Update traceability
 await megamemory.update_concept({
   id: "Requirement Traceability",
   changes: {
-    summary: "Coverage: v1 requirements 18 total, mapped to phases 18, unmapped 0\nAUTH-01 → Phase 1: In Progress\nAUTH-02 → Phase 1: In Progress\nAUTH-03 → Phase 1: Pending\nAUTH-04 → Phase 1: Pending"
+    summary: "Coverage: v1 requirements 18 total, mapped to chapters 18, unmapped 0\nAUTH-01 → Chapter 1: In Progress\nAUTH-02 → Chapter 1: In Progress\nAUTH-03 → Chapter 1: Pending\nAUTH-04 → Chapter 1: Pending"
   }
 });
 ```
@@ -321,14 +321,14 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "AUTH-01: User can sign up with email and password",
   changes: {
-    summary: "✅ COMPLETE: User creates account by providing email and password. Validation for email format and password strength. Shipped: Phase 1."
+    summary: "✅ COMPLETE: User creates account by providing email and password. Validation for email format and password strength. Shipped: Chapter 1."
   }
 });
 
 await megamemory.update_concept({
   id: "Requirement Traceability",
   changes: {
-    summary: "Coverage: v1 requirements 18 total, mapped to phases 18, unmapped 0\nAUTH-01 → Phase 1: Complete\nAUTH-02 → Phase 1: Complete\nAUTH-03 → Phase 1: Complete\nAUTH-04 → Phase 1: Complete"
+    summary: "Coverage: v1 requirements 18 total, mapped to chapters 18, unmapped 0\nAUTH-01 → Chapter 1: Complete\nAUTH-02 → Chapter 1: Complete\nAUTH-03 → Chapter 1: Complete\nAUTH-04 → Chapter 1: Complete"
   }
 });
 ```
@@ -355,7 +355,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Requirement Traceability",
   changes: {
-    summary: "Coverage: v1 requirements 19 total, mapped to phases 19, unmapped 0\nPROF-05 → Phase 2: In Progress"
+    summary: "Coverage: v1 requirements 19 total, mapped to chapters 19, unmapped 0\nPROF-05 → Chapter 2: In Progress"
   }
 });
 ```
@@ -380,7 +380,7 @@ const authReqs = await megamemory.understand({
 
 // Get unmapped requirements
 const unmapped = await megamemory.understand({
-  query: "Requirements unmapped not mapped to phase"
+  query: "Requirements unmapped not mapped to chapter"
 });
 
 // Get traceability
@@ -463,7 +463,7 @@ async function initializeRequirements(
   await megamemory.create_concept({
     name: "Requirement Traceability",
     kind: "config",
-    summary: `Coverage: v1 requirements ${requirements.filter(r => r.version === "v1").length} total, mapped to phases 0, unmapped ${requirements.filter(r => r.version === "v1").length} [WARN]`,
+    summary: `Coverage: v1 requirements ${requirements.filter(r => r.version === "v1").length} total, mapped to chapters 0, unmapped ${requirements.filter(r => r.version === "v1").length} [WARN]`,
     parent_id: reqConcept.id
   });
 
@@ -517,14 +517,14 @@ await initializeRequirements(
 interface TraceabilityEntry {
   requirementId: string;
   requirementDescription: string;
-  phase: string;
+  chapter: string;
   status: "Pending" | "In Progress" | "Complete" | "Blocked";
 }
 
-async function mapRequirementToPhase(
+async function mapRequirementToChapter(
   initiativeName: string,
   requirementId: string,
-  phaseName: string
+  chapterName: string
 ) {
   const traceability = await megamemory.understand({
     query: "Requirement Traceability"
@@ -544,17 +544,17 @@ async function mapRequirementToPhase(
     }
 
     // Add new entry
-    const newEntry = `${requirementId} → ${phaseName}: Pending`;
+    const newEntry = `${requirementId} → ${chapterName}: Pending`;
     const updated = [...lines, newEntry].join('\n');
 
     // Update coverage
-    const match = coverageLine.match(/mapped to phases (\d+), unmapped (\d+)/);
+    const match = coverageLine.match(/mapped to chapters (\d+), unmapped (\d+)/);
     if (match) {
       const mapped = parseInt(match[1]) + 1;
       const unmapped = parseInt(match[2]) - 1;
       const newCoverage = coverageLine.replace(
-        /mapped to phases \d+, unmapped \d+/,
-        `mapped to phases ${mapped}, unmapped ${unmapped}`
+        /mapped to chapters \d+, unmapped \d+/,
+        `mapped to chapters ${mapped}, unmapped ${unmapped}`
       );
 
       await megamemory.update_concept({
@@ -598,7 +598,7 @@ async function updateRequirementStatus(
 }
 
 // Usage
-await mapRequirementToPhase("CommunityApp", "AUTH-01", "Phase 1");
+await mapRequirementToChapter("CommunityApp", "AUTH-01", "Chapter 1");
 await updateRequirementStatus("CommunityApp", "AUTH-01", "In Progress");
 await updateRequirementStatus("CommunityApp", "AUTH-01", "Complete");
 ```
@@ -638,7 +638,7 @@ async function getRequirements(initiativeName: string): Promise<{
       }
     } else if (concept.name === "Requirement Traceability") {
       // Parse coverage
-      const match = concept.summary.match(/v1 requirements (\d+) total, mapped to phases (\d+), unmapped (\d+)/);
+      const match = concept.summary.match(/v1 requirements (\d+) total, mapped to chapters (\d+), unmapped (\d+)/);
       if (match) {
         result.coverage = {
           total: parseInt(match[1]),
@@ -651,13 +651,13 @@ async function getRequirements(initiativeName: string): Promise<{
       const lines = concept.summary.split('\n');
       for (const line of lines) {
         if (line.includes(' → ')) {
-          const [reqPart, phasePart] = line.split(' → ');
+          const [reqPart, chapterPart] = line.split(' → ');
           const [reqId] = reqPart.split(':');
-          const [phase, status] = phasePart.split(': ');
+          const [chapter, status] = chapterPart.split(': ');
           result.v1.push({
             requirementId: reqId.trim(),
             requirementDescription: reqPart.replace(`${reqId}: `, '').trim(),
-            phase: phase.trim(),
+            chapter: chapter.trim(),
             status: status as any
           });
         }
@@ -693,7 +693,7 @@ console.log(`V1 Complete: ${reqs.v1.filter(r => r.status === "Complete").length}
 
 ## v1 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+Requirements for initial release. Each maps to roadmap chapters.
 
 ### Authentication
 
@@ -733,19 +733,19 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+Which chapters cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
+| Requirement | Chapter | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| [REQ-ID] | Phase [N] | Pending |
+| AUTH-01 | Chapter 1 | Pending |
+| AUTH-02 | Chapter 1 | Pending |
+| AUTH-03 | Chapter 1 | Pending |
+| AUTH-04 | Chapter 1 | Pending |
+| [REQ-ID] | Chapter [N] | Pending |
 
 **Coverage:**
 - v1 requirements: [X] total
-- Mapped to phases: [Y]
+- Mapped to chapters: [Y]
 - Unmapped: [Z] [WARN]
 
 ---
@@ -770,7 +770,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - Typical: Authentication, Content, Social, Notifications, Moderation, Payments, Admin
 
 **v1 vs v2:**
-- v1: Committed scope, will be in roadmap phases
+- v1: Committed scope, will be in roadmap chapters
 - v2: Acknowledged but deferred, not in current roadmap
 - Moving v2 → v1 requires roadmap update
 
@@ -781,12 +781,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **Traceability:**
 - Empty initially, populated during roadmap creation
-- Each requirement maps to exactly one phase
+- Each requirement maps to exactly one chapter
 - Unmapped requirements = roadmap gap
 
 **Status Values:**
 - Pending: Not started
-- In Progress: Phase is active
+- In Progress: Chapter is active
 - Complete: Requirement verified
 - Blocked: Waiting on external factor
 
@@ -794,7 +794,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 <evolution>
 
-**After each phase completes:**
+**After each chapter completes:**
 1. Mark covered requirements as Complete
 2. Update traceability status
 3. Note any requirements that changed scope

@@ -1,69 +1,69 @@
-# Phase Context Template (MegaMemory-Backed)
+# Chapter Context Template (MegaMemory-Backed)
 
-Template for phase context stored as MegaMemory concepts - captures implementation decisions for a phase.
+Template for chapter context stored as MegaMemory concepts - captures implementation decisions for a chapter.
 
 **Purpose:** Document decisions that downstream agents need. Researcher uses this to know WHAT to investigate. Planner uses this to know WHAT choices are locked vs flexible.
 
-**Key principle:** Categories are NOT predefined. They emerge from what was actually discussed for THIS phase. A CLI phase has CLI-relevant sections, a UI phase has UI-relevant sections.
+**Key principle:** Categories are NOT predefined. They emerge from what was actually discussed for THIS chapter. A CLI chapter has CLI-relevant sections, a UI chapter has UI-relevant sections.
 
 **Downstream consumers:**
-- `fuska-phase-researcher` — Reads decisions to focus research (e.g., "card layout" → research card component patterns)
+- `fuska-chapter-researcher` — Reads decisions to focus research (e.g., "card layout" → research card component patterns)
 - `fuska-planner` — Reads decisions to create specific tasks (e.g., "infinite scroll" → task includes virtualization)
 
 ---
 
 <megamemory_schema>
 
-## Concept: `phase-context`
+## Concept: `chapter-context`
 
 **Kind:** `feature`
 
-**Summary:** Phase context capturing implementation decisions for a specific phase. Includes phase boundary, implementation decisions (grouped by areas discussed), specific ideas/references, and deferred ideas.
+**Summary:** Chapter context capturing implementation decisions for a specific chapter. Includes chapter boundary, implementation decisions (grouped by areas discussed), specific ideas/references, and deferred ideas.
 
 **Fields:**
-- `phase_id` (string) - Phase identifier (e.g., "03-post-feed")
-- `phase_boundary` (string) - Clear scope anchor from ROADMAP.md
+- `chapter_id` (string) - Chapter identifier (e.g., "03-post-feed")
+- `chapter_boundary` (string) - Clear scope anchor from ROADMAP.md
 - `decisions` (array) - Implementation decisions organized by area
   - `area` (string) - Decision category (e.g., "Layout style", "Loading behavior")
   - `items` (array) - Specific decisions made
 - `opencode_discretion` (array) - Areas where OpenCode has flexibility
 - `specifics` (array) - Product references, examples, "like X" statements
-- `deferred` (array) - Ideas out of scope for this phase
+- `deferred` (array) - Ideas out of scope for this chapter
 - `gathered_date` (string) - ISO timestamp when context gathered
 - `status` (string) - "ready-for-planning" or similar
 
 **Relationships:**
-- `depends_on` → `roadmap:phase[phase_id]` - Phase boundary from roadmap
-- `connects_to` → `phase-research` - Researcher uses decisions to focus investigation
-- `configured_by` → `phase-plan` - Planner uses decisions to create tasks
+- `depends_on` → `roadmap:chapter[chapter_id]` - Chapter boundary from roadmap
+- `connects_to` → `chapter-research` - Researcher uses decisions to focus investigation
+- `configured_by` → `chapter-plan` - Planner uses decisions to create tasks
 
 </megamemory_schema>
 
 <megamemory_operations>
 
-## Create Phase Context
+## Create Chapter Context
 
 ```typescript
-// When gathering phase context after user discussion
+// When gathering chapter context after user discussion
 await megamemory.create_concept({
-  name: `phase-context:${phaseId}`,
+  name: `chapter-context:${chapterId}`,
   kind: "feature",
-  summary: `Phase ${phaseId} context: ${phaseBoundary}. Decisions on ${decisions.map(d => d.area).join(", ")}.`,
+  summary: `Chapter ${chapterId} context: ${chapterBoundary}. Decisions on ${decisions.map(d => d.area).join(", ")}.`,
   why: "Captures implementation decisions for downstream agents (researcher, planner)",
   parent_id: `initiative:${initiativeId}`,
   edges: [
     {
-      to: `roadmap:${phaseId}`,
+      to: `roadmap:${chapterId}`,
       relation: "depends_on",
-      description: "Phase boundary derived from roadmap"
+      description: "Chapter boundary derived from roadmap"
     },
     {
-      to: `phase-research:${phaseId}`,
+      to: `chapter-research:${chapterId}`,
       relation: "connects_to",
       description: "Researcher uses decisions to focus investigation"
     },
     {
-      to: `phase-plan:${phaseId}`,
+      to: `chapter-plan:${chapterId}`,
       relation: "configured_by",
       description: "Planner uses decisions to create tasks"
     }
@@ -71,27 +71,27 @@ await megamemory.create_concept({
 })
 ```
 
-## Query Phase Context
+## Query Chapter Context
 
 ```typescript
 // Get context for researcher agent
 const result = await megamemory.understand({
-  query: `phase context decisions for ${phaseId}`,
+  query: `chapter context decisions for ${chapterId}`,
   top_k: 5
 })
 
 // Extract decisions by area
 const decisions = result.concepts
-  .filter(c => c.kind === "feature" && c.name.startsWith("phase-context:"))
+  .filter(c => c.kind === "feature" && c.name.startsWith("chapter-context:"))
   .flatMap(c => c.summary.match(/decisions on (.+?)\./)[1]?.split(", ") || [])
 ```
 
-## Update Phase Context
+## Update Chapter Context
 
 ```typescript
 // When decisions are clarified during planning
 await megamemory.update_concept({
-  id: `phase-context:${phaseId}`,
+  id: `chapter-context:${chapterId}`,
   changes: {
     summary: updatedSummary // Include new decisions
   }
@@ -107,16 +107,16 @@ await megamemory.update_concept({
 ```typescript
 // After discussion about post feed feature
 await megamemory.create_concept({
-  name: "phase-context:03-post-feed",
+  name: "chapter-context:03-post-feed",
   kind: "feature",
-  summary: "Phase 03-post-feed context: Display posts from followed users in scrollable feed. Decisions on Layout style (card-based, shadows, rounded), Loading behavior (infinite scroll, pull-to-refresh, new posts indicator), Empty state (friendly illustration, follow suggestions). OpenCode discretion: loading skeleton, typography, error handling.",
+  summary: "Chapter 03-post-feed context: Display posts from followed users in scrollable feed. Decisions on Layout style (card-based, shadows, rounded), Loading behavior (infinite scroll, pull-to-refresh, new posts indicator), Empty state (friendly illustration, follow suggestions). OpenCode discretion: loading skeleton, typography, error handling.",
   why: "Researcher needs to investigate card component patterns; planner needs to include virtualization for infinite scroll",
   parent_id: "project:social-app",
   edges: [
     {
       to: "roadmap:03-post-feed",
       relation: "depends_on",
-      description: "Phase boundary from roadmap"
+      description: "Chapter boundary from roadmap"
     }
   ]
 })
@@ -127,7 +127,7 @@ await megamemory.create_concept({
 ```typescript
 // Planner agent queries specific decision areas
 const result = await megamemory.understand({
-  query: "phase context loading behavior infinite scroll decisions",
+  query: "chapter context loading behavior infinite scroll decisions",
   top_k: 3
 })
 
@@ -141,7 +141,7 @@ const result = await megamemory.understand({
 ```typescript
 // Researcher agent asks what to investigate
 const researchQuery = await megamemory.understand({
-  query: "what card layout patterns are needed for post feed phase",
+  query: "what card layout patterns are needed for post feed chapter",
   top_k: 5
 })
 
@@ -156,15 +156,15 @@ const researchQuery = await megamemory.understand({
 ## File Template
 
 ```markdown
-# Phase [X]: [Name] - Context
+# Chapter [X]: [Name] - Context
 
 **Gathered:** [date]
 **Status:** Ready for planning
 
 <domain>
-## Phase Boundary
+## Chapter Boundary
 
-[Clear statement of what this phase delivers — the scope anchor. This comes from ROADMAP.md and is fixed. Discussion clarifies implementation within this boundary.]
+[Clear statement of what this chapter delivers — the scope anchor. This comes from ROADMAP.md and is fixed. Discussion clarifies implementation within this boundary.]
 
 </domain>
 
@@ -198,15 +198,15 @@ const researchQuery = await megamemory.understand({
 <deferred>
 ## Deferred Ideas
 
-[Ideas that came up during discussion but belong in other phases. Captured here so they're not lost, but explicitly out of scope for this phase.]
+[Ideas that came up during discussion but belong in other chapters. Captured here so they're not lost, but explicitly out of scope for this chapter.]
 
-[If none: "None — discussion stayed within phase scope"]
+[If none: "None — discussion stayed within chapter scope"]
 
 </deferred>
 
 ---
 
-*Phase: XX-name*
+*Chapter: XX-name*
 *Context gathered: [date]*
 ```
 
@@ -215,15 +215,15 @@ const researchQuery = await megamemory.understand({
 **Example 1: Visual feature (Post Feed)**
 
 ```markdown
-# Phase 3: Post Feed - Context
+# Chapter 3: Post Feed - Context
 
 **Gathered:** 2025-01-20
 **Status:** Ready for planning
 
 <domain>
-## Phase Boundary
+## Chapter Boundary
 
-Display posts from followed users in a scrollable feed. Users can view posts and see engagement counts. Creating posts and interactions are separate phases.
+Display posts from followed users in a scrollable feed. Users can view posts and see engagement counts. Creating posts and interactions are separate chapters.
 
 </domain>
 
@@ -262,29 +262,29 @@ Display posts from followed users in a scrollable feed. Users can view posts and
 <deferred>
 ## Deferred Ideas
 
-- Commenting on posts — Phase 5
+- Commenting on posts — Chapter 5
 - Bookmarking posts — add to backlog
 
 </deferred>
 
 ---
 
-*Phase: 03-post-feed*
+*Chapter: 03-post-feed*
 *Context gathered: 2025-01-20*
 ```
 
 **Example 2: CLI tool (Database backup)**
 
 ```markdown
-# Phase 2: Backup Command - Context
+# Chapter 2: Backup Command - Context
 
 **Gathered:** 2025-01-20
 **Status:** Ready for planning
 
 <domain>
-## Phase Boundary
+## Chapter Boundary
 
-CLI command to backup database to local file or S3. Supports full and incremental backups. Restore command is a separate phase.
+CLI command to backup database to local file or S3. Supports full and incremental backups. Restore command is a separate chapter.
 
 </domain>
 
@@ -324,29 +324,29 @@ CLI command to backup database to local file or S3. Supports full and incrementa
 <deferred>
 ## Deferred Ideas
 
-- Scheduled backups — separate phase
+- Scheduled backups — separate chapter
 - Backup rotation/retention — add to backlog
 
 </deferred>
 
 ---
 
-*Phase: 02-backup-command*
+*Chapter: 02-backup-command*
 *Context gathered: 2025-01-20*
 ```
 
 **Example 3: Organization task (Photo library)**
 
 ```markdown
-# Phase 1: Photo Organization - Context
+# Chapter 1: Photo Organization - Context
 
 **Gathered:** 2025-01-20
 **Status:** Ready for planning
 
 <domain>
-## Phase Boundary
+## Chapter Boundary
 
-Organize existing photo library into structured folders. Handle duplicates and apply consistent naming. Tagging and search are separate phases.
+Organize existing photo library into structured folders. Handle duplicates and apply consistent naming. Tagging and search are separate chapters.
 
 </domain>
 
@@ -386,14 +386,14 @@ Organize existing photo library into structured folders. Handle duplicates and a
 <deferred>
 ## Deferred Ideas
 
-- Face detection grouping — future phase
+- Face detection grouping — future chapter
 - Cloud sync — out of scope for now
 
 </deferred>
 
 ---
 
-*Phase: 01-photo-organization*
+*Chapter: 01-photo-organization*
 *Context gathered: 2025-01-20*
 ```
 
@@ -425,8 +425,8 @@ The output should answer: "What does the researcher need to investigate? What ch
 - **Deferred** — Ideas captured but explicitly out of scope. Prevents scope creep while preserving good ideas.
 
 **After creation:**
-- Concept stored in MegaMemory as `phase-context:{phaseId}`
-- `fuska-phase-researcher` uses decisions to focus investigation
+- Concept stored in MegaMemory as `chapter-context:{chapterId}`
+- `fuska-chapter-researcher` uses decisions to focus investigation
 - `fuska-planner` uses decisions + research to create executable tasks
 - Downstream agents should NOT need to ask the user again about captured decisions
 </guidelines>

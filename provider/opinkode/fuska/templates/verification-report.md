@@ -1,6 +1,6 @@
 # Verification Report Template (MegaMemory-Backed)
 
-Template for phase goal verification results - stored in MegaMemory, never on disk.
+Template for chapter goal verification results - stored in MegaMemory, never on disk.
 
 ---
 
@@ -8,15 +8,15 @@ Template for phase goal verification results - stored in MegaMemory, never on di
 
 ```markdown
 ---
-phase: XX-name
+chapter: XX-name
 verified: YYYY-MM-DDTHH:MM:SSZ
 status: passed | gaps_found | human_needed
 score: N/M must-haves verified
 ---
 
-# Phase {X}: {Name} Verification Report
+# Chapter {X}: {Name} Verification Report
 
-**Phase Goal:** {goal from ROADMAP.md}
+**Chapter Goal:** {goal from ROADMAP.md}
 **Verified:** {timestamp}
 **Status:** {passed | gaps_found | human_needed}
 
@@ -87,7 +87,7 @@ None — all verifiable items checked programmatically.
 ## Gaps Summary
 
 {If no gaps:}
-**No gaps found.** Phase goal achieved. Ready to proceed.
+**No gaps found.** Chapter goal achieved. Ready to proceed.
 
 {If gaps found:}
 
@@ -114,7 +114,7 @@ None — all verifiable items checked programmatically.
 
 {If gaps found, generate fix plan recommendations:}
 
-### {phase}-{next}-PLAN.md: {Fix Name}
+### {chapter}-{next}-PLAN.md: {Fix Name}
 
 **Objective:** {What this fixes}
 
@@ -127,7 +127,7 @@ None — all verifiable items checked programmatically.
 
 ---
 
-### {phase}-{next+1}-PLAN.md: {Fix Name}
+### {chapter}-{next+1}-PLAN.md: {Fix Name}
 
 **Objective:** {What this fixes}
 
@@ -141,7 +141,7 @@ None — all verifiable items checked programmatically.
 
 ## Verification Metadata
 
-**Verification approach:** Goal-backward (derived from phase goal)
+**Verification approach:** Goal-backward (derived from chapter goal)
 **Must-haves source:** {PLAN.md frontmatter | derived from ROADMAP.md goal}
 **Automated checks:** {N} passed, {M} failed
 **Human checks required:** {N}
@@ -161,14 +161,14 @@ None — all verifiable items checked programmatically.
 concept_kind: "verification"
 
 summary: |
-  Verification Report for Phase {phase_number}: {phase_name}
+  Verification Report for Chapter {chapter_number}: {chapter_name}
   Status: {passed | gaps_found | human_needed}
   Score: {N}/{M} must-haves verified
   {One-sentence overview of verification result}
 
 why: |
-  Phase goal verification results with must-haves, artifacts, gaps.
-  Enables goal-backward verification to ensure phase delivers what was promised.
+  Chapter goal verification results with must-haves, artifacts, gaps.
+  Enables goal-backward verification to ensure chapter delivers what was promised.
 
 file_refs: [
   "{file_paths_of_verified_artifacts}"
@@ -176,9 +176,9 @@ file_refs: [
 
 edges: [
   {
-    to: "phase-{phase_number}",
+    to: "chapter-{chapter_number}",
     relation: "connects_to",
-    description: "Verification for this phase"
+    description: "Verification for this chapter"
   }
 ]
 </megamemory_schema>
@@ -190,9 +190,9 @@ edges: [
 
 ```markdown
 <megamemory_operations>
-**Create Verification Report (after phase execution):**
+**Create Verification Report (after chapter execution):**
 
-1. Create concept with phase, verification timestamp, status, score
+1. Create concept with chapter, verification timestamp, status, score
 2. Document observable truths from must-haves
 3. Verify required artifacts exist and are substantive
 4. Check key wiring between components
@@ -201,7 +201,7 @@ edges: [
 7. Document human verification needs (if any)
 8. Summarize gaps (critical vs non-critical)
 9. Recommend fix plans if gaps found
-10. Link to parent phase
+10. Link to parent chapter
 
 **Update Verification (rare - retrospective corrections):**
 
@@ -211,7 +211,7 @@ edges: [
 
 **Query Verification (for gap closure or review):**
 
-1. Query verification by phase number
+1. Query verification by chapter number
 2. Read gaps, fix recommendations, status
 3. Understand what needs to be fixed or what's blocking
 </megamemory_operations>
@@ -225,8 +225,8 @@ edges: [
 <megamemory_examples>
 ```typescript
 // Create a verification report
-const createVerificationReport = async (phaseNumber: string, phaseName: string, report: {
-  phaseGoal: string;
+const createVerificationReport = async (chapterNumber: string, chapterName: string, report: {
+  chapterGoal: string;
   verifiedDate: string;
   status: 'passed' | 'gaps_found' | 'human_needed';
   observableTruths: Array<{
@@ -308,7 +308,7 @@ const createVerificationReport = async (phaseNumber: string, phaseName: string, 
   const warnings = report.antiPatterns.filter(p => p.severity === 'Warning').length;
 
   let summary =
-    `Verification Report for Phase ${phaseNumber}: ${phaseName}\n` +
+    `Verification Report for Chapter ${chapterNumber}: ${chapterName}\n` +
     `Status: ${report.status}\n` +
     `Score: ${verifiedCount}/${totalTruths} must-haves verified\n` +
     `Artifacts: ${artifactsCount}/${totalArtifacts} verified\n` +
@@ -321,7 +321,7 @@ const createVerificationReport = async (phaseNumber: string, phaseName: string, 
   }
 
   if (report.status === 'passed') {
-    summary += `\nNo gaps found. Phase goal achieved. Ready to proceed.`;
+    summary += `\nNo gaps found. Chapter goal achieved. Ready to proceed.`;
   } else if (report.status === 'gaps_found' && report.gaps) {
     summary += `\nCritical gaps: ${report.gaps.critical.length}\n`;
     if (report.gaps.nonCritical.length > 0) {
@@ -330,20 +330,20 @@ const createVerificationReport = async (phaseNumber: string, phaseName: string, 
   }
 
   const result = await megamemory.create_concept({
-    name: `Verification: Phase ${phaseNumber}`,
+    name: `Verification: Chapter ${chapterNumber}`,
     kind: "verification",
     summary,
-    why: "Phase goal verification results with must-haves, artifacts, gaps. " +
-          "Enables goal-backward verification to ensure phase delivers what was promised.",
+    why: "Chapter goal verification results with must-haves, artifacts, gaps. " +
+          "Enables goal-backward verification to ensure chapter delivers what was promised.",
     file_refs: [
       ...report.requiredArtifacts.map(a => a.path)
     ],
     edges: [{
-      to: `phase-${phaseNumber}`,
+      to: `chapter-${chapterNumber}`,
       relation: "connects_to",
-      description: "Verification for this phase"
+      description: "Verification for this chapter"
     }],
-    created_by_task: `Verify Phase ${phaseNumber}`
+    created_by_task: `Verify Chapter ${chapterNumber}`
   });
   const concept = JSON.parse(result.concepts[0]);
 
@@ -351,9 +351,9 @@ const createVerificationReport = async (phaseNumber: string, phaseName: string, 
 };
 
 // Query verification report
-const queryVerificationReport = async (phaseNumber: string) => {
+const queryVerificationReport = async (chapterNumber: string) => {
   const result = await megamemory.understand({
-    query: `Verification report for Phase ${phaseNumber} with status, gaps, fix recommendations`
+    query: `Verification report for Chapter ${chapterNumber} with status, gaps, fix recommendations`
   });
 
   if (result.concepts.length > 0) {
@@ -363,8 +363,8 @@ const queryVerificationReport = async (phaseNumber: string) => {
     // Parse basic info
     const report = {
       id: verification.id,
-      phaseNumber,
-      phaseName: summary.match(/Verification Report for Phase ([\d.]+): ([^\n]+)/)?.[2] || '',
+      chapterNumber,
+      chapterName: summary.match(/Verification Report for Chapter ([\d.]+): ([^\n]+)/)?.[2] || '',
       status: summary.match(/Status: (passed|gaps_found|human_needed)/)?.[1] || 'unknown',
       score: summary.match(/Score: (\d+)\/(\d+)/)?.[0] || '',
       artifactsScore: summary.match(/Artifacts: (\d+)\/(\d+) verified/)?.[0] || '',
@@ -389,7 +389,7 @@ const queryVerificationReport = async (phaseNumber: string) => {
 // Query all verification reports (for project status)
 const queryAllVerificationReports = async () => {
   const result = await megamemory.understand({
-    query: "All verification reports with phase, status, score"
+    query: "All verification reports with chapter, status, score"
   });
 
   return result.concepts.map(c => {
@@ -398,8 +398,8 @@ const queryAllVerificationReports = async () => {
 
     return {
       id: verification.id,
-      phaseNumber: summary.match(/Verification Report for Phase ([\d.]+):/)?.[1] || '',
-      phaseName: summary.match(/Verification Report for Phase [\d.]+: ([^\n]+)/)?.[1] || '',
+      chapterNumber: summary.match(/Verification Report for Chapter ([\d.]+):/)?.[1] || '',
+      chapterName: summary.match(/Verification Report for Chapter [\d.]+: ([^\n]+)/)?.[1] || '',
       status: summary.match(/Status: (passed|gaps_found|human_needed)/)?.[1] || 'unknown',
       score: summary.match(/Score: (\d+)\/(\d+)/)?.[0] || '',
       criticalGaps: summary.includes('Critical gaps:')
@@ -409,10 +409,10 @@ const queryAllVerificationReports = async () => {
   });
 };
 
-// Query gaps for a phase (for gap closure planning)
-const queryPhaseGaps = async (phaseNumber: string) => {
+// Query gaps for a chapter (for gap closure planning)
+const queryChapterGaps = async (chapterNumber: string) => {
   const result = await megamemory.understand({
-    query: `Phase ${phaseNumber} verification gaps, critical and non-critical`
+    query: `Chapter ${chapterNumber} verification gaps, critical and non-critical`
   });
 
   if (result.concepts.length > 0) {
@@ -422,7 +422,7 @@ const queryPhaseGaps = async (phaseNumber: string) => {
     // This is a simplified gap extraction - in practice you'd parse full verification details
     return {
       id: verification.id,
-      phaseNumber,
+      chapterNumber,
       status: summary.match(/Status: (passed|gaps_found|human_needed)/)?.[1] || 'unknown',
       criticalGaps: summary.includes('Critical gaps:')
         ? parseInt(summary.match(/Critical gaps: (\d+)/)?.[1] || '0')
@@ -493,15 +493,15 @@ const queryPhaseGaps = async (phaseNumber: string) => {
 
 ```markdown
 ---
-phase: 03-chat
+chapter: 03-chat
 verified: 2025-01-15T14:30:00Z
 status: gaps_found
 score: 2/5 must-haves verified
 ---
 
-# Phase 3: Chat Interface Verification Report
+# Chapter 3: Chat Interface Verification Report
 
-**Phase Goal:** Working chat interface where users can send and receive messages
+**Chapter Goal:** Working chat interface where users can send and receive messages
 **Verified:** 2025-01-15T14:30:00Z
 **Status:** gaps_found
 
@@ -614,7 +614,7 @@ None needed until automated gaps are fixed.
 
 ## Verification Metadata
 
-**Verification approach:** Goal-backward (derived from phase goal)
+**Verification approach:** Goal-backward (derived from chapter goal)
 **Must-haves source:** 03-01-PLAN.md frontmatter
 **Automated checks:** 2 passed, 8 failed
 **Human checks required:** 0 (blocked by automated failures)

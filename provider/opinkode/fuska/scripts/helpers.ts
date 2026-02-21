@@ -51,8 +51,8 @@ export function generateSummary(data: any, markdownSections: string[] = []): str
 }
 
 export interface DependencyGraph {
-  getRelevantSummaries(phaseSlug: string): Array<ConceptMatch & {data: any}>;
-  getDependentPhases(phaseSlug: string): ConceptMatch[];
+  getRelevantSummaries(chapterSlug: string): Array<ConceptMatch & {data: any}>;
+  getDependentChapters(chapterSlug: string): ConceptMatch[];
   getTechStackHistory(): ConceptMatch[];
   getAllConcepts(): ConceptMatch[];
 }
@@ -94,22 +94,22 @@ export async function buildDependencyGraph(megamemory: MegaMemoryClient): Promis
   }
 
   return {
-    getRelevantSummaries: (phaseSlug: string) => {
-      const phase = conceptMap.get(phaseSlug);
-      if (!phase) return [];
+    getRelevantSummaries: (chapterSlug: string) => {
+      const chapter = conceptMap.get(chapterSlug);
+      if (!chapter) return [];
 
-      return Array.from(traverse(phaseSlug))
+      return Array.from(traverse(chapterSlug))
         .filter(c => c.kind === 'component' && c.name.includes('-summary-'))
         .map(c => ({ ...c, data: extractJson(c.summary) }));
     },
 
-    getDependentPhases: (phaseSlug: string) => {
-      const phase = conceptMap.get(phaseSlug);
-      if (!phase) return [];
+    getDependentChapters: (chapterSlug: string) => {
+      const chapter = conceptMap.get(chapterSlug);
+      if (!chapter) return [];
 
-      return Array.from(traverse(phaseSlug))
-        .filter(c => c.kind === 'feature' && c.name.startsWith('phase-'))
-        .filter(c => c.id !== phaseSlug);
+      return Array.from(traverse(chapterSlug))
+        .filter(c => c.kind === 'feature' && c.name.startsWith('chapter-'))
+        .filter(c => c.id !== chapterSlug);
     },
 
     getTechStackHistory: () => {
@@ -126,8 +126,8 @@ export async function buildDependencyGraph(megamemory: MegaMemoryClient): Promis
 export function generateContextMarkdown(contextData: any, relevantKnowledge: any[]): string {
   const sections: string[] = [];
 
-  if (contextData.phase_boundary) {
-    sections.push(`<domain>\n## Phase Boundary\n\n${contextData.phase_boundary}\n</domain>`);
+  if (contextData.chapter_boundary) {
+    sections.push(`<domain>\n## Chapter Boundary\n\n${contextData.chapter_boundary}\n</domain>`);
   }
 
   if (contextData.decisions && Object.keys(contextData.decisions).length > 0) {
@@ -195,7 +195,7 @@ export function generatePlanMarkdown(planData: any, patterns: any[], relevantSum
 export function generateSummaryMarkdown(summaryData: any): string {
   const sections: string[] = [];
 
-  sections.push(`## Phase\n\n${summaryData.phase || 'N/A'}`);
+  sections.push(`## Chapter\n\n${summaryData.chapter || 'N/A'}`);
   sections.push(`## Plan\n\n${summaryData.plan || 'N/A'}`);
   const durationMinutes = summaryData.duration_minutes || 0;
   const completedDate = summaryData.completed ? new Date(summaryData.completed).toLocaleString() : 'N/A';
@@ -264,7 +264,7 @@ export function generateSummaryMarkdown(summaryData: any): string {
     sections.push(`## Issues Encountered\n\n${summaryData.issues_encountered.map((i: string) => `- ${i}`).join('\n')}`);
   }
 
-  sections.push(`## Next Phase Readiness\n\n${summaryData.next_phase_readiness || 'N/A'}`);
+  sections.push(`## Next Chapter Readiness\n\n${summaryData.next_chapter_readiness || 'N/A'}`);
 
   return sections.join('\n\n');
 }
@@ -316,9 +316,9 @@ export function generateUATMarkdown(uatData: any): string {
   return sections.join('\n\n');
 }
 
-export function calculateProgress(phases: any[]): number {
-  if (!phases || phases.length === 0) return 0;
+export function calculateProgress(chapters: any[]): number {
+  if (!chapters || chapters.length === 0) return 0;
 
-  const completedPhases = phases.filter((p: any) => p.status === 'complete').length;
-  return Math.round((completedPhases / phases.length) * 100);
+  const completedChapters = chapters.filter((p: any) => p.status === 'complete').length;
+  return Math.round((completedChapters / chapters.length) * 100);
 }

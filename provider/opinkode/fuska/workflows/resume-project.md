@@ -57,7 +57,7 @@ Parse returned concepts. Look for:
 **From State concept summary (parse as JSON):**
 
 - **Project Reference**: Core value and current focus
-- **Current Position**: Phase X of Y, Plan A of B, Status
+- **Current Position**: Chapter X of Y, Plan A of B, Status
 - **Progress**: Visual progress bar
 - **Recent Decisions**: Key decisions affecting current work
 - **Pending Todos**: Ideas captured during sessions
@@ -66,8 +66,8 @@ Parse returned concepts. Look for:
 
 **From Roadmap concept summary (parse as JSON):**
 
-- Phases list with status
-- Current phase position
+- Chapters list with status
+- Current chapter position
 
 </step>
 
@@ -79,7 +79,7 @@ megamemory:understand with query: "incomplete work interrupted agent mid-plan ch
 ```
 
 Look for:
-- Phase concepts with status: "in_progress" or "blocked"
+- Chapter concepts with status: "in_progress" or "blocked"
 - Plan concepts without summary (incomplete execution)
 - Agent concepts with status: "interrupted"
 - Session continuity concepts with resume_file references
@@ -88,8 +88,8 @@ Look for:
 - Parse agent concept.summary for task details
 - Flag: "Found interrupted agent"
 
-**If phase in progress:**
-- Parse phase concept.summary for current plan status
+**If chapter in progress:**
+- Parse chapter concept.summary for current plan status
 - Check if current plan has summary
 - Flag: "Found incomplete plan execution"
 
@@ -104,7 +104,7 @@ Present complete project status to user:
 ╠══════════════════════════════════════════════════════════════╣
 ║  Building: [one-liner from PROJECT concept.summary JSON]      ║
 ║                                                               ║
-║  Phase: [X] of [Y] - [Phase name]                            ║
+║  Chapter: [X] of [Y] - [Chapter name]                            ║
 ║  Plan:  [A] of [B] - [Status]                                ║
 ║  Progress: [██████░░░░] XX%                                  ║
 ║                                                               ║
@@ -113,7 +113,7 @@ Present complete project status to user:
 
 [If incomplete work found:]
 [WARN]  Incomplete work detected:
-    - [incomplete plan or blocked phase]
+    - [incomplete plan or blocked chapter]
 
 [If interrupted agent found:]
 [WARN]  Interrupted agent detected:
@@ -144,29 +144,29 @@ Based on project state from MM concepts, determine the most logical next action:
 → Primary: Resume interrupted agent (Task tool with resume parameter)
 → Option: Start fresh (abandon agent work)
 
-**If phase blocked:**
+**If chapter blocked:**
 → Primary: Resolve blockers
 → Option: Continue with unblocked work
 
-**If phase in progress, all plans complete:**
-→ Primary: Transition to next phase
+**If chapter in progress, all plans complete:**
+→ Primary: Transition to next chapter
 → Option: Review completed work
 
-**If phase ready to plan:**
-→ Check phase concept.summary for context availability:
+**If chapter ready to plan:**
+→ Check chapter concept.summary for context availability:
 
 ```json
 "context_available": true|false
 ```
 
 - If context_available is false:
-  → Primary: Discuss phase vision (how user imagines it working)
+  → Primary: Discuss chapter vision (how user imagines it working)
   → Secondary: Plan directly (skip context gathering)
 - If context_available is true:
-  → Primary: Plan the phase
+  → Primary: Plan the chapter
   → Option: Review roadmap
 
-**If phase ready to execute:**
+**If chapter ready to execute:**
 → Primary: Execute next plan
 → Option: Review the plan first
 </step>
@@ -180,14 +180,14 @@ What would you like to do?
 [Primary action based on state - e.g.:]
 1. Resume interrupted agent [if interrupted agent found]
    OR
-1. Execute phase (/fuska-execute-phase {phase})
+1. Execute chapter (/fuska-execute-chapter {chapter})
    OR
-1. Discuss Phase 3 context (/fuska-discuss-phase 3) [if context_available is false]
+1. Discuss Chapter 3 context (/fuska-discuss-chapter 3) [if context_available is false]
    OR
-1. Plan Phase 3 (/fuska-plan-phase 3) [if context_available is true or discuss option declined]
+1. Plan Chapter 3 (/fuska-plan-chapter 3) [if context_available is true or discuss option declined]
 
 [Secondary options:]
-2. Review current phase status
+2. Review current chapter status
 3. Check pending todos ([N] pending)
 4. Review brief alignment
 5. Something else
@@ -205,31 +205,31 @@ Based on user selection, route to appropriate workflow:
 
   ## > Next Up
 
-  **{phase}-{plan}: [Plan Name]** — [objective from plan concept.summary JSON]
+  **{chapter}-{plan}: [Plan Name]** — [objective from plan concept.summary JSON]
 
-  `/fuska-execute-phase {phase}`
+  `/fuska-execute-chapter {chapter}`
 
   *`/new` first → fresh context window*
 
   ---
   ```
-- **Plan phase** → Show command for user to run after clearing:
+- **Plan chapter** → Show command for user to run after clearing:
   ```
   ---
 
   ## > Next Up
 
-  **Phase [N]: [Name]** — [Goal from roadmap concept.summary JSON]
+  **Chapter [N]: [Name]** — [Goal from roadmap concept.summary JSON]
 
-  `/fuska-plan-phase [phase-number]`
+  `/fuska-plan-chapter [chapter-number]`
 
   *`/new` first → fresh context window*
 
   ---
 
   **Also available:**
-  - `/fuska-discuss-phase [N]` — gather context first
-  - `/fuska-research-phase [N]` — investigate unknowns
+  - `/fuska-discuss-chapter [N]` — gather context first
+  - `/fuska-research-chapter [N]` — investigate unknowns
 
   ---
   ```
@@ -268,8 +268,8 @@ If project concepts are sparse or missing state concept:
 "Project state concept missing. Reconstructing from other concepts..."
 
 1. Query project concept → Extract "What This Is" and Core Value
-2. Query roadmap concept → Determine phases, find current position
-3. Query phase concepts → Extract decisions, concerns
+2. Query roadmap concept → Determine chapters, find current position
+3. Query chapter concepts → Extract decisions, concerns
 4. Query todo concepts → Count pending todos
 5. Query all concepts → Check for incomplete work markers
 

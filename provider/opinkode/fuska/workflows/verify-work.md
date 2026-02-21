@@ -1,5 +1,5 @@
 <purpose>
-Validate built features through conversational testing with persistent state. Creates UAT concept in MegaMemory that tracks test progress, survives /new, and feeds gaps into /fuska-plan-phase --gaps.
+Validate built features through conversational testing with persistent state. Creates UAT concept in MegaMemory that tracks test progress, survives /new, and feeds gaps into /fuska-plan-chapter --gaps.
 
 User tests, OpenCode records. One test at a time. Plain text responses.
 </purpose>
@@ -68,29 +68,29 @@ megamemory:understand(query="UAT testing sessions with status testing")
 
 **If active sessions exist AND no `$ARGUMENTS` provided:**
 
-Parse each concept's summary JSON to extract (status, phase) and current_test.
+Parse each concept's summary JSON to extract (status, chapter) and current_test.
 
 Display inline:
 
 ```
 ## Active UAT Sessions
 
-| # | Phase | Status | Current Test | Progress |
+| # | Chapter | Status | Current Test | Progress |
 |---|-------|--------|--------------|----------|
 | 1 | 04-comments | testing | 3. Reply to Comment | 2/6 |
 | 2 | 05-auth | testing | 1. Login Form | 0/4 |
 
-Reply with a number to resume, or provide a phase number to start new.
+Reply with a number to resume, or provide a chapter number to start new.
 ```
 
 Wait for user response.
 
 - If user replies with number (1, 2) → Load that concept, go to `resume_from_concept`
-- If user replies with phase number → Treat as new session, go to `create_uat_concept`
+- If user replies with chapter number → Treat as new session, go to `create_uat_concept`
 
 **If active sessions exist AND `$ARGUMENTS` provided:**
 
-Check if session exists for that phase. If yes, offer to resume or restart.
+Check if session exists for that chapter. If yes, offer to resume or restart.
 If no, continue to `create_uat_concept`.
 
 **If no active sessions AND no `$ARGUMENTS`:**
@@ -98,7 +98,7 @@ If no, continue to `create_uat_concept`.
 ```
 No active UAT sessions.
 
-Provide a phase number to start testing (e.g., /fuska-verify-work 4)
+Provide a chapter number to start testing (e.g., /fuska-verify-work 4)
 ```
 
 **If no active sessions AND `$ARGUMENTS` provided:**
@@ -109,25 +109,25 @@ Continue to `create_uat_concept`.
 <step name="find_summaries">
 **Find what to test:**
 
-Parse `$ARGUMENTS` as phase number (e.g., "4") or plan number (e.g., "04-02").
+Parse `$ARGUMENTS` as chapter number (e.g., "4") or plan number (e.g., "04-02").
 
-Query MegaMemory for phase concept:
+Query MegaMemory for chapter concept:
 
 ```bash
-# Query for phase concept to get phase details and parent_id
-megamemory:understand({query: "phase ${PHASE_ARG}", top_k: 10})
+# Query for chapter concept to get chapter details and parent_id
+megamemory:understand({query: "chapter ${CHAPTER_ARG}", top_k: 10})
 ```
 
-Parse phase concept.summary JSON to extract:
-- Phase number/slug
-- Phase directory name
+Parse chapter concept.summary JSON to extract:
+- Chapter number/slug
+- Chapter directory name
 - Any metadata about deliverables
 
-Query MegaMemory for summary concepts for this phase:
+Query MegaMemory for summary concepts for this chapter:
 
 ```bash
-# Query for summary concepts related to this phase
-megamemory:understand({query: "${phase_slug} summary", top_k: 100})
+# Query for summary concepts related to this chapter
+megamemory:understand({query: "${chapter_slug} summary", top_k: 100})
 ```
 
 Parse each summary concept's.summary JSON to extract testable deliverables.
@@ -164,8 +164,8 @@ Construct JSON summary:
 ```json
 {
   "status": "testing",
-  "phase": "XX-name",
-  "phase_dir": "XX-name",
+  "chapter": "XX-name",
+  "chapter_dir": "XX-name",
   "source": ["04-01-SUMMARY.md", "04-02-SUMMARY.md"],
   "started": "[ISO timestamp]",
   "updated": "[ISO timestamp]",
@@ -198,11 +198,11 @@ Create MegaMemory concept:
 
 ```bash
 megamemory:create_concept(
-  name="{phase} UAT",
+  name="{chapter} UAT",
   kind="feature",
   summary="{JSON string}",
-  parent_id="{phase_concept_id}",
-  why="Tracks UAT testing progress for phase",
+  parent_id="{chapter_concept_id}",
+  why="Tracks UAT testing progress for chapter",
   created_by_task="verify-work workflow"
 )
 ```
@@ -329,7 +329,7 @@ Find first test with `result: "pending"`.
 
 Announce:
 ```
-Resuming: Phase {phase} UAT
+Resuming: Chapter {chapter} UAT
 Progress: {passed + issues + skipped}/{total}
 Issues found so far: {issues count}
 
@@ -362,12 +362,12 @@ megamemory:update_concept(
 ```bash
 # Note: MegaMemory concepts are not committed to git
 # Only commit actual source code changes made during testing
-git commit -m "test({phase}): complete UAT - {passed} passed, {issues} issues"
+git commit -m "test({chapter}): complete UAT - {passed} passed, {issues} issues"
 ```
 
 Present summary:
 ```
-## UAT Complete: Phase {phase}
+## UAT Complete: Chapter {chapter}
 
 | Result | Count |
 |--------|-------|
@@ -387,8 +387,8 @@ Present summary:
 ```
 All tests passed. Ready to continue.
 
-- `/fuska-plan-phase {next}` — Plan next phase
-- `/fuska-execute-phase {next}` — Execute next phase
+- `/fuska-plan-chapter {next}` — Plan next chapter
+- `/fuska-execute-chapter {next}` — Execute next chapter
 ```
 </step>
 
@@ -433,11 +433,11 @@ Task(
   prompt="""
 <planning_context>
 
-**Phase:** {phase_number}
+**Chapter:** {chapter_number}
 **Mode:** gap_closure
 
 **UAT with diagnoses:**
-Query MegaMemory for UAT concept: megamemory:understand(query="{phase} UAT")
+Query MegaMemory for UAT concept: megamemory:understand(query="{chapter} UAT")
 
 **Project State:**
 Query MegaMemory for STATE concept: megamemory:understand(query="project state")
@@ -450,13 +450,13 @@ Parse JSON from concept.summary fields for structured data.
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /fuska-execute-phase
+Output consumed by /fuska-execute-chapter
 Plans must be executable prompts.
 </downstream_consumer>
 """,
   subagent_type="fuska-planner",
   model="{planner_model}",
-  description="Plan gap fixes for Phase {phase}"
+  description="Plan gap fixes for Chapter {chapter}"
 )
 ```
 
@@ -486,15 +486,15 @@ Task(
   prompt="""
 <verification_context>
 
-**Phase:** {phase_number}
-**Phase Goal:** Close diagnosed gaps from UAT
+**Chapter:** {chapter_number}
+**Chapter Goal:** Close diagnosed gaps from UAT
 
 **Plans to verify:**
 
-Query MegaMemory for plan concepts for this phase:
+Query MegaMemory for plan concepts for this chapter:
 
 ```bash
-megamemory:understand({query: "phase ${phase_number} plans", top_k: 100})
+megamemory:understand({query: "chapter ${chapter_number} plans", top_k: 100})
 ```
 
 Parse plan concepts' summary JSON for verification.
@@ -509,7 +509,7 @@ Return one of:
 """,
   subagent_type="fuska-plan-checker",
   model="{checker_model}",
-  description="Verify Phase {phase} fix plans"
+  description="Verify Chapter {chapter} fix plans"
 )
 ```
 
@@ -532,15 +532,15 @@ Task(
   prompt="""
 <revision_context>
 
-**Phase:** {phase_number}
+**Chapter:** {chapter_number}
 **Mode:** revision
 
 **Existing plans:**
 
-Query MegaMemory for plan concepts for this phase:
+Query MegaMemory for plan concepts for this chapter:
 
 ```bash
-megamemory:understand({query: "phase ${phase_number} plans", top_k: 100})
+megamemory:understand({query: "chapter ${chapter_number} plans", top_k: 100})
 ```
 
 Parse plan concepts' summary JSON for plan details.
@@ -557,7 +557,7 @@ Do NOT replan from scratch unless issues are fundamental.
 """,
   subagent_type="fuska-planner",
   model="{planner_model}",
-  description="Revise Phase {phase} plans"
+  description="Revise Chapter {chapter} plans"
 )
 ```
 
@@ -571,7 +571,7 @@ Display: `Max iterations reached. {N} issues remain.`
 Offer options:
 1. Force proceed (execute despite issues)
 2. Provide guidance (user gives direction, retry)
-3. Abandon (exit, user runs /fuska-plan-phase manually)
+3. Abandon (exit, user runs /fuska-plan-chapter manually)
 
 Wait for user response.
 </step>
@@ -584,12 +584,12 @@ Wait for user response.
   Fuska: Fixes ready
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Phase {X}: {Name}** — {N} gap(s) diagnosed, {M} fix plan(s) created
+**Chapter {X}: {Name}** — {N} gap(s) diagnosed, {M} fix plan(s) created
 
 | Gap | Root Cause | Fix Plan |
 |-----|------------|----------|
-| {truth 1} | {root_cause} | {phase}-04 |
-| {truth 2} | {root_cause} | {phase}-04 |
+| {truth 1} | {root_cause} | {chapter}-04 |
+| {truth 2} | {root_cause} | {chapter}-04 |
 
 Plans verified and ready for execution.
 
@@ -599,7 +599,7 @@ Plans verified and ready for execution.
 
 **Execute fixes** — run fix plans
 
-`/new` then `/fuska-execute-phase {phase} --gaps-only`
+`/new` then `/fuska-execute-chapter {chapter} --gaps-only`
 
 ───────────────────────────────────────────────────────────────
 ```
@@ -653,5 +653,5 @@ Default to **major** if unclear. User can correct if needed.
 - [ ] If issues: fuska-planner creates fix plans (gap_closure mode)
 - [ ] If issues: fuska-plan-checker verifies fix plans
 - [ ] If issues: revision loop until plans pass (max 3 iterations)
-- [ ] Ready for `/fuska-execute-phase --gaps-only` when complete
+- [ ] Ready for `/fuska-execute-chapter --gaps-only` when complete
 </success_criteria>

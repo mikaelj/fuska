@@ -49,7 +49,7 @@ Commit history and development context are stored as `decision` and `feature` co
 ### Concept: `commit-history`
 ```typescript
 interface CommitHistoryConcept {
-  name: string;                    // "commit-history:phase-plan" or "commit-history:task"
+  name: string;                    // "commit-history:chapter-plan" or "commit-history:task"
   kind: "decision";
   summary: string;                  // Commit hash, message, files changed, timestamp
   why: string;                     // Why this commit matters (e.g., "completes task X")
@@ -67,14 +67,14 @@ interface CommitHistoryConcept {
   // Commit-specific metadata (stored in summary)
   commit_hash: string;
   commit_type: "initialization" | "task-completion" | "plan-completion" | "handoff";
-  phase_plan: string;               // e.g., "04-01"
+  chapter_plan: string;               // e.g., "04-01"
 }
 ```
 
 ### Concept: `task-completion`
 ```typescript
 interface TaskCompletionConcept {
-  name: string;                    // "task:phase-plan:task-name"
+  name: string;                    // "task:chapter-plan:task-name"
   kind: "feature";
   summary: string;                  // What was implemented (files, changes, outcome)
   why: string;                     // Why this task exists (supports plan goal)
@@ -94,9 +94,9 @@ interface TaskCompletionConcept {
 ### Related Concepts
 
 **Concepts to create during development:**
-- `commit-history:{phase}-{plan}` - Captures all commits for a plan
-- `task:{phase}-{plan}:{task-name}` - Individual task completion
-- `plan-state:{phase}-{plan}` - Plan progress tracking
+- `commit-history:{chapter}-{plan}` - Captures all commits for a plan
+- `task:{chapter}-{plan}:{task-name}` - Individual task completion
+- `plan-state:{chapter}-{plan}` - Plan progress tracking
 
 **Relationships:**
 - `commit-history` → `completes` → `task` (commit completes a task)
@@ -118,7 +118,7 @@ When starting a new initiative, record initialization:
 const initCommitId = await megamemory.create_concept({
   name: "commit-history:initialization",
   kind: "decision",
-  summary: "Commit a1b2c3d: 'docs: initialize ecommerce-app (5 phases)'. Established initiative scaffolding with 5 phases: Foundation, Auth, Products, Checkout, Deployment. Initiative context stored in MegaMemory.",
+  summary: "Commit a1b2c3d: 'docs: initialize ecommerce-app (5 chapters)'. Established initiative scaffolding with 5 chapters: Foundation, Auth, Products, Checkout, Deployment. Initiative context stored in MegaMemory.",
   why: "Initiative initialization commit marks start of development",
   file_refs: [
     "package.json"
@@ -140,12 +140,12 @@ After completing a task and committing, record both:
 
 ```typescript
 const commitHash = "e7f8g9h0";
-const phasePlan = "04-01";
+const chapterPlan = "04-01";
 const taskName = "payment-session-creation";
 
 // Create task completion concept
 const taskId = await megamemory.create_concept({
-  name: `task:${phasePlan}:${taskName}`,
+  name: `task:${chapterPlan}:${taskName}`,
   kind: "feature",
   summary: "Implements Stripe payment session creation in src/app/api/checkout/session/route.ts:1-50. Uses stripe.checkout.sessions.create with product line items, success/cancel URLs, and metadata. Returns session.url to client. Error handling with try/catch, returns 400 on Stripe errors.",
   why: "Enables users to initiate Stripe checkout flow",
@@ -166,12 +166,12 @@ const taskId = await megamemory.create_concept({
       description: "Part of Stripe payments feature"
     }
   ],
-  created_by_task: `task:${phasePlan}:${taskName}`
+  created_by_task: `task:${chapterPlan}:${taskName}`
 });
 
 // Record commit history
 await megamemory.create_concept({
-  name: `commit-history:${phasePlan}:session-creation`,
+  name: `commit-history:${chapterPlan}:session-creation`,
   kind: "decision",
   summary: `Commit ${commitHash}: 'feat(api): implement payment session creation
 
@@ -192,7 +192,7 @@ await megamemory.create_concept({
       description: "Commit completes this task"
     }
   ],
-  created_by_task: `git:commit:${phasePlan}:${taskName}`
+  created_by_task: `git:commit:${chapterPlan}:${taskName}`
 });
 ```
 
@@ -201,11 +201,11 @@ await megamemory.create_concept({
 After all tasks in a plan are done, record plan completion:
 
 ```typescript
-const phasePlan = "04-01";
+const chapterPlan = "04-01";
 
 // Update plan state
 await megamemory.create_concept({
-  name: `plan-state:${phasePlan}:completed`,
+  name: `plan-state:${chapterPlan}:completed`,
   kind: "decision",
   summary: "Plan 04-01 (Checkout Flow) completed. Tasks completed: 3/3. Tasks: webhook-verification, payment-session-creation, checkout-page-component. All artifacts committed and verified.",
   why: "Marks plan as complete for roadmap tracking",
@@ -221,9 +221,9 @@ await megamemory.create_concept({
       description: "Plan completion metadata"
     },
     {
-      to: "phase:04-checkout",
+      to: "chapter:04-checkout",
       relation: "depends_on",
-      description: "Plan belongs to phase 04"
+      description: "Plan belongs to chapter 04"
     }
   ],
   created_by_task: "plan:complete:04-01"
@@ -231,7 +231,7 @@ await megamemory.create_concept({
 
 // Record metadata commit (plan state tracked in MegaMemory)
 await megamemory.create_concept({
-  name: `commit-history:${phasePlan}:metadata`,
+  name: `commit-history:${chapterPlan}:metadata`,
   kind: "decision",
   summary: `Commit i1j2k3l: 'docs(checkout): complete checkout flow plan
 
@@ -246,7 +246,7 @@ await megamemory.create_concept({
   ],
   edges: [
     {
-      to: `plan-state:${phasePlan}:completed`,
+      to: `plan-state:${chapterPlan}:completed`,
       relation: "completes",
       description: "Commit completes plan metadata"
     }
@@ -260,20 +260,20 @@ await megamemory.create_concept({
 When pausing work, record handoff state:
 
 ```typescript
-const phasePlan = "04-02";
+const chapterPlan = "04-02";
 const currentTask = "payment-webhook-handler";
 
 await megamemory.create_concept({
-  name: `handoff:${phasePlan}:paused`,
+  name: `handoff:${chapterPlan}:paused`,
   kind: "decision",
-  summary: `Handoff for plan ${phasePlan} at task 1/3. Current: ${currentTask}. Context: Started webhook handler, Stripe signature verification implemented, payment intent handling in progress. Next: Add order creation in database and fulfillment logic.`,
+  summary: `Handoff for plan ${chapterPlan} at task 1/3. Current: ${currentTask}. Context: Started webhook handler, Stripe signature verification implemented, payment intent handling in progress. Next: Add order creation in database and fulfillment logic.`,
   why: "Preserves WIP state for next session",
   file_refs: [
     "src/app/api/webhooks/stripe/route.ts:1-30"
   ],
   edges: [
     {
-      to: `task:${phasePlan}:${currentTask}`,
+      to: `task:${chapterPlan}:${currentTask}`,
       relation: "depends_on",
       description: "Paused on this task"
     },
@@ -300,7 +300,7 @@ Current: payment-webhook-handler
   ],
   edges: [
     {
-      to: `handoff:${phasePlan}:paused`,
+      to: `handoff:${chapterPlan}:paused`,
       relation: "completes",
       description: "Commit captures handoff state"
     }
@@ -371,19 +371,19 @@ Get overall project state from commit history:
 
 ```typescript
 const projectState = await megamemory.understand({
-  query: "commit-history plan-state completed phase roadmap"
+  query: "commit-history plan-state completed chapter roadmap"
 });
 
-// Group by phase
-const phases = {};
+// Group by chapter
+const chapters = {};
 projectState.forEach(concept => {
   if (concept.name.includes("plan-state")) {
-    const phase = concept.name.match(/plan-state:(\d{2}-\d{2})/)?.[1];
-    if (phase) phases[phase] = concept.summary;
+    const chapter = concept.name.match(/plan-state:(\d{2}-\d{2})/)?.[1];
+    if (chapter) chapters[chapter] = concept.summary;
   }
 });
 
-console.log("Project state:", phases);
+console.log("Project state:", chapters);
 // Output: { "01-01": "completed", "02-01": "completed", "04-01": "completed", "04-02": "paused" }
 ```
 
@@ -422,7 +422,7 @@ const commitHash = await bash("git rev-parse HEAD");
 await megamemory.create_concept({
   name: "commit-history:initialization",
   kind: "decision",
-  summary: `Commit ${commitHash}: 'docs: initialize ecommerce-app (5 phases)'. Created initiative scaffold with Next.js 15, Prisma, Tailwind. Phases: 01-Foundation, 02-Auth, 03-Products, 04-Checkout, 05-Deployment.`,
+  summary: `Commit ${commitHash}: 'docs: initialize ecommerce-app (5 chapters)'. Created initiative scaffold with Next.js 15, Prisma, Tailwind. Chapters: 01-Foundation, 02-Auth, 03-Products, 04-Checkout, 05-Deployment.`,
   why: "Initiative start",
   file_refs: [
     "package.json",
@@ -451,14 +451,14 @@ await megamemory.create_concept({
 ### Example 2: Task Completion Chain (TDD Workflow)
 
 ```typescript
-// RED Phase: Write failing test
+// RED Chapter: Write failing test
 const testCommit = await bash("git rev-parse HEAD");
 
 await megamemory.create_concept({
   name: "task:02-02:jwt-failing-test",
   kind: "feature",
   summary: "Adds failing test for JWT token generation in src/__tests__/jwt.test.ts:1-30. Tests: token contains user ID claim, expires in 1 hour, signature verification works. Currently fails: jwt.ts not implemented.",
-  why: "TDD RED phase - defines expected behavior",
+  why: "TDD RED chapter - defines expected behavior",
   file_refs: ["src/__tests__/jwt.test.ts:1-30"],
   edges: [{ to: "plan:02-02", relation: "implements", description: "Test task" }],
   created_by_task: "tdd:red:jwt"
@@ -478,14 +478,14 @@ await megamemory.create_concept({
   created_by_task: "git:commit:tdd:red"
 });
 
-// GREEN Phase: Implement to pass test
+// GREEN Chapter: Implement to pass test
 const implCommit = await bash("git rev-parse HEAD");
 
 await megamemory.create_concept({
   name: "task:02-02:jwt-implementation",
   kind: "feature",
   summary: "Implements JWT generation in src/utils/jwt.ts:1-40. Uses jose library with HS256 algorithm. Claims: userId, iat (issued at), exp (expires in 1h). Functions: createToken(userId), verifyToken(token). Passes all tests.",
-  why: "TDD GREEN phase - implements to pass test",
+  why: "TDD GREEN chapter - implements to pass test",
   file_refs: ["src/utils/jwt.ts:1-40", "src/__tests__/jwt.test.ts:1-30"],
   edges: [
     { to: "plan:02-02", relation: "implements", description: "Implementation task" },
@@ -537,7 +537,7 @@ await megamemory.create_concept({
   ],
   edges: [
     { to: "plan:04-01", relation: "completes", description: "Plan completion" },
-    { to: "phase:04-checkout", relation: "depends_on", description: "Plan in phase 04" },
+    { to: "chapter:04-checkout", relation: "depends_on", description: "Plan in chapter 04" },
     ...tasksCompleted.map(task => ({ to: task, relation: "depends_on", description: "Depends on task" }))
   ],
   created_by_task: "plan:complete:04-01"
@@ -579,27 +579,27 @@ console.log("Plan 04-01 commits:", allCommits);
 
 ```typescript
 // Before pausing, record handoff
-const currentPhasePlan = "04-02";
+const currentChapterPlan = "04-02";
 const currentTask = "payment-webhook";
 const progress = "Stripe signature verification done, payment intent parsing started, order creation not started";
 
 await megamemory.create_concept({
-  name: `handoff:${currentPhasePlan}:paused`,
+  name: `handoff:${currentChapterPlan}:paused`,
   kind: "decision",
-  summary: `Handoff for plan ${currentPhasePlan} at task 1/3. Current: ${currentTask}. Progress: ${progress}. Next: Parse payment_intent.succeeded, create order in Prisma, trigger fulfillment.`,
+  summary: `Handoff for plan ${currentChapterPlan} at task 1/3. Current: ${currentTask}. Progress: ${progress}. Next: Parse payment_intent.succeeded, create order in Prisma, trigger fulfillment.`,
   why: "Preserves WIP for next session",
   file_refs: [
     "src/app/api/webhooks/stripe/route.ts:1-35"
   ],
   edges: [
-    { to: `task:${currentPhasePlan}:${currentTask}`, relation: "depends_on", description: "Paused on task" },
+    { to: `task:${currentChapterPlan}:${currentTask}`, relation: "depends_on", description: "Paused on task" },
     { to: "plan:04-02", relation: "configured_by", description: "Plan is WIP" }
   ],
   created_by_task: "git:handoff"
 });
 
 await megamemory.create_concept({
-  name: `commit-history:${currentPhasePlan}:handoff`,
+  name: `commit-history:${currentChapterPlan}:handoff`,
   kind: "decision",
   summary: `Commit ${await bash("git rev-parse HEAD")}: 'wip: checkout paused at task 1/3
 
@@ -609,14 +609,14 @@ Current: ${currentTask}
   why: "Commits handoff state",
   file_refs: ["src/app/api/webhooks/stripe/route.ts"],
   edges: [
-    { to: `handoff:${currentPhasePlan}:paused`, relation: "completes", description: "Commits handoff" }
+    { to: `handoff:${currentChapterPlan}:paused`, relation: "completes", description: "Commits handoff" }
   ],
   created_by_task: "git:commit:handoff"
 });
 
 // In next session, query handoff context
 const handoffContext = await megamemory.understand({
-  query: `handoff ${currentPhasePlan} paused task progress`
+  query: `handoff ${currentChapterPlan} paused task progress`
 });
 
 const handoff = handoffContext.find(c => c.name.startsWith("handoff"));
@@ -625,7 +625,7 @@ console.log("Resuming work:", handoff.summary);
 
 // Query task to continue
 const taskContext = await megamemory.understand({
-  query: `task ${currentPhasePlan} ${currentTask} implementation`
+  query: `task ${currentChapterPlan} ${currentTask} implementation`
 });
 
 console.log("Task context:", taskContext[0].summary);
@@ -669,7 +669,7 @@ console.log("Task implementation:", buggyTask[0].summary);
 ```typescript
 // Get overall initiative state
 const allPlans = await megamemory.understand({
-  query: "plan-state completed paused phase"
+  query: "plan-state completed paused chapter"
 });
 
 const status = {
@@ -713,9 +713,9 @@ console.log("Commits per plan:", commitCounts);
 
 <commit_points>
 
-Commit timing depends on the `git.commit_strategy` setting in the config concept. Default: `per-phase`.
+Commit timing depends on the `git.commit_strategy` setting in the config concept. Default: `per-chapter`.
 
-| Event                    | per-phase | per-plan | per-task | Why                                    |
+| Event                    | per-chapter | per-plan | per-task | Why                                    |
 | ------------------------ | --------- | -------- | -------- | -------------------------------------- |
 | BRIEF + ROADMAP created  | YES       | YES      | YES      | Project initialization                 |
 | PLAN concept created     | NO        | NO       | NO       | Intermediate — MegaMemory tracks this  |
@@ -723,7 +723,7 @@ Commit timing depends on the `git.commit_strategy` setting in the config concept
 | DISCOVERY concept created| NO        | NO       | NO       | Intermediate                           |
 | **Task completed**       | stage     | stage    | COMMIT   | Stage files; commit only if per-task   |
 | **Plan completed**       | stage     | COMMIT   | —        | Commit if per-plan; already done if per-task |
-| **Phase completed**      | COMMIT    | —        | —        | Commit if per-phase                    |
+| **Chapter completed**      | COMMIT    | —        | —        | Commit if per-chapter                    |
 | Handoff created          | YES       | YES      | YES      | WIP state preserved                    |
 
 **"stage" means:** `git add` the files but do NOT commit yet. The commit happens at the boundary defined by the strategy.
@@ -764,7 +764,7 @@ These rules apply to ALL commit strategies. Every commit message MUST follow the
 ### Commit types
 - `feat` — New feature/functionality
 - `fix` — Bug fix
-- `test` — Test-only (TDD RED phase)
+- `test` — Test-only (TDD RED chapter)
 - `refactor` — Code cleanup, no behavior change
 - `perf` — Performance improvement
 - `chore` — Dependencies, config, tooling
@@ -799,7 +799,7 @@ feat(api): parse discounts from API response
 
 02-02
 ```
-Two bullets. High-level. The diff shows the rest. Phase/plan in the trailer.
+Two bullets. High-level. The diff shows the rest. Chapter/plan in the trailer.
 
 </commit_message_rules>
 
@@ -807,7 +807,7 @@ Two bullets. High-level. The diff shows the rest. Phase/plan in the trailer.
 ## Initiative Initialization
 
 ```
-docs: initialize [initiative-name] ([N] phases)
+docs: initialize [initiative-name] ([N] chapters)
 
 [One-liner initiative description]
 ```
@@ -829,11 +829,11 @@ Each task gets its own commit immediately after completion.
 - {high-level change 1}
 - {high-level change 2}
 
-{phase}-{plan}
+{chapter}-{plan}
 ```
 
 - **Scope:** Semantic area (`auth`, `api`, `checkout`, etc.)
-- **Trailer:** Phase-plan identifier (`02-01`)
+- **Trailer:** Chapter-plan identifier (`02-01`)
 
 **Max 2-4 bullets. See commit message rules above.**
 
@@ -862,11 +862,11 @@ All tasks in a plan are staged as they complete. One commit when the plan finish
 - {task 2}: {one-line summary}
 - {task 3}: {one-line summary}
 
-{phase}-{plan}
+{chapter}-{plan}
 ```
 
 - **Scope:** Semantic area (`auth`, `api`, `checkout`, etc.)
-- **Trailer:** Phase-plan identifier (`02-01`)
+- **Trailer:** Chapter-plan identifier (`02-01`)
 - One bullet per task. Each bullet is one sentence max.
 
 ```bash
@@ -882,22 +882,22 @@ git commit -m "feat(auth): add JWT auth with refresh token rotation
 
 </format>
 
-<format name="per-phase">
-## Per-Phase Commit (when `git.commit_strategy` = `per-phase`)
+<format name="per-chapter">
+## Per-Chapter Commit (when `git.commit_strategy` = `per-chapter`)
 
-All tasks across all plans are staged as they complete. One commit when the phase finishes.
+All tasks across all plans are staged as they complete. One commit when the chapter finishes.
 
 ```
-{type}({scope}): {phase goal summary}
+{type}({scope}): {chapter goal summary}
 
 - Plan {NN}-01: {one-line summary}
 - Plan {NN}-02: {one-line summary}
 
-phase-{NN}
+chapter-{NN}
 ```
 
 - **Scope:** Semantic area (`auth`, `api`, `checkout`, etc.)
-- **Trailer:** Phase identifier (`phase-02`)
+- **Trailer:** Chapter identifier (`chapter-02`)
 - One bullet per plan. Each bullet is one sentence max.
 
 ```bash
@@ -907,7 +907,7 @@ git commit -m "feat(auth): add user authentication system
 - Plan 02-02: refresh token rotation and secure storage
 - Plan 02-03: protected route middleware
 
-phase-02
+chapter-02
 "
 ```
 
@@ -917,11 +917,11 @@ phase-02
 ## Handoff (WIP)
 
 ```
-wip: [phase-name] paused at task [X]/[Y]
+wip: [chapter-name] paused at task [X]/[Y]
 
 Current: [task name]
 
-{phase}-{plan}
+{chapter}-{plan}
 ```
 
 ```bash
@@ -958,17 +958,17 @@ Current: refresh token rotation
 
 ## Example Git Logs by Strategy
 
-**per-phase (recommended — cleanest history):**
+**per-chapter (recommended — cleanest history):**
 ```
 a7f2d1 feat(checkout): add Stripe payments integration
-        phase-04
+        chapter-04
 3e9c4b feat(catalog): add product search and filters
-        phase-03
+        chapter-03
 8a1b2c feat(auth): add JWT auth with refresh token rotation
-        phase-02
+        chapter-02
 5c3d7e feat(scaffold): set up Next.js 15 + Prisma + Tailwind
-        phase-01
-2f4a8d docs: initialize ecommerce-app (5 phases)
+        chapter-01
+2f4a8d docs: initialize ecommerce-app (5 chapters)
 ```
 
 **per-plan (moderate granularity):**
@@ -985,7 +985,7 @@ a7f2d1 feat(checkout): add Stripe payments integration
         02-01
 6t7u8v feat(scaffold): configure project structure
         01-01
-2f4a8d docs: initialize ecommerce-app (5 phases)
+2f4a8d docs: initialize ecommerce-app (5 chapters)
 ```
 
 **per-task (most granular):**
@@ -1010,7 +1010,7 @@ a7f2d1 feat(checkout): add Stripe payments integration
         01-01
 2z3a4b feat(scaffold): create Next.js 15 project
         01-01
-2f4a8d docs: initialize ecommerce-app (5 phases)
+2f4a8d docs: initialize ecommerce-app (5 chapters)
 ```
 
 </example_log>
@@ -1022,7 +1022,7 @@ a7f2d1 feat(checkout): add Stripe payments integration
 - PLAN concept creation (MegaMemory stores it)
 - RESEARCH concept (intermediate, stored in MegaMemory)
 - DISCOVERY concept (intermediate, stored in MegaMemory)
-- Plan-completion metadata (`docs({phase}-{plan}): complete X plan` — MegaMemory tracks completion, not git)
+- Plan-completion metadata (`docs({chapter}-{plan}): complete X plan` — MegaMemory tracks completion, not git)
 
 **Do commit (outcomes):**
 - Source code and tests — at the boundary defined by `git.commit_strategy`
@@ -1036,12 +1036,12 @@ a7f2d1 feat(checkout): add Stripe payments integration
 
 ## Choosing a Commit Strategy
 
-**per-phase (default):** Cleanest git history. One commit per phase. Best for solo dev + AI workflows where MegaMemory already tracks granular progress. You rarely need to bisect individual tasks when MegaMemory knows exactly what each task did.
+**per-chapter (default):** Cleanest git history. One commit per chapter. Best for solo dev + AI workflows where MegaMemory already tracks granular progress. You rarely need to bisect individual tasks when MegaMemory knows exactly what each task did.
 
-**per-plan:** Middle ground. Useful when phases are large and you want some ability to revert individual plans without losing a whole phase.
+**per-plan:** Middle ground. Useful when chapters are large and you want some ability to revert individual plans without losing a whole chapter.
 
 **per-task:** Most granular. Each task is independently revertable and bisectable. Use when you need fine-grained git history (e.g., working with other developers who read git log, or when MegaMemory is not available for context).
 
-**Failure recovery across all strategies:** MegaMemory tracks task completion regardless of commit strategy. If an agent crashes mid-phase, it resumes from the last completed task (not the last commit). Uncommitted work on disk is typically still present and can be staged by the resuming agent.
+**Failure recovery across all strategies:** MegaMemory tracks task completion regardless of commit strategy. If an agent crashes mid-chapter, it resumes from the last completed task (not the last commit). Uncommitted work on disk is typically still present and can be staged by the resuming agent.
 
 </commit_strategy_rationale>

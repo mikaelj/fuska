@@ -1,7 +1,7 @@
 ---
 name: fuska-git-message
 description: Generate a commit message using Fuska rules without committing, or regenerate for an existing commit or commit range
-argument-hint: "<commit-hash | commit-range | phase-X-plan-Y>"
+argument-hint: "<commit-hash | commit-range | chapter-X-plan-Y>"
 agent: @../../agents/fuska/fuska-git-message.md
 tools:
   - read
@@ -17,7 +17,7 @@ Test and preview commit messages using the Fuska commit message rules. Three mod
 2. **Commit hash mode:** Replay an existing commit's diff and generate what the message *should* look like under current rules
 3. **Working tree mode:** Generate a commit message for uncommitted changes using plan context
 
-All modes can be combined with explicit phase-plan context (overrides auto-detection).
+All modes can be combined with explicit chapter-plan context (overrides auto-detection).
 
 </objective>
 
@@ -35,7 +35,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\", ...}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -54,14 +54,14 @@ The variable `input` contains the raw argument string provided by the user.
 const args = input.trim().split(/\s+/)
 let commitRange = null
 let commitHash = null
-let phasePlan = null
+let chapterPlan = null
 
 for (const arg of args) {
   // Check for range first (contains "..")
   if (arg.includes('..')) {
     commitRange = arg
-  } else if (arg.match(/^phase-\d+-plan-\d+$/)) {
-    phasePlan = arg
+  } else if (arg.match(/^chapter-\d+-plan-\d+$/)) {
+    chapterPlan = arg
   } else {
     // Try to resolve as a single git commit
     // bash: git rev-parse --verify <arg>^{commit} 2>/dev/null
@@ -70,7 +70,7 @@ for (const arg of args) {
   }
 }
 
-const isDefaultMode = !commitHash && !commitRange && !phasePlan
+const isDefaultMode = !commitHash && !commitRange && !chapterPlan
 
 ## Load Config
 
@@ -79,7 +79,7 @@ megamemory_understand(query="config", top_k=5)
 
 const configData = response.matches.length > 0
   ? JSON.parse(response.matches[0].summary) : {}
-const commitStrategy = configData?.git?.commit_strategy || 'per-phase'
+const commitStrategy = configData?.git?.commit_strategy || 'per-chapter'
 ```
 
 The commit message rules and formats from git-integration.md are already loaded via `@execution_context`.
@@ -170,27 +170,27 @@ git log -1 --format="%B" $commitHash
 
 Store as `originalMessage`.
 
-**Step 2a.3: Extract phase-plan from commit message (if no explicit phasePlan arg)**
+**Step 2a.3: Extract chapter-plan from commit message (if no explicit chapterPlan arg)**
 
-If `phasePlan` is not set, try to parse scope from the subject line:
+If `chapterPlan` is not set, try to parse scope from the subject line:
 
 ```
-// Match patterns like: feat(phase-02-plan-01): ... or feat(02-01): ...
+// Match patterns like: feat(chapter-02-plan-01): ... or feat(02-01): ...
 const scopeMatch = originalMessage.match(/^\w+\(([^)]+)\):/)
 if (scopeMatch) {
   const scope = scopeMatch[1]
-  // Full format: phase-02-plan-01
-  if (scope.match(/^phase-\d+-plan-\d+$/)) {
-    phasePlan = scope
+  // Full format: chapter-02-plan-01
+  if (scope.match(/^chapter-\d+-plan-\d+$/)) {
+    chapterPlan = scope
   }
-  // Short format: 02-01 → phase-02-plan-01
+  // Short format: 02-01 → chapter-02-plan-01
   else if (scope.match(/^\d{2}-\d{2}$/)) {
-    const [phaseNum, planNum] = scope.split('-')
-    phasePlan = `phase-${phaseNum}-plan-${planNum}`
+    const [chapterNum, planNum] = scope.split('-')
+    chapterPlan = `chapter-${chapterNum}-plan-${planNum}`
   }
-  // Phase-only format: phase-02
-  else if (scope.match(/^phase-\d+$/)) {
-    phasePlan = scope  // No plan, just phase context
+  // Chapter-only format: chapter-02
+  else if (scope.match(/^chapter-\d+$/)) {
+    chapterPlan = scope  // No plan, just chapter context
   }
 }
 ```
@@ -261,9 +261,9 @@ if (currentHash) {
 }
 ```
 
-**Step 2c.4: Extract phase-plan from most recent commit (if no explicit arg)**
+**Step 2c.4: Extract chapter-plan from most recent commit (if no explicit arg)**
 
-If `phasePlan` is not set:
+If `chapterPlan` is not set:
 
 ```bash
 git log -1 --format="%B" ${rangeEnd}
@@ -276,24 +276,24 @@ const scopeMatch = latestMessage.match(/^\w+\s*\(([^)]+)\):/)
 
 if (scopeMatch) {
   const scope = scopeMatch[1].trim()
-  // Full format: phase-02-plan-01
-  if (scope.match(/^phase-\d+-plan-\d+$/)) {
-    phasePlan = scope
+  // Full format: chapter-02-plan-01
+  if (scope.match(/^chapter-\d+-plan-\d+$/)) {
+    chapterPlan = scope
   }
-  // Short format: 02-01 → phase-02-plan-01
+  // Short format: 02-01 → chapter-02-plan-01
   else if (scope.match(/^\d{2}-\d{2}$/)) {
-    const [phaseNum, planNum] = scope.split('-')
-    phasePlan = `phase-${phaseNum}-plan-${planNum}`
+    const [chapterNum, planNum] = scope.split('-')
+    chapterPlan = `chapter-${chapterNum}-plan-${planNum}`
   }
-  // Phase-only format: phase-02
-  else if (scope.match(/^phase-\d+$/)) {
-    phasePlan = scope
+  // Chapter-only format: chapter-02
+  else if (scope.match(/^chapter-\d+$/)) {
+    chapterPlan = scope
   }
 }
 
-// If still no phasePlan found, note it
-if (!phasePlan) {
-  → Note: "No phase-plan context available — generating message from diff only"
+// If still no chapterPlan found, note it
+if (!chapterPlan) {
+  → Note: "No chapter-plan context available — generating message from diff only"
 }
 ```
 
@@ -301,7 +301,7 @@ if (!phasePlan) {
 
 Store flag `isRangeMode = true`. The working tree is NOT modified (we only read the diff), so no cherry-pick or checkout needed.
 
-**Priority note:** If user explicitly provides `phasePlan` argument, it overrides any auto-detected value from commits.
+**Priority note:** If user explicitly provides `chapterPlan` argument, it overrides any auto-detected value from commits.
 
 ---
 
@@ -335,10 +335,10 @@ git rev-parse HEAD 2>/dev/null
 
 ## Step 3: Load plan context from MegaMemory
 
-If `phasePlan` is known (from argument or parsed from commit):
+If `chapterPlan` is known (from argument or parsed from commit):
 
 ```
-megamemory_understand(query="${phasePlan}", top_k=3)
+megamemory_understand(query="${chapterPlan}", top_k=3)
 ```
 
 From the results, extract:
@@ -348,8 +348,8 @@ From the results, extract:
 
 This gives the message generator richer context: *what the plan intended*, not just what the diff shows.
 
-If `phasePlan` is not known:
-→ Note: "No phase-plan context available — generating message from diff only"
+If `chapterPlan` is not known:
+→ Note: "No chapter-plan context available — generating message from diff only"
 
 ---
 
@@ -392,7 +392,7 @@ If `isDefaultMode` is true:
 - No args: Generate commit message for current changes (unstaged + staged)
 - <commit-hash>: Replay existing commit and regenerate message
 - <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)
-- [phase-X-plan-Y]: Override auto-detect phase-plan context
+- [chapter-X-plan-Y]: Override auto-detect chapter-plan context
 ```
 
 ---
@@ -414,10 +414,10 @@ Apply the `<commit_message_rules>` and `<commit_formats>` from git-integration.m
 
 **Scope Rules (CRITICAL):**
 - Scope MUST be a semantic area: `auth`, `api`, `checkout`, `ui`, `db`, `benchmark`, `pricing`, `data`, `config`, etc.
-- NEVER use task numbers, phase numbers, or plan identifiers as scope
+- NEVER use task numbers, chapter numbers, or plan identifiers as scope
 - BAD: `refactor(task-002): ...` — task-002 is metadata, not an area
 - GOOD: `refactor(benchmark): ...` — benchmark is the semantic area
-- Phase-plan identifiers go in the TRAILER (footer), not the scope
+- Chapter-plan identifiers go in the TRAILER (footer), not the scope
 
 Priority order:
 1. If `domainScope` is found from MegaMemory domain concepts → use domain name (e.g., `pricing`, `booking`)
@@ -443,15 +443,15 @@ Priority order:
 **Step 4.5: Apply commit strategy format**
 
 Use the format matching `commitStrategy` from git-integration.md:
-- `per-phase`: one bullet per plan
+- `per-chapter`: one bullet per plan
 - `per-plan`: one bullet per task
 - `per-task`: 2-4 high-level bullets
 
-**Step 4.6: Add trailer (phase-plan identifier)**
+**Step 4.6: Add trailer (chapter-plan identifier)**
 
-If `phasePlan` is known, add as trailer in the footer:
-- `per-phase` → `phase-{NN}` (e.g., `phase-02`)
-- `per-plan` / `per-task` → `{phase}-{plan}` (e.g., `02-01`, `task-002`)
+If `chapterPlan` is known, add as trailer in the footer:
+- `per-chapter` → `chapter-{NN}` (e.g., `chapter-02`)
+- `per-plan` / `per-task` → `{chapter}-{plan}` (e.g., `02-01`, `task-002`)
 
 **Final format:**
 ```
@@ -524,7 +524,7 @@ ${isDefaultMode ? `
 - No args: Generate commit message for current changes (unstaged + staged)
 - <commit-hash>: Replay existing commit and regenerate message
 - <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)
-- [phase-X-plan-Y]: Override auto-detect phase-plan context
+- [chapter-X-plan-Y]: Override auto-detect chapter-plan context
 
 ` : ''}
 ${isDefaultMode ? '## Generated commit message for current changes:' : '## Generated commit message:'}
@@ -550,8 +550,8 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Range validation confirms commits exist between endpoints
 - [ ] Combined diff correctly extracted for entire range
 - [ ] All original commit messages captured and displayed with parseable format
-- [ ] Phase-plan auto-detected from most recent commit in range with flexible regex
-- [ ] Phase-plan can be overridden with explicit argument (takes precedence)
+- [ ] Chapter-plan auto-detected from most recent commit in range with flexible regex
+- [ ] Chapter-plan can be overridden with explicit argument (takes precedence)
 - [ ] Generated message follows all Fuska commit message rules
 - [ ] Original messages displayed in full for all commits
 - [ ] No working tree modifications in range mode (no stash, no checkout, no cherry-pick)
@@ -564,8 +564,8 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Git log parsing handles empty commit bodies correctly
 - [ ] Subject line: max 72 chars, imperative mood, `{type}({scope}): {description}`
 - [ ] Body: max 2-4 bullets, high-level only, no implementation details
-- [ ] Scope is ALWAYS a semantic area (`benchmark`, `pricing`, `api`), NEVER task/phase numbers
-- [ ] Trailer contains phase-plan identifier (e.g., `task-002`, `02-01`, `phase-02`)
+- [ ] Scope is ALWAYS a semantic area (`benchmark`, `pricing`, `api`), NEVER task/chapter numbers
+- [ ] Trailer contains chapter-plan identifier (e.g., `task-002`, `02-01`, `chapter-02`)
 - [ ] Message is printed, nothing is committed
 - [ ] No arguments defaults to working tree mode (unstaged + staged)
 - [ ] No arguments falls back to HEAD commit when no uncommitted changes exist
@@ -576,8 +576,8 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Domain concepts queried from MegaMemory (query="domain")
 - [ ] Changed files extracted from diff content
 - [ ] Files matched against domain file_refs
-- [ ] Domain scope used when phasePlan is unknown and domain match found
-- [ ] Scope omitted (not random word) when neither phasePlan nor domainScope found
+- [ ] Domain scope used when chapterPlan is unknown and domain match found
+- [ ] Scope omitted (not random word) when neither chapterPlan nor domainScope found
 - [ ] Never extracts scope from diff content (variable names, renames, function names)
 
 </success_criteria>

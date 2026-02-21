@@ -23,7 +23,7 @@ describe('Migration Tests', () => {
       // Create some planning files
       await fs.writeJSON(path.join(planningDir, 'config.json'), { mode: 'yolo' });
       await fs.writeFile(path.join(planningDir, 'PROJECT.md'), '# Test Project\n\nThis is a test project.');
-      await fs.writeFile(path.join(planningDir, 'STATE.md'), '# State\n\nCurrent phase: 1');
+      await fs.writeFile(path.join(planningDir, 'STATE.md'), '# State\n\nCurrent chapter: 1');
 
       // Simulate migration backup
       const backupDir = planningDir + BACKUP_SUFFIX;
@@ -54,18 +54,18 @@ describe('Migration Tests', () => {
 
       await fs.writeFile(path.join(planningDir, 'PROJECT.md'), '# Test Project\n\n## What This Is\n\nA test project for migration.\n\n## Core Value\n\nTesting migration functionality.');
       await fs.writeFile(path.join(planningDir, 'REQUIREMENTS.md'), '# Requirements\n\n## Validated\n\n- REQ-001: Existing feature\n\n## Active\n\n- REQ-002: New feature\n\n## Out of Scope\n\n- Feature X: Not needed');
-      await fs.writeFile(path.join(planningDir, 'ROADMAP.md'), '# Roadmap\n\n## Phase 1: Foundation\n\nGoal: Implement core features\n\nRequirements: REQ-001, REQ-002\n\n## Phase 2: Enhancement\n\nGoal: Add advanced features');
-      await fs.writeFile(path.join(planningDir, 'STATE.md'), '# State\n\nCurrent Phase: Phase 1\nCurrent Plan: None\nStatus: ready_to_plan\nProgress: 0%');
+      await fs.writeFile(path.join(planningDir, 'ROADMAP.md'), '# Roadmap\n\n## Chapter 1: Foundation\n\nGoal: Implement core features\n\nRequirements: REQ-001, REQ-002\n\n## Chapter 2: Enhancement\n\nGoal: Add advanced features');
+      await fs.writeFile(path.join(planningDir, 'STATE.md'), '# State\n\nCurrent Chapter: Chapter 1\nCurrent Plan: None\nStatus: ready_to_plan\nProgress: 0%');
 
-      // Create phases directory
-      const phasesDir = path.join(planningDir, 'phases');
-      await fs.ensureDir(phasesDir);
-      const phase1Dir = path.join(phasesDir, '01-foundation');
-      await fs.ensureDir(phase1Dir);
+      // Create chapters directory
+      const chaptersDir = path.join(planningDir, 'chapters');
+      await fs.ensureDir(chaptersDir);
+      const chapter1Dir = path.join(chaptersDir, '01-foundation');
+      await fs.ensureDir(chapter1Dir);
 
-      // Create phase files
-      await fs.writeFile(path.join(phase1Dir, '01-foundation-CONTEXT.md'), '# Context\n\n## Phase Boundary\n\nImplement core features\n\n## Decisions\n\n- Decision 1: Use TypeScript\n\n## OpenCode Discretion\n\n- UI design\n\n## Specifics\n\n- Must work in CI\n\n## Deferred\n\n- Advanced UI (Phase 2)');
-      await fs.writeFile(path.join(phase1Dir, '01-foundation-PLAN.md'), '# Plan\n\n## Objective\n\nImplement REQ-001\n\n## Tasks\n\n1. Task 1\n2. Task 2');
+      // Create chapter files
+      await fs.writeFile(path.join(chapter1Dir, '01-foundation-CONTEXT.md'), '# Context\n\n## Chapter Boundary\n\nImplement core features\n\n## Decisions\n\n- Decision 1: Use TypeScript\n\n## OpenCode Discretion\n\n- UI design\n\n## Specifics\n\n- Must work in CI\n\n## Deferred\n\n- Advanced UI (Chapter 2)');
+      await fs.writeFile(path.join(chapter1Dir, '01-foundation-PLAN.md'), '# Plan\n\n## Objective\n\nImplement REQ-001\n\n## Tasks\n\n1. Task 1\n2. Task 2');
 
       // Verify all files can be read
       expect(await fs.pathExists(path.join(planningDir, 'config.json'))).toBe(true);
@@ -73,8 +73,8 @@ describe('Migration Tests', () => {
       expect(await fs.pathExists(path.join(planningDir, 'REQUIREMENTS.md'))).toBe(true);
       expect(await fs.pathExists(path.join(planningDir, 'ROADMAP.md'))).toBe(true);
       expect(await fs.pathExists(path.join(planningDir, 'STATE.md'))).toBe(true);
-      expect(await fs.pathExists(path.join(phase1Dir, '01-foundation-CONTEXT.md'))).toBe(true);
-      expect(await fs.pathExists(path.join(phase1Dir, '01-foundation-PLAN.md'))).toBe(true);
+      expect(await fs.pathExists(path.join(chapter1Dir, '01-foundation-CONTEXT.md'))).toBe(true);
+      expect(await fs.pathExists(path.join(chapter1Dir, '01-foundation-PLAN.md'))).toBe(true);
     });
 
     it('should create MegaMemory concepts from planning files', async () => {
@@ -153,37 +153,37 @@ describe('Migration Tests', () => {
       expect(req2.summary).toContain('"status":"active"');
     });
 
-    it('should migrate phases correctly', async () => {
+    it('should migrate chapters correctly', async () => {
       const planningDir = path.join(TEST_DIR, 'test-project', '.planning');
       await fs.ensureDir(planningDir);
 
       // Create roadmap file
-      await fs.writeFile(path.join(planningDir, 'ROADMAP.md'), '# Roadmap\n\n## Phase 1: Foundation\n\nGoal: Implement core\n\n## Phase 2: Enhancement\n\nGoal: Add advanced');
+      await fs.writeFile(path.join(planningDir, 'ROADMAP.md'), '# Roadmap\n\n## Chapter 1: Foundation\n\nGoal: Implement core\n\n## Chapter 2: Enhancement\n\nGoal: Add advanced');
 
-      // Create phase directory
-      const phasesDir = path.join(planningDir, 'phases');
-      await fs.ensureDir(phasesDir);
-      const phase1Dir = path.join(phasesDir, '01-foundation');
-      await fs.ensureDir(phase1Dir);
+      // Create chapter directory
+      const chaptersDir = path.join(planningDir, 'chapters');
+      await fs.ensureDir(chaptersDir);
+      const chapter1Dir = path.join(chaptersDir, '01-foundation');
+      await fs.ensureDir(chapter1Dir);
 
-      // Create phase context file
-      await fs.writeFile(path.join(phase1Dir, '01-foundation-CONTEXT.md'), '# Context\n\n## Phase Boundary\n\nImplement core\n\n## Decisions\n\n- Use TypeScript');
+      // Create chapter context file
+      await fs.writeFile(path.join(chapter1Dir, '01-foundation-CONTEXT.md'), '# Context\n\n## Chapter Boundary\n\nImplement core\n\n## Decisions\n\n- Use TypeScript');
 
       // Parse and verify
       const roadmap = await fs.readFile(path.join(planningDir, 'ROADMAP.md'), 'utf-8');
-      const context = await fs.readFile(path.join(phase1Dir, '01-foundation-CONTEXT.md'), 'utf-8');
+      const context = await fs.readFile(path.join(chapter1Dir, '01-foundation-CONTEXT.md'), 'utf-8');
 
-      expect(roadmap).toContain('Phase 1: Foundation');
-      expect(context).toContain('Phase Boundary');
+      expect(roadmap).toContain('Chapter 1: Foundation');
+      expect(context).toContain('Chapter Boundary');
       expect(context).toContain('Implement core');
 
-      // Simulate phase concept
-      const phase1 = {
-        name: 'phase-1',
+      // Simulate chapter concept
+      const chapter1 = {
+        name: 'chapter-1',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
-          slug: 'phase-01',
+          slug: 'chapter-01',
           name: 'Foundation',
           goal: 'Implement core',
           status: 'planned'
@@ -192,23 +192,23 @@ describe('Migration Tests', () => {
         edges: [{ to: 'roadmap', relation: 'connects_to' }]
       };
 
-      const phase1Context = {
-        name: 'phase-01-context',
+      const chapter1Context = {
+        name: 'chapter-01-context',
         kind: 'config',
         summary: JSON.stringify({
           gathered: '2025-01-20',
           status: 'ready_for_planning',
-          phase_boundary: 'Implement core',
+          chapter_boundary: 'Implement core',
           decisions: { tech_stack: 'TypeScript' }
         }),
-        parent_id: 'phase-1',
-        edges: [{ to: 'phase-1', relation: 'configured_by' }]
+        parent_id: 'chapter-1',
+        edges: [{ to: 'chapter-1', relation: 'configured_by' }]
       };
 
-      expect(phase1.kind).toBe('feature');
-      expect(phase1Context.kind).toBe('config');
-      expect(phase1Context.parent_id).toBe('phase-1');
-      expect(phase1Context.edges[0].relation).toBe('configured_by');
+      expect(chapter1.kind).toBe('feature');
+      expect(chapter1Context.kind).toBe('config');
+      expect(chapter1Context.parent_id).toBe('chapter-1');
+      expect(chapter1Context.edges[0].relation).toBe('configured_by');
     });
 
     it('should migrate state correctly', async () => {
@@ -216,12 +216,12 @@ describe('Migration Tests', () => {
       await fs.ensureDir(planningDir);
 
       // Create state file
-      await fs.writeFile(path.join(planningDir, 'STATE.md'), '# State\n\nCurrent Phase: Phase 1\nCurrent Plan: None\nStatus: ready_to_plan\nProgress: 10%');
+      await fs.writeFile(path.join(planningDir, 'STATE.md'), '# State\n\nCurrent Chapter: Chapter 1\nCurrent Plan: None\nStatus: ready_to_plan\nProgress: 10%');
 
       // Parse state
       const content = await fs.readFile(path.join(planningDir, 'STATE.md'), 'utf-8');
 
-      expect(content).toContain('Current Phase: Phase 1');
+      expect(content).toContain('Current Chapter: Chapter 1');
       expect(content).toContain('Status: ready_to_plan');
       expect(content).toContain('Progress: 10%');
 
@@ -230,7 +230,7 @@ describe('Migration Tests', () => {
         name: 'state',
         kind: 'config',
         summary: JSON.stringify({
-          current_phase: 'phase-01',
+          current_chapter: 'chapter-01',
           current_plan: null,
           status: 'ready_to_plan',
           progress: 10,
@@ -241,28 +241,28 @@ describe('Migration Tests', () => {
       };
 
       const stateData = JSON.parse(state.summary);
-      expect(stateData.current_phase).toBe('phase-01');
+      expect(stateData.current_chapter).toBe('chapter-01');
       expect(stateData.progress).toBe(10);
       expect(state.kind).toBe('config');
     });
 
     describe('parseStateMarkdown', () => {
-      it('should extract current_phase from STATE.md', () => {
-        const content = '## Current Position\nPhase: 27\nStatus: 0/1 plans executed';
+      it('should extract current_chapter from STATE.md', () => {
+        const content = '## Current Position\nChapter: 27\nStatus: 0/1 plans executed';
         const currentPosMatch = content.match(/## Current Position[\s\S]+?(?=##|$)/);
-        let current_phase = 'phase-01';
+        let current_chapter = 'chapter-01';
         if (currentPosMatch) {
           const section = currentPosMatch[0];
-          const phaseMatch = section.match(/Phase:\s*(\d+)/);
-          if (phaseMatch) {
-            current_phase = `phase-${phaseMatch[1].padStart(2, '0')}`;
+          const chapterMatch = section.match(/Chapter:\s*(\d+)/);
+          if (chapterMatch) {
+            current_chapter = `chapter-${chapterMatch[1].padStart(2, '0')}`;
           }
         }
-        expect(current_phase).toBe('phase-27');
+        expect(current_chapter).toBe('chapter-27');
       });
 
       it('should derive status from execution status', () => {
-        const content = '## Current Position\nPhase: 27\nStatus: 0/1 plans executed';
+        const content = '## Current Position\nChapter: 27\nStatus: 0/1 plans executed';
         const currentPosMatch = content.match(/## Current Position[\s\S]+?(?=##|$)/);
         let status = 'ready_to_plan';
         if (currentPosMatch) {
@@ -291,7 +291,7 @@ describe('Migration Tests', () => {
       });
 
       it('should extract last_activity', () => {
-        const content = '## Current Position\nLast Activity: 2026-02-07 -- Archived Phase 27.1';
+        const content = '## Current Position\nLast Activity: 2026-02-07 -- Archived Chapter 27.1';
         const currentPosMatch = content.match(/## Current Position[\s\S]+?(?=##|$)/);
         let last_activity = 'Migration from .planning';
         if (currentPosMatch) {
@@ -301,7 +301,7 @@ describe('Migration Tests', () => {
             last_activity = activityMatch[1].trim();
           }
         }
-        expect(last_activity).toBe('2026-02-07 -- Archived Phase 27.1');
+        expect(last_activity).toBe('2026-02-07 -- Archived Chapter 27.1');
       });
     });
 
@@ -323,8 +323,8 @@ describe('Migration Tests', () => {
       // Should handle gracefully with defaults
       const defaults = {
         requirements: [],
-        phases: [],
-        state: { current_phase: 'phase-01', status: 'ready_to_plan', progress: 0 }
+        chapters: [],
+        state: { current_chapter: 'chapter-01', status: 'ready_to_plan', progress: 0 }
       };
 
       expect(defaults.requirements).toEqual([]);
@@ -401,8 +401,8 @@ describe('Migration Tests', () => {
         { name: 'requirements', kind: 'module', summary: 'Requirements list' },
         { name: 'req-TEST-001', kind: 'feature', summary: 'Test requirement' },
         { name: 'roadmap', kind: 'module', summary: 'Project roadmap' },
-        { name: 'phase-1', kind: 'feature', summary: 'Phase 1' },
-        { name: 'phase-01-context', kind: 'config', summary: 'Context' },
+        { name: 'chapter-1', kind: 'feature', summary: 'Chapter 1' },
+        { name: 'chapter-01-context', kind: 'config', summary: 'Context' },
         { name: 'state', kind: 'config', summary: 'State' },
         { name: 'config', kind: 'config', summary: 'Config' }
       ];
@@ -463,7 +463,7 @@ describe('Migration Tests', () => {
         status: 'failed',
         errors: [
           { file: 'PROJECT.md', error: 'Invalid format' },
-          { file: 'STATE.md', error: 'Missing phase reference' }
+          { file: 'STATE.md', error: 'Missing chapter reference' }
         ],
         conceptsCreated: 5
       };

@@ -24,7 +24,7 @@ interface StateConcept {
 ```
 name: "[Project Name] State"
 kind: "config"
-summary: "Project state tracking: Phase [X] of [Y] ([Phase name]), Plan [A] of [B], Status: [status]. Last activity: [YYYY-MM-DD] — [What happened]. Progress: [X]%"
+summary: "Project state tracking: Chapter [X] of [Y] ([Chapter name]), Plan [A] of [B], Status: [status]. Last activity: [YYYY-MM-DD] — [What happened]. Progress: [X]%"
 ```
 
 ## Child Concepts
@@ -33,7 +33,7 @@ summary: "Project state tracking: Phase [X] of [Y] ([Phase name]), Plan [A] of [
 ```
 name: "Current Position"
 kind: "config"
-summary: "Phase: [X] of [Y] ([Phase name])\nPlan: [A] of [B] in current phase\nStatus: [Ready to plan / Planning / Ready to execute / In progress / Phase complete]\nProgress: [░░░░░░░░░░] 0%"
+summary: "Chapter: [X] of [Y] ([Chapter name])\nPlan: [A] of [B] in current chapter\nStatus: [Ready to plan / Planning / Ready to execute / In progress / Chapter complete]\nProgress: [░░░░░░░░░░] 0%"
 parent_id: "[Project Name] State"
 ```
 
@@ -41,7 +41,7 @@ parent_id: "[Project Name] State"
 ```
 name: "Recent Decisions"
 kind: "config"
-summary: "[Phase X]: [Decision summary]\n[Phase Y]: [Decision summary]"
+summary: "[Chapter X]: [Decision summary]\n[Chapter Y]: [Decision summary]"
 parent_id: "[Project Name] State"
 edges: [{to: "[Project Name]", relation: "configured_by", description: "Decisions affect project scope"}]
 ```
@@ -58,7 +58,7 @@ parent_id: "[Project Name] State"
 ```
 name: "Blockers/Concerns"
 kind: "config"
-summary: "[Phase X]: [Issue that affects future work]\n[Phase Y]: [Issue that affects future work]"
+summary: "[Chapter X]: [Issue that affects future work]\n[Chapter Y]: [Issue that affects future work]"
 parent_id: "[Project Name] State"
 ```
 
@@ -82,13 +82,13 @@ parent_id: "[Project Name] State"
 const state = await megamemory.create_concept({
   name: "CommunityApp State",
   kind: "config",
-  summary: "Project state tracking: Phase 1 of 4 (Authentication), Plan 0 of 3, Status: Ready to plan. Last activity: 2025-01-20 — State initialized. Progress: ░░░░░░░░░░ 0%"
+  summary: "Project state tracking: Chapter 1 of 4 (Authentication), Plan 0 of 3, Status: Ready to plan. Last activity: 2025-01-20 — State initialized. Progress: ░░░░░░░░░░ 0%"
 });
 
 await megamemory.create_concept({
   name: "Current Position",
   kind: "config",
-  summary: "Phase: 1 of 4 (Authentication)\nPlan: 0 of 3 in current phase\nTask: 0 of 0 (none in progress)\nStatus: Ready to plan\nProgress: ░░░░░░░░░░ 0%",
+  summary: "Chapter: 1 of 4 (Authentication)\nPlan: 0 of 3 in current chapter\nTask: 0 of 0 (none in progress)\nStatus: Ready to plan\nProgress: ░░░░░░░░░░ 0%",
   parent_id: state.id
 });
 
@@ -130,8 +130,8 @@ After each task completes, update the state with task position:
 await megamemory.update_concept({
   id: "Current Position",
   changes: {
-    summary: `Phase: ${phaseNum} of 4
-Plan: ${planNum} of ${totalPlansInPhase} in current phase
+    summary: `Chapter: ${chapterNum} of 4
+Plan: ${planNum} of ${totalPlansInChapter} in current chapter
 Task: ${taskNum} of ${totalTasks} (in progress)
 Status: In progress
 Progress: [${progressBars}] ${progress}%`
@@ -146,7 +146,7 @@ Progress: [${progressBars}] ${progress}%`
 await megamemory.update_concept({
   id: "Current Position",
   changes: {
-    summary: "Phase: 1 of 4 (Authentication)\nPlan: 1 of 3 in current phase\nTask: 7 of 7 (complete)\nStatus: Ready to plan\nProgress: ██░░░░░░░░ 20%"
+    summary: "Chapter: 1 of 4 (Authentication)\nPlan: 1 of 3 in current chapter\nTask: 7 of 7 (complete)\nStatus: Ready to plan\nProgress: ██░░░░░░░░ 20%"
   }
 });
 
@@ -154,23 +154,23 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Recent Decisions",
   changes: {
-    summary: "Phase 1: Use React Hook Form for form validation — Simplifies validation logic\nPhase 1: Client-side password complexity check — Prevents weak passwords before submission"
+    summary: "Chapter 1: Use React Hook Form for form validation — Simplifies validation logic\nChapter 1: Client-side password complexity check — Prevents weak passwords before submission"
   }
 });
 ```
 
-## Update After Phase Completion
+## Update After Chapter Completion
 
 ```typescript
-// Update current position for next phase
+// Update current position for next chapter
 await megamemory.update_concept({
   id: "Current Position",
   changes: {
-    summary: "Phase: 2 of 4 (Profiles)\nPlan: 0 of 2 in current phase\nStatus: Ready to plan\nProgress: ███░░░░░░░ 30%"
+    summary: "Chapter: 2 of 4 (Profiles)\nPlan: 0 of 2 in current chapter\nStatus: Ready to plan\nProgress: ███░░░░░░░ 30%"
   }
 });
 
-// Clear blockers from completed phase
+// Clear blockers from completed chapter
 await megamemory.update_concept({
   id: "Blockers/Concerns",
   changes: {
@@ -185,7 +185,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Blockers/Concerns",
   changes: {
-    summary: "Phase 2: Image upload size limit undefined — Need to clarify max file size for avatars\nPhase 3: Database schema for posts not designed — May need migration strategy"
+    summary: "Chapter 2: Image upload size limit undefined — Need to clarify max file size for avatars\nChapter 3: Database schema for posts not designed — May need migration strategy"
   }
 });
 ```
@@ -196,7 +196,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Session Continuity",
   changes: {
-    summary: "Last session: 2025-01-20 14:30\nStopped at: Completed plan 01-01, ready to start execution\nResume concept: phase-plan:01-01"
+    summary: "Last session: 2025-01-20 14:30\nStopped at: Completed plan 01-01, ready to start execution\nResume concept: chapter-plan:01-01"
   }
 });
 ```
@@ -234,17 +234,17 @@ const metrics = await megamemory.understand({
 ## Initial State Creation
 
 ```typescript
-async function initializeInitiativeState(initiativeName: string, totalPhases: number) {
+async function initializeInitiativeState(initiativeName: string, totalChapters: number) {
   const state = await megamemory.create_concept({
     name: `${initiativeName} State`,
     kind: "config",
-    summary: `Initiative state tracking: Phase 1 of ${totalPhases}, Plan 0 of TBD, Status: Ready to plan. Progress: ░░░░░░░░░░ 0%`
+    summary: `Initiative state tracking: Chapter 1 of ${totalChapters}, Plan 0 of TBD, Status: Ready to plan. Progress: ░░░░░░░░░░ 0%`
   });
 
   await megamemory.create_concept({
     name: "Current Position",
     kind: "config",
-    summary: `Phase: 1 of ${totalPhases}\nPlan: 0 of TBD in current phase\nStatus: Ready to plan\nProgress: ░░░░░░░░░░ 0%`,
+    summary: `Chapter: 1 of ${totalChapters}\nPlan: 0 of TBD in current chapter\nStatus: Ready to plan\nProgress: ░░░░░░░░░░ 0%`,
     parent_id: state.id
   });
 
@@ -288,8 +288,8 @@ const stateId = await initializeInitiativeState("CommunityApp", 4);
 ```typescript
 interface InitiativeState {
   currentPosition: {
-    phase: number;
-    totalPhases: number;
+    chapter: number;
+    totalChapters: number;
     plan: number;
     totalPlans: number;
     status: string;
@@ -314,8 +314,8 @@ async function getInitiativeState(initiativeName: string): Promise<InitiativeSta
 
   const state: ProjectState = {
     currentPosition: {
-      phase: 1,
-      totalPhases: 1,
+      chapter: 1,
+      totalChapters: 1,
       plan: 0,
       totalPlans: 0,
       status: "Ready to plan",
@@ -374,9 +374,9 @@ console.log(`Blockers: ${state.blockers.join(', ')}`);
 ```typescript
 async function updateStateAfterPlan(
   projectName: string,
-  phaseNum: number,
+  chapterNum: number,
   planNum: number,
-  totalPlansInPhase: number,
+  totalPlansInChapter: number,
   totalPlansOverall: number,
   completedPlans: number,
   decisions: string[]
@@ -387,7 +387,7 @@ async function updateStateAfterPlan(
   await megamemory.update_concept({
     id: "Current Position",
     changes: {
-      summary: `Phase: ${phaseNum} of 4\nPlan: ${planNum} of ${totalPlansInPhase} in current phase\nTask: ${totalTasks} of ${totalTasks} (complete)\nStatus: Ready to plan\nProgress: [${progressBars}] ${progress}%`
+      summary: `Chapter: ${chapterNum} of 4\nPlan: ${planNum} of ${totalPlansInChapter} in current chapter\nTask: ${totalTasks} of ${totalTasks} (complete)\nStatus: Ready to plan\nProgress: [${progressBars}] ${progress}%`
     }
   });
 
@@ -396,7 +396,7 @@ async function updateStateAfterPlan(
     await megamemory.update_concept({
       id: "Recent Decisions",
       changes: {
-        summary: decisions.map(d => `Phase ${phaseNum}: ${d}`).join('\n')
+        summary: decisions.map(d => `Chapter ${chapterNum}: ${d}`).join('\n')
       }
     });
   }
@@ -417,7 +417,7 @@ await updateStateAfterPlan(
 
 <purpose>
 
-STATE.md is the project's short-term memory spanning all phases and sessions.
+STATE.md is the project's short-term memory spanning all chapters and sessions.
 
 **Problem it solves:** Information is captured in summaries, issues, and decisions but not systematically consumed. Sessions start without context.
 
@@ -434,7 +434,7 @@ STATE.md is the project's short-term memory spanning all phases and sessions.
 **Creation:** After ROADMAP.md is created (during init)
 - Query PROJECT.md for core value and current focus
 - Initialize empty accumulated context sections
-- Set position to "Phase 1 ready to plan"
+- Set position to "Chapter 1 ready to plan"
 
 **Reading:** First step of every workflow
 - progress: Present status to user
@@ -444,10 +444,10 @@ STATE.md is the project's short-term memory spanning all phases and sessions.
 
 **Writing:** After every significant action
 - execute: After plan completion
-  - Update position (phase, plan, status)
+  - Update position (chapter, plan, status)
   - Note new decisions
   - Add blockers/concerns
-- transition: After phase marked complete
+- transition: After chapter marked complete
   - Update progress bar
   - Clear resolved blockers
   - Refresh context
@@ -458,12 +458,12 @@ STATE.md is the project's short-term memory spanning all phases and sessions.
 
 ### Current Position
 Where we are right now:
-- Phase X of Y — which phase
-- Plan A of B — which plan within phase
+- Chapter X of Y — which chapter
+- Plan A of B — which plan within chapter
 - Status — current state
 - Progress bar — visual indicator of overall completion
 
-Progress calculation: (completed plans) / (total plans across all phases) × 100%
+Progress calculation: (completed plans) / (total plans across all chapters) × 100%
 
 ### Accumulated Context
 
@@ -473,9 +473,9 @@ Progress calculation: (completed plans) / (total plans across all phases) × 100
 - Count of pending todos
 - Brief list if few, count if many (e.g., "5 pending todos")
 
-**Blockers/Concerns:** From "Next Phase Readiness" sections
+**Blockers/Concerns:** From "Next Chapter Readiness" sections
 - Issues that affect future work
-- Prefix with originating phase
+- Prefix with originating chapter
 - Cleared when addressed
 
 ### Session Continuity
@@ -512,7 +512,7 @@ The goal is "read once, know where we are" — if it's too long, that fails.
 
 **When updated:**
 - After each plan execution (update position, note decisions, update issues/blockers)
-- After phase transitions (update progress bar, clear resolved blockers, refresh context)
+- After chapter transitions (update progress bar, clear resolved blockers, refresh context)
 
 **Size management:**
 - Keep concise in MegaMemory
@@ -520,7 +520,7 @@ The goal is "read once, know where we are" — if it's too long, that fails.
 - Keep only active blockers
 
 **Concepts:**
-- Current Position: Where we are now (phase, plan, status)
+- Current Position: Where we are now (chapter, plan, status)
 - Recent Decisions: Decision summaries
 - Pending Todos: Todo count
 - Blockers/Concerns: Active issues

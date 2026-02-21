@@ -41,7 +41,7 @@ why: "Core value statement — the ONE thing that matters most. If everything el
 ```
 name: "Validated Requirements"
 kind: "config"
-summary: "Requirements that shipped and proved valuable. Format: '- [OK] [Requirement] — [version/phase]'. These are locked — changing them requires explicit discussion."
+summary: "Requirements that shipped and proved valuable. Format: '- [OK] [Requirement] — [version/chapter]'. These are locked — changing them requires explicit discussion."
 parent_id: "[Initiative Name]"
 
 name: "Active Requirements"
@@ -90,7 +90,7 @@ The `config` concept includes a `refresh` object for import graph settings:
   "refresh": {
     "mode": "hybrid",
     "age_hours": 24,
-    "auto_before": ["plan-phase", "execute-phase", "debug"],
+    "auto_before": ["plan-chapter", "execute-chapter", "debug"],
     "last_sha": null,
     "last_refresh": null,
     "files_scanned": 0,
@@ -203,7 +203,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Active Requirements",
   changes: {
-    summary: "- [OK] User can sign up with email and password — Phase 1\n- [OK] User receives email verification after signup — Phase 1"
+    summary: "- [OK] User can sign up with email and password — Chapter 1\n- [OK] User receives email verification after signup — Chapter 1"
   }
 });
 
@@ -323,7 +323,7 @@ const context = await megamemory.understand({
 await megamemory.update_concept({
   id: "Active Requirements",
   changes: {
-    summary: "- [OK] User can sign up with email and password — Phase 1\n- [ ] User receives email verification after signup\n- [ ] User can reset password via email link"
+    summary: "- [OK] User can sign up with email and password — Chapter 1\n- [ ] User receives email verification after signup\n- [ ] User can reset password via email link"
   }
 });
 
@@ -331,7 +331,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Validated Requirements",
   changes: {
-    summary: "- [OK] User can sign up with email and password — Phase 1"
+    summary: "- [OK] User can sign up with email and password — Chapter 1"
   }
 });
 
@@ -441,7 +441,7 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 
 **Requirements — Validated:**
 - Requirements that shipped and proved valuable
-- Format: `- [OK] [Requirement] — [version/phase]`
+- Format: `- [OK] [Requirement] — [version/chapter]`
 - These are locked — changing them requires explicit discussion
 
 **Requirements — Active:**
@@ -475,7 +475,7 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 
 **Last Updated:**
 - Always note when and why the document was updated
-- Format: `after Phase 2` or `after v1.0 milestone`
+- Format: `after Chapter 2` or `after v1.0 milestone`
 - Triggers review of whether content is still accurate
 
 </Guidelines>
@@ -484,9 +484,9 @@ Common types: Tech stack, Timeline, Budget, Dependencies, Compatibility, Perform
 
 INITIATIVE.md evolves throughout the initiative lifecycle.
 
-**After each phase transition:**
+**After each chapter transition:**
 1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
+2. Requirements validated? → Move to Validated with chapter reference
 3. New requirements emerged? → Add to Active
 4. Decisions to log? → Add to Key Decisions
 5. "What This Is" still accurate? → Update if drifted
@@ -538,7 +538,7 @@ const context = JSON.parse(initiative.concepts[0].summary);
 ```
 
 **Core value:** [One-liner from Core Value section]
-**Current focus:** [Current phase name]
+**Current focus:** [Current chapter name]
 ```
 
 This ensures OpenCode reads current INITIATIVE.md context from MegaMemory.

@@ -46,7 +46,7 @@ All project data lives in MegaMemory. If a MegaMemory query returns no results, 
 
 **`megamemory:understand` returns:**
 ```json
-{ "matches": [ { "id": "state", "name": "state", "kind": "config", "summary": "{\"current_phase\":\"phase-01\",\"tasks_completed\":[...]}", "children": [...], "edges": [...] } ] }
+{ "matches": [ { "id": "state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\",\"tasks_completed\":[...]}", "children": [...], "edges": [...] } ] }
 ```
 
 The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
@@ -262,7 +262,7 @@ const aliases = configData.model_aliases || {
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
-| fuska-phase-researcher | quality_model | balanced_model | budget_model |
+| fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-planner | quality_model | quality_model | balanced_model |
 | fuska-plan-checker | balanced_model | balanced_model | budget_model |
 | fuska-executor | quality_model | balanced_model | balanced_model |
@@ -340,10 +340,10 @@ const planData = {
   status: "planning",
   created_at: new Date().toISOString(),
   project_context: {
-    current_phase: stateData?.current_phase
+    current_chapter: stateData?.current_chapter
   },
   tasks: [],
-  wave: 1,
+  batch: 1,
   depends_on: [],
   files_modified: [],
   autonomous: false,
@@ -399,14 +399,14 @@ Display: `Researching...`
 const researcherPrompt = `<critical_constraints>
 Return: ## RESEARCH COMPLETE with key findings
 Create concept with name="task-${nextNum}-${slug}-research", kind="pattern"
-Keep research focused and concise — this is a standalone task, not a full phase
+Keep research focused and concise — this is a standalone task, not a full chapter
 </critical_constraints>
 
 <objective>
 Research how to implement: ${DESCRIPTION}
 
 Answer: "What do I need to know to PLAN this task well?"
-This is a standalone task, not a full phase. Focus on:
+This is a standalone task, not a full chapter. Focus on:
 - Relevant patterns in the existing codebase
 - Key libraries or APIs needed
 - Common pitfalls for this type of task
@@ -434,7 +434,7 @@ megamemory_create_concept(
 ```
 Task(
   prompt=researcherPrompt,
-  subagent_type="fuska-phase-researcher",
+  subagent_type="fuska-chapter-researcher",
   model=models.researcher,
   variant="plan",
   description="Research: ${DESCRIPTION}"
@@ -553,7 +553,7 @@ const checkerPrompt = `<critical_constraints>
 Return one of:
 - ## VERIFICATION PASSED -- plan is ready
 - ## ISSUES FOUND -- structured issue list with fix hints
-Skip phase-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a standalone task, not a phase plan.
+Skip chapter-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a standalone task, not a chapter plan.
 </critical_constraints>
 
 <verification_context>
@@ -812,7 +812,7 @@ const executorPrompt = `<critical_constraints>
 Execute all tasks in the plan
 Do NOT commit (commit happens at end of fuska-do, not during execution)
 Create summary concept named exactly: task-${nextNum}-${slug}-summary (kind: "config")
-Do NOT update roadmap concept (standalone tasks are separate from phases)
+Do NOT update roadmap concept (standalone tasks are separate from chapters)
 Return: ## EXECUTION COMPLETE
 </critical_constraints>
 
