@@ -2,6 +2,7 @@
 name: fuska-doc
 description: Create documentation as deliverables with research, planning, and review
 argument-hint: "[mode] <topic> [--type TYPE] [--audience AUD] [--depth DEPTH] [--output PATH]"
+flags: --type, --audience, --depth, --output
 tools:
   - read
   - bash

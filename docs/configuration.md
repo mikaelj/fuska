@@ -30,7 +30,7 @@ Use `fuska config --view` to view current settings non-interactively.
 Fuska automatically validates that your `current_initiative` pointer matches an existing initiative in MegaMemory. Mismatches can occur if:
 
 - Initiative was renamed after creation
-- Slug was derived differently during `/fuska-configure-initiative`
+- Slug was derived differently during `/fuska-configure`
 - Manual edits to the knowledge graph
 
 ### Automatic Detection
@@ -122,7 +122,7 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 
 ## Git Commit Strategy
 
-Controls how often Fuska creates git commits during execution. Set during `/fuska-configure-initiative`.
+Controls how often Fuska creates git commits during execution. Set during `/fuska-configure`.
 
 ### Commit Message Format
 
@@ -387,7 +387,7 @@ fuska config
   "refresh": {
     "mode": "hybrid",
     "age_hours": 24,
-    "auto_before": ["plan-chapter", "execute-chapter", "debug"],
+    "auto_before": ["plan", "build", "debug"],
     "last_sha": "abc123",
     "last_refresh": "2026-02-17T10:00:00Z",
     "files_scanned": 147,

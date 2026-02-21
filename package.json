@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc && npm run build:claude",
     "build:claude": "ts-node scripts/build-claude.ts",
-    "prepare": "npm run build",
+    "prepare": "npm run validate:help && npm run build",
+    "validate:help": "ts-node scripts/validate-help-sync.ts",
     "test": "jest",
     "watch": "tsc --watch"
   },

@@ -83,6 +83,23 @@ Before marking any task complete, you MUST:
 
 ---
 
+## CLI Help Sync
+
+The CLI `fuska help <cmd>` uses a hardcoded lookup table in `src/commands/help.ts`.
+
+Command flags are defined in two places:
+1. `flags:` field in command file frontmatter (source of truth)
+2. `commandHelp` object in `src/commands/help.ts` (must stay in sync)
+
+When adding or modifying command flags:
+1. Update `flags:` in `provider/opinkode/command/fuska/fuska-{cmd}.md`
+2. **Manually sync** to `src/commands/help.ts`
+
+A validation script (`npm run validate:help`) catches mismatches at build time.
+Run it locally before committing flag changes.
+
+---
+
 ## Always Look Here
 
 - `provider/opinkode/command/fuska/` — Command implementations

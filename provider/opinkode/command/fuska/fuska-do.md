@@ -2,6 +2,7 @@
 name: fuska-do
 description: Execute unplanned tasks with mode-aware agent chain using MegaMemory
 argument-hint: "[mode] [description]"
+flags: --review, --no-review, --auto-commit
 tools:
   - read
   - write

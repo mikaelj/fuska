@@ -112,16 +112,36 @@ Run ${chalk.cyan('fuska help <command>')} for detailed help.
 ${chalk.bold('Quick Tasks:')}
   do          Execute unplanned tasks
 
-${chalk.bold('Planning:')}
+${chalk.bold('Project Setup:')}
   configure   Configure initiative
-  plan        Plan current chapter
+  import      Import existing initiative
+  map         Map codebase and domains
+
+${chalk.bold('Chapter Planning:')}
   design      Design chapter vision
   research    Research chapter domain
+  list        List chapter assumptions
+  plan        Plan current chapter
 
 ${chalk.bold('Execution:')}
   build       Build current chapter
 
-${chalk.bold('Analysis:')}
+${chalk.bold('Roadmap Management:')}
+  add         Add chapter to roadmap
+  insert      Insert chapter mid-milestone
+  remove      Remove future chapter
+
+${chalk.bold('Milestones:')}
+  milestone   Start new milestone
+  complete    Complete milestone
+  audit       Audit milestone
+
+${chalk.bold('Work Management:')}
+  resume      Resume work
+  pause       Pause work
+  todos       Manage todos
+
+${chalk.bold('Codebase Analysis:')}
   refresh     Refresh import graph
   ask         Query codebase
 
@@ -131,15 +151,12 @@ ${chalk.bold('Documentation:')}
 ${chalk.bold('Debugging:')}
   debug       Debug issues
 
-${chalk.bold('Progress:')}
-  resume      Resume work
-  pause       Pause work
-  progress    Show progress (CLI)
+${chalk.bold('Git:')}
+  message     Generate commit message
 
-${chalk.bold('Milestone:')}
-  milestone   Start new milestone
-  complete    Complete milestone
-  audit       Audit milestone
+${chalk.bold('Utilities:')}
+  help        Show command reference
+  export      Export to markdown
 `;
 
 export function helpCommand(program: Command) {

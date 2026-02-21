@@ -63,7 +63,7 @@ A **chapter** is a work bucket that groups related requirements into a deliverab
 - Chapter 2: iOS implementation (goal: "iOS users receive notifications")
 - Chapter 3: Android implementation (goal: "Android users receive notifications")
 
-Chapters are created during `/fuska-configure-initiative` and worked through sequentially: design (optional) -> plan -> build -> review (optional).
+Chapters are created during `/fuska-configure` and worked through sequentially: design (optional) -> plan -> build -> review (optional).
 
 ---
 
@@ -83,7 +83,7 @@ Plans are stored as MegaMemory concepts (e.g., `chapter-02-plan-01`) and execute
 
 ## Milestone
 
-A **milestone** groups chapters into a release and tracks progress across them. Milestones are **optional** — a default milestone (e.g., "v1.0") is created automatically during `/fuska-configure-initiative`.
+A **milestone** groups chapters into a release and tracks progress across them. Milestones are **optional** — a default milestone (e.g., "v1.0") is created automatically during `/fuska-configure`.
 
 Use milestones when releasing a version (v1.0, v1.1), grouping related features, or tracking major deliverables.
 
@@ -200,7 +200,7 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | **Project classification** | Auto-detected project type (web-api, embedded-constrained, cli-tool, etc.) used to select the contextual checker role |
 | **Requirement** | A specific feature or behavior that needs to be built, assigned to a chapter |
 | **Researcher** | An agent that investigates technologies, patterns, and prior art during the planning stage |
-| **Roadmap** | The overall structure of chapters and milestones for an initiative, created during `/fuska-configure-initiative` |
+| **Roadmap** | The overall structure of chapters and milestones for an initiative, created during `/fuska-configure` |
 | **Stage** | A category of work in the Fuska workflow: planning, execution, or verification — each uses different agents |
 | **Success criteria** | Observable behaviors that must be true when a chapter completes — used for goal-backward verification |
 | **Reviewer** | An agent that performs goal-backward verification after a chapter is built |

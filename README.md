@@ -137,7 +137,7 @@ fuska init --no-map "My new project"
 Launch OpenCode (or Claude Code), then run:
 
 ```
-/fuska-configure-initiative
+/fuska-configure
 ```
 
 Walks through initiative configuration:
@@ -189,10 +189,10 @@ Configuration:
 ---------
 
 Gather context for chapter 3 and clarify approach by running:
-* /fuska-design-chapter 3
+* /fuska-design 3
 
 or skip design of chapter 3 and plan directly by running:
-* /fuska-plan-chapter 3
+* /fuska-plan 3
 ```
 
 See [commands.md](docs/commands.md) for the full reference.
@@ -200,7 +200,7 @@ See [commands.md](docs/commands.md) for the full reference.
 ### Work Through Chapters
 
 ```
-fuska init -> /fuska-configure-initiative -> /fuska plan -> /fuska build -> repeat
+fuska init -> /fuska-configure -> /fuska plan -> /fuska build -> repeat
 ```
 
 | Step | Command | When to Use |

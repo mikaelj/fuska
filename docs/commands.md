@@ -54,10 +54,10 @@ Configuration:
 ---------
 
 Gather context for chapter 3 and clarify approach by running:
-* /fuska-design-chapter 3
+* /fuska-design 3
 
 or skip design of chapter 3 and plan directly by running:
-* /fuska-plan-chapter 3
+* /fuska-plan 3
 ```
 
 Use `--json` for machine-readable output.
@@ -78,7 +78,7 @@ Use `--json` for machine-readable output.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-configure-initiative`</nobr> | Configure existing initiative (run after `fuska init`) | -- |
+| <nobr>`/fuska-configure`</nobr> | Configure existing initiative (run after `fuska init`) | -- |
 | <nobr>`/fuska-map-codebase`</nobr> | Map codebase structure, business domains, and import graph | `[area]` -- optional area to focus on |
 | <nobr>`/fuska-import`</nobr> | Import existing initiative | -- |
 
@@ -88,11 +88,11 @@ Use `--json` for machine-readable output.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-design-chapter`</nobr> | Design chapter details before planning | `<N>` -- chapter number |
-| <nobr>`/fuska-plan-chapter`</nobr> | Create detailed chapter plan | `<N>` `[--research \| --skip-research \| --skip-verify \| --mode <MODE>]` |
+| <nobr>`/fuska-design`</nobr> | Design chapter details before planning | `<N>` -- chapter number |
+| <nobr>`/fuska-plan`</nobr> | Create detailed chapter plan | `<N>` `[--research \| --skip-research \| --skip-verify \| --mode <MODE>]` |
 | <nobr>`/fuska-research-chapter`</nobr> | Research chapter requirements | `<N>` -- chapter number |
-| <nobr>`/fuska-build-chapter`</nobr> | Build chapter tasks | `<N>` `[--mode <MODE>]` -- chapter number and optional mode override |
-| <nobr>`/fuska-review-chapter`</nobr> | Review chapter completion | `<N>` -- chapter number |
+| <nobr>`/fuska-build`</nobr> | Build chapter tasks | `<N>` `[--mode <MODE>]` -- chapter number and optional mode override |
+| <nobr>`/fuska-review`</nobr> | Review chapter completion | `<N>` -- chapter number |
 
 ### Chapter Management
 
@@ -108,16 +108,16 @@ Use `--json` for machine-readable output.
 | Command | Description | Arguments |
 |---------|-------------|-----------|
 | <nobr>`/fuska-new-milestone`</nobr> | Create new milestone | `"[name]"` -- milestone name |
-| <nobr>`/fuska-audit-milestone`</nobr> | Audit milestone status | -- |
-| <nobr>`/fuska-complete-milestone`</nobr> | Mark milestone complete | -- |
+| <nobr>`/fuska-audit`</nobr> | Audit milestone status | -- |
+| <nobr>`/fuska-complete`</nobr> | Mark milestone complete | -- |
 | <nobr>`/fuska-plan-milestone-gaps`</nobr> | Plan gaps between milestones | -- |
 
 ### Work Management
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-pause-work`</nobr> | Capture mental context for next session | -- |
-| <nobr>`/fuska-resume-work`</nobr> | Restore context and show task position | -- |
+| <nobr>`/fuska-pause`</nobr> | Capture mental context for next session | -- |
+| <nobr>`/fuska-resume`</nobr> | Restore context and show task position | -- |
 | <nobr>`/fuska-add-todo`</nobr> | Add todo item | `[description]` -- auto-extracts from conversation if omitted |
 | <nobr>`/fuska-check-todos`</nobr> | View all todos | -- |
 

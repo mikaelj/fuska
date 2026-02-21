@@ -142,7 +142,7 @@ done
 OpenCode commands have this frontmatter:
 ```yaml
 ---
-name: fuska-plan-chapter
+name: fuska-plan
 description: Create execution plan for chapter
 tools:
   - read
@@ -154,7 +154,7 @@ tools:
 Claude skills need:
 ```yaml
 ---
-name: fuska-plan-chapter
+name: fuska-plan
 description: Create execution plan for chapter
 allowed-tools: read, bash, megamemory:understand
 ---

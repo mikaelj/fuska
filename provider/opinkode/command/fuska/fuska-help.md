@@ -43,6 +43,7 @@ All `/fuska-*` commands below also work directly.
 
 \* `fuska init` — Initialize project foundation: git, .megamemory/, MCP registration (then `/fuska-configure`).
 \* `/fuska-configure` — Configure initiative through unified flow.
+\* `/fuska-import` — Import existing initiative from another project.
 \* `/fuska-map-codebase` — Map an existing codebase for brownfield projects.
 
 ## Chapter Planning
@@ -108,6 +109,7 @@ All `/fuska-*` commands below also work directly.
 
 \* `/fuska-refresh` — Refresh import graph with symbol indexing. **Flags:** --full, --dead-code, --json, --prune
 \* `/fuska-ask [question]` — Ask questions about the codebase using import graph data.
+\* `/fuska-map-domains` — Map business domains to code areas for semantic scopes.
 
 ## Documentation
 
@@ -116,6 +118,8 @@ All `/fuska-*` commands below also work directly.
 ## Utility Commands
 
 \* `/fuska-help` — Show this command reference.
+\* `/fuska-export-md` — Export MegaMemory concepts to markdown files.
+\* `/fuska-git-message` — Generate Fuska-format commit messages.
 
 ## Thinking Variants
 

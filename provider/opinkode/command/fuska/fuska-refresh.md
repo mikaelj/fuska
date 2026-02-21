@@ -2,6 +2,7 @@
 name: fuska-refresh
 description: Refresh import graph with file and symbol-level indexing, detect dead code
 argument-hint: "[--full] [--dead-code] [--json] [--prune]"
+flags: --full, --dead-code, --json, --prune
 tools:
   - read
   - bash

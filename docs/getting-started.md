@@ -108,7 +108,7 @@ megamemory install --target opencode
 Launch OpenCode (or Claude Code), then run:
 
 ```
-/fuska-configure-initiative
+/fuska-configure
 ```
 
 Walks through initiative configuration:
