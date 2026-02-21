@@ -37,6 +37,8 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 
 <execution_context>
 
+@../../fuska/references/megamemory-quick-ref.md
+
 @../../fuska/references/preflight-check-connectivity.md
 @../../fuska/references/questioning.md
 @../../fuska/references/ui-brand.md
@@ -47,27 +49,6 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 @../../fuska/scripts/helpers.ts
 
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "concepts": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `concepts` is empty, the concept doesn't exist.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-**`megamemory:update_concept` accepts changes:** `{summary?, name?, kind?, why?, file_refs?}` only. Pass the full updated JSON string as `summary`. Returns `{message}`.
-
-**`megamemory:list_roots` returns:** an array of root concepts with `id`, `name`, `kind`, `summary`.
-
-</megamemory_guide>
 
 <process>
 

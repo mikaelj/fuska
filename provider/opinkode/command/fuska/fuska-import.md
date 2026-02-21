@@ -41,34 +41,13 @@ This is the reverse of `/fuska-export-md` — converts the traditional `.plannin
 </objective>
 
 <execution_context>
+
+@../../fuska/references/megamemory-quick-ref.md
 @../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/helpers.ts
 
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data will live in MegaMemory after import. This command reads files and creates concepts.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-**`megamemory:update_concept` accepts changes:** `{summary?, name?, kind?, why?, file_refs?}` only. Pass the full updated JSON string as `summary`. Returns `{message}`.
-
-**`megamemory:link` creates edges:** `{from, to, relation, description?}`. Returns `{message}`.
-
-**`megamemory:list_roots` returns:** an array of root concepts with `id`, `name`, `kind`, `summary`.
-
-</megamemory_guide>
 
 <context>
 

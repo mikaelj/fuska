@@ -23,22 +23,11 @@ Each domain concept represents a distinct business concern (pricing, booking, au
 This is a fast, focused operation that only maps domains - use `fuska map` for full codebase analysis.
 </objective>
 
-<megamemory_guide>
+<execution_context>
 
-## How to read MegaMemory responses
+@../../fuska/references/megamemory-quick-ref.md
 
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "domain-pricing", "name": "domain-pricing", "kind": "domain", "summary": "...", "file_refs": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. If `matches` is empty, the concept doesn't exist.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-</megamemory_guide>
+</execution_context>
 
 <context>
 

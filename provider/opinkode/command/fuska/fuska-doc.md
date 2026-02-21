@@ -30,6 +30,8 @@ Create documents as deliverables — architecture docs, implementation guides, d
 
 <execution_context>
 
+@../../fuska/references/megamemory-quick-ref.md
+
 Document types:
 - `architecture` — System design (Problem, Context, Options, Recommendation, Design, Risks, Migration)
 - `implementation` — How-to build (Overview, Prerequisites, Steps, Code Examples, Troubleshooting)
@@ -50,27 +52,6 @@ Depths:
 - `comprehensive` — 8-12 sections
 
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All doc data lives in MegaMemory. If a query returns no results, proceed with defaults or prompt user.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "...", "name": "doc-001-auth-architecture", "kind": "feature", "summary": "{\"number\":\"001\", ...}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string. Parse it with `JSON.parse()` to extract fields.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-**`megamemory:update_concept` accepts changes:** `{summary?, name?, kind?, why?, file_refs?}` only. Pass full updated JSON string as `summary`.
-
-**`megamemory:list_roots` returns:** array of root concepts (projects).
-
-</megamemory_guide>
 
 <process>
 

@@ -26,34 +26,10 @@ Refresh the import graph stored in MegaMemory with file and symbol-level indexin
 </objective>
 
 <execution_context>
+
+@../../fuska/references/megamemory-quick-ref.md
 @../../fuska/references/preflight-check-initiative-exists.md
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "...", "name": "...", "kind": "...", "summary": "{...}", "edges": [...], "incoming_edges": [...] } ] }
-```
-
-Use `response.matches[0]` to access the first match.
-
-**Parse summaries:** `const data = JSON.parse(match.summary)` to extract structured data.
-
-**Edge relations for import graph:**
-- `imports` -- File -> File
-- `uses` -- File -> Symbol
-- `defined_in` -- Symbol -> File
-- `exports` -- File -> Symbol
-
-**Concept naming convention:**
-- Files: `file:lib/services/auth.dart` (use forward slashes in path)
-- Symbols: `symbol:ClassName` or `symbol:functionName`
-- Dead code: `dead-code:SymbolName`
-
-</megamemory_guide>
 
 <context>
 Refresh the import graph. Default: incremental (only changed files since last SHA).

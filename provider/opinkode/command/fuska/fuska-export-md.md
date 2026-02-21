@@ -34,28 +34,13 @@ This is the reverse of the migration script — converts the knowledge graph bac
 </objective>
 
 <execution_context>
+
+@../../fuska/references/megamemory-quick-ref.md
 @../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/helpers.ts
 
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. The summary field contains JSON data that should be parsed and converted to markdown.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
-```
-
-Parse the `summary` field to extract data. Convert JSON to appropriate markdown format with frontmatter.
-
-**`megamemory:list_roots` returns:** an array of root concepts with `id`, `name`, `kind`, `summary`.
-
-</megamemory_guide>
 
 <context>
 

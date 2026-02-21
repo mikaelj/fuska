@@ -23,28 +23,9 @@ Debug issues using scientific method with subagent isolation and MegaMemory pers
 **MegaMemory:** Debug sessions tracked as concepts, surviving across context resets.
 </objective>
 
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "debug/session-001", "name": "session-001", "kind": "config", "summary": "{\"trigger\":\"...\",\"expected\":\"...\",\"actual\":\"...\",\"hypothesis\":\"...\",\"status\":\"active\"}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the debug session's data. Parse it to extract the fields you need. If `matches` is empty, the session doesn't exist.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-**`megamemory:update_concept` accepts changes:** `{summary?, name?, kind?, why?, file_refs?}` only. Pass the full updated JSON string as `summary`. Returns `{message}`.
-
-**`megamemory:list_roots` returns:** an array of root concepts.
-
-</megamemory_guide>
-
 <execution_context>
+
+@../../fuska/references/megamemory-quick-ref.md
 @../../fuska/references/preflight-check-initiative-exists.md
 </execution_context>
 

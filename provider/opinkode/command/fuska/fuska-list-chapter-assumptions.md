@@ -22,26 +22,11 @@ Uses MegaMemory to query project state and roadmap data.
 </objective>
 
  <execution_context>
+
+@../../fuska/references/megamemory-quick-ref.md
  @../../fuska/references/preflight-check-initiative-exists.md
  @../../fuska/workflows/list-chapter-assumptions.md
  </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "chapter-01", "name": "chapter-01", "kind": "feature", "summary": "{\"name\":\"Foundation\",\"goal\":\"...\",\"status\":\"pending\"}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
-
-**`megamemory:list_roots` returns:** an array of root concepts.
-
-</megamemory_guide>
 
 <context>
 Chapter number: `$ARGUMENTS` (required)

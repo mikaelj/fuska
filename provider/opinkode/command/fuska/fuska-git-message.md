@@ -23,24 +23,11 @@ All modes can be combined with explicit chapter-plan context (overrides auto-det
 
 <execution_context>
 
+@../../fuska/references/megamemory-quick-ref.md
+
 @../../fuska/references/git-integration.md
 
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
-
-</megamemory_guide>
 
 <context>
 

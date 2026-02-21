@@ -21,33 +21,10 @@ Answer questions about the codebase using the import graph stored in MegaMemory.
 </objective>
 
 <execution_context>
+
+@../../fuska/references/megamemory-quick-ref.md
 @../../fuska/references/preflight-check-initiative-exists.md
 </execution_context>
-
-<megamemory_guide>
-
-## Query patterns
-
-| Query Type | Example |
-|------------|---------|
-| Find file | `megamemory_understand(query="file:lib/services/auth", top_k=5)` |
-| Find symbol | `megamemory_understand(query="symbol:UserService", top_k=5)` |
-| Find dead code | `megamemory_understand(query="dead-code:ItemSelection", top_k=5)` |
-| General search | `megamemory_understand(query="authentication login user", top_k=20)` |
-
-**Parse response:** Use `response.matches[0]` to access first match.
-
-**Check edges:**
-- `match.edges` -- outgoing edges from this concept
-- `match.incoming_edges` -- incoming edges to this concept
-
-**Edge relations:**
-- `imports` -- files importing this file
-- `uses` -- files using this symbol
-- `defined_in` -- file where symbol is defined
-- `exports` -- symbols exported by this file
-
-</megamemory_guide>
 
 <context>
 User question: `$ARGUMENTS`
