@@ -34,31 +34,12 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees (atomic commits, state tra
 <execution_context>
 
 @../../fuska/references/preflight-check-initiative-exists.md
+@../../fuska/references/megamemory-quick-ref.md
+@../../fuska/references/model-resolution.md
 
 Orchestration is inline. Mode determines which agents spawn.
 
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\",\"tasks_completed\":[...]}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-**`megamemory:update_concept` accepts changes:** `{summary?, name?, kind?, why?, file_refs?}` only. Pass the full updated JSON string as `summary`. Returns `{message}`.
-
-**`megamemory:list_roots` returns:** an array of root concepts.
-
-</megamemory_guide>
 
 <context>
 Arguments: `$ARGUMENTS`
@@ -74,95 +55,40 @@ Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-in
 
 ## 0.5. Help Check
 
-If `$ARGUMENTS` starts with "help" (case-insensitive):
+If `$ARGUMENTS` starts with "help" (case-insensitive), display and stop:
 
 ```
-const input = "$ARGUMENTS" || ""
-if (input.trim().toLowerCase().startsWith("help")) {
-  Display:
-  Help for /fuska-do:
+Help for /fuska-do:
 
-  Execute unplanned tasks with mode-aware agent chain.
+Execute unplanned tasks with mode-aware agent chain.
 
-  Usage: /fuska-do [mode] [description]
+Usage: /fuska-do [mode] [description]
 
-  Modes:
-    planned    - Planner → Builder | Review: Skipped | You have a plan, just build it
-    checked    - Planner → Plan Checker → Builder | Review: Prompted | Plan gets validated, you review before building
-    researched - Researcher → Planner → Plan Checker → Builder | Review: Prompted | Research adds context, review before committing
-    verified   - Researcher → Planner → Plan Checker → Builder → Reviewer | Review: Skipped | Full pipeline with post-build review
+Modes:
+  planned    - Planner → Builder | Review: Skipped | You have a plan, just build it
+  checked    - Planner → Plan Checker → Builder | Review: Prompted | Plan gets validated, you review before building
+  researched - Researcher → Planner → Plan Checker → Builder | Review: Prompted | Research adds context, review before committing
+  verified   - Researcher → Planner → Plan Checker → Builder → Reviewer | Review: Skipped | Full pipeline with post-build review
 
-  Flags:
-    --review       Force plan review before executing (any mode)
-    --no-review    Skip plan review (any mode)
-    --auto-commit  Auto-commit with generated message (no prompt)
-
-
-  -> Stop
-}
+Flags:
+  --review       Force plan review before executing (any mode)
+  --no-review    Skip plan review (any mode)
+  --auto-commit  Auto-commit with generated message (no prompt)
 ```
 
 ---
 
 ## 1. Load All Context (Single Pass)
 
-Query MegaMemory for all needed concepts upfront. All subsequent steps use these cached results — NO additional queries for data already loaded here.
+Query MegaMemory upfront. All subsequent steps use cached results — NO additional queries for data already loaded here.
 
-**Step 1.1: Query config**
+**Step 1.1:** Query `config` (top_k=5). If empty: Display "No initiative found. Run `fuska init` first." → Stop. Extract `configData`, `modelProfile` (default: "balanced").
 
-```
-megamemory_understand(query="config", top_k=5)
-```
+**Step 1.1a:** Check if prompt contains `<debug_findings>`. If present: extract root_cause, evidence, fix_complexity, suggested_fix, files_involved, session_id. Set DESCRIPTION = suggested_fix unless provided in arguments.
 
-If response.matches.length === 0:
--> Display: "No initiative found. Run `fuska init` first."
--> If DESCRIPTION available from arguments, add: "When prompted, describe: {DESCRIPTION}"
--> Stop
+**Step 1.2:** Query `state` (top_k=5). If empty: Display "State concept not found." → Stop. Extract `stateId`, `stateData`.
 
-Extract:
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
-const modelProfile = configData.model_profile || "balanced"
-```
-
-**Step 1.1a: Check for debug context**
-
-Check if prompt contains `<debug_findings>`:
-```
-const hasDebugContext = prompt.includes('<debug_findings>')
-```
-
-If debug context present:
-- Extract from `<debug_findings>`: root_cause, evidence, fix_complexity, suggested_fix, files_involved, session_id
-- Set DESCRIPTION = suggested_fix (unless provided in arguments)
-- Store debug_session_id for linking
-
-**Step 1.2: Query state**
-
-```
-megamemory_understand(query="state", top_k=5)
-```
-
-If response.matches.length === 0:
--> Display: "State concept not found. Run `fuska init` to initialize initiative."
--> Stop
-
-Extract:
-```
-const stateId = response.matches[0].id
-const stateData = JSON.parse(response.matches[0].summary)
-```
-
-**Step 1.3: Query existing tasks**
-
-```
-megamemory_understand(query="task", top_k=50)
-```
-
-Extract existing task numbers for incrementing.
-
-All context now cached. No re-querying in later steps.
+**Step 1.3:** Query `task` (top_k=50). Extract existing task numbers for incrementing.
 
 ---
 
@@ -171,13 +97,8 @@ All context now cached. No re-querying in later steps.
 **Step 2.1: Parse arguments**
 
 ```
-const input = "$ARGUMENTS" || ""
 const validModes = ["planned", "checked", "researched", "verified"]
 const words = input.trim().split(/\s+/)
-
-let MODE = null
-let DESCRIPTION = null
-
 const hasReviewFlag = input.includes("--review") && !input.includes("--no-review")
 const hasNoReviewFlag = input.includes("--no-review")
 const hasAutoCommitFlag = input.includes("--auto-commit")
@@ -187,79 +108,39 @@ if (validModes.includes(words[0]?.toLowerCase())) {
   MODE = words[0].toLowerCase()
   DESCRIPTION = words.slice(1).join(" ").replace(flagPattern, '').trim() || null
 } else {
-  // No mode specified - entire argument is description
   DESCRIPTION = input.replace(flagPattern, '').trim() || null
 }
 ```
 
-**Step 2.2: Resolve mode**
+**Step 2.2:** If MODE not set, ALWAYS ask user to select:
 
-If MODE is not set, ALWAYS ask the user to select one:
+| Option | Description |
+|--------|-------------|
+| Planned | Planner → Builder. Auto-build. You have a plan, just build it. |
+| Checked | Planner → Plan Checker → Builder. Ask first. Plan gets validated. |
+| Researched | Researcher → Planner → Plan Checker → Builder. Ask first. Research adds context. |
+| Verified | Full pipeline with Reviewer. Auto-build. Critical systems, production code. |
 
-```
-if (!MODE) {
-  const modeResponse = question(questions=[{
-    header: "Mode",
-    question: "Select workflow mode:",
-    options: [
-      { label: "Planned", description: "Planner → Builder. Auto-build. You have a plan, just build it." },
-      { label: "Checked", description: "Planner → Plan Checker → Builder. Ask first. Plan gets validated before building." },
-      { label: "Researched", description: "Researcher → Planner → Plan Checker → Builder. Ask first. Research adds context." },
-      { label: "Verified", description: "Full pipeline with Reviewer. Auto-build. Critical systems, production code." }
-    ]
-  }])
-  MODE = modeResponse[0].toLowerCase()
-}
-```
-
-**Step 2.3: Get description if missing**
-
-If DESCRIPTION is null or empty:
-```
-const taskResponse = question(questions=[{
-  header: "Task",
-  question: "What do you want to do?",
-  options: []
-}])
-DESCRIPTION = taskResponse[0]
-```
+**Step 2.3:** If DESCRIPTION is null, prompt user: "What do you want to do?"
 
 **Step 2.4: Derive mode config**
 
 ```
-let modeConfig = {
+modeConfig = {
   planned:    { research: false, planCheck: false, verifier: false, autoExecute: true },
   checked:    { research: false, planCheck: true,  verifier: false, autoExecute: false },
   researched: { research: true,  planCheck: true,  verifier: false, autoExecute: false },
   verified:   { research: true,  planCheck: true,  verifier: true,  autoExecute: true }
 }[MODE]
 
-// Override autoExecute based on review flags
-if (hasReviewFlag) {
-  modeConfig.autoExecute = false
-} else if (hasNoReviewFlag) {
-  modeConfig.autoExecute = true
-}
-
-// Override if debug context present (investigation already done)
-if (hasDebugContext) {
-  modeConfig.research = false
-}
+if (hasReviewFlag) modeConfig.autoExecute = false
+if (hasNoReviewFlag) modeConfig.autoExecute = true
+if (hasDebugContext) modeConfig.research = false
 ```
 
-**Step 2.5: Resolve models from lookup table**
+**Step 2.5: Resolve models**
 
-First, extract model aliases from config (with defaults):
-
-```
-const aliases = configData.model_aliases || {
-  quality_model: "opencode/claude-opus-4",
-  balanced_model: "opencode/claude-sonnet-4",
-  budget_model: "opencode/claude-haiku-4"
-}
-```
-
-**Model lookup table (uses aliases):**
+Follow model-resolution.md. Extract aliases from config, then apply this lookup table:
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
@@ -270,30 +151,6 @@ const aliases = configData.model_aliases || {
 | fuska-verifier | balanced_model | balanced_model | budget_model |
 
 ```
-const modelLookup = {
-  quality: {
-    researcher: aliases.quality_model,
-    planner: aliases.quality_model,
-    checker: aliases.balanced_model,
-    executor: aliases.quality_model,
-    verifier: aliases.balanced_model
-  },
-  balanced: {
-    researcher: aliases.balanced_model,
-    planner: aliases.quality_model,
-    checker: aliases.balanced_model,
-    executor: aliases.balanced_model,
-    verifier: aliases.balanced_model
-  },
-  budget: {
-    researcher: aliases.budget_model,
-    planner: aliases.balanced_model,
-    checker: aliases.budget_model,
-    executor: aliases.balanced_model,
-    verifier: aliases.budget_model
-  }
-}
-
 const models = modelLookup[modelProfile]  // { researcher, planner, checker, executor, verifier }
 ```
 
@@ -303,79 +160,17 @@ Display: `Mode: ${MODE} | Profile: ${modelProfile}`
 
 ## 3. Generate Slug and Task Number
 
-**Step 3.1: Generate slug**
+Generate slug: DESCRIPTION lowercase, replace non-alphanumeric with hyphens, collapse doubles, trim, max 40 chars.
 
-```
-slug = DESCRIPTION lowercase, replace non-alphanumeric with hyphens, collapse doubles, trim leading/trailing hyphens, max 40 chars
-```
-
-**Step 3.2: Calculate next number**
-
-```
-const existingNumbers = existingQuickTasks
-  .filter(match => match.name.match(/^task-\d+-/))
-  .map(match => {
-    const matchResult = match.name.match(/^task-(\d+)-/)
-    return matchResult ? parseInt(matchResult[1]) : 0
-  })
-  .sort((a, b) => b - a)
-
-const lastNumber = existingNumbers[0] || 0
-const nextNum = (lastNumber + 1).toString().padStart(3, '0')
-```
-
-If no existing tasks: `nextNum = "001"`
+Calculate next number from existing `task-NNN-*` concepts. If none: `nextNum = "001"`.
 
 ---
 
 ## 4. Create Plan Concept
 
-**Step 4.1: Initialize plan data**
+**Step 4.1:** Create plan data with: task_number, slug, description, mode, status="planning", created_at, project_context (current_chapter from stateData), empty tasks/files_modified/depends_on arrays, autonomous=false. If debug context present, include debug_context (session_id, root_cause, complexity).
 
-```
-const planData = {
-  task_number: nextNum,
-  slug: slug,
-  description: DESCRIPTION,
-  mode: MODE,
-  status: "planning",
-  created_at: new Date().toISOString(),
-  project_context: {
-    current_chapter: stateData?.current_chapter
-  },
-  tasks: [],
-  batch: 1,
-  depends_on: [],
-  files_modified: [],
-  autonomous: false,
-  debug_context: hasDebugContext ? {
-    session_id: debug_session_id,
-    root_cause: root_cause,
-    complexity: fix_complexity
-  } : null
-}
-```
-
-**Step 4.2: Create plan concept**
-
-```
-const planResult = megamemory_create_concept(
-  name=`task-${nextNum}-${slug}`,
-  kind="feature",
-  summary=JSON.stringify(planData),
-  why="Task plan",
-  parent_id=null
-)
-const planConceptId = planResult.id
-
-**Step 4.3: Display**
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Fuska > TASK ${nextNum}: ${DESCRIPTION}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Mode: ${MODE} | Plan: task-${nextNum}-${slug}
-```
+**Step 4.2:** Create concept: `name=task-${nextNum}-${slug}`, kind="feature", summary=JSON.stringify(planData).
 
 **Step 4.3: Display**
 
@@ -390,11 +185,9 @@ const planConceptId = planResult.id
 
 ## 5. Spawn Researcher (if modeConfig.research)
 
-Only for researched, verified modes.
+Only for researched, verified modes. Display: `Researching...`
 
-Display: `Researching...`
-
-**Step 5.1: Build researcher prompt (adapted for quick tasks)**
+**Step 5.1: Build researcher prompt**
 
 ```
 const researcherPrompt = `<critical_constraints>
@@ -430,35 +223,9 @@ megamemory_create_concept(
 </output>`
 ```
 
-**Step 5.2: Spawn researcher**
+**Step 5.2:** Spawn Task(subagent_type="fuska-chapter-researcher", model=models.researcher, variant="plan").
 
-```
-Task(
-  prompt=researcherPrompt,
-  subagent_type="fuska-chapter-researcher",
-  model=models.researcher,
-  variant="plan",
-  description="Research: ${DESCRIPTION}"
-)
-```
-
-**Step 5.3: Handle researcher return**
-
-If `## RESEARCH COMPLETE`:
--> Query research concept:
-```
-megamemory_understand(query=`task-${nextNum}-${slug}-research`, top_k=1)
-const researchData = JSON.parse(response.matches[0].summary)
-```
--> Continue to Step 6
-
-If `## RESEARCH BLOCKED`:
--> Display blocker information
--> Use question tool:
-  - header: "Research Blocked"
-  - question: "How would you like to proceed?"
-  - options: "Skip research" / "Provide context" / "Abort"
--> Handle accordingly
+**Step 5.3:** If `## RESEARCH COMPLETE`: query research concept, continue. If `## RESEARCH BLOCKED`: offer Skip research / Provide context / Abort.
 
 ---
 
@@ -510,44 +277,19 @@ Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.str
 </output>`
 ```
 
-**Step 6.2: Spawn planner**
+**Step 6.2:** Spawn Task(subagent_type="fuska-planner", model=models.planner, variant="plan").
 
-```
-Task(
-  prompt=plannerPrompt,
-  subagent_type="fuska-planner",
-  model=models.planner,
-  variant="plan",
-  description="Plan: ${DESCRIPTION}"
-)
-```
-
-**Step 6.3: Handle planner return**
-
-If `## PLANNING COMPLETE`:
--> Display: "Plan created: task-${nextNum}-${slug}"
--> Continue to Step 7
-
-If error:
--> Display: "Planner failed to create plan"
--> Stop
+**Step 6.3:** If `## PLANNING COMPLETE`: continue. If error: display failure → Stop.
 
 ---
 
 ## 7. Spawn Plan-Checker + Revision Loop (if modeConfig.planCheck)
 
-Only for checked, researched, verified modes.
+Only for checked, researched, verified modes. Display: `Validating plan...`
 
-Display: `Validating plan...`
+**Step 7.1:** Query updated plan concept `task-${nextNum}-${slug}`.
 
-**Step 7.1: Query updated plan concept**
-
-```
-megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
-const planData = JSON.parse(response.matches[0].summary)
-```
-
-**Step 7.2: Build checker prompt (simplified for standalone tasks)**
+**Step 7.2: Build checker prompt**
 
 ```
 const checkerPrompt = `<critical_constraints>
@@ -569,229 +311,37 @@ Verify this task plan. Focus on:
 </verification_context>`
 ```
 
-**Step 7.3: Spawn checker**
+**Step 7.3:** Spawn Task(subagent_type="fuska-plan-checker", model=models.checker, variant="validate").
 
-```
-Task(
-  prompt=checkerPrompt,
-  subagent_type="fuska-plan-checker",
-  model=models.checker,
-  variant="validate",
-  description="Check: ${DESCRIPTION}"
-)
-```
+**Step 7.4: Handle return + revision loop**
 
-**Step 7.4: Handle checker return + revision loop**
+Track `iterationCount = 1`, `issuesHistory = []`.
 
-Track: `iterationCount = 1`
-Track: `issuesHistory = []`
+If `## VERIFICATION PASSED`: output checker response with iteration summary → Step 8.
 
-If `## VERIFICATION PASSED`:
--> Output the checker's full response (contains verified plans JSON)
--> Append coordinator summary:
-   - **Iterations:** {iterationCount}
-   - **What Was Fixed:** {1 paragraph summary of issues raised and addressed, if iterations > 1}
--> Continue to Step 8
+If `## ISSUES FOUND` and iterationCount < 3:
+- Display: `Checker found issues. Revising... (N/3)`
+- Spawn planner with revision context (mode=revision, current plan, checker issues)
+- Re-run checker, increment iterationCount
 
-If `## ISSUES FOUND`:
-
-```
-Store issues in issuesHistory for summary generation
-
-while iterationCount < 3:
-  Display: `Checker found issues. Revising... (${iterationCount}/3)`
-
-  // Build revision prompt
-  const revisionPrompt = `<revision_context>
-  **Mode:** revision
-  **Task:** ${DESCRIPTION}
-  **Plan Concept ID:** ${planConceptId}
-  **Current plan:** ${JSON.stringify(planData, null, 2)}
-  **Checker issues:** [include checker output]
-  </revision_context>
-
-  <instructions>
-  Make targeted updates to address checker issues.
-  Do NOT replan from scratch.
-  Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlan)})
-  Return: ## REVISION COMPLETE
-  </instructions>`
-
-  Task(
-    prompt=revisionPrompt,
-    subagent_type="fuska-planner",
-    model=models.planner,
-    variant="plan",
-    description="Revise: ${DESCRIPTION}"
-  )
-
-  // Re-run checker (repeat step 7.2-7.3)
-  iterationCount++
-```
-
-If iterationCount >= 3 and still issues:
-```
-Display: "Max iterations reached. Issues remain:"
-List remaining issues
-
-const proceedResponse = question(questions=[{
-  header: "Plan Issues",
-  question: "How to proceed?",
-  options: [
-    { label: "Proceed anyway", description: "Execute despite remaining issues" },
-    { label: "Provide guidance", description: "I'll give direction for another attempt" },
-    { label: "Abort", description: "Cancel this task" }
-  ]
-}])
-```
+If iterationCount >= 3 and still issues: display remaining issues, offer Proceed anyway / Provide guidance / Abort.
 
 ---
 
 ## 8. Plan Review
 
-**Step 8.1: Query and display plan (ALWAYS)**
+**Step 8.1:** Query plan concept, display full plan with: objective, purpose, output, files to modify, tasks (each with files/action/verify/done).
 
-```
-megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
-const planData = JSON.parse(response.matches[0].summary)
-```
+**Step 8.2:** Check skip: `skipReview = hasNoReviewFlag || modeConfig.autoExecute || configData?.workflow?.interactive_review === false`. If skip → Step 9.
 
-Display format:
+**Step 8.3: Review loop**
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- TASK ${nextNum}: ${DESCRIPTION}
- Mode: ${MODE}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Options: Execute now | Ask a question | Modify the plan | Save and exit
 
-## Objective
-${planData.objective || DESCRIPTION}
-
-## Purpose
-${planData.purpose || 'N/A'}
-
-## Output
-${planData.output || 'N/A'}
-
-## Files to Modify
-${planData.files_modified?.map(f => `- ${f}`).join('\n') || 'TBD'}
-
-## Tasks (${planData.tasks?.length || 0})
-
-${planData.tasks?.map((t, i) => `
-### Task ${i+1}: ${t.name || 'Task ' + (i+1)}
-
-**Files:**
-- ${(Array.isArray(t.files) ? t.files : [t.files]).join('\n- ') || 'TBD'}
-
-**Action:**
-${t.action || t.description || 'N/A'}
-
-**Verify:**
-${t.verify || 'N/A'}
-
-**Done:**
-${t.done || 'N/A'}
-`).join('\n') || 'No tasks defined'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-**Step 8.2: Check review mode**
-
-```
-const skipReview = hasNoReviewFlag || modeConfig.autoExecute || configData?.workflow?.interactive_review === false
-
-if (skipReview) {
-  // Skip to Step 9 (execution)
-  Continue to Step 9
-}
-```
-
-**Step 8.3: Review Loop**
-
-```
-const reviewOptions = [
-  { label: "Execute now", description: "Run the plan immediately" },
-  { label: "Ask a question", description: "Discuss the plan before executing" },
-  { label: "Modify the plan", description: "Make changes to tasks" },
-  { label: "Save and exit", description: "Save for later execution" }
-]
-
-while (true) {
-  const actionResponse = question(questions=[{
-    header: "Plan Review",
-    question: "What would you like to do with this plan?",
-    options: reviewOptions
-  }])
-
-  if (actionResponse[0] === "Execute now") {
-    break  // Continue to Step 9
-  }
-
-  if (actionResponse[0] === "Ask a question") {
-    const questionResponse = question(questions=[{
-      header: "Question",
-      question: "What would you like to know about this plan?",
-      options: []
-    }])
-    
-    // Answer based on planData context
-    // The LLM should answer the question using planData context
-    
-    // Re-display plan and re-enter loop
-    continue
-  }
-
-  if (actionResponse[0] === "Modify the plan") {
-    const modResponse = question(questions=[{
-      header: "Modify",
-      question: "What changes do you want to make?",
-      options: []
-    }])
-    
-    const feedback = modResponse[0]
-    
-    // Spawn planner with revision context
-    const revisionPrompt = `<revision_context>
-**Mode:** revision
-**Task:** ${DESCRIPTION}
-**Plan Concept ID:** ${planConceptId}
-**Current plan:** ${JSON.stringify(planData, null, 2)}
-**User feedback:** ${feedback}
-</revision_context>
-
-<instructions>
-Update the plan to address user feedback.
-Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlan)})
-Return: ## REVISION COMPLETE
-</instructions>`
-
-    Task(
-      prompt=revisionPrompt,
-      subagent_type="fuska-planner",
-      model=models.planner,
-      variant="plan",
-      description="Revise: ${DESCRIPTION}"
-    )
-
-    // Re-query and re-display updated plan
-    megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
-    planData = JSON.parse(response.matches[0].summary)
-    Re-display plan from Step 8.1
-    continue
-  }
-
-  if (actionResponse[0] === "Save and exit") {
-    Display: "Plan saved as task-${nextNum}-${slug}"
-    Display: "Run `/fuska-do task-${nextNum}` to execute later."
-    Skip to Step 12 (display only, no execution)
-    return  // Exit process
-  }
-}
-
-// After loop exits, continue to Step 9
-```
+- **Execute now** → Step 9
+- **Ask a question** → answer from planData context, re-display, loop
+- **Modify the plan** → get feedback, spawn planner revision via Task, re-query, re-display, loop
+- **Save and exit** → Display "Plan saved as task-${nextNum}-${slug}. Run `/fuska-do task-${nextNum}` to execute later." → Stop
 
 ---
 
@@ -799,12 +349,7 @@ Return: ## REVISION COMPLETE
 
 Display: `Executing...`
 
-**Step 9.1: Query plan concept (get planner's updates)**
-
-```
-megamemory_understand(query=`task-${nextNum}-${slug}`, top_k=5)
-const planData = JSON.parse(response.matches[0].summary)
-```
+**Step 9.1:** Query plan concept for planner's latest updates.
 
 **Step 9.2: Build executor prompt**
 
@@ -834,42 +379,15 @@ megamemory_create_concept(
 </output>`
 ```
 
-**Step 9.3: Spawn executor**
+**Step 9.3:** Spawn Task(subagent_type="fuska-executor", model=models.executor, variant="execute").
 
-```
-Task(
-  prompt=executorPrompt,
-  subagent_type="fuska-executor",
-  model=models.executor,
-  variant="execute",
-  description="Execute: ${DESCRIPTION}"
-)
-```
-
-**Step 9.4: Handle executor return**
-
-If `## EXECUTION COMPLETE`:
--> Continue to Step 9.5
-
-If error:
--> Display: "Execution failed"
--> Stop
+**Step 9.4:** If `## EXECUTION COMPLETE` → Step 9.5. If error → Stop.
 
 ---
 
 ## 9.5. Generate Commit Message
 
-**Step 9.5.1: Get staged changes**
-
-```
-bash("git diff HEAD", description="Get all changes for commit message")
-const diffOutput = result
-```
-
-If diff is empty:
--> Display: "No changes detected. Skipping commit."
--> Set `generatedCommitMessage = null`
--> Skip to Step 10
+**Step 9.5.1:** Run `git diff HEAD`. If empty: set `generatedCommitMessage = null`, skip to Step 10.
 
 **Step 9.5.2: Spawn git-message agent**
 
@@ -896,31 +414,18 @@ Generate a commit message following Fuska format:
 
 Return ONLY the commit message, nothing else.`
 
-Task(
-  prompt=gitMessagePrompt,
-  subagent_type="fuska-git-message",
-  variant="amend",
-  description="Generate commit message"
-)
+Task(subagent_type="fuska-git-message", variant="amend", description="Generate commit message")
 ```
 
-**Step 9.5.3: Store generated message**
-
-```
-generatedCommitMessage = agentOutput.trim()
-```
-
--> Continue to Step 10
+**Step 9.5.3:** Store `generatedCommitMessage = agentOutput.trim()`.
 
 ---
 
 ## 10. Spawn Reviewer (if modeConfig.verifier)
 
-Only for verified mode.
+Only for verified mode. Display: `Reviewing...`
 
-Display: `Reviewing...`
-
-**Step 10.1: Build reviewer prompt (adapted for quick task)**
+**Step 10.1: Build reviewer prompt**
 
 ```
 const verifierPrompt = `<critical_constraints>
@@ -950,22 +455,9 @@ megamemory_create_concept(
 </verification_context>`
 ```
 
-**Step 10.2: Spawn verifier**
+**Step 10.2:** Spawn Task(subagent_type="fuska-verifier", model=models.verifier, variant="validate").
 
-```
-Task(
-  prompt=verifierPrompt,
-  subagent_type="fuska-verifier",
-  model=models.verifier,
-  variant="validate",
-  description="Verify: ${DESCRIPTION}"
-)
-```
-
-**Step 10.3: Handle verifier return**
-
-If "passed" -> continue to Step 11
-If "issues_found" -> display issues, continue to Step 11 (don't block completion for quick tasks)
+**Step 10.3:** If "passed" → continue. If "issues_found" → display issues, continue (don't block for quick tasks).
 
 ---
 
@@ -984,82 +476,23 @@ stateData.tasks_completed.push({
   mode: MODE
 })
 
-megamemory_update_concept(
-  id=stateId,
-  changes={ summary: JSON.stringify(stateData) }
-)
+megamemory_update_concept(id=stateId, changes={ summary: JSON.stringify(stateData) })
 ```
 
 ---
 
 ## 11.5. Commit Confirmation
 
-Skip if `generatedCommitMessage` is null (no changes to commit).
+Skip if `generatedCommitMessage` is null.
 
-**Step 11.5.1: Display generated commit message**
+Display generated commit message in banner.
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Generated Commit Message:
-───────────────────────────────────────────────────
-${generatedCommitMessage}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+If `hasAutoCommitFlag`: auto-commit (`git add -A && git commit`), extract hash, skip to Step 12.
 
-**Step 11.5.2: Prompt user for action**
-
-If `hasAutoCommitFlag`:
-```
-// Auto-commit without asking
-bash("git add -A && git commit -m '${generatedCommitMessage}'", description="Auto-commit (--auto-commit flag)")
-const commitOutput = result
-const commitMatch = commitOutput.match(/\[[\w-]+ ([a-f0-9]+)\]/) || commitOutput.match(/([a-f0-9]{7,})/)
-finalCommitHash = commitMatch ? commitMatch[1] : "committed"
-// Skip to Step 12
-```
-
-Otherwise:
-```
-const commitResponse = question(questions=[{
-  header: "Commit",
-  question: "How would you like to proceed with this commit?",
-  options: [
-    { label: "Commit now", description: "Commit with the generated message" },
-    { label: "Edit first", description: "Edit the message before committing" },
-    { label: "Skip", description: "Leave changes uncommitted" }
-  ]
-}])
-```
-
-**Step 11.5.3: Handle response**
-
-If "Commit now":
-```
-bash("git add -A && git commit -m '${generatedCommitMessage}'", description="Commit all changes")
-const commitOutput = result
-const commitMatch = commitOutput.match(/\[[\w-]+ ([a-f0-9]+)\]/) || commitOutput.match(/([a-f0-9]{7,})/)
-finalCommitHash = commitMatch ? commitMatch[1] : "committed"
-```
-
-If "Edit first":
-```
-const editResponse = question(questions=[{
-  header: "Edit Message",
-  question: "Enter your commit message (or leave blank to cancel):",
-  options: []
-}])
-if (editResponse[0]?.trim()) {
-  bash("git add -A && git commit -m '${editResponse[0]}'", description="Commit with edited message")
-  finalCommitHash = "committed"
-} else {
-  finalCommitHash = null
-}
-```
-
-If "Skip":
-```
-finalCommitHash = null
-```
+Otherwise prompt: Commit now | Edit first | Skip.
+- **Commit now** → `git add -A && git commit`, extract hash
+- **Edit first** → prompt for message, commit if provided
+- **Skip** → `finalCommitHash = null`
 
 ---
 
@@ -1081,83 +514,21 @@ finalCommitHash = null
  Ready for next task: /fuska-do
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-stateData.tasks_completed = stateData.tasks_completed || []
-stateData.tasks_completed.push({
-  number: nextNum,
-  description: DESCRIPTION,
-  date: new Date().toISOString().split('T')[0],
-  commit: commitHash,
-  plan_concept: `task-${nextNum}-${slug}`,
-  mode: MODE
-})
-
-megamemory_update_concept(
-  id=stateId,
-  changes={ summary: JSON.stringify(stateData) }
-)
-```
-
----
-
-## 12. Display Completion
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Fuska > TASK COMPLETE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
- Task ${nextNum}: ${DESCRIPTION}
- Mode: ${MODE}
- Plan: task-${nextNum}-${slug}
- Commit: ${commitHash}
- ${verification ? `Verification: ${verificationStatus}` : ''}
-
-───────────────────────────────────────────────────
- Ready for next task: /fuska-do
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Fuska > TASK COMPLETE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
- Task ${nextNum}: ${DESCRIPTION}
- Mode: ${MODE}
- Plan: task-${nextNum}-${slug}
- Commit: ${commitHash}
- ${verification ? `Verification: ${verificationStatus}` : ''}
-
-────────────────────────────────────────────────────
- Ready for next task: /fuska-do
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
 
 </process>
 
 <success_criteria>
 
-- [ ] Preflight check passes (MegaMemory connectivity + project exists)
-- [ ] Mode resolved (from argument, config, or default)
-- [ ] Description obtained (from argument or prompted)
-- [ ] Slug generated (lowercase, hyphens, max 40 chars)
-- [ ] Task number calculated (001, 002, ...)
-- [ ] Plan concept created with mode
-- [ ] Researcher spawned for research modes (researched/verified)
-- [ ] Research concept created (kind: pattern) if researched
+- [ ] Preflight passes, mode resolved, description obtained
+- [ ] Slug generated, task number calculated, plan concept created
+- [ ] Researcher spawned for research modes; research concept created
 - [ ] Planner spawns with mode-appropriate constraints
-- [ ] Plan-checker spawned for check modes (checked/researched/verified)
-- [ ] Revision loop works (max 3 iterations)
-- [ ] Auto-execute for planned/verified modes (overridable with --review)
-- [ ] Ask-before-execute for checked/researched modes (overridable with --no-review)
-- [ ] --auto-commit flag: auto-commits without prompt
-- [ ] Plan displayed before asking for execution decision
-- [ ] Change plan option: feedback collected, planner re-spawned, plan re-displayed
-- [ ] Save and exit option: plan saved with execution command shown
-- [ ] Builder spawns and creates summary concept (no commit during build)
-- [ ] Git-message agent spawned to generate commit message
-- [ ] Commit message displayed with Commit now / Edit first / Skip options
-- [ ] Commit executed only on user confirmation
+- [ ] Plan-checker spawned for check modes; revision loop works (max 3)
+- [ ] Auto-execute for planned/verified; ask-before for checked/researched (overridable)
+- [ ] Plan displayed; review loop with modify/question/save options
+- [ ] Builder spawns, creates summary concept (no commit during build)
+- [ ] Git-message agent generates commit; user confirms or auto-commits
 - [ ] Reviewer spawned for verified mode
-- [ ] State concept updated with task entry (including commit hash if committed)
-- [ ] Completion banner displayed with commit status
+- [ ] State updated, completion banner displayed
 
 </success_criteria>
