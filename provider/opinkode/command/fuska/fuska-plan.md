@@ -22,9 +22,9 @@ Create executable chapter concepts (plan concepts) for a roadmap chapter with in
 
 **Default flow:** Research (if needed) → Plan → Verify → Done
 
-**Orchestrator role:** Parse arguments, validate chapter, research domain (unless skipped or exists), spawn fuska-planner agent, verify plans with fuska-plan-checker, iterate until plans pass or max iterations reached, present results.
+**Orchestrator role:** Parse arguments, validate chapter, research domain (unless skipped), spawn fuska-planner agent, verify plans with fuska-plan-checker, iterate until plans pass or max iterations, present results.
 
-**Why subagents:** Research and planning burn context fast. Verification uses fresh context. User sees flow between agents in main context.
+**Why subagents:** Research and planning burn context fast. Verification uses fresh context. User sees flow between agents.
 
 </objective>
 
@@ -32,42 +32,26 @@ Create executable chapter concepts (plan concepts) for a roadmap chapter with in
 
 @../../fuska/references/preflight-check-initiative-exists.md
 @../../fuska/references/model-validation.md
+@../../fuska/references/megamemory-quick-ref.md
+@../../fuska/config/workflow-modes.md
+@../../fuska/templates/plan-prompts.md
+@../../fuska/templates/review-loop.md
 @../../fuska/scripts/types.ts
 @../../fuska/scripts/chapter-templates.ts
 @../../fuska/scripts/helpers.ts
 
 </execution_context>
 
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-All project data lives in MegaMemory. If a MegaMemory query returns no results, tell the user the data wasn't found.
-
-**`megamemory:understand` returns:**
-```json
-{ "matches": [ { "id": "project/state", "name": "state", "kind": "config", "summary": "{\"current_chapter\":\"chapter-01\", ...}", "children": [...], "edges": [...] } ] }
-```
-
-The important field is **`summary`** — it's a JSON string containing the concept's data. Parse it to extract the fields you need. If `matches` is empty, the concept doesn't exist.
-
-**`megamemory:create_concept` returns:** `{id, message}` on success.
-
-**`megamemory:update_concept` accepts changes:** `{summary?, name?, kind?, why?, file_refs?}` only. Pass the full updated JSON string as `summary`. Returns `{message}`.
-
-**`megamemory:list_roots` returns:** an array of root concepts.
-
-</megamemory_guide>
-
 <context>
 
-Chapter number: `$ARGUMENTS` (optional - auto-detects next unplanned chapter if not provided)
+Chapter number: `$ARGUMENTS` (optional - auto-detects next unplanned chapter)
 
 **Flags:**
 - `--research` — Force re-research even if research concept exists
-- `--skip-research` — Skip research entirely, go straight to planning
-- `--fixes` — Fix planning mode (uses verification concept for issues, skips research)
+- `--skip-research` — Skip research entirely
+- `--fixes` — Fix planning mode (uses verification concept, skips research)
 - `--skip-verify` — Skip planner → checker verification loop
+- `--no-review` — Skip interactive review loop
 
 Normalize chapter input in step 2 before any MegaMemory lookups.
 
@@ -83,75 +67,22 @@ Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-in
 
 **Step 1.1: Check MegaMemory availability**
 
-Call:
-```
-megamemory_list_roots()
-```
+Call `megamemory_list_roots()`. If empty: Display "No initiatives found" → Stop.
 
-**Step 1.2: Check for empty results**
+**Step 1.2: Query and parse config**
 
-If response.roots.length === 0:
-→ Display: "No initiatives found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
-
-**Step 1.3: Query config concept**
-
-Call:
 ```
 megamemory_understand(query="config", top_k=5)
+configData = JSON.parse(response.matches[0].summary)
 ```
 
-**Step 1.4: Check config exists**
+If no config found: Display "Config not found" → Suggest "Run fuska init" → Stop.
 
-If response.matches.length === 0:
-→ Display: "Config concept not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
+**Step 1.3: Resolve models**
 
-**Step 1.5: Extract and parse config**
+Use model-validation.md patterns. Extract `model_profile` (default: "balanced") and `model_aliases`.
 
-If response.matches.length > 0:
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
-```
-
-**Step 1.6: Access model_profile field**
-
-```
-const modelProfile = configData.model_profile
-if (!modelProfile || modelProfile === "") {
-  modelProfile = "balanced"
-}
-```
-
-**Step 1.7: Extract checker_panel configuration**
-
-```
-const checkerPanel = configData.checker_panel || {
-  base: 'quality-advocate',
-  contextual: null,
-  expert: 'dynamic'
-}
-
-const projectClassification = configData.project_classification || {
-  type: 'generic',
-  confidence: 'low',
-  signals: []
-}
-```
-
-**Model lookup table (uses aliases):**
-
-First, extract model aliases from config (with defaults):
-```
-const aliases = configData.model_aliases || {
-  quality_model: "opencode/claude-opus-4",
-  balanced_model: "opencode/claude-sonnet-4",
-  budget_model: "opencode/claude-haiku-4"
-}
-```
+Model lookup table:
 
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
@@ -160,6 +91,12 @@ const aliases = configData.model_aliases || {
 | fuska-plan-checker | balanced_model | balanced_model | budget_model |
 
 ```
+const aliases = configData.model_aliases || {
+  quality_model: "opencode/claude-opus-4",
+  balanced_model: "opencode/claude-sonnet-4",
+  budget_model: "opencode/claude-haiku-4"
+}
+
 const modelLookup = {
   quality: { researcher: aliases.quality_model, planner: aliases.quality_model, checker: aliases.balanced_model },
   balanced: { researcher: aliases.balanced_model, planner: aliases.quality_model, checker: aliases.balanced_model },
@@ -168,306 +105,91 @@ const modelLookup = {
 const models = modelLookup[modelProfile]
 ```
 
-Store the resolved models (e.g., `researcherModel`, `plannerModel`, `checkerModel`) for use in Task calls below.
+**Step 1.4: Validate against OpenCode config**
 
-**Step 1.8: Validate model strings against OpenCode configuration**
+Follow model-validation.md to validate model strings against `~/.config/opencode/opencode.jsonc`.
 
-Before spawning any Task, validate that model strings reference available providers.
+**Step 1.5: Extract checker panel config**
 
 ```
-const configPath = path.join(os.homedir(), '.config', 'opencode', 'opencode.jsonc')
-
-let openCodeConfig
-try {
-  const content = readFileSync(configPath, 'utf-8')
-  const cleaned = content
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/.*$/gm, '')
-  openCodeConfig = JSON.parse(cleaned)
-} catch (error) {
-  Display: "Could not read OpenCode configuration at ~/.config/opencode/opencode.jsonc"
-  Display: "Please ensure OpenCode is properly configured, then run `fuska config`"
-  Stop
-}
-
-const modelAliases = configData.model_aliases || {
-  quality_model: "opencode/claude-opus-4",
-  balanced_model: "opencode/claude-sonnet-4",
-  budget_model: "opencode/claude-haiku-4"
-}
-
-const validationErrors = []
-const providerModels = new Map()
-
-for (const [alias, modelString] of Object.entries(modelAliases)) {
-  const parts = modelString.split('/')
-  if (parts.length !== 2) {
-    validationErrors.push(`"${modelString}" (${alias}) - invalid format, expected "provider/model"`)
-    continue
-  }
-  
-  const [provider, model] = parts
-  const providerConfig = openCodeConfig.provider?.[provider]
-  
-  if (!providerConfig) {
-    validationErrors.push(`"${modelString}" (${alias}) - provider "${provider}" not found`)
-    const availableProviders = Object.keys(openCodeConfig.provider || {})
-    for (const p of availableProviders) {
-      const pc = openCodeConfig.provider[p]
-      const models = pc.whitelist || Object.keys(pc.models || {})
-      if (!providerModels.has(p)) {
-        providerModels.set(p, models)
-      }
-    }
-    continue
-  }
-  
-  const whitelist = providerConfig.whitelist || []
-  const configuredModels = Object.keys(providerConfig.models || {})
-  const availableModels = whitelist.length > 0 ? whitelist : configuredModels
-  
-  if (!providerModels.has(provider)) {
-    providerModels.set(provider, availableModels)
-  }
-  
-  if (!availableModels.includes(model)) {
-    validationErrors.push(`"${modelString}" (${alias}) - model "${model}" not found in provider "${provider}"`)
-  }
-}
-
-if (validationErrors.length > 0) {
-  const providerList = Array.from(providerModels.entries())
-    .map(([provider, models]) => `  - ${provider}: ${models.join(', ')}`)
-    .join('\n')
-  
-  Display: "Invalid model configuration:"
-  for (const error of validationErrors) {
-    Display: `  - ${error}`
-  }
-  Display: ""
-  Display: "Available providers in your OpenCode config:"
-  Display: providerList
-  Display: ""
-  Display: "To fix: Run `fuska config` to reconfigure your models"
-  Stop
-}
+checkerPanel = configData.checker_panel || { base: 'quality-advocate', contextual: null, expert: 'dynamic' }
+projectClassification = configData.project_classification || { type: 'generic', confidence: 'low', signals: [] }
 ```
 
 ---
 
 ## 2. Parse and Normalize Arguments
 
-**Step 2.1: Extract flags from arguments**
-
-The variable `input` contains the raw argument string provided by the user.
+**Step 2.1: Extract flags and chapter number**
 
 ```
-const hasResearchFlag = input.includes("--research")
-const hasSkipResearchFlag = input.includes("--skip-research")
-const hasFixesFlag = input.includes("--fixes")
-const hasSkipVerifyFlag = input.includes("--skip-verify")
-const hasNoReviewFlag = input.includes("--no-review")
-
-// Extract --mode flag for one-off override
-const modeMatch = input.match(/--mode\s+(\S+)/)
-const modeOverride = modeMatch ? modeMatch[1] : null
-
-// Extract chapter number
-const chapterMatch = input.match(/\d+/)
-let chapterNumber = chapterMatch ? parseInt(chapterMatch[0]) : null
+hasResearchFlag = input.includes("--research")
+hasSkipResearchFlag = input.includes("--skip-research")
+hasFixesFlag = input.includes("--fixes")
+hasSkipVerifyFlag = input.includes("--skip-verify")
+hasNoReviewFlag = input.includes("--no-review")
+modeOverride = input.match(/--mode\s+(\S+)/)?.[1]
+chapterNumber = input.match(/\d+/) ? parseInt(match[0]) : null
 ```
 
 **Step 2.2: Auto-detect chapter if not provided**
 
-If chapterNumber === null:
-```
-// Query roadmap to find next unplanned chapter
-megamemory_understand(query="roadmap", top_k=5)
-if (response.matches.length > 0) {
-  const roadmapData = JSON.parse(response.matches[0].summary)
-  // Find chapters with status != "complete"
-  const incompleteChapters = roadmapData.chapters.filter(p => p.status !== "complete")
-  if (incompleteChapters.length > 0) {
-    chapterNumber = incompleteChapters[0].number
-  }
-}
-```
+Query roadmap, find first incomplete chapter. If none found: Display error → Stop.
 
-If still no chapter found:
-→ Display: "Could not determine chapter. Please specify a chapter number."
-→ Stop
-
-**Step 2.3: Normalize chapter to slug**
+**Step 2.3: Normalize to slug**
 
 ```
-const chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
+chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
 ```
 
-**Step 2.4: Check for existing research**
+**Step 2.4-2.5: Check existing research and plans**
 
-Call:
-```
-megamemory_understand(query=`${chapterSlug}-research`, top_k=1)
-```
-
-If response.matches.length > 0:
-```
-const researchExists = true
-```
-Else:
-```
-const researchExists = false
-```
-
-**Step 2.5: Check for existing plans**
-
-Call:
-```
-megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
-```
-
-If response.matches.length > 0:
-```
-const existingPlansCount = response.matches.length
-```
-Else:
-```
-const existingPlansCount = 0
-```
+Query `${chapterSlug}-research` and `${chapterSlug}-plan` concepts. Store `researchExists` and `existingPlansCount`.
 
 ---
 
 ## 3. Validate Chapter
 
-**Step 3.1: Query chapter concept**
+Query `chapter ${chapterNumber}` concept. If not found: Display error → Stop.
 
-Call:
-```
-megamemory_understand(query=`chapter ${chapterNumber}`, top_k=5)
-```
-
-**Step 3.2: Check chapter exists**
-
-If response.matches.length === 0:
-→ Display: `Chapter ${chapterNumber} not found in MegaMemory`
-→ Suggest: "Query available chapters using megamemory:understand(query='roadmap', top_k=10)"
-→ Stop
-
-**Step 3.3: Extract chapter data**
-
-If response.matches.length > 0:
-```
-const chapterSummaryString = response.matches[0].summary
-const chapterData = JSON.parse(chapterSummaryString)
-
-const chapterName = chapterData.name
-const chapterGoal = chapterData.goal
-const chapterStatus = chapterData.status
-const chapterId = response.matches[0].id
-```
+Extract: `chapterName`, `chapterGoal`, `chapterStatus`, `chapterId` from parsed summary.
 
 ---
 
 ## 4. Handle Research
 
-**Step 4.1: Check for --fixes flag**
+**Step 4.1-4.2: Skip if --fixes or --skip-research**
 
-If hasGapsFlag === true:
-→ Skip to step 5 (research not needed for gap closure)
+**Step 4.3: Resolve workflow mode**
 
-**Step 4.2: Check for --skip-research flag**
-
-If hasSkipResearchFlag === true:
-→ Skip to step 5
-
-**Step 4.3: Extract workflow mode and derive research**
-
-Re-use configData from step 1.5:
+Using workflow-modes.md:
 ```
-// Extract mode (with --mode flag override for one-off changes)
-const mode = modeOverride || configData.workflow?.mode || "standard"
-
-const modeConfig = {
-  direct: { research: false, planCheck: false },
-  quick: { research: false, planCheck: false },
-  fast: { research: false, planCheck: true },
-  balanced: { research: true, planCheck: false },
-  thorough: { research: true, planCheck: true },
-  standard: { research: true, planCheck: true }
-}[mode] || { research: true, planCheck: true };  // Default to standard
-
-// Allow per-chapter flags to augment (never reduce)
-const shouldResearch = modeConfig.research || hasResearchFlag
-const shouldPlanCheck = modeConfig.planCheck && !hasSkipVerifyFlag
+mode = modeOverride || configData.workflow?.mode || "standard"
+{ shouldResearch, shouldPlanCheck } = resolve from mode flags table
 ```
 
-**Step 4.4: Skip if research disabled**
+Flags augment (never reduce) mode defaults:
+```
+shouldResearch = modeConfig.research || hasResearchFlag
+shouldPlanCheck = modeConfig.planCheck && !hasSkipVerifyFlag
+```
 
-If shouldResearch === false:
-→ Skip to step 5
+**Step 4.4: Skip if research disabled by mode**
 
-**Step 4.5: Check for existing research**
+**Step 4.5: Use existing if available**
 
-If researchExists === true AND hasResearchFlag === false:
-→ Display: `Using existing research: ${chapterSlug}-research concept`
-→ Skip to step 5
+If researchExists AND !hasResearchFlag: Display "Using existing research" → Skip to step 5
 
-**Step 4.6: Spawning researcher (if needed)**
+**Step 4.6-4.8: Spawn researcher**
 
-If (researchExists === false OR hasResearchFlag === true) AND hasGapsFlag === false AND shouldResearch === true:
-
-Display:
+Display banner:
 ```
 ----------------------------------------------------
  Fuska: RESEARCHING CHAPTER ${chapterNumber}
 ----------------------------------------------------
-
- [IN_PROGRESS] Spawning researcher...
 ```
 
-### Spawn fuska-chapter-researcher
-
-**Step 4.7: Gather research context**
-
-**Gather chapter description:**
-```
-// Reuse chapterData from step 3.3
-const chapterDesc = { name: chapterName, goal: chapterGoal }
-```
-
-**Gather requirements:**
-```
-megamemory_understand(query="requirements", top_k=50)
-if (response.matches.length > 0) {
-  const requirements = response.matches.map(match => {
-    const summaryString = match.summary
-    const reqData = JSON.parse(summaryString)
-    return { id: match.id, description: reqData.description, status: reqData.status }
-  })
-}
-```
-
-**Gather chapter context (if exists):**
-```
-megamemory_understand(query=`${chapterSlug}-context`, top_k=1)
-if (response.matches.length > 0) {
-  const contextSummaryString = response.matches[0].summary
-  const contextData = JSON.parse(contextSummaryString)
-  // Use contextData.gathered, contextData.status, contextData.chapter_boundary, etc.
-}
-```
-
-**Gather prior decisions:**
-```
-megamemory_understand(query="state", top_k=1)
-if (response.matches.length > 0) {
-  const stateSummaryString = response.matches[0].summary
-  const stateData = JSON.parse(stateSummaryString)
-  // Use stateData.current_chapter, stateData.last_activity, etc.
-}
-```
-
-**Step 4.8: Build and spawn researcher**
+Gather context (chapter, requirements, context, state) then build researcher prompt:
 
 ```
 const researchPrompt = `<critical_constraints>
@@ -477,23 +199,14 @@ Create/update research concept: ${chapterSlug}-research
 
 <objective>
 Research how to implement Chapter ${chapterNumber}: ${chapterName}
-
 Answer: "What do I need to know to PLAN this chapter well?"
 </objective>
 
 <context>
-**Chapter description:**
-Name: ${chapterName}
-Goal: ${chapterGoal}
-
-**Requirements (if any):**
-${requirements.map(r => `- ${r.description} (${r.status})`).join('\n') || 'No requirements found'}
-
-**Chapter context (if any):**
-${contextData ? JSON.stringify(contextData, null, 2) : 'No context found'}
-
-**Prior decisions:**
-${stateData ? JSON.stringify(stateData, null, 2) : 'No state data'}
+**Chapter:** ${chapterName} — ${chapterGoal}
+**Requirements:** ${requirements list or 'None'}
+**Chapter context:** ${contextData or 'None'}
+**Prior state:** ${stateData or 'None'}
 </context>
 
 <output>
@@ -509,876 +222,173 @@ Task(
 )
 ```
 
-### Handle Researcher Return
-
-**If researcher returns "## RESEARCH COMPLETE":**
-→ Display: "Research complete. Proceeding to planning..."
-→ Continue to step 5
-
-**If researcher returns "## RESEARCH BLOCKED":**
-→ Display blocker information from researcher output
-→ Use question tool:
-  - header: "Research Blocked"
-  - question: "How would you like to proceed?"
-  - options:
-    - "Provide more context" - I'll gather more information
-    - "Skip research" - Proceed to planning anyway
-    - "Abort" - Cancel this operation
-
-Wait for user response and handle accordingly.
+Handle return:
+- `## RESEARCH COMPLETE` → Continue to step 5
+- `## RESEARCH BLOCKED` → Offer options (Provide context, Skip research, Abort)
 
 ---
 
 ## 5. Check Existing Plans
 
-**Step 5.1: Check if plans exist**
-
-If existingPlansCount > 0:
-→ Use question tool:
-```
-const plansResponse = question(questions=[{
-  header: "Existing Plans",
-  question: "Plans already exist for this chapter (${existingPlansCount} plan(s)). What would you like to do?",
-  options: [
-    {label: "Continue planning", description: "Add more plans to existing ones"},
-    {label: "View existing", description: "Show current plans"},
-    {label: "Replan from scratch", description: "Delete and recreate all plans"}
-  ]
-}])
-```
-
-**Step 5.2: Handle user response**
-
-If user chooses "Continue planning":
-→ Continue to step 6
-
-If user chooses "View existing":
-→ Display existing plans (query `${chapterSlug}-plan` and show summaries)
-→ Re-prompt question
-
-If user chooses "Replan from scratch":
-→ Ask confirmation
-→ If confirmed, delete all plan concepts and continue to step 6
+If existingPlansCount > 0: Question user (Continue planning, View existing, Replan from scratch)
 
 ---
 
-## 6. Load All Context (Single Pass)
+## 6. Load All Context
 
-Query MegaMemory for all needed concepts in sequence, store results. All subsequent steps use these cached results — NO additional queries for data already loaded.
+Query in sequence, cache results — NO re-querying in later steps:
 
-**Step 6.1: Query project state**
+1. State → `stateData`
+2. Roadmap → `roadmapData`
+3. Requirements → `requirements`
+4. Chapter context → `contextData`, `hasContext`
+5. Research → `researchData`, `hasResearch`
+6. Verification (if --fixes) → `verificationData`
+7. Import graph freshness check (if refresh config enables it):
+   - Check `configData.refresh` for hybrid mode with `auto_before` including `plan-chapter`
+   - Compare `git rev-parse HEAD` against `last_sha` and age against `age_hours`
+   - If stale: spawn fuska-refresh, then re-query config
+8. Import graph context:
+   - Query `symbol ${chapterKeywords}` and `file ${chapterKeywords}` (top_k=50)
+   - Filter out `dead-code:` concepts
+   - Format as `importGraphFiles` and `importGraphSymbols`
+   - Set `importGraphAvailable = files.length > 0 || symbols.length > 0`
 
-```
-const stateResponse = megamemory_understand(query="state", top_k=5)
-const stateData = stateResponse.matches.length > 0
-  ? JSON.parse(stateResponse.matches[0].summary)
-  : null
-```
-
-**Step 6.2: Query roadmap**
-
-```
-const roadmapResponse = megamemory_understand(query="roadmap", top_k=5)
-const roadmapData = roadmapResponse.matches.length > 0
-  ? JSON.parse(roadmapResponse.matches[0].summary)
-  : null
-```
-
-**Step 6.3: Query requirements**
-
-```
-const reqResponse = megamemory_understand(query="requirements", top_k=50)
-const requirements = reqResponse.matches.map(match => {
-  const reqData = JSON.parse(match.summary)
-  return { id: match.id, description: reqData.description, status: reqData.status }
-})
-```
-
-**Step 6.4: Query chapter context**
-
-```
-const contextResponse = megamemory_understand(query=`${chapterSlug}-context`, top_k=1)
-const contextData = contextResponse.matches.length > 0
-  ? JSON.parse(contextResponse.matches[0].summary)
-  : null
-const hasContext = contextResponse.matches.length > 0
-```
-
-**Step 6.5: Query research**
-
-```
-const researchResponse = megamemory_understand(query=`${chapterSlug}-research`, top_k=1)
-const researchData = researchResponse.matches.length > 0
-  ? JSON.parse(researchResponse.matches[0].summary)
-  : null
-const hasResearch = researchResponse.matches.length > 0
-```
-
-**Step 6.6: Query Verification (if --fixes mode)**
-
-```
-let verificationData = null
-if (hasGapsFlag) {
-  const verificationResponse = megamemory_understand(query=`${chapterSlug}-verification`, top_k=1)
-  verificationData = verificationResponse.matches.length > 0
-    ? JSON.parse(verificationResponse.matches[0].summary)
-    : null
-}
-```
-
-**Step 6.7: Check Import Graph Freshness**
-
-**Step 6.7.1: Query config for refresh settings**
-
-Re-use `configData` from Step 1.5:
-```
-const refreshConfig = configData.refresh || { mode: 'disabled' }
-```
-
-**Step 6.7.2: Check if auto-refresh is enabled and stale**
-
-If `refreshConfig.mode === 'hybrid'` AND `refreshConfig.auto_before?.includes('plan-chapter')`:
-
-```bash
-currentSha = $(git rev-parse HEAD)
-```
-
-```
-const lastSha = refreshConfig.last_sha
-const lastRefresh = refreshConfig.last_refresh ? new Date(refreshConfig.last_refresh) : null
-const ageHours = lastRefresh ? (Date.now() - lastRefresh.getTime()) / (1000 * 60 * 60) : Infinity
-
-const needsRefresh = !lastSha || lastSha !== currentSha || ageHours > (refreshConfig.age_hours || 24)
-```
-
-If `needsRefresh`:
-```
-Display: "---------------------------------------------------"
-Display: "  Import graph stale, running quick refresh..."
-Display: "---------------------------------------------------"
-
-// Execute refresh logic (abbreviated from fuska-refresh)
-// OR spawn fuska-refresh via Task tool
-
-// After refresh, query config again for updated metadata
-const updatedConfig = await megamemory_understand(query="config", top_k=1)
-```
-
-**Step 6.7.3: Query import graph for chapter context**
-
-```
-const chapterKeywords = chapterName.split(/[\s-]+/).join(' ')
-const symbolMatches = await megamemory_understand(query=`symbol ${chapterKeywords}`, top_k=50)
-const fileMatches = await megamemory_understand(query=`file ${chapterKeywords}`, top_k=50)
-```
-
-Add to planner context:
-- `symbolMatches` -- Related symbols for understanding scope
-- `fileMatches` -- Related files for disambiguation
-- Filter out `dead-code:` concepts from planning context
-
-**Step 6.7.3a: Format import graph data for planner**
-
-```
-// Build structured data for planner prompt
-const importGraphFiles = fileMatches.matches.map(match => {
-  const data = JSON.parse(match.summary);
-  return {
-    path: data.path,
-    language: data.language,
-    exports: data.exports || [],
-    imports: data.imports || [],
-    symbol_count: data.symbol_count || 0
-  };
-});
-
-const importGraphSymbols = symbolMatches.matches
-  .filter(m => !m.name.startsWith('dead-code:'))
-  .map(match => {
-    const data = JSON.parse(match.summary);
-    return {
-      name: data.name,
-      type: data.type,
-      file: data.file,
-      exported: data.exported,
-      signature: data.signature
-    };
-  });
-
-const importGraphAvailable = importGraphFiles.length > 0 || importGraphSymbols.length > 0;
-```
-
-**Step 6.7.4: Derive computed values**
-
-```
-const modelProfile = configData?.model_profile || "balanced"
-```
-
-All data is now cached. Subsequent steps reference these variables — no re-querying.
+---
 
 ## 7. Spawn fuska-planner Agent
 
-Display stage banner:
-
+Display banner:
 ```
 -----------------------------------------------------
  Fuska: PLANNING CHAPTER {X}
 -----------------------------------------------------
-
-[IN_PROGRESS] Spawning planner...
 ```
 
-Build the planner prompt by inlining the concept data gathered in step 6. Replace each section below with the actual summary content from the corresponding MegaMemory query:
-
-```markdown
-<critical_constraints>
-Return: ## PLANNING COMPLETE or ## CHECKPOINT REACHED or ## PLANNING INCONCLUSIVE
-Create plan concepts in MegaMemory using ChapterConceptTemplates.createPlan()
-Plans MUST complete within 50% context usage
-Each plan: 2-3 tasks maximum
-</critical_constraints>
-
-<planning_context>
-
-**Chapter:** {chapter_number}
-**Mode:** {standard | fix_planning}
-
-**Project State:**
-Include the state concept's summary here — the JSON with current_chapter, status, progress, and last_activity so the planner knows where the project stands.
-
-**Roadmap:**
-Include the roadmap concept's summary here so the planner understands the overall project structure and chapter sequence.
-
-**Requirements (if exists):**
-Include all requirement concept summaries here (each has description and status). Omit this section if no requirements were found.
-
-**Chapter Context (if exists):**
-Include the context concept's summary here (gathered items, decisions, deferred items, chapter_boundary). Omit if none found.
-
-**Research (if exists):**
-Include the research concept's summary here (domain-specific findings). Omit if research was skipped or not found.
-
-**Fix Planning (if --fixes mode):**
-Include the verification concept's summary here (issues and findings). Omit entirely if not in --fixes mode.
-
-</planning_context>
-
-**Import Graph Context (if available):**
-{if importGraphAvailable}
-<import_graph_context>
-
-**Related files from import graph ({importGraphFiles.length} files):**
-{importGraphFiles.slice(0, 20).map(f => `- ${f.path} (${f.symbol_count} symbols, exports: ${f.exports.slice(0, 5).join(', ')}${f.exports.length > 5 ? '...' : ''})`).join('\n')}
-
-**Related symbols from import graph ({importGraphSymbols.length} symbols):**
-{importGraphSymbols.slice(0, 20).map(s => `- ${s.name} (${s.type}) in ${s.file}`).join('\n')}
-
-**Usage in planning:**
-- Check `fileByPath.get('path/to/file.ts')` before planning to create files
-- Use `symbolByName.get('SymbolName')` to find existing symbols to reference
-- If file exists: action = "extend", preserve existing exports
-- If file missing: action = "create"
-
-**Fallback:** If import graph context is empty, proceed without artifact existence checks.
-
-</import_graph_context>
-{endif}
-
-<downstream_consumer>
-Output consumed by /fuska-build
-
-Plans must be executable prompts with:
-- Frontmatter (batch, depends_on, files_modified, autonomous)
-- Tasks in XML format
-- Verification criteria
-- requirements for goal-backward verification
-
-Use MegaMemory:
-- Create plan concepts: ChapterConceptTemplates.createPlan()
-- Reference patterns from MegaMemory: megamemory:understand()
-</downstream_consumer>
-
-<quality_gate>
-Before returning PLANNING COMPLETE:
-
-- [ ] Plan concepts created in MegaMemory
-- [ ] Each plan has valid frontmatter
-- [ ] Tasks are specific and actionable
-- [ ] Dependencies correctly identified
-- [ ] Batchs assigned for parallel execution
-- [ ] requirements derived from chapter goal
-- [ ] Patterns referenced from MegaMemory (if found)
-</quality_gate>
-```
+Build prompt using **plan-prompts.md Planner Prompt Template**. Fill placeholders with cached data from step 6. Inline the actual JSON summaries for stateData, roadmapData, requirements, contextData, researchData, verificationData, and import graph context.
 
 ```
 Task(
   prompt=filled_prompt,
   subagent_type="fuska-planner",
-  model="{planner_model}",
+  model=models.planner,
   variant="plan",
-  description="Plan Chapter {chapter} with MegaMemory"
+  description="Plan Chapter {chapter}"
 )
 ```
 
+---
+
 ## 8. Handle Planner Return
 
-Parse planner output:
+- `## PLANNING COMPLETE` → If --skip-verify or !shouldPlanCheck: Step 13, else: Step 9
+- `## CHECKPOINT REACHED` → Present to user, spawn continuation (step 12)
+- `## PLANNING INCONCLUSIVE` → Offer options (Add context, Retry, Manual)
 
-**`## PLANNING COMPLETE`:**
-- Display: `Planner created {N} plan(s). Concepts created in MegaMemory.`
-- If `--skip-verify`: Skip to step 13
-- If `shouldPlanCheck` is `false`: Skip to step 13
-- Otherwise: Proceed to step 10
-
-**`## CHECKPOINT REACHED`:**
-- Present to user, get response, spawn continuation (see step 12)
-
-**`## PLANNING INCONCLUSIVE`:**
-- Show what was attempted
-- Offer: Add context, Retry, Manual
-- Wait for user response
+---
 
 ## 9. Query Plans for Verification
 
-**Step 9.1: Query all plans for this chapter**
+Query all `${chapterSlug}-plan` concepts (top_k=20). If none found: Display error → Stop.
 
-Call:
-```
-megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
-```
+Extract plan data: `id`, `name`, `batch`, `dependsOn`, `filesModified`, `autonomous`, `objective`, `tasks`, `mustHaves`.
 
-**Step 9.2: Check for plans**
+Also query requirements (top_k=50) for checker context.
 
-If response.matches.length === 0:
-→ Display: "No plan concepts found for verification"
-→ Suggest: "Plans may not have been created. Check previous step output."
-→ Stop
-
-**Step 9.3: Extract plan summaries**
-
-If response.matches.length > 0:
-```
-const planConcepts = response.matches.map(match => {
-  const planSummaryString = match.summary
-  const planData = JSON.parse(planSummaryString)
-  return {
-    id: match.id,
-    name: match.name,
-    batch: planData.batch,
-    dependsOn: planData.depends_on,
-    filesModified: planData.files_modified,
-    autonomous: planData.autonomous,
-    objective: planData.objective,
-    tasks: planData.tasks,
-    mustHaves: planData.requirements
-  }
-})
-```
-
-**Step 9.4: Query requirements**
-
-Call:
-```
-megamemory_understand(query="requirements", top_k=50)
-```
-
-**Step 9.5: Extract requirement summaries**
-
-If response.matches.length > 0:
-```
-const requirementConcepts = response.matches.map(match => {
-  const reqSummaryString = match.summary
-  const reqData = JSON.parse(reqSummaryString)
-  return {
-    id: match.id,
-    description: reqData.description,
-    status: reqData.status
-  }
-})
-```
-
-All extracted data is used to build the checker prompt in step 10.
+---
 
 ## 10. Spawn fuska-plan-checker-panel Agent
 
-**Step 10.1: Display stage banner**
-
+Display banner:
 ```
 -----------------------------------------------------
  Fuska: VERIFYING PLANS
 -----------------------------------------------------
-
- [IN_PROGRESS] Spawning plan checker panel...
 ```
 
-**Step 10.2: Build panel prompt**
-
-Use the data extracted in step 9 (planConcepts and requirementConcepts), chapterData from step 3, and checker_panel from step 1:
-
-```markdown
-<critical_constraints>
-Return one of:
-- ## VERIFICATION PASSED — all checks pass
-- ## ISSUES FOUND — structured issue list with cross-validation badges
-</critical_constraints>
-
-<verification_context>
-
-**Chapter:** ${chapterNumber}
-**Chapter Goal:** ${chapterGoal}
-
-**Plans to verify:**
-${planConcepts.map(plan => `### ${plan.name}
-- Batch: ${plan.batch}
-- Depends on: ${plan.dependsOn.join(', ') || 'None'}
-- Files: ${plan.filesModified.join(', ')}
-- Autonomous: ${plan.autonomous}
-- Objective: ${plan.objective}
-- Tasks: ${plan.tasks ? plan.tasks.map(t => `- ${t}`).join('\n') : 'No tasks'}
-- Must haves: ${JSON.stringify(plan.mustHaves, null, 2)}\n`).join('\n')}
-
-**Requirements (if any):**
-${requirementConcepts.map(req => `- ${req.description} (${req.status})`).join('\n') || 'No requirements'}
-
-</verification_context>
-
-<checker_panel>
-Base: quality-advocate (always)
-Contextual: ${checkerPanel.contextual || 'none'}
-Expert: dynamic (derived from plan content)
-
-Project Classification:
-- Type: ${projectClassification.type}
-- Confidence: ${projectClassification.confidence}
-- Signals: ${projectClassification.signals.join(', ')}
-</checker_panel>
-```
-
-**Step 10.3: Spawn panel coordinator**
+Build prompt using **plan-prompts.md Checker Panel Prompt Template**. Fill with plan data from step 9, chapter data from step 3, and checker panel config from step 1.
 
 ```
 Task(
   subagent_type="fuska-plan-checker-panel",
-  model=checkerModel,
+  model=models.checker,
   variant="validate",
-  description="Verify Chapter ${chapterNumber} plans (panel)",
-  prompt=panelPrompt
+  description="Verify Chapter ${chapterNumber} plans"
 )
 ```
 
+---
+
 ## 11. Handle Checker Return
 
-**If `## VERIFICATION PASSED`:**
-- Display: `Plans verified. Ready for execution.`
-- Proceed to step 13
+- `## VERIFICATION PASSED` → Step 13
+- `## ISSUES FOUND` → List issues → Step 12
 
-**If `## ISSUES FOUND`:**
-- Display: `Checker found issues:`
-- List issues from checker output
-- Check iteration count
-- Proceed to step 12
+---
 
 ## 12. Revision Loop (Max 3 Iterations)
 
-Track: `iteration_count` (starts at 1 after initial plan + check)
+Track `iteration_count` (starts at 1).
 
 **If iteration_count < 3:**
 
-Display: `Sending back to planner for revision... (iteration {N}/3)`
+Display: `Sending back for revision... (iteration N/3)`
 
-Retrieve the current plans for revision context using `megamemory:understand` — query "{CHAPTER}-plan", top_k=20.
-Each plan concept summary has: `batch`, `depends_on`, `files_modified`, `autonomous`, `objective`, `tasks`, `requirements`.
-Collect all plan summaries so the planner can see what needs revision.
-
-Build the revision prompt by inlining the plans and checker issues:
-
-```markdown
-<critical_constraints>
-Return what changed
-Do NOT replan from scratch unless issues are fundamental
-Update plan concepts in MegaMemory
-</critical_constraints>
-
-<revision_context>
-
-**Chapter:** {chapter_number}
-**Mode:** revision
-
-**Existing plans:**
-Include all current plan concept summaries here so the planner can see the plans that need revision.
-
-**Checker issues:**
-Include the structured issues from the checker's output here so the planner knows exactly what to fix.
-
-</revision_context>
-
-<instructions>
-Make targeted updates to address checker issues.
-
-Use MegaMemory:
-- Update plan concepts: megamemory:update_concept()
-- Reference patterns from MegaMemory for solutions
-</instructions>
-```
+Query current `${chapterSlug}-plan` concepts (top_k=20). Build revision prompt using **plan-prompts.md Revision Prompt Template**. Fill with current plan summaries and checker issues.
 
 ```
 Task(
   prompt=revision_prompt,
   subagent_type="fuska-planner",
-  model="{planner_model}",
+  model=models.planner,
   variant="plan",
   description="Revise Chapter {chapter} plans"
 )
 ```
 
-- After planner returns → spawn checker again (step 10)
-- Increment iteration_count
+After planner returns → spawn checker again (step 10). Increment iteration_count.
 
 **If iteration_count >= 3:**
 
-Display: `Max iterations reached. {N} issues remain:`
+Display remaining issues. Offer: Force proceed, Provide guidance, Abandon.
 
-List remaining issues.
-
-Offer options:
-1. Force proceed (execute despite issues)
-2. Provide guidance (user gives direction, retry)
-3. Abandon (exit planning)
-
-Wait for user response.
+---
 
 ## 13. Interactive Review Loop
 
-**Step 13.1: Check review mode**
+**Step 13.1: Check skip flag**
 
 ```
-const skipReview = hasNoReviewFlag || configData?.workflow?.interactive_review === false
-
-if (skipReview) {
-  // Skip to Step 14 (Update State Concept)
-  Continue to Step 14
-}
+skipReview = hasNoReviewFlag || configData?.workflow?.interactive_review === false
+if (skipReview) → Step 14
 ```
 
-**Step 13.2: Display all plans for chapter**
+**Step 13.2-13.3: Display plans and review loop**
 
-```
-megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
+Follow **review-loop.md** for:
+- Query and sort plan concepts by plan number
+- Display each plan with full details (batch, depends_on, autonomous, purpose, output, must haves, files, tasks)
+- Review options: Looks good proceed, Ask a question, Modify a task, Add a task, Remove a task
+- For modifications: Select plan → Select task → Get feedback → Spawn planner revision via Task
+- Re-query and re-display after each change
+- Loop until user selects "Looks good, proceed"
 
-const planConcepts = response.matches.map(match => {
-  const planData = JSON.parse(match.summary)
-  return {
-    id: match.id,
-    name: match.name,
-    data: planData
-  }
-}).sort((a, b) => {
-  const numA = parseInt(a.name.match(/plan-(\d+)/)?.[1] || '0')
-  const numB = parseInt(b.name.match(/plan-(\d+)/)?.[1] || '0')
-  return numA - numB
-})
-```
-
-Display format:
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- CHAPTER ${chapterNumber}: ${chapterName} - Plans
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-${planConcepts.map((plan, idx) => `
-## Plan ${idx + 1}: ${plan.data.objective || plan.name}
-
-**Batch:** ${plan.data.batch || 'N/A'}
-**Depends on:** ${plan.data.depends_on?.join(', ') || 'None'}
-**Autonomous:** ${plan.data.autonomous !== false ? 'Yes' : 'No'}
-**Purpose:** ${plan.data.purpose || 'N/A'}
-**Output:** ${plan.data.output || 'N/A'}
-
-### Must Haves
-${plan.data.requirements?.map(m => `- ${m}`).join('\n') || 'None defined'}
-
-### Files to Modify
-${plan.data.files_modified?.map(f => `- ${f}`).join('\n') || 'TBD'}
-
-### Tasks (${plan.data.tasks?.length || 0})
-${plan.data.tasks?.map((t, i) => `
-#### Task ${i+1}: ${t.name || 'Task ' + (i+1)}
-- **Files:** ${(Array.isArray(t.files) ? t.files : [t.files]).join(', ') || 'TBD'}
-- **Action:** ${t.action || t.description || 'N/A'}
-- **Verify:** ${t.verify || 'N/A'}
-- **Done:** ${t.done || 'N/A'}
-`).join('\n') || 'No tasks defined'}
-`).join('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-**Step 13.3: Review Loop**
-
-```
-const reviewOptions = [
-  { label: "Looks good, proceed", description: "Save plans and continue" },
-  { label: "Ask a question", description: "Discuss the plans" },
-  { label: "Modify a task", description: "Change a specific task" },
-  { label: "Add a task", description: "Add new task to a plan" },
-  { label: "Remove a task", description: "Remove a task from a plan" }
-]
-
-while (true) {
-  const actionResponse = question(questions=[{
-    header: "Plan Review",
-    question: "What would you like to do with these plans?",
-    options: reviewOptions
-  }])
-
-  if (actionResponse[0] === "Looks good, proceed") {
-    break  // Continue to Step 14 (Update State)
-  }
-
-  if (actionResponse[0] === "Ask a question") {
-    const questionResponse = question(questions=[{
-      header: "Question",
-      question: "What would you like to know about these plans?",
-      options: []
-    }])
-
-    // Answer based on plan concepts context
-    // Re-display and continue loop
-    continue
-  }
-
-  if (actionResponse[0] === "Modify a task") {
-    // First, ask which plan
-    const planOptions = planConcepts.map(p => ({
-      label: p.name,
-      description: p.data.objective || 'No objective'
-    }))
-
-    const planChoice = question(questions=[{
-      header: "Select Plan",
-      question: "Which plan contains the task to modify?",
-      options: planOptions
-    }])
-
-    // Then ask which task
-    const selectedPlan = planConcepts.find(p => p.name === planChoice[0])
-    const taskOptions = selectedPlan.data.tasks?.map((t, i) => ({
-      label: `Task ${i+1}: ${t.name || 'Task ' + (i+1)}`,
-      description: t.action?.substring(0, 50) + '...' || 'No description'
-    })) || []
-
-    const taskChoice = question(questions=[{
-      header: "Select Task",
-      question: "Which task to modify?",
-      options: taskOptions
-    }])
-
-    // Get modification details
-    const modResponse = question(questions=[{
-      header: "Modification",
-      question: "What changes do you want to make to this task?",
-      options: []
-    }])
-
-    // Spawn planner for revision
-    const feedback = modResponse[0]
-    const revisionPrompt = `<revision_context>
-**Mode:** revision
-**Chapter:** ${chapterNumber}
-**Plan Concept ID:** ${selectedPlan.id}
-**Current plan:** ${JSON.stringify(selectedPlan.data, null, 2)}
-**User feedback:** ${feedback}
-</revision_context>
-
-<instructions>
-Update the plan to address user feedback.
-Use: megamemory_update_concept(id="${selectedPlan.id}", changes={summary: JSON.stringify(updatedPlan)})
-Return: ## REVISION COMPLETE
-</instructions>`
-
-    Task(
-      prompt=revisionPrompt,
-      subagent_type="fuska-planner",
-      model=models.planner,
-      variant="plan",
-      description="Revise: ${selectedPlan.name}"
-    )
-
-    // Re-query and re-display
-    megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
-    // Update planConcepts and re-display from Step 13.2
-    continue
-  }
-
-  if (actionResponse[0] === "Add a task") {
-    // Select plan
-    const planOptions = planConcepts.map(p => ({
-      label: p.name,
-      description: p.data.objective || 'No objective'
-    }))
-
-    const planChoice = question(questions=[{
-      header: "Select Plan",
-      question: "Which plan to add a task to?",
-      options: planOptions
-    }])
-
-    // Get task details
-    const taskResponse = question(questions=[{
-      header: "New Task",
-      question: "Describe the task to add:",
-      options: []
-    }])
-
-    const selectedPlan = planConcepts.find(p => p.name === planChoice[0])
-    const feedback = taskResponse[0]
-
-    const revisionPrompt = `<revision_context>
-**Mode:** add_task
-**Chapter:** ${chapterNumber}
-**Plan Concept ID:** ${selectedPlan.id}
-**Current plan:** ${JSON.stringify(selectedPlan.data, null, 2)}
-**New task to add:** ${feedback}
-</revision_context>
-
-<instructions>
-Add the new task to the plan.
-Use: megamemory_update_concept(id="${selectedPlan.id}", changes={summary: JSON.stringify(updatedPlan)})
-Return: ## REVISION COMPLETE
-</instructions>`
-
-    Task(
-      prompt=revisionPrompt,
-      subagent_type="fuska-planner",
-      model=models.planner,
-      variant="plan",
-      description="Add task to: ${selectedPlan.name}"
-    )
-
-    // Re-query and re-display
-    continue
-  }
-
-  if (actionResponse[0] === "Remove a task") {
-    // Select plan
-    const planOptions = planConcepts.map(p => ({
-      label: p.name,
-      description: p.data.objective || 'No objective'
-    }))
-
-    const planChoice = question(questions=[{
-      header: "Select Plan",
-      question: "Which plan contains the task to remove?",
-      options: planOptions
-    }])
-
-    // Select task
-    const selectedPlan = planConcepts.find(p => p.name === planChoice[0])
-    const taskOptions = selectedPlan.data.tasks?.map((t, i) => ({
-      label: `Task ${i+1}: ${t.name || 'Task ' + (i+1)}`,
-      description: t.action?.substring(0, 50) + '...' || 'No description'
-    })) || []
-
-    const taskChoice = question(questions=[{
-      header: "Select Task",
-      question: "Which task to remove?",
-      options: taskOptions
-    }])
-
-    // Confirm removal
-    const confirmResponse = question(questions=[{
-      header: "Confirm",
-      question: `Remove ${taskChoice[0]}?`,
-      options: [
-        { label: "Yes, remove it", description: "Remove the task" },
-        { label: "Cancel", description: "Keep the task" }
-      ]
-    }])
-
-    if (confirmResponse[0] === "Yes, remove it") {
-      const taskIndex = parseInt(taskChoice[0].match(/Task (\d+)/)?.[1] || '0') - 1
-
-      const revisionPrompt = `<revision_context>
-**Mode:** remove_task
-**Chapter:** ${chapterNumber}
-**Plan Concept ID:** ${selectedPlan.id}
-**Current plan:** ${JSON.stringify(selectedPlan.data, null, 2)}
-**Task to remove:** Task ${taskIndex + 1}
-</revision_context>
-
-<instructions>
-Remove the specified task from the plan.
-Use: megamemory_update_concept(id="${selectedPlan.id}", changes={summary: JSON.stringify(updatedPlan)})
-Return: ## REVISION COMPLETE
-</instructions>`
-
-      Task(
-        prompt=revisionPrompt,
-        subagent_type="fuska-planner",
-        model=models.planner,
-        variant="plan",
-        description="Remove task from: ${selectedPlan.name}"
-      )
-    }
-
-    // Re-query and re-display
-    continue
-  }
-}
-
-// After loop exits, continue to Step 14 (Update State Concept)
-```
+---
 
 ## 14. Update State Concept
 
-**Step 13.1: Query state concept**
-
-Call:
+Query state concept. Update with:
 ```
-megamemory_understand(query="state", top_k=5)
-```
-
-**Step 13.2: Check state exists**
-
-If response.matches.length === 0:
-→ Display: "State concept not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
-
-**Step 13.3: Extract state data**
-
-If response.matches.length > 0:
-```
-const stateId = response.matches[0].id
-const stateSummaryString = response.matches[0].summary
-const stateData = JSON.parse(stateSummaryString)
-```
-
-**Step 13.4: Build updated state data**
-
-```
-const updatedStateData = {
+{
   ...stateData,
   current_chapter: chapterSlug,
   status: "ready_to_execute"
 }
 ```
 
-**Step 13.5: Update state concept**
+Note: `changes` parameter only accepts: `summary`, `name`, `kind`, `why`, `file_refs`.
 
-Call:
-```
-megamemory_update_concept(
-  id=stateId,
-  changes={
-    summary: JSON.stringify(updatedStateData)
-  }
-)
-```
-
-Note: The `changes` parameter only accepts these fields: `summary`, `name`, `kind`, `why`, `file_refs` — do NOT pass `parent_id` or `edges`.
+---
 
 ## 15. Present Final Status
 
@@ -1426,21 +436,15 @@ Verification: {Passed | Passed with override | Skipped}
 
 <success_criteria>
 
-- [ ] MegaMemory validated (roots exist)
-- [ ] Chapter validated against roadmap (chapter concept exists)
-- [ ] Research completed (unless --skip-research or --fixes or exists)
-- [ ] Research concept created if needed
-- [ ] Existing plan concepts checked
-- [ ] fuska-planner spawned with MegaMemory context
-- [ ] Plan concepts created (PLANNING COMPLETE or CHECKPOINT handled)
+- [ ] MegaMemory validated
+- [ ] Chapter validated
+- [ ] Research completed (unless skipped/exists)
+- [ ] fuska-planner spawned with context
+- [ ] Plan concepts created
 - [ ] fuska-plan-checker spawned (unless --skip-verify)
-- [ ] Verification passed OR user override OR max iterations with user decision
-- [ ] User sees status between agent spawns
-- [ ] Interactive review loop displayed (unless --no-review or config disables)
-- [ ] All plans displayed with full details in review
-- [ ] Review options work: Ask question, Modify task, Add task, Remove task, Proceed
-- [ ] Plan modifications trigger planner revision and re-display
-- [ ] State concept updated with planning status
-- [ ] User knows next steps (execute or review)
+- [ ] Verification passed OR user override
+- [ ] Interactive review loop (unless --no-review)
+- [ ] State concept updated
+- [ ] User knows next steps
 
 </success_criteria>
