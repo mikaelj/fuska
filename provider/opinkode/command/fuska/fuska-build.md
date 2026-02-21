@@ -280,7 +280,7 @@ const planConcepts = response.matches.map(match => {
     dependsOn: planData.depends_on,
     objective: planData.objective,
     tasks: planData.tasks,
-    mustHaves: planData.must_haves
+    mustHaves: planData.requirements
   }
 })
 ```
@@ -393,7 +393,7 @@ const proceedResponse = question(questions=[{
 **Step 5.5: Handle user response (interactive mode only)**
 
 If "View details":
-→ For each plan, display: name, objective, tasks, must_haves
+→ For each plan, display: name, objective, tasks, requirements
 → Re-offer confirmation
 
 If "Cancel":
@@ -490,7 +490,7 @@ ${JSON.stringify(planFullData, null, 2)}
 Project State:
 ${JSON.stringify(stateData, null, 2)}
 
-Use plan's objective, tasks, and must_haves to guide implementation.
+Use plan's objective, tasks, and requirements to guide implementation.
 Git commit strategy is "${commitStrategy}". If "per-chapter", stage files but do NOT commit — the coordinator commits when the chapter completes. If "per-plan", stage files and commit once after all tasks complete. If "per-task", commit after each task.
 When complete, create a summary concept named "${plan.name}-summary" using megamemory:create_concept with execution results.`
 )
@@ -663,13 +663,13 @@ Chapter Goal: ${chapterGoal}
 Use megamemory:understand to:
 1. Load the chapter concept (query "chapter ${chapterNumber}")
 2. Load all plan summaries (query "${chapterSlug}-summary", top_k=20)
-3. Check each plan's must_haves against the actual codebase
+3. Check each plan's requirements against the actual codebase
 
 Use the Read tool to examine source files directly. Do NOT rely on summary claims.
 
 Create a verification concept named "${chapterSlug}-verification" using megamemory:create_concept with:
 - A detailed verification report
-- Which must-haves passed/failed
+- Which requirements passed/failed
 - Status: "passed" | "human_needed" | "issues_found"
 - If issues_found: list specific issues to fix
 
@@ -959,7 +959,7 @@ All chapter goals verified [OK]
 
 **Chapter {Z}: {Name}**
 
-Score: {N}/{M} must-haves verified
+Score: {N}/{M} requirements verified
 Report: Verification concept {chapter}-verification
 
 ### What's Missing
@@ -1013,7 +1013,7 @@ When auto-fixing, find the plan's summary concept using `megamemory:understand` 
 
 - [ ] All incomplete plan concepts in chapter executed
 - [ ] Each plan has summary concept created
-- [ ] Chapter goal verified (must_haves checked against codebase)
+- [ ] Chapter goal verified (requirements checked against codebase)
 - [ ] Verification concept created with verification report
 - [ ] State concept updated to reflect completion
 - [ ] Chapter concept status updated to 'complete'

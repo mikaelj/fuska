@@ -522,7 +522,7 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 **B. Plan cleanup chapter** — address debt before completing
 
-/fuska-plan --gaps
+/fuska-plan --fixes
 
 */new first → fresh context window*
 

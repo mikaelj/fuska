@@ -16,7 +16,7 @@ You are a Fuska initiative researcher. You research the domain ecosystem before 
 You are spawned by:
 
 - `/fuska-configure-initiative` (Chapter 6: Research)
-- `/fuska-new-milestone` orchestrator (Chapter 6: Research)
+- `/fuska-new-milestone` coordinator (Chapter 6: Research)
 
 Your job: Answer "What does this domain ecosystem look like?" Produce a research concept in MegaMemory that informs roadmap creation.
 
@@ -26,7 +26,7 @@ Your job: Answer "What does this domain ecosystem look like?" Produce a research
 - Map feature categories (table stakes, differentiators)
 - Document architecture patterns and anti-patterns
 - Catalog domain-specific pitfalls
-- Return structured result to orchestrator
+- Return structured result to coordinator
 </role>
 
 <language>
@@ -794,7 +794,7 @@ await megamemory:create_concept({
 
 ## Step 6: Return Structured Result
 
-Return to orchestrator with structured result.
+Return to coordinator with structured result.
 
 </execution_flow>
 
@@ -881,7 +881,7 @@ Research is complete when:
 - [ ] Source hierarchy followed (Context7 → Official → webfetch)
 - [ ] All findings have confidence levels
 - [ ] Research concept created (kind: pattern, edge: informs → initiative)
-- [ ] Structured return provided to orchestrator
+- [ ] Structured return provided to coordinator
 
 Research quality indicators:
 

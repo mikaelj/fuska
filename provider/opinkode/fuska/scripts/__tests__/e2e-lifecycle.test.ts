@@ -131,7 +131,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
           objective: 'Implement JWT login',
           purpose: 'Secure authentication',
           output: 'Working login system',
-          must_haves: ['Login endpoint', 'Token generation', 'Token validation'],
+          requirements: ['Login endpoint', 'Token generation', 'Token validation'],
           megamemory_references: {
             knowledge_applied: ['chapter-01-context', 'chapter-01-research'],
             patterns_to_follow: ['Token rotation']
@@ -153,7 +153,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       const plan = await megaMemory.understand({ query: 'chapter-01-plan' });
       expect(plan.matches.length).toBe(1);
       const data = JSON.parse(plan.matches[0].summary);
-      expect(data.must_haves.length).toBe(3);
+      expect(data.requirements.length).toBe(3);
     });
 
     it('should complete execute chapter workflow', async () => {
@@ -237,8 +237,8 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         edges: []
       });
 
-      // Create UAT concept with all tests passing
-      const uatData = {
+      // Create verification concept with all tests passing
+      const verificationData = {
         verification_results: [
           'User can login with valid credentials',
           'User cannot login with invalid credentials',
@@ -251,9 +251,9 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       };
 
       await megaMemory.create_concept({
-        name: 'chapter-01-uat',
+        name: 'chapter-01-verification',
         kind: 'component',
-        summary: JSON.stringify(uatData),
+        summary: JSON.stringify(verificationData),
         parent_id: 'chapter-1',
         edges: [
           { to: 'chapter-1', relation: 'connects_to' },
@@ -261,10 +261,10 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         ]
       });
 
-      // Verify UAT created
-      const uat = await megaMemory.understand({ query: 'uat' });
-      expect(uat.matches.length).toBe(1);
-      const data = JSON.parse(uat.matches[0].summary);
+      // Verify verification created
+      const verification = await megaMemory.understand({ query: 'verification' });
+      expect(verification.matches.length).toBe(1);
+      const data = JSON.parse(verification.matches[0].summary);
       expect(data.verification_results.length).toBe(4);
       expect(data.issues_found.length).toBe(0);
     });
@@ -281,8 +281,8 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         edges: []
       });
 
-      // Create UAT concept with issues
-      const uatData = {
+      // Create verification concept with issues
+      const verificationData = {
         verification_results: ['Login works', 'Logout fails'],
         issues_found: ['Logout endpoint crashes on token expiry'],
         recommendations: ['Fix logout crash'],
@@ -290,17 +290,17 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       };
 
       await megaMemory.create_concept({
-        name: 'chapter-01-uat',
+        name: 'chapter-01-verification',
         kind: 'component',
-        summary: JSON.stringify(uatData),
+        summary: JSON.stringify(verificationData),
         parent_id: 'chapter-1',
         edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
 
-      // Verify UAT with issues
-      const uat = await megaMemory.understand({ query: 'uat' });
-      expect(uat.matches.length).toBe(1);
-      const data = JSON.parse(uat.matches[0].summary);
+      // Verify verification with issues
+      const verification = await megaMemory.understand({ query: 'verification' });
+      expect(verification.matches.length).toBe(1);
+      const data = JSON.parse(verification.matches[0].summary);
       expect(data.verification_results.length).toBe(2);
       expect(data.issues_found.length).toBe(1);
       expect(data.recommendations.length).toBe(1);

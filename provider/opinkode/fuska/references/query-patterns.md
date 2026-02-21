@@ -106,7 +106,7 @@ const contexts = matches.filter(m => m.name.includes('-context'))        // cont
 ```
 
 **Chapter root parse:** `JSON.parse(match.summary)` → `{ number, name, goal, status, depends_on }`
-**Plan parse:** `JSON.parse(match.summary)` → `{ batch, depends_on, objective, must_haves, tasks }`
+**Plan parse:** `JSON.parse(match.summary)` → `{ batch, depends_on, objective, requirements, tasks }`
 **Summary parse:** `JSON.parse(match.summary)` → `{ chapter, plan, accomplishments, files_modified, ... }`
 
 ### Research

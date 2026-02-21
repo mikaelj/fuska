@@ -12,9 +12,9 @@ NOTE: For comprehensive ecosystem research ("how do experts build this"), use /f
 
 | Level | Name         | Time      | Output                                       | When                                      |
 | ----- | ------------ | --------- | -------------------------------------------- | ----------------------------------------- |
-| 1     | Quick Verify | 2-5 min   | MM concept with verified knowledge           | Single library, confirming current syntax |
-| 2     | Standard     | 15-30 min | MM concept with comprehensive findings      | Choosing between options, new integration |
-| 3     | Deep Dive    | 1+ hour   | MM concept with validation gates and full context | Architectural decisions, novel problems   |
+| 1     | Quick Verify | 2-5 min   | MegaMemory concept with verified knowledge           | Single library, confirming current syntax |
+| 2     | Standard     | 15-30 min | MegaMemory concept with comprehensive findings      | Choosing between options, new integration |
+| 3     | Deep Dive    | 1+ hour   | MegaMemory concept with validation gates and full context | Architectural decisions, novel problems   |
 
 **Depth is determined by plan-chapter.md before routing here.**
 </depth_levels>
@@ -85,7 +85,7 @@ For: Single known library, confirming syntax/version still correct.
    - API syntax unchanged
    - No breaking changes in recent versions
 
-4. **If verified:** Create/update MM concept with verification result:
+4. **If verified:** Create/update MegaMemory concept with verification result:
 
    ```
    megamemory:create_concept or megamemory:update_concept with:
@@ -97,7 +97,7 @@ For: Single known library, confirming syntax/version still correct.
 
 5. **If concerns found:** Escalate to Level 2.
 
-**Output:** MM concept with verification status
+**Output:** MegaMemory concept with verification status
 </step>
 
 <step name="level_2_standard">
@@ -131,7 +131,7 @@ For: Choosing between options, new external integration.
 
 5. **Cross-verify:** Any webfetch finding → confirm with Context7/official docs.
 
-6. **Create MM concept** with JSON-structured findings:
+6. **Create MegaMemory concept** with JSON-structured findings:
 
    ```
    megamemory:create_concept with:
@@ -151,7 +151,7 @@ For: Choosing between options, new external integration.
 
 7. Return to plan-chapter.md.
 
-**Output:** MM concept with discovery findings
+**Output:** MegaMemory concept with discovery findings
 </step>
 
 <step name="level_3_deep_dive">
@@ -193,7 +193,7 @@ For: Architectural decisions, novel problems, high-risk choices.
    - Mark what's verified vs assumed
    - Flag contradictions
 
-6. **Create comprehensive MM concept:**
+6. **Create comprehensive MegaMemory concept:**
 
    ```
    megamemory:create_concept with:
@@ -215,7 +215,7 @@ For: Architectural decisions, novel problems, high-risk choices.
 
 8. Return to plan-chapter.md.
 
-**Output:** MM concept with comprehensive discovery findings
+**Output:** MegaMemory concept with comprehensive discovery findings
 </step>
 
 <step name="identify_unknowns">
@@ -237,7 +237,7 @@ Include:
 - Clear discovery objective
 - Scoped include/exclude lists
 - Source preferences (official docs, Context7, current year)
-- Output structure for MM concept summary
+- Output structure for MegaMemory concept summary
   </step>
 
 <step name="execute_discovery">
@@ -249,7 +249,7 @@ Run the discovery:
 </step>
 
 <step name="create_discovery_output">
-Create MM concept:
+Create MegaMemory concept:
 
 ```
 megamemory:create_concept or megamemory:update_concept with:
@@ -269,7 +269,7 @@ All discovery state must be stored in MegaMemory concepts.
 </step>
 
 <step name="confidence_gate">
-After creating MM concept, check confidence level.
+After creating MegaMemory concept, check confidence level.
 
 If confidence is LOW:
 Use question:
@@ -301,12 +301,12 @@ Present them inline:
 
 These may affect implementation. Acknowledge and proceed? (yes / address first)"
 
-If "address first": Gather user input on questions, update MM concept via `megamemory:update_concept`.
+If "address first": Gather user input on questions, update MegaMemory concept via `megamemory:update_concept`.
 </step>
 
 <step name="offer_next">
 ```
-Discovery complete: MM concept "[Chapter] [topic] discovery"
+Discovery complete: MegaMemory concept "[Chapter] [topic] discovery"
 Recommendation: [one-liner]
 Confidence: [level]
 
@@ -315,7 +315,7 @@ What's next?
 1. Discuss chapter context (/fuska-discuss-chapter [current-chapter])
 2. Create chapter plan (/fuska-plan [current-chapter])
 3. Refine discovery (dig deeper)
-4. Review discovery (query MM concept)
+4. Review discovery (query MegaMemory concept)
 
 ```
 </step>
@@ -326,12 +326,12 @@ What's next?
 **Level 1 (Quick Verify):**
 - Context7 consulted for library/topic
 - Current state verified or concerns escalated
-- MM concept created/updated with verification result
+- MegaMemory concept created/updated with verification result
 
 **Level 2 (Standard):**
 - Context7 consulted for all options
 - webfetch findings cross-verified
-- MM concept created with JSON-structured findings
+- MegaMemory concept created with JSON-structured findings
 - Confidence level MEDIUM or higher
 - Ready to inform PLAN.md creation
 
@@ -339,7 +339,7 @@ What's next?
 - Discovery scope defined
 - Context7 exhaustively consulted
 - All webfetch findings verified against authoritative sources
-- MM concept created with comprehensive analysis in JSON summary
+- MegaMemory concept created with comprehensive analysis in JSON summary
 - Quality report with source attribution
 - If LOW confidence findings → validation checkpoints defined
 - Confidence gate passed

@@ -26,9 +26,9 @@ score: N/M requirements verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | {truth from must_haves} | [OK] VERIFIED | {what confirmed it} |
-| 2 | {truth from must_haves} | [FAIL] FAILED | {what's wrong} |
-| 3 | {truth from must_haves} | ? UNCERTAIN | {why can't verify} |
+| 1 | {truth from requirements} | [OK] VERIFIED | {what confirmed it} |
+| 2 | {truth from requirements} | [FAIL] FAILED | {what's wrong} |
+| 3 | {truth from requirements} | ? UNCERTAIN | {why can't verify} |
 
 **Score:** {N}/{M} truths verified
 
@@ -167,7 +167,7 @@ summary: |
   {One-sentence overview of verification result}
 
 why: |
-  Chapter goal verification results with must-haves, artifacts, gaps.
+  Chapter goal verification results with requirements, artifacts, gaps.
   Enables goal-backward verification to ensure chapter delivers what was promised.
 
 file_refs: [
@@ -193,7 +193,7 @@ edges: [
 **Create Verification Report (after chapter execution):**
 
 1. Create concept with chapter, verification timestamp, status, score
-2. Document observable truths from must-haves
+2. Document observable truths from requirements
 3. Verify required artifacts exist and are substantive
 4. Check key wiring between components
 5. Cover requirements from REQUIREMENTS.md (if exists)
@@ -310,7 +310,7 @@ const createVerificationReport = async (chapterNumber: string, chapterName: stri
   let summary =
     `Verification Report for Chapter ${chapterNumber}: ${chapterName}\n` +
     `Status: ${report.status}\n` +
-    `Score: ${verifiedCount}/${totalTruths} must-haves verified\n` +
+    `Score: ${verifiedCount}/${totalTruths} requirements verified\n` +
     `Artifacts: ${artifactsCount}/${totalArtifacts} verified\n` +
     `Wiring: ${wiringCount}/${totalLinks} verified\n` +
     `Anti-patterns: ${report.antiPatterns.length} found (${blockers} blockers, ${warnings} warnings)\n`;
@@ -333,7 +333,7 @@ const createVerificationReport = async (chapterNumber: string, chapterName: stri
     name: `Verification: Chapter ${chapterNumber}`,
     kind: "verification",
     summary,
-    why: "Chapter goal verification results with must-haves, artifacts, gaps. " +
+    why: "Chapter goal verification results with requirements, artifacts, gaps. " +
           "Enables goal-backward verification to ensure chapter delivers what was promised.",
     file_refs: [
       ...report.requiredArtifacts.map(a => a.path)

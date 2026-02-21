@@ -33,7 +33,7 @@ interface ChapterChildren {
   plans: Map<number, ConceptMatch>;
   research: ConceptMatch | null;
   summaries: Map<number, ConceptMatch>;
-  uat: ConceptMatch | null;
+  verification: ConceptMatch | null;
 }
 
 interface ConceptMatch {
@@ -216,7 +216,7 @@ class ExportToMarkdown {
       if (concept.kind === 'config' && concept.name.match(/^-context$/)) {
         const chapterName = concept.parent?.id || '';
         if (!organized.chapterChildren.has(chapterName)) {
-          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), verification: null });
         }
         organized.chapterChildren.get(chapterName)!.context = concept;
         continue;
@@ -228,7 +228,7 @@ class ExportToMarkdown {
           const planNum = parseInt(match[1]);
           const chapterName = concept.parent?.id || '';
           if (!organized.chapterChildren.has(chapterName)) {
-            organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+            organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), verification: null });
           }
           organized.chapterChildren.get(chapterName)!.plans.set(planNum, concept);
         }
@@ -238,7 +238,7 @@ class ExportToMarkdown {
       if (concept.kind === 'pattern' && concept.name.match(/^-research$/)) {
         const chapterName = concept.parent?.id || '';
         if (!organized.chapterChildren.has(chapterName)) {
-          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), verification: null });
         }
         organized.chapterChildren.get(chapterName)!.research = concept;
         continue;
@@ -250,19 +250,19 @@ class ExportToMarkdown {
           const planNum = parseInt(match[1]);
           const chapterName = concept.parent?.id || '';
           if (!organized.chapterChildren.has(chapterName)) {
-            organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+            organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), verification: null });
           }
           organized.chapterChildren.get(chapterName)!.summaries.set(planNum, concept);
         }
         continue;
       }
 
-      if (concept.kind === 'component' && concept.name.match(/^-uat$/)) {
+      if (concept.kind === 'component' && concept.name.match(/^-verification$/)) {
         const chapterName = concept.parent?.id || '';
         if (!organized.chapterChildren.has(chapterName)) {
-          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), uat: null });
+          organized.chapterChildren.set(chapterName, { context: null, plans: new Map(), research: null, summaries: new Map(), verification: null });
         }
-        organized.chapterChildren.get(chapterName)!.uat = concept;
+        organized.chapterChildren.get(chapterName)!.verification = concept;
         continue;
       }
 
@@ -359,9 +359,9 @@ class ExportToMarkdown {
   }
 
   generateVerificationMarkdown(concept: ConceptMatch): string {
-    const { generateUATMarkdown } = require('../scripts/helpers');
+    const { generateVerificationMarkdown: genVerificationMarkdown } = require('../scripts/helpers');
     const data = this.extractJson(concept.summary);
-    return `---\nverification_results: ${JSON.stringify(data.verification_results || [])}\nissues_found: ${JSON.stringify(data.issues_found || [])}\nrecommendations: ${JSON.stringify(data.recommendations || [])}\nconcepts_reviewed: ${JSON.stringify(data.concepts_reviewed || [])}\n---\n\n${generateUATMarkdown(data)}`;
+    return `---\nverification_results: ${JSON.stringify(data.verification_results || [])}\nissues_found: ${JSON.stringify(data.issues_found || [])}\nrecommendations: ${JSON.stringify(data.recommendations || [])}\nconcepts_reviewed: ${JSON.stringify(data.concepts_reviewed || [])}\n---\n\n${genVerificationMarkdown(data)}`;
   }
 
   generateConfigJson(concept: ConceptMatch): string {
@@ -499,8 +499,8 @@ class ExportToMarkdown {
           }
         }
 
-        if (children.uat) {
-          const content = this.generateVerificationMarkdown(children.uat);
+        if (children.verification) {
+          const content = this.generateVerificationMarkdown(children.verification);
           if (content.trim()) {
             this.safeWrite(path.join(chapterDir, 'VERIFICATION.md'), content);
           }

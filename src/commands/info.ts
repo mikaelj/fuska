@@ -40,7 +40,7 @@ interface CodebaseConcerns {
   analysis_date: string;
   tech_debt?: Array<{ area: string; issue: string }>;
   large_files?: Array<{ file: string; lines: number }>;
-  test_gaps?: Array<{ area: string; what_missing: string }>;
+  test_issues?: Array<{ area: string; what_missing: string }>;
 }
 
 class InfoRunner {
@@ -261,12 +261,12 @@ class InfoRunner {
       }
     }
     
-    const gapSection = this.extractSection(summary, 'Test Gaps') || 
+    const issueSection = this.extractSection(summary, 'Test Issues') ||
                         this.extractSection(summary, 'Test Coverage');
-    if (gapSection) {
-      const items = this.extractAllListItems(gapSection);
+    if (issueSection) {
+      const items = this.extractAllListItems(issueSection);
       if (items.length > 0) {
-        result.test_gaps = items.slice(0, 3).map(item => ({ area: '', what_missing: item }));
+        result.test_issues = items.slice(0, 3).map(item => ({ area: '', what_missing: item }));
       }
     }
     

@@ -20,9 +20,9 @@ The git log should read like a changelog of what shipped, not a diary of plannin
 MegaMemory concepts for all planning data (initiative, roadmap, state, plan, summary, etc.) are stored in MegaMemory and persist outside of git version control. This means:
 
 - **No planning file git operations:** Never run `git add` on planning artifacts or commit planning data
-- **MM data survives git resets:** MegaMemory concepts are unaffected by `git reset`, `git revert`, etc.
+- **MegaMemory data survives git resets:** MegaMemory concepts are unaffected by `git reset`, `git revert`, etc.
 - **Source code only:** Git commits should only include actual code changes (src/, tests/, config files)
-- **MM tracks context:** MegaMemory maintains full development context across sessions
+- **MegaMemory tracks context:** MegaMemory maintains full development context across sessions
 
 **When committing code:**
 ```bash

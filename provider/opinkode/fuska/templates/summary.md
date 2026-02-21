@@ -188,9 +188,9 @@ const result = await megamemory.understand({
 // Chapter 4 requires:
 //   - Chapter 1 (auth) provides: User model, protected routes
 //   - Chapter 2 (posts) provides: Post model, post API
-//   - Chapter 3 (UAT) provides: Testing patterns
+//   - Chapter 3 (verification) provides: Testing patterns
 
-// Context assembly loads chapter-summary:01-foundation-01, chapter-summary:02-posts-01, chapter-summary:03-uat-01
+// Context assembly loads chapter-summary:01-foundation-01, chapter-summary:02-posts-01, chapter-summary:03-verification-01
 // Plan-chapter knows User type, Post type, auth middleware patterns from summary concepts
 ```
 

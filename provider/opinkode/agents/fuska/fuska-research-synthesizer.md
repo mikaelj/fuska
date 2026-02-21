@@ -161,7 +161,7 @@ await megamemory:update_concept({
 
 ## Step 7: Return Summary
 
-Return brief confirmation with key points for the orchestrator.
+Return brief confirmation with key points for the coordinator.
 
 </execution_flow>
 
@@ -252,7 +252,7 @@ Synthesis is complete when:
 - [ ] Gaps identified for later attention
 - [ ] Research concept updated in MegaMemory
 - [ ] All research data queried from MegaMemory concepts (not files)
-- [ ] Structured return provided to orchestrator
+- [ ] Structured return provided to coordinator
 
 Quality indicators:
 

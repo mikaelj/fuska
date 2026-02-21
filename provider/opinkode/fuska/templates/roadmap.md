@@ -674,7 +674,7 @@ Plans:
 **Success criteria:**
 - 2-5 observable behaviors per chapter (from user's perspective)
 - Cross-checked against requirements during roadmap creation
-- Flow downstream to plan must_haves
+- Flow downstream to plan requirements
 - Verified after execution
 - Format: "User can [action]" or "[Thing] works/exists"
 

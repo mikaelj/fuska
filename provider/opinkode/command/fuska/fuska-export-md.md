@@ -21,7 +21,7 @@ This is the reverse of the migration script — converts the knowledge graph bac
 **Creates:**
 - `.planning.export/` directory with full markdown hierarchy
 - PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, MILESTONES.md
-- `chapters/NN-*/` directories with CONTEXT.md, PLAN.md, SUMMARY.md, RESEARCH.md, UAT.md
+- `chapters/NN-*/` directories with CONTEXT.md, PLAN.md, SUMMARY.md, RESEARCH.md, VERIFICATION.md
 - `todos/pending/` and `todos/done/` with todo files
 - `config.json` with settings
 
@@ -462,8 +462,8 @@ chapterConcepts.forEach(match => {
     chapterGroups[chapterSlug].summaries.push({ name: match.name, data })
   } else if (match.name.includes('-research')) {
     chapterGroups[chapterSlug].research.push({ name: match.name, data })
-  } else if (match.name.includes('-uat')) {
-    chapterGroups[chapterSlug].uat.push({ name: match.name, data })
+  } else if (match.name.includes('-verification')) {
+    chapterGroups[chapterSlug].verification.push({ name: match.name, data })
   }
 })
 ```
@@ -568,7 +568,7 @@ ${plan.data.objective || 'Not specified'}
 
 ## Must Haves
 
-${plan.data.must_haves && plan.data.must_haves.length > 0 ? plan.data.must_haves.map(m => `- ${m}`).join('\n') : 'None'}
+${plan.data.requirements && plan.data.requirements.length > 0 ? plan.data.requirements.map(m => `- ${m}`).join('\n') : 'None'}
 
 ## Tasks
 
@@ -651,31 +651,31 @@ ${research.data.references && research.data.references.length > 0 ? research.dat
 *Generated from MegaMemory: ${new Date().toISOString()}*
 ```
 
-**Export UAT:**
+**Export Verification:**
 
-For each uat in chapterGroup.uat:
+For each verification in chapterGroup.verification:
 ```
-const uat = uat
-write to `${chapterDir}/${uat.name.replace('-', ' ').toUpperCase()}.md`:
+const verification = verification
+write to `${chapterDir}/${verification.name.replace('-', ' ').toUpperCase()}.md`:
 
 ```markdown
 ---
-status: ${uat.data.status || 'not_tested'}
+status: ${verification.data.status || 'not_tested'}
 ---
 
-# ${uat.name.replace('-', ' ').toUpperCase()}
+# ${verification.name.replace('-', ' ').toUpperCase()}
 
 ## Verification Results
 
-${uat.data.verification_results || 'Not tested'}
+${verification.data.verification_results || 'Not tested'}
 
 ## Issues Found
 
-${uat.data.issues_found && uat.data.issues_found.length > 0 ? uat.data.issues_found.map(i => `- [${i.severity}] ${i.description}`).join('\n') : 'None'}
+${verification.data.issues_found && verification.data.issues_found.length > 0 ? verification.data.issues_found.map(i => `- [${i.severity}] ${i.description}`).join('\n') : 'None'}
 
 ## Gaps
 
-${uat.data.gaps && uat.data.gaps.length > 0 ? uat.data.gaps.map(g => `- ${g.description}`).join('\n') : 'None'}
+${verification.data.gaps && verification.data.gaps.length > 0 ? verification.data.gaps.map(g => `- ${g.description}`).join('\n') : 'None'}
 
 ## Pass/Fail Criteria
 
@@ -798,7 +798,7 @@ Files Exported:
   - Plans: ${totalPlans} files
   - Summaries: ${totalSummaries} files
   - Research: ${totalResearch} files
-  - UAT: ${totalUAT} files
+  - Verification: ${totalVerification} files
 - Todos: ${todos.length} total
 
 Total files: ${totalFileCount}
@@ -886,7 +886,7 @@ $outputDir/
 - [ ] config.json exported
 - [ ] MILESTONES.md exported with all milestones
 - [ ] All chapter directories created
-- [ ] Chapter documents exported (context, plans, summaries, research, UAT)
+- [ ] Chapter documents exported (context, plans, summaries, research, verification)
 - [ ] Todos exported (pending and done)
 - [ ] Export summary displayed with file counts
 - [ ] User knows next actions

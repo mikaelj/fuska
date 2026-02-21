@@ -164,8 +164,8 @@ export function generatePlanMarkdown(planData: any, patterns: any[], relevantSum
   sections.push(`## Purpose\n\n${planData.purpose}`);
   sections.push(`## Output\n\n${planData.output}`);
 
-  if (planData.must_haves && planData.must_haves.length > 0) {
-    sections.push(`## Must Haves\n\n${planData.must_haves.map((mh: string) => `- ${mh}`).join('\n')}`);
+  if (planData.requirements && planData.requirements.length > 0) {
+    sections.push(`## Requirements\n\n${planData.requirements.map((mh: string) => `- ${mh}`).join('\n')}`);
   }
 
   if (planData.megamemory_references) {
@@ -294,23 +294,23 @@ export function generateResearchMarkdown(researchData: any): string {
   return sections.join('\n\n');
 }
 
-export function generateUATMarkdown(uatData: any): string {
+export function generateVerificationMarkdown(verificationData: any): string {
   const sections: string[] = [];
 
-  if (uatData.verification_results && Array.isArray(uatData.verification_results) && uatData.verification_results.length > 0) {
-    sections.push(`## Verification Results\n\n${uatData.verification_results.map((r: string) => `- ${r}`).join('\n')}`);
+  if (verificationData.verification_results && Array.isArray(verificationData.verification_results) && verificationData.verification_results.length > 0) {
+    sections.push(`## Verification Results\n\n${verificationData.verification_results.map((r: string) => `- ${r}`).join('\n')}`);
   }
 
-  if (uatData.issues_found && Array.isArray(uatData.issues_found) && uatData.issues_found.length > 0) {
-    sections.push(`## Issues Found\n\n${uatData.issues_found.map((i: string) => `- ${i}`).join('\n')}`);
+  if (verificationData.issues_found && Array.isArray(verificationData.issues_found) && verificationData.issues_found.length > 0) {
+    sections.push(`## Issues Found\n\n${verificationData.issues_found.map((i: string) => `- ${i}`).join('\n')}`);
   }
 
-  if (uatData.recommendations && Array.isArray(uatData.recommendations) && uatData.recommendations.length > 0) {
-    sections.push(`## Recommendations\n\n${uatData.recommendations.map((r: string) => `- ${r}`).join('\n')}`);
+  if (verificationData.recommendations && Array.isArray(verificationData.recommendations) && verificationData.recommendations.length > 0) {
+    sections.push(`## Recommendations\n\n${verificationData.recommendations.map((r: string) => `- ${r}`).join('\n')}`);
   }
 
-  if (uatData.concepts_reviewed && Array.isArray(uatData.concepts_reviewed) && uatData.concepts_reviewed.length > 0) {
-    sections.push(`## Concepts Reviewed\n\n${uatData.concepts_reviewed.map((c: string) => `- ${c}`).join('\n')}`);
+  if (verificationData.concepts_reviewed && Array.isArray(verificationData.concepts_reviewed) && verificationData.concepts_reviewed.length > 0) {
+    sections.push(`## Concepts Reviewed\n\n${verificationData.concepts_reviewed.map((c: string) => `- ${c}`).join('\n')}`);
   }
 
   return sections.join('\n\n');

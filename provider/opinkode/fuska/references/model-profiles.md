@@ -429,7 +429,7 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 
 ## Model Aliases
 
-Model aliases provide an indirection layer between lookup tables and actual model IDs. Instead of hardcoding model names like `opus`, `sonnet`, `haiku`, orchestrators use aliases:
+Model aliases provide an indirection layer between lookup tables and actual model IDs. Instead of hardcoding model names like `opus`, `sonnet`, `haiku`, coordinators use aliases:
 
 | Alias | Purpose | Example Value |
 |-------|---------|---------------|

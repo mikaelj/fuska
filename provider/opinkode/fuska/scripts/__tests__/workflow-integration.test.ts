@@ -266,7 +266,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         objective: 'Implement JWT login',
         purpose: 'Secure authentication',
         output: 'Working login system',
-        must_haves: ['Login endpoint', 'Token generation', 'Token validation'],
+        requirements: ['Login endpoint', 'Token generation', 'Token validation'],
         megamemory_references: {
           knowledge_applied: ['context-concept'],
           patterns_to_follow: []
@@ -292,7 +292,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
       expect(plan.matches.length).toBeGreaterThan(0);
       const data = extractJson(plan.matches[0].summary);
       expect(data.objective).toBe('Implement JWT login');
-      expect(data.must_haves.length).toBe(3);
+      expect(data.requirements.length).toBe(3);
     });
 
     it('should create research concept', async () => {
@@ -452,8 +452,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
       });
     });
 
-    it('should create UAT concept', async () => {
-      const uatData = {
+    it('should create verification concept', async () => {
+      const verificationData = {
         verification_results: ['Login works', 'Logout works', 'Password reset works'],
         issues_found: [],
         recommendations: [],
@@ -461,9 +461,9 @@ describe('MegaMemory Workflow Integration Tests', () => {
       };
 
       await mockMegaMemory.create_concept({
-        name: 'chapter-01-uat',
+        name: 'chapter-01-verification',
         kind: 'component',
-        summary: JSON.stringify(uatData),
+        summary: JSON.stringify(verificationData),
         parent_id: 'chapter-1',
         edges: [
           { to: 'chapter-1', relation: 'connects_to' },
@@ -471,15 +471,15 @@ describe('MegaMemory Workflow Integration Tests', () => {
         ]
       });
 
-      const uat = await mockMegaMemory.understand({ query: 'uat' });
-      expect(uat.matches.length).toBe(1);
-      const data = extractJson(uat.matches[0].summary);
+      const verification = await mockMegaMemory.understand({ query: 'verification' });
+      expect(verification.matches.length).toBe(1);
+      const data = extractJson(verification.matches[0].summary);
       expect(data.verification_results.length).toBe(3);
       expect(data.issues_found.length).toBe(0);
     });
 
-    it('should create UAT concept with issues', async () => {
-      const uatData = {
+    it('should create verification concept with issues', async () => {
+      const verificationData = {
         verification_results: ['Login works', 'Logout fails'],
         issues_found: ['Logout endpoint crashes'],
         recommendations: ['Fix logout endpoint'],
@@ -487,15 +487,15 @@ describe('MegaMemory Workflow Integration Tests', () => {
       };
 
       await mockMegaMemory.create_concept({
-        name: 'chapter-01-uat',
+        name: 'chapter-01-verification',
         kind: 'component',
-        summary: JSON.stringify(uatData),
+        summary: JSON.stringify(verificationData),
         parent_id: 'chapter-1',
         edges: [{ to: 'chapter-1', relation: 'connects_to' }]
       });
 
-      const uat = await mockMegaMemory.understand({ query: 'uat' });
-      const data = extractJson(uat.matches[0].summary);
+      const verification = await mockMegaMemory.understand({ query: 'verification' });
+      const data = extractJson(verification.matches[0].summary);
       expect(data.verification_results.length).toBe(2);
       expect(data.issues_found.length).toBe(1);
     });

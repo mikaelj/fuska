@@ -22,7 +22,7 @@ tools:
 <objective>
 Analyze existing codebase using serial fuska-codebase-mapper agents to produce structured MegaMemory concepts about the codebase.
 
-Each mapper agent explores a focus area and **creates concepts directly** in MegaMemory. Agents run serially (one at a time) to reduce resource contention. The orchestrator only receives confirmations, keeping context usage minimal.
+Each mapper agent explores a focus area and **creates concepts directly** in MegaMemory. Agents run serially (one at a time) to reduce resource contention. The coordinator only receives confirmations, keeping context usage minimal.
 
 Output: MegaMemory concepts for tech, architecture, quality, concerns, and domains.
 

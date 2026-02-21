@@ -15,7 +15,7 @@ Template for chapter plan storage in MegaMemory - executable chapter plans optim
 
 **Kind:** `feature`
 
-**Summary:** Executable chapter plan with batch grouping, tasks, verification criteria, and goal-backward must-haves. Includes dependencies, file modifications, and autonomy flags for parallel execution.
+**Summary:** Executable chapter plan with batch grouping, tasks, verification criteria, and goal-backward requirements. Includes dependencies, file modifications, and autonomy flags for parallel execution.
 
 **Fields:**
 - `chapter_id` (string) - Chapter identifier (e.g., "03-features")
@@ -27,7 +27,7 @@ Template for chapter plan storage in MegaMemory - executable chapter plans optim
 - `autonomous` (boolean) - True if no checkpoints
 - `objective` (string) - What this plan accomplishes
 - `tasks` (array) - Execution tasks with type, name, files, action, verify, done
-- `must_haves` (object) - Goal-backward verification criteria
+- `requirements` (object) - Goal-backward verification criteria
   - `truths` (array) - Observable behaviors
   - `artifacts` (array) - Files with implementation details
   - `key_links` (array) - Critical connections between artifacts
@@ -50,7 +50,7 @@ Template for chapter plan storage in MegaMemory - executable chapter plans optim
 await megamemory.create_concept({
   name: `chapter-plan:${chapterId}-${planId}`,
   kind: "feature",
-  summary: `Plan ${planId} for chapter ${chapterId}: ${objective}. Batch ${batch}, depends on ${depends_on.join(", ")}. Tasks: ${tasks.length}. Autonomous: ${autonomous}. Must-haves: ${must_haves.truths.length} truths, ${must_haves.artifacts.length} artifacts.`,
+  summary: `Plan ${planId} for chapter ${chapterId}: ${objective}. Batch ${batch}, depends on ${depends_on.join(", ")}. Tasks: ${tasks.length}. Autonomous: ${autonomous}. Must-haves: ${requirements.truths.length} truths, ${requirements.artifacts.length} artifacts.`,
   why: "Executes specific portion of chapter, can run in parallel with other same-batch plans",
   parent_id: `initiative:${initiativeId}`,
   edges: [
@@ -187,7 +187,7 @@ const result = await megamemory.understand({
   top_k: 5
 })
 
-// Aggregates must_haves from all plans:
+// Aggregates requirements from all plans:
 // truths: ["User can see existing messages", "User can send a message", ...]
 // artifacts: [{path: "src/components/Chat.tsx", contains: ...}, ...]
 // key_links: [{from: "Chat.tsx", to: "/api/chat", pattern: ...}, ...]
@@ -269,7 +269,7 @@ autonomous: true            # false if plan has checkpoints requiring user inter
 user_setup: []              # Human-required setup OpenCode cannot automate (see below)
 
 # Goal-backward verification (derived during planning, verified after execution)
-must_haves:
+requirements:
   truths: []                # Observable behaviors that must be true for goal achievement
   artifacts: []             # Files that must exist with real implementation
   key_links: []             # Critical connections between artifacts
@@ -384,11 +384,11 @@ After completion, create or update the MegaMemory chapter-summary concept for th
 | `files_modified` | Yes | Files this plan touches. |
 | `autonomous` | Yes | `true` if no checkpoints, `false` if has checkpoints |
 | `user_setup` | No | Array of human-required setup items (external services) |
-| `must_haves` | Yes | Goal-backward verification criteria (see below) |
+| `requirements` | Yes | Goal-backward verification criteria (see below) |
 
 **Batch is pre-computed:** Batch numbers are assigned during `/fuska-plan`. Execute-chapter reads `batch` directly from frontmatter and groups plans by batch number. No runtime dependency analysis needed.
 
-**Must-haves enable verification:** The `must_haves` field carries goal-backward requirements from planning to execution. After all plans complete, execute-chapter spawns a verification subagent that checks these criteria against the actual codebase.
+**Must-haves enable verification:** The `requirements` field carries goal-backward requirements from planning to execution. After all plans complete, execute-chapter spawns a verification subagent that checks these criteria against the actual codebase.
 
 ---
 
@@ -448,7 +448,7 @@ files_modified: [src/components/Dashboard.tsx]
 autonomous: false  # Has checkpoint:human-verify
 ```
 
-Batch 3 runs after Batchs 1 and 2. Pauses at checkpoint, orchestrator presents to user, resumes on approval.
+Batch 3 runs after Batchs 1 and 2. Pauses at checkpoint, coordinator presents to user, resumes on approval.
 
 </parallel_examples>
 
@@ -524,9 +524,9 @@ See `~/.config/opencode/get-shit-done/references/tdd.md` for TDD plan structure.
 | Type | Use For | Autonomy |
 |------|---------|----------|
 | `auto` | Everything OpenCode can do independently | Fully autonomous |
-| `checkpoint:human-verify` | Visual/functional verification | Pauses, returns to orchestrator |
-| `checkpoint:decision` | Implementation choices | Pauses, returns to orchestrator |
-| `checkpoint:human-action` | Truly unavoidable manual steps (rare) | Pauses, returns to orchestrator |
+| `checkpoint:human-verify` | Visual/functional verification | Pauses, returns to coordinator |
+| `checkpoint:decision` | Implementation choices | Pauses, returns to coordinator |
+| `checkpoint:human-action` | Truly unavoidable manual steps (rare) | Pauses, returns to coordinator |
 
 **Checkpoint behavior in parallel execution:**
 - Plan runs until checkpoint
@@ -763,12 +763,12 @@ See `~/.config/opencode/get-shit-done/templates/user-setup.md` for full schema a
 
 ## Must-Haves (Goal-Backward Verification)
 
-The `must_haves` field defines what must be TRUE for the chapter goal to be achieved. Derived during planning, verified after execution.
+The `requirements` field defines what must be TRUE for the chapter goal to be achieved. Derived during planning, verified after execution.
 
 **Structure:**
 
 ```yaml
-must_haves:
+requirements:
   truths:
     - "User can see existing messages"
     - "User can send a message"
@@ -813,15 +813,15 @@ must_haves:
 
 **Why this matters:**
 
-Task completion ≠ Goal achievement. A task "create chat component" can complete by creating a placeholder. The `must_haves` field captures what must actually work, enabling verification to catch gaps before they compound.
+Task completion ≠ Goal achievement. A task "create chat component" can complete by creating a placeholder. The `requirements` field captures what must actually work, enabling verification to catch gaps before they compound.
 
 **Verification flow:**
 
-1. Plan-chapter derives must_haves from chapter goal (goal-backward)
+1. Plan-chapter derives requirements from chapter goal (goal-backward)
 2. Must_haves written to PLAN.md frontmatter
 3. Execute-chapter runs all plans
-4. Verification subagent checks must_haves against codebase
+4. Verification subagent checks requirements against codebase
 5. Gaps found → fix plans created → execute → re-verify
-6. All must_haves pass → chapter complete
+6. All requirements pass → chapter complete
 
 See `~/.config/opencode/get-shit-done/workflows/verify-chapter.md` for verification logic.

@@ -40,7 +40,7 @@ interface ChapterFiles {
   plans: Map<number, { content: string; path: string }>;
   research: { content: string; path: string } | null;
   summaries: Map<number, { content: string; path: string }>;
-  uat: { content: string; path: string } | null;
+  verification: { content: string; path: string } | null;
 }
 
 interface ReferencePattern {
@@ -487,9 +487,9 @@ class EnhancedPlanningToMegaMemoryMigration {
         this.scanFileForDuplicates(fileData.content, `chapters/${basename}`);
       }
 
-      if (chapterFiles.uat) {
-        const basename = path.basename(chapterFiles.uat.path);
-        this.scanFileForDuplicates(chapterFiles.uat.content, `chapters/${basename}`);
+      if (chapterFiles.verification) {
+        const basename = path.basename(chapterFiles.verification.path);
+        this.scanFileForDuplicates(chapterFiles.verification.content, `chapters/${basename}`);
       }
     }
 
@@ -1141,8 +1141,8 @@ class EnhancedPlanningToMegaMemoryMigration {
         await processFile(fileData.path, fileData.content);
       }
 
-      if (chapterFiles.uat) {
-        await processFile(chapterFiles.uat.path, chapterFiles.uat.content);
+      if (chapterFiles.verification) {
+        await processFile(chapterFiles.verification.path, chapterFiles.verification.content);
       }
     }
 
@@ -1159,7 +1159,7 @@ class EnhancedPlanningToMegaMemoryMigration {
       plans: new Map(),
       research: null,
       summaries: new Map(),
-      uat: null
+      verification: null
     };
 
     const allFiles = await glob.glob('*.md', { cwd: chapterPath, absolute: true });
@@ -1171,8 +1171,8 @@ class EnhancedPlanningToMegaMemoryMigration {
         files.context = { content: await fs.readFile(file, 'utf-8'), path: file };
       } else if (basename.endsWith('-RESEARCH.md')) {
         files.research = { content: await fs.readFile(file, 'utf-8'), path: file };
-      } else if (basename.endsWith('-UAT.md')) {
-        files.uat = { content: await fs.readFile(file, 'utf-8'), path: file };
+      } else if (basename.endsWith('-VERIFICATION.md')) {
+        files.verification = { content: await fs.readFile(file, 'utf-8'), path: file };
       } else if (basename.endsWith('-SUMMARY.md')) {
         const match = basename.match(/-(\d+)-SUMMARY\.md/);
         if (match) {
@@ -1230,13 +1230,13 @@ class EnhancedPlanningToMegaMemoryMigration {
       plans: new Map(),
       research: null,
       summaries: new Map(),
-      uat: null
+      verification: null
     };
 
     for (const files of chapterFiles) {
       if (files.context) merged.context = files.context;
       if (files.research && !merged.research) merged.research = files.research;
-      if (files.uat && !merged.uat) merged.uat = files.uat;
+      if (files.verification && !merged.verification) merged.verification = files.verification;
 
       for (const [num, plan] of files.plans) {
         merged.plans.set(num, plan);
@@ -1405,15 +1405,15 @@ class EnhancedPlanningToMegaMemoryMigration {
         }
       }
 
-      if (chapterFiles.uat) {
-        const relativePath = chapterFiles.uat.path.replace(/^.*\.planning\//, '.planning/');
-        const uatData = this.parseUATFile(chapterFiles.uat.content, relativePath);
-        if (uatData) {
-          const concept = ChapterTemplates.createUAT(chapterName, uatData);
+      if (chapterFiles.verification) {
+        const relativePath = chapterFiles.verification.path.replace(/^.*\.planning\//, '.planning/');
+        const verificationData = this.parseVerificationFile(chapterFiles.verification.content, relativePath);
+        if (verificationData) {
+          const concept = ChapterTemplates.createVerification(chapterName, verificationData);
           concept.parent_id = chapterParentId;
           concept.edges = [
             { to: chapterParentId, relation: 'connects_to' as const },
-            ...uatData.concepts_reviewed.map((c: string) => ({ to: c, relation: 'connects_to' as const }))
+            ...verificationData.concepts_reviewed.map((c: string) => ({ to: c, relation: 'connects_to' as const }))
           ];
           await this.createConcept(concept);
         }
@@ -1858,7 +1858,7 @@ class EnhancedPlanningToMegaMemoryMigration {
     }
   }
 
-  private parseUATFile(content: string, filename: string): any {
+  private parseVerificationFile(content: string, filename: string): any {
     try {
       const cleaned = this.cleanYamlContent(content, filename);
       const parsed = matter(cleaned);

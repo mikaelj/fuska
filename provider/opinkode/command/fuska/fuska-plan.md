@@ -617,11 +617,11 @@ const hasResearch = researchResponse.matches.length > 0
 **Step 6.6: Query Verification (if --fixes mode)**
 
 ```
-let uatData = null
+let verificationData = null
 if (hasGapsFlag) {
-  const uatResponse = megamemory_understand(query=`${chapterSlug}-uat`, top_k=1)
-  uatData = uatResponse.matches.length > 0
-    ? JSON.parse(uatResponse.matches[0].summary)
+  const verificationResponse = megamemory_understand(query=`${chapterSlug}-verification`, top_k=1)
+  verificationData = verificationResponse.matches.length > 0
+    ? JSON.parse(verificationResponse.matches[0].summary)
     : null
 }
 ```
@@ -791,7 +791,7 @@ Plans must be executable prompts with:
 - Frontmatter (batch, depends_on, files_modified, autonomous)
 - Tasks in XML format
 - Verification criteria
-- must_haves for goal-backward verification
+- requirements for goal-backward verification
 
 Use MegaMemory:
 - Create plan concepts: ChapterConceptTemplates.createPlan()
@@ -806,7 +806,7 @@ Before returning PLANNING COMPLETE:
 - [ ] Tasks are specific and actionable
 - [ ] Dependencies correctly identified
 - [ ] Batchs assigned for parallel execution
-- [ ] must_haves derived from chapter goal
+- [ ] requirements derived from chapter goal
 - [ ] Patterns referenced from MegaMemory (if found)
 </quality_gate>
 ```
@@ -871,7 +871,7 @@ const planConcepts = response.matches.map(match => {
     autonomous: planData.autonomous,
     objective: planData.objective,
     tasks: planData.tasks,
-    mustHaves: planData.must_haves
+    mustHaves: planData.requirements
   }
 })
 ```
@@ -955,7 +955,7 @@ Project Classification:
 </checker_panel>
 ```
 
-**Step 10.3: Spawn panel orchestrator**
+**Step 10.3: Spawn panel coordinator**
 
 ```
 Task(
@@ -988,7 +988,7 @@ Track: `iteration_count` (starts at 1 after initial plan + check)
 Display: `Sending back to planner for revision... (iteration {N}/3)`
 
 Retrieve the current plans for revision context using `megamemory:understand` — query "{CHAPTER}-plan", top_k=20.
-Each plan concept summary has: `batch`, `depends_on`, `files_modified`, `autonomous`, `objective`, `tasks`, `must_haves`.
+Each plan concept summary has: `batch`, `depends_on`, `files_modified`, `autonomous`, `objective`, `tasks`, `requirements`.
 Collect all plan summaries so the planner can see what needs revision.
 
 Build the revision prompt by inlining the plans and checker issues:
@@ -1097,7 +1097,7 @@ ${planConcepts.map((plan, idx) => `
 **Output:** ${plan.data.output || 'N/A'}
 
 ### Must Haves
-${plan.data.must_haves?.map(m => `- ${m}`).join('\n') || 'None defined'}
+${plan.data.requirements?.map(m => `- ${m}`).join('\n') || 'None defined'}
 
 ### Files to Modify
 ${plan.data.files_modified?.map(f => `- ${f}`).join('\n') || 'TBD'}

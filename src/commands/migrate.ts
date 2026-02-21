@@ -31,7 +31,7 @@ interface ChapterFiles {
   plans: Map<number, string>;
   research: string | null;
   summaries: Map<number, string>;
-  uat: string | null;
+  verification: string | null;
 }
 
 class PlanningToMegaMemoryMigration {
@@ -370,7 +370,7 @@ class PlanningToMegaMemoryMigration {
       plans: new Map(),
       research: null,
       summaries: new Map(),
-      uat: null
+      verification: null
     };
 
     const allFiles = await glob('*.md', { cwd: phasePath, absolute: true });
@@ -382,8 +382,8 @@ class PlanningToMegaMemoryMigration {
         files.context = await fs.readFile(file, 'utf-8');
       } else if (basename.endsWith('-RESEARCH.md')) {
         files.research = await fs.readFile(file, 'utf-8');
-      } else if (basename.endsWith('-UAT.md')) {
-        files.uat = await fs.readFile(file, 'utf-8');
+      } else if (basename.endsWith('-VERIFICATION.md')) {
+        files.verification = await fs.readFile(file, 'utf-8');
       } else if (basename.endsWith('-SUMMARY.md')) {
         const match = basename.match(/-(\d+)-SUMMARY\.md/);
         if (match) {
@@ -439,13 +439,13 @@ class PlanningToMegaMemoryMigration {
       plans: new Map(),
       research: null,
       summaries: new Map(),
-      uat: null
+      verification: null
     };
 
     for (const files of chapterFiles) {
       if (files.context) merged.context = files.context;
       if (files.research && !merged.research) merged.research = files.research;
-      if (files.uat && !merged.uat) merged.uat = files.uat;
+      if (files.verification && !merged.verification) merged.verification = files.verification;
 
       for (const [num, plan] of files.plans) {
         merged.plans.set(num, plan);
@@ -615,14 +615,14 @@ class PlanningToMegaMemoryMigration {
         }
       }
 
-      if (chapterFiles.uat) {
-        const uatData = this.parseUATFile(chapterFiles.uat);
-        if (uatData) {
-          const concept = ChapterConceptTemplates.createVerification(chapterName, uatData);
+      if (chapterFiles.verification) {
+        const verificationData = this.parseVerificationFile(chapterFiles.verification);
+        if (verificationData) {
+          const concept = ChapterConceptTemplates.createVerification(chapterName, verificationData);
           concept.parent_id = chapterParentId;
           concept.edges = [
             { to: chapterParentId, relation: 'connects_to' as const },
-            ...uatData.concepts_reviewed.map((c: string) => ({ to: c, relation: 'connects_to' as const }))
+            ...verificationData.concepts_reviewed.map((c: string) => ({ to: c, relation: 'connects_to' as const }))
           ];
           await this.createConcept(concept);
         }
@@ -937,9 +937,9 @@ class PlanningToMegaMemoryMigration {
     }
   }
 
-  private parseUATFile(content: string): any {
+  private parseVerificationFile(content: string): any {
     try {
-      const cleaned = this.cleanYamlContent(content, 'UAT file');
+      const cleaned = this.cleanYamlContent(content, 'verification file');
       const parsed = matter(cleaned);
       const data = parsed.data || {};
       return {
@@ -951,7 +951,7 @@ class PlanningToMegaMemoryMigration {
       };
     } catch (e: any) {
       this.stats.yamlErrors++;
-      console.warn(`Failed to parse YAML in UAT file: ${e.message}`);
+      console.warn(`Failed to parse YAML in verification file: ${e.message}`);
       return {
         verification_results: [],
         issues_found: [],

@@ -218,7 +218,7 @@ megamemory:create_concept with:
     "symptoms": {
       "truth": "expected behavior",
       "actual": "actual behavior from user",
-      "reproduction": "Test {test_num} in UAT"
+      "reproduction": "Test {test_num} in verification"
     },
     "evidence": [
       {"file": "path/to/file", "issue": "what's wrong"},

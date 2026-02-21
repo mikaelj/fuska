@@ -411,7 +411,7 @@ await megamemory_link({
 ## Example 2: Determining When to Use TDD
 
 ```typescript
-// Agent queries MM for TDD decision guidance
+// Agent queries MegaMemory for TDD decision guidance
 const tddGuidance = await megamemory_understand({
   query: "TDD vs standard development: when to use each approach"
 });

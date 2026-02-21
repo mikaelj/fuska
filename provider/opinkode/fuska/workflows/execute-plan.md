@@ -1165,7 +1165,7 @@ git commit -m "{type}({chapter}-{plan}): {plan objective summary}
 "
 ```
 
-**If `per-chapter`:** Do NOT commit. Files stay staged. The execute-chapter orchestrator commits when the entire chapter completes.
+**If `per-chapter`:** Do NOT commit. Files stay staged. The execute-chapter coordinator commits when the entire chapter completes.
 
 **Step 3. Record commit hash (per-task and per-plan only):**
 
@@ -1289,10 +1289,10 @@ I'll verify after: [verification]
 See ~/.config/opencode/get-shit-done/references/checkpoints.md for complete checkpoint guidance.
 </step>
 
-<step name="checkpoint_return_for_orchestrator">
-**When spawned by an orchestrator (execute-chapter or execute-plan command):**
+<step name="checkpoint_return_for_coordinator">
+**When spawned by an coordinator (execute-chapter or execute-plan command):**
 
-If you were spawned via Task tool and hit a checkpoint, you cannot directly interact with the user. Instead, RETURN to the orchestrator with structured checkpoint state so it can present to the user and spawn a fresh continuation agent.
+If you were spawned via Task tool and hit a checkpoint, you cannot directly interact with the user. Instead, RETURN to the coordinator with structured checkpoint state so it can present to the user and spawn a fresh continuation agent.
 
 **Return format for checkpoints:**
 
@@ -1348,7 +1348,7 @@ Type "done" when Convex is authenticated and project created.
 
 **After you return:**
 
-The orchestrator will:
+The coordinator will:
 1. Parse your structured return
 2. Present checkpoint details to the user
 3. Collect user's response
@@ -1358,7 +1358,7 @@ You will NOT be resumed. A new agent continues from where you stopped, using you
 
 **How to know if you were spawned:**
 
-If you're reading this workflow because an orchestrator spawned you (vs running directly), the orchestrator's prompt will include checkpoint return instructions. Follow those instructions when you hit a checkpoint.
+If you're reading this workflow because an coordinator spawned you (vs running directly), the coordinator's prompt will include checkpoint return instructions. Follow those instructions when you hit a checkpoint.
 
 **If running in main context (not spawned):**
 
@@ -1787,7 +1787,7 @@ git commit -m "{type}({chapter}-{plan}): {plan objective summary}
 
 **If `per-task`:** All tasks already committed individually. Nothing to do here.
 
-**If `per-chapter`:** Do NOT commit. Files stay staged for the execute-chapter orchestrator.
+**If `per-chapter`:** Do NOT commit. Files stay staged for the execute-chapter coordinator.
 
 **Commit message rules:** Max 2-4 bullets. Never list implementation details. See `git-integration.md` commit_message_rules.
 </step>

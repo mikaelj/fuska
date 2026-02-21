@@ -97,13 +97,13 @@ If audit exists and has gaps:
 
 ## Pre-flight Check
 
-[WARN] Milestone audit found gaps. Run /fuska-plan-milestone-gaps to create
+[WARN] Milestone audit found gaps. Run /fuska-plan-milestone-fixes to create
 chapters that close the gaps, or proceed anyway to accept as tech debt.
 
 ────────────────────────────────────────────────────────────
 ```
 
-Suggest: "Run /fuska-plan-milestone-gaps first" or offer "Proceed anyway" option
+Suggest: "Run /fuska-plan-milestone-fixes first" or offer "Proceed anyway" option
 
 If audit exists and status is "passed":
 → Display: "[OK] Milestone audit passed. Proceeding with completion."
@@ -711,7 +711,7 @@ git push origin v${{version}}
 ## 11. Handle Edge Cases
 
 - Audit missing → recommend /fuska-audit-milestone
-- Audit has gaps → recommend /fuska-plan-milestone-gaps or offer to proceed as tech debt
+- Audit has gaps → recommend /fuska-plan-milestone-fixes or offer to proceed as tech debt
 - Incomplete chapters → list incomplete chapters, ask to complete first
 - Git tag already exists → ask to force update or use different tag
 - Push fails → show error, suggest manual push

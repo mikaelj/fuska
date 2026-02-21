@@ -554,7 +554,7 @@ const checkerPrompt = `<critical_constraints>
 Return one of:
 - ## VERIFICATION PASSED -- plan is ready
 - ## ISSUES FOUND -- structured issue list with fix hints
-Skip chapter-specific checks (requirement coverage, dependency graph, must_haves derivation, context compliance). This is a standalone task, not a chapter plan.
+Skip chapter-specific checks (requirement coverage, dependency graph, requirements derivation, context compliance). This is a standalone task, not a chapter plan.
 </critical_constraints>
 
 <verification_context>
@@ -588,7 +588,7 @@ Track: `issuesHistory = []`
 
 If `## VERIFICATION PASSED`:
 -> Output the checker's full response (contains verified plans JSON)
--> Append orchestrator summary:
+-> Append coordinator summary:
    - **Iterations:** {iterationCount}
    - **What Was Fixed:** {1 paragraph summary of issues raised and addressed, if iterations > 1}
 -> Continue to Step 8

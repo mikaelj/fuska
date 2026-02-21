@@ -117,7 +117,7 @@ interface AdHocContext {
 }
 
 interface NextAction {
-  route: 'execute' | 'plan' | 'discuss' | 'gaps' | 'complete-milestone' | 'next-chapter';
+  route: 'execute' | 'plan' | 'discuss' | 'issues' | 'complete-milestone' | 'next-chapter';
   chapterNumber?: number;
   planName?: string;
   objective?: string;
@@ -424,7 +424,7 @@ class ProgressRunner {
     const chapterNum = chapterSlug ? parseInt(chapterSlug.replace('chapter-', '')) : 0;
 
     if (ctx.chapterVerification?.status === 'diagnosed' && ctx.chapterVerification.issues && ctx.chapterVerification.issues.length > 0) {
-      return { route: 'gaps', chapterNumber: chapterNum };
+      return { route: 'issues', chapterNumber: chapterNum };
     }
 
     const totalPlans = ctx.chapterPlans.length;
@@ -576,9 +576,9 @@ class ProgressRunner {
         this.out(`* /fuska-plan ${chapterNum}`);
         break;
 
-      case 'gaps':
-        this.out(`Fix UAT gaps in chapter ${chapterNum} by running:`);
-        this.out(`* /fuska-plan ${chapterNum} --gaps`);
+      case 'issues':
+        this.out(`Fix verification issues in chapter ${chapterNum} by running:`);
+        this.out(`* /fuska-plan ${chapterNum} --fixes`);
         break;
 
       case 'next-chapter':

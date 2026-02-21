@@ -38,7 +38,7 @@ Plans must be executable prompts with:
 - Frontmatter (batch, depends_on, files_modified, autonomous)
 - Tasks in XML format
 - Verification criteria
-- must_haves for goal-backward verification
+- requirements for goal-backward verification
 </downstream_consumer>
 
 <quality_gate>
@@ -48,7 +48,7 @@ Before returning PLANNING COMPLETE:
 - [ ] Tasks are specific and actionable
 - [ ] Dependencies correctly identified
 - [ ] Batchs assigned for parallel execution
-- [ ] must_haves derived from chapter goal
+- [ ] requirements derived from chapter goal
 </quality_gate>
 ```
 
@@ -59,7 +59,7 @@ Before returning PLANNING COMPLETE:
 | `{chapter_number}` | From roadmap/arguments | `5` or `2.1` |
 | `{chapter_dir}` | Chapter directory name | `05-user-profiles` |
 | `{chapter}` | Chapter prefix | `05` |
-| `{standard \| gap_closure}` | Mode flag | `standard` |
+| `{standard \| fix_closure}` | Mode flag | `standard` |
 
 ## Continuation Template
 
@@ -81,7 +81,7 @@ Existing plans: megamemory:understand({query: "chapter {chapter_number} plans"})
 </checkpoint_response>
 
 <mode>
-Continue: {standard | gap_closure}
+Continue: {standard | fix_closure}
 </mode>
 ```
 
@@ -101,7 +101,7 @@ summary: |
 
 why: |
   Stores executable plans for chapter implementation.
-  Plans contain tasks, dependencies, verification criteria, and must-haves.
+  Plans contain tasks, dependencies, verification criteria, and requirements.
   Consumed by /fuska-build for execution.
 
 edges: [
@@ -128,9 +128,9 @@ edges: [
 **Create Plan (during chapter planning):**
 
 1. Create concept with plan_id, plan_name, batch, tasks
-2. Set mode (standard or gap_closure)
+2. Set mode (standard or fix_closure)
 3. List all tasks with dependencies
-4. Include verification criteria and must_haves
+4. Include verification criteria and requirements
 5. Link to parent chapter and dependent plans
 6. Return concept ID for execution
 
@@ -211,7 +211,7 @@ const createPlan = async (planId: string, chapterNumber: string, chapterName: st
     kind: "plan",
     summary,
     why: "Stores executable plans for chapter implementation. " +
-          "Plans contain tasks, dependencies, verification criteria, and must-haves. " +
+          "Plans contain tasks, dependencies, verification criteria, and requirements. " +
           "Consumed by /fuska-build for execution.",
     edges,
     created_by_task: `Planning for Chapter ${chapterNumber}`
@@ -356,7 +356,7 @@ const resumePlanning = async (chapterNumber: string) => {
 1. Create each plan as a separate concept
 2. Assign batch numbers for parallel execution
 3. Define dependencies between plans
-4. Set verification criteria and must-haves
+4. Set verification criteria and requirements
 5. Link to parent chapter concept
 
 **Quality gate before returning PLANNING COMPLETE:**
@@ -366,7 +366,7 @@ const resumePlanning = async (chapterNumber: string) => {
 - [ ] Tasks are specific and actionable
 - [ ] Dependencies correctly identified via edges
 - [ ] Batchs assigned for parallel execution
-- [ ] must_haves derived from chapter goal
+- [ ] requirements derived from chapter goal
 ```
 
 ---

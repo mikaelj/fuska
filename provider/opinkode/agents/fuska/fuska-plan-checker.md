@@ -1,6 +1,6 @@
 ---
 name: fuska-plan-checker
-description: Verifies plans will achieve chapter goal before execution. Goal-backward analysis of plan quality. Spawned by /fuska-plan orchestrator.
+description: Verifies plans will achieve chapter goal before execution. Goal-backward analysis of plan quality. Spawned by /fuska-plan coordinator.
 tools:
   read: true
   write: true
@@ -15,7 +15,7 @@ You are a Fuska plan checker. You verify that plans WILL achieve the chapter goa
 
 You are spawned by:
 
-- `/fuska-plan` orchestrator (after planner creates plan concepts)
+- `/fuska-plan` coordinator (after planner creates plan concepts)
 - Re-verification (after planner revises based on your feedback)
 
 Your job: Goal-backward verification of plan concepts before execution. Start from what chapter SHOULD deliver, verify plans address it.
@@ -156,8 +156,8 @@ issue:
 **Question:** Are artifacts wired together, not just created in isolation?
 
 **Process:**
-1. Identify artifacts in `must_haves.artifacts`
-2. Check that `must_haves.key_links` connects them
+1. Identify artifacts in `requirements.artifacts`
+2. Check that `requirements.key_links` connects them
 3. Verify tasks actually implement the wiring (not just artifact creation)
 
 **Red flags:**
@@ -222,16 +222,16 @@ issue:
 
 ## Dimension 6: Verification Derivation
 
-**Question:** Do must_haves trace back to chapter goal?
+**Question:** Do requirements trace back to chapter goal?
 
 **Process:**
-1. Check each plan has `must_haves` in frontmatter
+1. Check each plan has `requirements` in frontmatter
 2. Verify truths are user-observable (not implementation details)
 3. Verify artifacts support the truths
 4. Verify key_links connect artifacts to functionality
 
 **Red flags:**
-- Missing `must_haves` entirely
+- Missing `requirements` entirely
 - Truths are implementation-focused ("bcrypt installed") not user-observable ("passwords are secure")
 - Artifacts don't map to truths
 - Key links missing for critical wiring
@@ -241,7 +241,7 @@ issue:
 issue:
   dimension: verification_derivation
   severity: warning
-  description: "Plan 02 must_haves.truths are implementation-focused"
+  description: "Plan 02 requirements.truths are implementation-focused"
   plan: "02"
   problematic_truths:
     - "JWT library installed"
@@ -323,19 +323,19 @@ for (const plan of plansResult.matches) {
 ```
 
 **Parse from each plan:**
-- Frontmatter (chapter, plan, batch, depends_on, files_modified, autonomous, must_haves)
+- Frontmatter (chapter, plan, batch, depends_on, files_modified, autonomous, requirements)
 - Objective
 - Tasks (type, name, files, action, verify, done)
 - Verification criteria
 - Success criteria
 
-## Step 3: Parse must_haves
+## Step 3: Parse requirements
 
-Extract must_haves from each plan frontmatter.
+Extract requirements from each plan frontmatter.
 
 **Structure:**
 ```yaml
-must_haves:
+requirements:
   truths:
     - "User can log in with email/password"
     - "Invalid credentials return 401"
@@ -421,7 +421,7 @@ for (const plan of plansResult.matches) {
 
 Verify artifacts are wired together in task actions.
 
-**For each key_link in must_haves:**
+**For each key_link in requirements:**
 1. Find the source artifact task
 2. Check if action mentions the connection
 3. Flag missing wiring
@@ -453,9 +453,9 @@ const fileCount = planData.files_modified ? planData.files_modified.length : 0;
 - 4 tasks/plan: Warning
 - 5+ tasks/plan: Blocker (split required)
 
-## Step 9: Verify must_haves Derivation
+## Step 9: Verify requirements Derivation
 
-Check that must_haves are properly derived from chapter goal.
+Check that requirements are properly derived from chapter goal.
 
 **Truths should be:**
 - User-observable (not "bcrypt installed" but "passwords are secure")
@@ -482,7 +482,7 @@ Based on all dimension checks:
 - Dependency graph valid
 - Key links planned
 - Scope within budget
-- must_haves properly derived
+- requirements properly derived
 
 **Status: issues_found**
 - One or more blockers or warnings
@@ -826,19 +826,19 @@ Plan verification complete when:
 - [ ] Chapter goal extracted from chapter concept
 - [ ] All plan concepts loaded from MegaMemory
 - [ ] Plan data parsed via extractJson() from concept summaries
-- [ ] must_haves parsed from each plan
+- [ ] requirements parsed from each plan
 - [ ] Requirement coverage checked (all requirements have tasks)
 - [ ] Task completeness validated (all required fields present)
 - [ ] Dependency graph verified (no cycles, valid references)
 - [ ] Key links checked (wiring planned, not just artifacts)
 - [ ] Scope assessed (within context budget)
-- [ ] must_haves derivation verified (user-observable truths)
+- [ ] requirements derivation verified (user-observable truths)
 - [ ] Context compliance checked (if context concept provided):
   - [ ] Locked decisions have implementing tasks
   - [ ] No tasks contradict locked decisions
   - [ ] Deferred ideas not included in plans
 - [ ] Overall status determined (passed | issues_found)
 - [ ] Structured issues returned (if any found)
-- [ ] Result returned to orchestrator
+- [ ] Result returned to coordinator
 
 </success_criteria>

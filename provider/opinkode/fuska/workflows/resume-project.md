@@ -2,7 +2,7 @@
 Use this workflow when:
 - Starting a new session on an existing project
 - User says "continue", "what's next", "where were we", "resume"
-- Any planning operation when MM has project concepts
+- Any planning operation when MegaMemory has project concepts
 - User returns after time away from project
 </trigger>
 
@@ -10,7 +10,7 @@ Use this workflow when:
 Instantly restore full project context from MegaMemory and present clear status.
 Enables seamless session continuity for fully autonomous workflows.
 
-"Where were we?" should have an immediate, complete answer from MM.
+"Where were we?" should have an immediate, complete answer from MegaMemory.
 </purpose>
 
 <required_reading>
@@ -36,7 +36,7 @@ megamemory:list_roots
 
 <step name="load_state">
 
-Query MM for core project concepts:
+Query MegaMemory for core project concepts:
 
 ```
 megamemory:understand with query: "project state current position progress session"
@@ -72,7 +72,7 @@ Parse returned concepts. Look for:
 </step>
 
 <step name="check_incomplete_work">
-Query MM for incomplete work that needs attention:
+Query MegaMemory for incomplete work that needs attention:
 
 ```
 megamemory:understand with query: "incomplete work interrupted agent mid-plan checkpoint"
@@ -138,7 +138,7 @@ Present complete project status to user:
 </step>
 
 <step name="determine_next_action">
-Based on project state from MM concepts, determine the most logical next action:
+Based on project state from MegaMemory concepts, determine the most logical next action:
 
 **If interrupted agent exists:**
 → Primary: Resume interrupted agent (Task tool with resume parameter)
@@ -172,7 +172,7 @@ Based on project state from MM concepts, determine the most logical next action:
 </step>
 
 <step name="offer_options">
-Present contextual options based on project state from MM:
+Present contextual options based on project state from MegaMemory:
 
 ```
 What would you like to do?
@@ -234,13 +234,13 @@ Based on user selection, route to appropriate workflow:
   ---
   ```
 - **Transition** → ./transition.md
-- **Check todos** → Query MM todo concepts, present summary
+- **Check todos** → Query MegaMemory todo concepts, present summary
 - **Review alignment** → Query project concept, compare to current state
 - **Something else** → Ask what they need
 </step>
 
 <step name="update_session">
-Before proceeding to routed workflow, update session continuity in MM:
+Before proceeding to routed workflow, update session continuity in MegaMemory:
 
 Query state concept and update:
 
@@ -289,7 +289,7 @@ Then proceed normally.
 This handles cases where:
 - Project predates state concept introduction
 - State concept was accidentally deleted
-- Cloning repo without full MM state
+- Cloning repo without full MegaMemory state
 </reconstruction>
 
 <quick_resume>
@@ -297,7 +297,7 @@ For users who want minimal friction:
 
 If user says just "continue" or "go":
 
-- Query MM state silently
+- Query MegaMemory state silently
 - Determine primary action
 - Execute immediately without presenting options
 
@@ -309,12 +309,12 @@ This enables fully autonomous "just keep going" workflow.
 <success_criteria>
 Resume is complete when:
 
-- [ ] Project concepts queried from MM
+- [ ] Project concepts queried from MegaMemory
 - [ ] State concept loaded (or reconstructed)
 - [ ] Concept.summary parsed as JSON for each concept
 - [ ] Incomplete work detected and flagged
 - [ ] Clear status presented to user
 - [ ] Contextual next actions offered
 - [ ] User knows exactly where project stands
-- [ ] Session continuity updated in MM
+- [ ] Session continuity updated in MegaMemory
       </success_criteria>

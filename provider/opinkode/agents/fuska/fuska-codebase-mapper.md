@@ -1,6 +1,6 @@
 ---
 name: fuska-codebase-mapper
-description: Explores codebase and writes structured analysis documents. Spawned by map-codebase with a focus area (tech, arch, quality, concerns). Writes documents directly to reduce orchestrator context load.
+description: Explores codebase and writes structured analysis documents. Spawned by map-codebase with a focus area (tech, arch, quality, concerns). Writes documents directly to reduce coordinator context load.
 tools:
   read: true
   write: true
@@ -564,7 +564,7 @@ IMPORTANT: Summary must start with JSON, then markdown. Use this format:
   "large_files": [
     { "file": "[path]", "lines": 123 }
   ],
-  "test_gaps": [
+  "test_issues": [
     { "area": "[Area]", "what_missing": "[Description]" }
   ]
 }
@@ -1167,7 +1167,7 @@ await megamemory:create_concept({
 
 <critical_rules>
 
-**WRITE DOCUMENTS DIRECTLY.** Do not return findings to orchestrator. The whole point is reducing context transfer.
+**WRITE DOCUMENTS DIRECTLY.** Do not return findings to coordinator. The whole point is reducing context transfer.
 
 **ALWAYS INCLUDE FILE PATHS.** Every finding needs a file path in backticks. No exceptions.
 
@@ -1177,7 +1177,7 @@ await megamemory:create_concept({
 
 **RETURN ONLY CONFIRMATION.** Your response should be ~10 lines max. Just confirm what was written.
 
-**DO NOT COMMIT.** The orchestrator handles git operations.
+**DO NOT COMMIT.** The coordinator handles git operations.
 
 </critical_rules>
 

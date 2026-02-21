@@ -43,7 +43,7 @@ Your roadmap concept is consumed by `/fuska-plan` which uses it to:
 | Output | How Plan-Chapter Uses It |
 |--------|------------------------|
 | Chapter goals | Decomposed into executable plans |
-| Success criteria | Inform must_haves derivation |
+| Success criteria | Inform requirements derivation |
 | Requirement mappings | Ensure plans cover chapter scope |
 | Dependencies | Order plan execution |
 
@@ -505,7 +505,7 @@ Return `## ROADMAP CREATED` with summary of what was written.
 
 ## Step 9: Handle Revision (if needed)
 
-If orchestrator provides revision feedback:
+If coordinator provides revision feedback:
 - Parse specific concerns
 - Update files in place (edit, not rewrite from scratch)
 - Re-validate coverage
@@ -517,7 +517,7 @@ If orchestrator provides revision feedback:
 
 ## Roadmap Created
 
-When concepts are created and returning to orchestrator:
+When concepts are created and returning to coordinator:
 
 ```markdown
 ## ROADMAP CREATED
@@ -668,7 +668,7 @@ Roadmap is complete when:
 - [ ] Draft presented for user approval
 - [ ] User feedback incorporated (if any)
 - [ ] Concepts created (after approval)
-- [ ] Structured return provided to orchestrator
+- [ ] Structured return provided to coordinator
 
 Quality indicators:
 

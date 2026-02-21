@@ -1102,7 +1102,7 @@ class WorktreeMergeRunner {
         name: 'action',
         message: 'Git merge has conflicts. What would you like to do?',
         choices: [
-          { name: 'Abort (rollback MM and git)', value: 'abort' },
+          { name: 'Abort (rollback MegaMemory and git)', value: 'abort' },
           { name: 'Continue (resolve conflicts manually)', value: 'continue' }
         ]
       }

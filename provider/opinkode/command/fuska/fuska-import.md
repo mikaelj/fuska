@@ -28,7 +28,7 @@ This is the reverse of `/fuska-export-md` — converts the traditional `.plannin
 - `ROADMAP.md` — roadmap concept + chapter concepts
 - `STATE.md` — project state concept
 - `config.json` — config concept
-- `chapters/NN-*/` — chapter context, plans, summaries, research, UAT
+- `chapters/NN-*/` — chapter context, plans, summaries, research, verification
 - `todos/pending/` and `todos/done/` — todo concepts + todos module
 - `research/` — research concepts (if present at top level)
 - `codebase/` — codebase concepts (if present at top level)
@@ -430,7 +430,7 @@ megamemory_create_concept({
 
 For each `*-PLAN*.md` or plan file in the chapter directory:
 
-Read file. Parse frontmatter (batch, depends_on, files_modified, autonomous) and body (objective, must_haves, tasks).
+Read file. Parse frontmatter (batch, depends_on, files_modified, autonomous) and body (objective, requirements, tasks).
 
 ```
 const planName = `${chapterSlug}-plan-${planNumber}`
@@ -444,7 +444,7 @@ megamemory_create_concept({
     files_modified: filesModified,
     autonomous: autonomous,
     objective: objective,
-    must_haves: mustHaves,
+    requirements: mustHaves,
     tasks: tasks
   }),
   parent_id: chapterSlug,
@@ -501,15 +501,15 @@ megamemory_create_concept({
 })
 ```
 
-**Step 7.7: Import chapter UAT**
+**Step 7.7: Import chapter verification**
 
-For each `*-UAT*.md` in the chapter directory:
+For each `*-verification*.md` in the chapter directory:
 
 Read file. Parse verification results, issues found, recommendations.
 
 ```
 megamemory_create_concept({
-  name: `${chapterSlug}-uat`,
+  name: `${chapterSlug}-verification`,
   kind: "component",
   summary: JSON.stringify({
     verification_results: verificationResults,
@@ -521,7 +521,7 @@ megamemory_create_concept({
 })
 ```
 
-Confirm: ">> Chapter ${chapterSlug} imported (context: ${hasContext}, plans: ${planCount}, summaries: ${summaryCount}, research: ${hasResearch}, uat: ${hasUAT})"
+Confirm: ">> Chapter ${chapterSlug} imported (context: ${hasContext}, plans: ${planCount}, summaries: ${summaryCount}, research: ${hasResearch}, verification: ${hasVerification})"
 
 ---
 
@@ -732,7 +732,7 @@ Concepts Created:
   - Chapter plans: ${planCount}
   - Chapter summaries: ${summaryCount}
   - Chapter research: ${researchCount}
-  - Chapter UAT: ${uatCount}
+  - Chapter verification: ${verificationCount}
 - Research concepts: ${topLevelResearchCount}
 - Codebase concepts: ${codebaseCount}
 - Todos module: 1
@@ -806,7 +806,7 @@ Total concepts: ${totalCount}
 - [ ] State concept created (if STATE.md exists)
 - [ ] Requirements module and individual requirements created
 - [ ] Roadmap and chapter concepts created
-- [ ] Chapter detail concepts created (context, plans, summaries, research, UAT)
+- [ ] Chapter detail concepts created (context, plans, summaries, research, verification)
 - [ ] Top-level research concepts created (if research/ directory exists)
 - [ ] Codebase concepts created (if codebase/ directory exists)
 - [ ] Todos module and individual todos created

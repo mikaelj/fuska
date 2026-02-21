@@ -167,7 +167,7 @@ await megamemory_create_concept({
 ## Example 1: Deployment Verification Workflow
 
 ```typescript
-// Agent queries MM for deployment verification pattern
+// Agent queries MegaMemory for deployment verification pattern
 const verificationPattern = await megamemory_understand({
   query: "how to verify Vercel deployment after automated deployment"
 });
@@ -379,7 +379,7 @@ await megamemory_create_concept({
 </task>`
 });
 
-// Agent queries MM before writing checkpoint to avoid anti-patterns
+// Agent queries MegaMemory before writing checkpoint to avoid anti-patterns
 const validation = await megamemory_understand({
   query: "anti-patterns for checkpoints that ask user to execute commands"
 });

@@ -1,6 +1,6 @@
 # MegaMemory: Continuation Format Patterns
 
-Reference file for @continuation-format.md - Learn standard continuation prompt format with MM operations.
+Reference file for @continuation-format.md - Learn standard continuation prompt format with MegaMemory operations.
 
 ---
 

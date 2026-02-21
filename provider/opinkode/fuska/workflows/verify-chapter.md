@@ -19,7 +19,7 @@ Then verify each level against the actual codebase.
 
 <required_reading>
 @../references/verification-patterns.md
-@../templates/verification-report.md
+@../templates/verification-results.md
 </required_reading>
 
 <tools>
@@ -55,20 +55,20 @@ Query: megamemory:understand({
 - Query for artifacts created/modified in this chapter
 - Check file_refs in plan concepts and summaries
 
-**Load must_haves from chapter plan:**
-- Check if chapter plan concept contains must_haves in summary
+**Load requirements from chapter plan:**
+- Check if chapter plan concept contains requirements in summary
 - Must-haves format: truths, artifacts, key_links
 </step>
 
-<step name="establish_must_haves">
+<step name="establish_requirements">
 **Determine what must be verified.**
 
 **Option A: Must-haves in chapter plan concept**
 
-Check if chapter plan concept has must_haves in summary:
+Check if chapter plan concept has requirements in summary:
 
 ```yaml
-must_haves:
+requirements:
   truths:
     - "User can see existing messages"
     - "User can send a message"
@@ -83,7 +83,7 @@ must_haves:
 
 **Option B: Derive from chapter goal**
 
-If no must_haves in plan concept, derive using goal-backward process:
+If no requirements in plan concept, derive using goal-backward process:
 
 1. **State the goal:** Take chapter goal from plan concept summary
 
@@ -99,7 +99,7 @@ If no must_haves in plan concept, derive using goal-backward process:
    - Identify critical wiring (component calls API, API queries DB)
    - These are where stubs hide
 
-5. **Create must-haves concept:**
+5. **Create requirements concept:**
    ```yaml
    Call: megamemory:create_concept({
      name: "Chapter {CHAPTER_NUM} Must-Haves",
@@ -251,7 +251,7 @@ Status: WIRED / NOT_WIRED / N/A
 
 ### Aggregate key link results
 
-For each key link in must_haves:
+For each key link in requirements:
 - Run appropriate verification using Read and Grep
 - Record status and evidence
 - WIRED / PARTIAL / STUB / NOT_WIRED
@@ -386,7 +386,7 @@ Store in verification concept summary:
 
 3. Re-verify chapter goal
    - Run verification again
-   - Confirm all must-haves pass
+   - Confirm all requirements pass
 
 **Estimated scope:** {Small / Medium}
 ```
@@ -483,8 +483,8 @@ If status = human_needed:
 - Human verification items recorded
 </step>
 
-<step name="return_to_orchestrator">
-**Return results to execute-chapter orchestrator.**
+<step name="return_to_coordinator">
+**Return results to execute-chapter coordinator.**
 
 **Return format:**
 

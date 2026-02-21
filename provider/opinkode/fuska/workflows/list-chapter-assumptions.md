@@ -23,7 +23,7 @@ Example: /fuska-list-chapter-assumptions 3
 Exit workflow.
 
 **If argument provided:**
-Query MM for chapter context:
+Query MegaMemory for chapter context:
 
 ```
 megamemory:understand with query: "Chapter ${CHAPTER} context goals scope"
@@ -35,7 +35,7 @@ megamemory:understand with query: "Chapter ${CHAPTER} context goals scope"
 Error: Chapter ${CHAPTER} not found in MegaMemory.
 
 Available chapters:
-[List chapter concepts from MM results]
+[List chapter concepts from MegaMemory results]
 ```
 
 Exit workflow.
@@ -55,11 +55,11 @@ Continue to analyze_chapter.
 </step>
 
 <step name="analyze_chapter">
-Based on MM chapter concept and project context, identify assumptions across five areas:
+Based on MegaMemory chapter concept and project context, identify assumptions across five areas:
 
 **1. Technical Approach:**
 What libraries, frameworks, patterns, or tools would OpenCode use?
-- Query MM for related feature/component concepts
+- Query MegaMemory for related feature/component concepts
 - "I'd use X library because..."
 - "I'd follow Y pattern because..."
 - "I'd structure this as Z because..."
@@ -86,7 +86,7 @@ What's included vs excluded in OpenCode's interpretation?
 
 **4. Risk Areas:**
 Where does OpenCode expect complexity or challenges?
-- Query MM for related decision concepts
+- Query MegaMemory for related decision concepts
 - "The tricky part is X because..."
 - "Potential issues: Y, Z"
 - "I'd watch out for..."
@@ -102,7 +102,7 @@ What does OpenCode assume exists or needs to be in place?
 - "This will be consumed by..."
 
 Be honest about uncertainty. Mark assumptions with confidence levels:
-- "Fairly confident: ..." (clear from MM)
+- "Fairly confident: ..." (clear from MegaMemory)
 - "Assuming: ..." (reasonable inference)
 - "Unclear: ..." (could go multiple ways)
 </step>
@@ -120,15 +120,15 @@ Present assumptions in a clear, scannable format:
 [List assumptions about sequencing]
 
 ### Scope Boundaries
-**In scope:** [from MM concept.summary JSON]
-**Out of scope:** [from MM concept.summary JSON]
-**Ambiguous:** [from MM concept.summary JSON]
+**In scope:** [from MegaMemory concept.summary JSON]
+**Out of scope:** [from MegaMemory concept.summary JSON]
+**Ambiguous:** [from MegaMemory concept.summary JSON]
 
 ### Risk Areas
 [List anticipated challenges]
 
 ### Dependencies
-**From prior chapters:** [from MM concept.summary JSON]
+**From prior chapters:** [from MegaMemory concept.summary JSON]
 **External:** [third-party needs]
 **Feeds into:** [what future chapters need from this]
 
@@ -202,13 +202,13 @@ If "Re-examine": Return to analyze_chapter with updated understanding
 </process>
 
 <success_criteria>
-- Chapter number validated via MM query
-- Chapter concept queried from MM
+- Chapter number validated via MegaMemory query
+- Chapter concept queried from MegaMemory
 - Concept.summary parsed as JSON
 - Assumptions surfaced across five areas: technical approach, implementation order, scope, risks, dependencies
 - Confidence levels marked where appropriate
 - "What do you think?" prompt presented
 - User feedback acknowledged
-- MM concept updated if user requests corrections
+- MegaMemory concept updated if user requests corrections
 - Clear next steps offered
 </success_criteria>

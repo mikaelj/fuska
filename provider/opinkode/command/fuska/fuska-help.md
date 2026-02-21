@@ -85,12 +85,12 @@ All `/fuska-*` commands below also work directly.
 
 ## User Acceptance Testing
 
-\* `/fuska-review [chapter]` — Validate built features through conversational UAT.
+\* `/fuska-review [chapter]` — Validate built features through conversational verification.
 
 ## Milestone Auditing
 
 \* `/fuska-audit [version]` — Audit milestone completion against original intent.
-\* `/fuska-plan-milestone-gaps` — Create chapters to close gaps identified by audit.
+\* `/fuska-plan-milestone-fixes` — Create chapters to close gaps identified by audit.
 
 ## Configuration
 
@@ -393,7 +393,7 @@ Usage: `/fuska-check-todos api`
 ### User Acceptance Testing
 
 **`/fuska-review [chapter]`**
-Validate built features through conversational UAT.
+Validate built features through conversational verification.
 
 - Extracts testable deliverables from summary concepts
 - Presents tests one at a time (yes/no responses)
@@ -414,7 +414,7 @@ Audit milestone completion against original intent.
 
 Usage: `/fuska-audit`
 
-**`/fuska-plan-milestone-gaps`**
+**`/fuska-plan-milestone-fixes`**
 Create chapters to close gaps identified by audit.
 
 - Queries audit concept and groups gaps into chapters
@@ -422,7 +422,7 @@ Create chapters to close gaps identified by audit.
 - Adds gap closure chapters to roadmap concept
 - Ready for `/fuska-plan` on new chapters
 
-Usage: `/fuska-plan-milestone-gaps`
+Usage: `/fuska-plan-milestone-fixes`
 
 ### Configuration
 

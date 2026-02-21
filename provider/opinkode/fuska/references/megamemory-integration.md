@@ -87,7 +87,7 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`. Con
 | `fuska-executor` | Direct | `load_import_graph` step: disambiguation, impact analysis |
 | `fuska-ask` | Direct | Main command for querying import graph |
 | `fuska-refresh` | Creates | Creates `file:`, `symbol:`, `dead-code:` concepts |
-| `fuska-debugger` | Indirect | Receives context from `fuska-debug` orchestrator |
+| `fuska-debugger` | Indirect | Receives context from `fuska-debug` coordinator |
 | `fuska-build` | Indirect | Via spawned `fuska-executor` |
 
 ### Planner Import Graph Patterns
@@ -596,7 +596,7 @@ async function loadContextForChapter(megamemory: MegaMemoryClient, chapterSlug: 
 | `{chapterSlug}-plan-{n}-summary` | `chapter-01-plan-1-summary` | Plan completions |
 | `{chapterSlug}-research` | `chapter-01-research` | Chapter research |
 | `{chapterSlug}-context` | `chapter-01-context` | Chapter context |
-| `{chapterSlug}-uat` | `chapter-01-uat` | Chapter verification |
+| `{chapterSlug}-verification` | `chapter-01-verification` | Chapter verification |
 | `req-{ID}` | `req-AUTH-01`, `req-DATA-02` | Requirements |
 | `decision-{topic}` | `decision-use-typescript` | Architectural decisions |
 | `milestone-{slug}` | `milestone-v1`, `milestone-mvp` | Milestones |
@@ -663,8 +663,8 @@ Complete
 - Research → Chapter (`informs`)
 - Plan → Research (`uses_pattern`)
 - Plan → Context (`uses_knowledge`)
-- UAT → Chapter (`verifies`)
-- UAT → Summary (`reviewed`)
+- Verification → Chapter (`verifies`)
+- Verification → Summary (`reviewed`)
 
 **Edge Relationship Rules:**
 
@@ -848,7 +848,7 @@ interface PlanUpdate {
     objective?: string;
     purpose?: string;
     output?: string;
-    must_haves?: string[];
+    requirements?: string[];
     tasks?: Task[];
   };
 }
@@ -1306,10 +1306,10 @@ async function updateChapterStatus(
 }
 ```
 
-### Create UAT Concept
+### Create Verification Concept
 
 ```typescript
-interface UATInput {
+interface VerificationInput {
   chapterSlug: string;
   verificationResults: string[];
   issuesFound: string[];
@@ -1317,21 +1317,21 @@ interface UATInput {
   conceptsReviewed: string[];
 }
 
-async function createUAT(
+async function createVerification(
   megamemory: MegaMemoryClient,
-  input: UATInput
+  input: VerificationInput
 ): Promise<string> {
-  const uatData = {
+  const verificationData = {
     verification_results: input.verificationResults,
     issues_found: input.issuesFound,
     recommendations: input.recommendations,
     concepts_reviewed: input.conceptsReviewed
   };
 
-  const uatConcept = await megamemory.create_concept({
-    name: `${input.chapterSlug}-uat`,
+  const verificationConcept = await megamemory.create_concept({
+    name: `${input.chapterSlug}-verification`,
     kind: 'component',
-    summary: JSON.stringify(uatData),
+    summary: JSON.stringify(verificationData),
     parent_id: input.chapterSlug,
     edges: [
       { to: input.chapterSlug, relation: 'verifies' },
@@ -1342,7 +1342,7 @@ async function createUAT(
     ]
   });
 
-  return uatConcept.id;
+  return verificationConcept.id;
 }
 ```
 

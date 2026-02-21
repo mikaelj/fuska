@@ -506,7 +506,7 @@ becomes:
 </gap_to_chapter_mapping>
 
 <success_criteria>
-- [ ] UAT concept loaded and gaps parsed
+- [ ] Verification concept loaded and issues parsed
 - [ ] Requirements queried for prioritization
 - [ ] Gaps prioritized (must/should/nice)
 - [ ] Gaps grouped into logical chapters

@@ -62,7 +62,7 @@ describe('ChapterConceptTemplates', () => {
         objective: 'Implement JWT authentication',
         purpose: 'Secure the application with JWT tokens',
         output: 'Working authentication system',
-        must_haves: ['Login endpoint', 'Token generation', 'Token validation', 'Refresh tokens'],
+        requirements: ['Login endpoint', 'Token generation', 'Token validation', 'Refresh tokens'],
         megamemory_references: {
           knowledge_applied: ['concept1', 'concept2'],
           patterns_to_follow: ['pattern1', 'pattern2']
@@ -104,7 +104,7 @@ describe('ChapterConceptTemplates', () => {
         objective: 'Test plan',
         purpose: 'Testing',
         output: 'Test output',
-        must_haves: [],
+        requirements: [],
         tasks: []
       };
 
@@ -194,7 +194,7 @@ describe('ChapterConceptTemplates', () => {
         },
         deviations: [],
         issues_encountered: [],
-        next_chapter_readiness: 'Ready - all must-haves delivered'
+        next_chapter_readiness: 'Ready - all requirements delivered'
       };
 
       const concept = ChapterConceptTemplates.createSummary('chapter-01', 1, summaryData);
@@ -221,9 +221,9 @@ describe('ChapterConceptTemplates', () => {
     });
   });
 
-  describe('createUAT', () => {
-    it('creates UAT concept', () => {
-      const uatData = {
+  describe('createVerification', () => {
+    it('creates verification concept', () => {
+      const verificationData = {
         verification_results: [
           'User can login with valid credentials',
           'User cannot login with invalid credentials',
@@ -241,9 +241,9 @@ describe('ChapterConceptTemplates', () => {
         concepts_reviewed: ['chapter-01-context', 'chapter-01-plan-1', 'chapter-01-plan-1-summary']
       };
 
-      const concept = ChapterConceptTemplates.createUAT('chapter-01', uatData);
+      const concept = ChapterConceptTemplates.createVerification('chapter-01', verificationData);
 
-      expect(concept.name).toBe('chapter-01-uat');
+      expect(concept.name).toBe('chapter-01-verification');
       expect(concept.kind).toBe('component');
       expect(concept.summary).toContain('"verification_results":[');
       expect(concept.summary).toContain('"issues_found":[');
@@ -265,15 +265,15 @@ describe('ChapterConceptTemplates', () => {
       expect(concept.edges[3]).toEqual({ to: 'chapter-01-plan-1-summary', relation: 'connects_to' });
     });
 
-    it('handles UAT with no issues', () => {
-      const uatData = {
+    it('handles verification with no issues', () => {
+      const verificationData = {
         verification_results: ['All tests passed'],
         issues_found: [],
         recommendations: [],
         concepts_reviewed: ['chapter-01-context']
       };
 
-      const concept = ChapterConceptTemplates.createUAT('chapter-01', uatData);
+      const concept = ChapterConceptTemplates.createVerification('chapter-01', verificationData);
 
       expect(concept.summary).toContain('"issues_found":[]');
       expect(concept.summary).toContain('"recommendations":[]');

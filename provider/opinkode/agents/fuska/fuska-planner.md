@@ -24,7 +24,7 @@ Your job: Produce plan concepts in MegaMemory that OpenCode executors can query 
 **Core responsibilities:**
 - Decompose chapters into parallel-optimized plans with 2-3 tasks each
 - Build dependency graphs and assign execution batches
-- Derive must-haves using goal-backward methodology
+- Derive requirements using goal-backward methodology
 - Handle both standard planning and fix planning mode
 - Revise existing plans based on checker feedback (revision mode)
 - Return structured results to coordinator
@@ -464,7 +464,7 @@ The summary contains JSON (for programmatic access) followed by markdown (for re
   "objective": "Set up project scaffolding",
   "purpose": "Foundation for all future work",
   "output": "Working Next.js project with TypeScript",
-  "must_haves": ["Project builds successfully", "TypeScript configured"],
+  "requirements": ["Project builds successfully", "TypeScript configured"],
   "tasks": [
     { "description": "Create Next.js project", "type": "auto", "dependencies": [] }
   ]
@@ -560,7 +560,7 @@ For complex multi-step analysis that benefits from intermediate state:
 - **edges:** `implements` → chapter, `depends_on` → patterns/knowledge
 
 **JSON data in summary includes:**
-- Core fields: `objective`, `purpose`, `output`, `must_haves`, `tasks`
+- Core fields: `objective`, `purpose`, `output`, `requirements`, `tasks`
 - Optional: `megamemory_references` (knowledge_applied, patterns_to_follow)
 - Workflow extras (untyped): `chapter`, `plan_number`, `batch`, `depends_on`, `files_modified`, `autonomous`
 
@@ -668,7 +668,7 @@ For chat interface:
 ## Must-Haves Output Format
 
 ```yaml
-must_haves:
+requirements:
   truths:
     - "User can see existing messages"
     - "User can send a message"
@@ -925,7 +925,7 @@ Triggered by `--fixes` flag. Creates plans to address verification failures.
 const verificationResult = await megamemory:understand({ query: `${chapterSlug}-verification`, top_k: 1 });
 
 // Check for verification concept with diagnosed status (user testing gaps)
-const uatResult = await megamemory:understand({ query: `${chapterSlug}-uat`, top_k: 1 });
+const uatResult = await megamemory:understand({ query: `${chapterSlug}-verification`, top_k: 1 });
 ```
 
 **2. Parse gaps:**
@@ -1006,7 +1006,7 @@ const plansResult = await megamemory:understand({ query: `${chapterSlug}-plan`, 
 Build mental model of:
 - Current plan structure (batch assignments, dependencies)
 - Existing tasks (what's already planned)
-- must_haves (goal-backward criteria)
+- requirements (goal-backward criteria)
 
 ### Step 2: Parse Checker Issues
 
@@ -1037,7 +1037,7 @@ Group issues by:
 | dependency_correctness | Fix depends_on array, recompute batches |
 | key_links_planned | Add wiring task or update action to include wiring |
 | scope_sanity | Split plan into multiple smaller plans |
-| must_haves_derivation | Derive and add must_haves to frontmatter |
+| requirements_derivation | Derive and add requirements to frontmatter |
 
 ### Step 4: Make Targeted Updates
 
@@ -1331,8 +1331,8 @@ Rules:
 4. Each plan: 2-3 tasks max, single concern, ~50% context target
 </step>
 
-<step name="derive_must_haves">
-Apply goal-backward methodology to derive must_haves for plan concept data.
+<step name="derive_requirements">
+Apply goal-backward methodology to derive requirements for plan concept data.
 
 1. State the goal (outcome, not task)
 2. Derive observable truths (3-7, user perspective)
@@ -1359,7 +1359,7 @@ Wait for confirmation in interactive mode. Auto-approve in yolo mode.
 After grouping tasks into batches, create plan concepts in MegaMemory:
 
 For each plan:
-1. Build PlanData structure (objective, purpose, output, must_haves, tasks)
+1. Build PlanData structure (objective, purpose, output, requirements, tasks)
 2. Add workflow extras to the JSON (chapter, plan_number, batch, depends_on, autonomous, files_modified)
 3. Call megamemory:create_concept with:
    - name: `${chapterSlug}-plan-${planNumber}`
@@ -1391,7 +1391,7 @@ Check that the plan concept's JSON data contains:
 - `objective` (string)
 - `purpose` (string)
 - `output` (string)
-- `must_haves` (array)
+- `requirements` (array)
 - `tasks` (array)
 - `batch` (number)
 - `depends_on` (array)
@@ -1575,7 +1575,7 @@ Chapter planning complete when:
 - [ ] Roadmap concept updated with plan count and objectives
 - [ ] Inter-plan dependency edges created via megamemory:link (relation: depends_on)
 - [ ] Each plan has implements → chapter edge
-- [ ] Each plan has valid data (objective, must_haves, tasks, batch, depends_on)
+- [ ] Each plan has valid data (objective, requirements, tasks, batch, depends_on)
 - [ ] User knows batch structure and parallelization opportunities
 - [ ] User knows next step (/fuska-build)
 

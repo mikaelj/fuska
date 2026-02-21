@@ -135,7 +135,7 @@ describe('Helper Functions', () => {
         objective: 'Implement auth',
         purpose: 'Secure the application',
         output: 'Working authentication',
-        must_haves: ['Login', 'Logout', 'Password reset'],
+        requirements: ['Login', 'Logout', 'Password reset'],
         megamemory_references: {
           knowledge_applied: ['concept1'],
           patterns_to_follow: ['pattern1']

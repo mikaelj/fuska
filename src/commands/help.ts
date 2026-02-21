@@ -102,6 +102,32 @@ ${chalk.bold('Examples:')}
   /fuska-ask "Who uses AuthService?"
   /fuska-ask "Is ItemSelectionSheet dead code?"
 `,
+
+  plan: `
+${chalk.bold('/fuska-plan [chapter] [--flags]')}
+
+Plan the current or specified chapter.
+
+${chalk.bold('Flags:')}
+  --fixes       Plan fixes for issues found during verification
+
+${chalk.bold('Examples:')}
+  /fuska-plan 3
+  /fuska-plan 3 --fixes
+`,
+
+  build: `
+${chalk.bold('/fuska-build [chapter] [--flags]')}
+
+Build (execute) the current or specified chapter plan.
+
+${chalk.bold('Flags:')}
+  --fixes-only  Only execute fix plans (skip regular plans)
+
+${chalk.bold('Examples:')}
+  /fuska-build 3
+  /fuska-build 3 --fixes-only
+`,
 };
 
 const allCommands = `

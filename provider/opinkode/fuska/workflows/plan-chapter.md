@@ -331,7 +331,7 @@ Plans must be executable prompts with:
 - Frontmatter (batch, depends_on, files_modified, autonomous)
 - Tasks in XML format
 - Verification criteria
-- must_haves for goal-backward verification
+- requirements for goal-backward verification
 
 Use MegaMemory:
 - Create plan concepts: ChapterConceptTemplates.createPlan()
@@ -346,7 +346,7 @@ Before returning PLANNING COMPLETE:
 - [ ] Tasks are specific and actionable
 - [ ] Dependencies correctly identified
 - [ ] Batchs assigned for parallel execution
-- [ ] must_haves derived from chapter goal
+- [ ] requirements derived from chapter goal
 - [ ] Patterns referenced from MegaMemory (if found)
 </quality_gate>
 ```
@@ -439,7 +439,7 @@ Task(
 
 **If `## VERIFICATION PASSED`:**
 - Output the checker's full response (contains verified plans JSON)
-- Append orchestrator summary:
+- Append coordinator summary:
   - **Iterations:** {iteration_count}
   - **What Was Fixed:** {1 paragraph summary of issues raised and addressed, if iterations > 1}
 - Proceed to step 13
