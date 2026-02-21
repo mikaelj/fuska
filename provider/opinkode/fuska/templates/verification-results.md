@@ -1,4 +1,4 @@
-# Verification Report Template (MegaMemory-Backed)
+# Verification Results Template (MegaMemory-Backed)
 
 Template for chapter goal verification results - stored in MegaMemory, never on disk.
 
@@ -10,15 +10,15 @@ Template for chapter goal verification results - stored in MegaMemory, never on 
 ---
 chapter: XX-name
 verified: YYYY-MM-DDTHH:MM:SSZ
-status: passed | gaps_found | human_needed
-score: N/M must-haves verified
+status: passed | issues_found | human_needed
+score: N/M requirements verified
 ---
 
 # Chapter {X}: {Name} Verification Report
 
 **Chapter Goal:** {goal from ROADMAP.md}
 **Verified:** {timestamp}
-**Status:** {passed | gaps_found | human_needed}
+**Status:** {passed | issues_found | human_needed}
 
 ## Goal Achievement
 
@@ -162,8 +162,8 @@ concept_kind: "verification"
 
 summary: |
   Verification Report for Chapter {chapter_number}: {chapter_name}
-  Status: {passed | gaps_found | human_needed}
-  Score: {N}/{M} must-haves verified
+  Status: {passed | issues_found | human_needed}
+  Score: {N}/{M} requirements verified
   {One-sentence overview of verification result}
 
 why: |
@@ -228,7 +228,7 @@ edges: [
 const createVerificationReport = async (chapterNumber: string, chapterName: string, report: {
   chapterGoal: string;
   verifiedDate: string;
-  status: 'passed' | 'gaps_found' | 'human_needed';
+  status: 'passed' | 'issues_found' | 'human_needed';
   observableTruths: Array<{
     truth: string;
     status: 'VERIFIED' | 'FAILED' | 'UNCERTAIN';
@@ -321,9 +321,9 @@ const createVerificationReport = async (chapterNumber: string, chapterName: stri
   }
 
   if (report.status === 'passed') {
-    summary += `\nNo gaps found. Chapter goal achieved. Ready to proceed.`;
-  } else if (report.status === 'gaps_found' && report.gaps) {
-    summary += `\nCritical gaps: ${report.gaps.critical.length}\n`;
+    summary += `\nNo issues found. Chapter goal achieved. Ready to proceed.`;
+  } else if (report.status === 'issues_found' && report.gaps) {
+    summary += `\nCritical issues: ${report.gaps.critical.length}\n`;
     if (report.gaps.nonCritical.length > 0) {
       summary += `Non-critical gaps: ${report.gaps.nonCritical.length}\n`;
     }
@@ -365,7 +365,7 @@ const queryVerificationReport = async (chapterNumber: string) => {
       id: verification.id,
       chapterNumber,
       chapterName: summary.match(/Verification Report for Chapter ([\d.]+): ([^\n]+)/)?.[2] || '',
-      status: summary.match(/Status: (passed|gaps_found|human_needed)/)?.[1] || 'unknown',
+      status: summary.match(/Status: (passed|issues_found|human_needed)/)?.[1] || 'unknown',
       score: summary.match(/Score: (\d+)\/(\d+)/)?.[0] || '',
       artifactsScore: summary.match(/Artifacts: (\d+)\/(\d+) verified/)?.[0] || '',
       wiringScore: summary.match(/Wiring: (\d+)\/(\d+) verified/)?.[0] || '',
@@ -400,7 +400,7 @@ const queryAllVerificationReports = async () => {
       id: verification.id,
       chapterNumber: summary.match(/Verification Report for Chapter ([\d.]+):/)?.[1] || '',
       chapterName: summary.match(/Verification Report for Chapter [\d.]+: ([^\n]+)/)?.[1] || '',
-      status: summary.match(/Status: (passed|gaps_found|human_needed)/)?.[1] || 'unknown',
+      status: summary.match(/Status: (passed|issues_found|human_needed)/)?.[1] || 'unknown',
       score: summary.match(/Score: (\d+)\/(\d+)/)?.[0] || '',
       criticalGaps: summary.includes('Critical gaps:')
         ? parseInt(summary.match(/Critical gaps: (\d+)/)?.[1] || '0')
@@ -423,7 +423,7 @@ const queryChapterGaps = async (chapterNumber: string) => {
     return {
       id: verification.id,
       chapterNumber,
-      status: summary.match(/Status: (passed|gaps_found|human_needed)/)?.[1] || 'unknown',
+      status: summary.match(/Status: (passed|issues_found|human_needed)/)?.[1] || 'unknown',
       criticalGaps: summary.includes('Critical gaps:')
         ? parseInt(summary.match(/Critical gaps: (\d+)/)?.[1] || '0')
         : 0,
@@ -444,8 +444,8 @@ const queryChapterGaps = async (chapterNumber: string) => {
 ```markdown
 **Status values:**
 
-- `passed` — All must-haves verified, no blockers
-- `gaps_found` — One or more critical gaps found
+- `passed` — All requirements verified, no blockers
+- `issues_found` — One or more critical issues found
 - `human_needed` — Automated checks pass but human verification required
 ```
 
@@ -481,7 +481,7 @@ const queryChapterGaps = async (chapterNumber: string) => {
 ```markdown
 **Fix plan generation:**
 
-- Only generate if gaps_found
+- Only generate if issues_found
 - Group related fixes into single plans
 - Keep to 2-3 tasks per plan
 - Include verification task in each plan
@@ -495,15 +495,15 @@ const queryChapterGaps = async (chapterNumber: string) => {
 ---
 chapter: 03-chat
 verified: 2025-01-15T14:30:00Z
-status: gaps_found
-score: 2/5 must-haves verified
+status: issues_found
+score: 2/5 requirements verified
 ---
 
 # Chapter 3: Chat Interface Verification Report
 
 **Chapter Goal:** Working chat interface where users can send and receive messages
 **Verified:** 2025-01-15T14:30:00Z
-**Status:** gaps_found
+**Status:** issues_found
 
 ## Goal Achievement
 

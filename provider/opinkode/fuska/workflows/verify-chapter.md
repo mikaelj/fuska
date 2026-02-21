@@ -338,7 +338,7 @@ Store in verification concept summary
 - No blocker anti-patterns
 - (Human verification items are OK — will be prompted)
 
-**Status: gaps_found**
+**Status: issues_found**
 - One or more truths FAILED
 - OR one or more artifacts MISSING/STUB
 - OR one or more key links NOT_WIRED
@@ -356,11 +356,11 @@ score = (verified_truths / total_truths)
 </step>
 
 <step name="generate_fix_plans">
-**If gaps_found, recommend fix plans.**
+**If issues_found, recommend fix plans.**
 
-Group related gaps into fix plans:
+Group related issues into fix plans:
 
-1. **Identify gap clusters:**
+1. **Identify issue clusters:**
    - API stub + component not wired → "Wire frontend to backend"
    - Multiple artifacts missing → "Complete core implementation"
    - Wiring issues only → "Connect existing components"
@@ -474,9 +474,9 @@ If status = passed:
 - Chapter marked as verified
 - Chapter goal achieved
 
-If status = gaps_found:
+If status = issues_found:
 - Chapter marked as incomplete
-- Gaps and fix plans recorded
+- Issues and fix plans recorded
 
 If status = human_needed:
 - Chapter marked as pending human review
@@ -491,19 +491,19 @@ If status = human_needed:
 ```markdown
 ## Verification Complete
 
-**Status:** {passed | gaps_found | human_needed}
-**Score:** {N}/{M} must-haves verified
+**Status:** {passed | issues_found | human_needed}
+**Score:** {N}/{M} requirements verified
 **Verification Concept:** Chapter {CHAPTER_NUM} Verification
 
 {If passed:}
-All must-haves verified. Chapter goal achieved. Ready to proceed.
+All requirements verified. Chapter goal achieved. Ready to proceed.
 
-{If gaps_found:}
-### Gaps Found
+{If issues_found:}
+### Issues Found
 
-{N} critical gaps blocking goal achievement:
-1. {Gap 1 summary}
-2. {Gap 2 summary}
+{N} critical issues blocking goal achievement:
+1. {Issue 1 summary}
+2. {Issue 2 summary}
 
 ### Recommended Fixes
 
@@ -521,9 +521,9 @@ All must-haves verified. Chapter goal achieved. Ready to proceed.
 Automated checks passed. Awaiting human verification.
 ```
 
-The orchestrator will:
+The coordinator will:
 - If `passed`: Continue to update_roadmap
-- If `gaps_found`: Create and execute fix plans, then re-verify
+- If `issues_found`: Create and execute fix plans, then re-verify
 - If `human_needed`: Present items to user, collect responses
 </step>
 
@@ -538,9 +538,9 @@ The orchestrator will:
 - [ ] Anti-patterns scanned and categorized
 - [ ] Human verification items identified
 - [ ] Overall status determined
-- [ ] Fix plans generated (if gaps_found)
+- [ ] Fix plans generated (if issues_found)
 - [ ] Verification concept created in MegaMemory
 - [ ] Chapter plan status updated
 - [ ] NO VERIFICATION.md file created
-- [ ] Results returned to orchestrator
+- [ ] Results returned to coordinator
 </success_criteria>

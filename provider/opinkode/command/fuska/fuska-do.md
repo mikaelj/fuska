@@ -924,7 +924,7 @@ Display: `Reviewing...`
 
 ```
 const verifierPrompt = `<critical_constraints>
-Return: ## Review Complete with status: passed | gaps_found
+Return: ## Review Complete with status: passed | issues_found
 Create concept named: task-${nextNum}-${slug}-verification
 </critical_constraints>
 
@@ -965,7 +965,7 @@ Task(
 **Step 10.3: Handle verifier return**
 
 If "passed" -> continue to Step 11
-If "gaps_found" -> display gaps, continue to Step 11 (don't block completion for quick tasks)
+If "issues_found" -> display issues, continue to Step 11 (don't block completion for quick tasks)
 
 ---
 

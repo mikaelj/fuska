@@ -1,7 +1,7 @@
 ---
 name: fuska-build
 description: Execute all plans in a chapter with batch-based parallelization using MegaMemory
-argument-hint: "<chapter-number> [--gaps-only]"
+argument-hint: "<chapter-number> [--fixes-only]"
 tools:
   - read
   - edit
@@ -20,7 +20,7 @@ Execute all plans in a chapter using batch-based parallel execution with MegaMem
 
 Orchestrator stays lean: discover plans, analyze dependencies, group into batches, spawn subagents, collect results. Each subagent loads full execute-plan context and handles its own plan.
 
-Context budget: ~15% orchestrator, 100% fresh per subagent.
+Context budget: ~15% coordinator, 100% fresh per subagent.
 
 </objective>
 
@@ -59,7 +59,7 @@ The important field is **`summary`** — it's a JSON string containing the conce
 Chapter: `$ARGUMENTS`
 
 **Flags:**
-- `--gaps-only` — Execute only gap closure plans (plans with specific gap_closure marker in summary). Use after verify-work creates fix plans.
+- `--fixes-only` — Execute only fix plans (plans with specific is_fix marker in summary). Use after verify-work creates fix plans.
 - `--mode MODE` — Override workflow mode for this chapter only (one-off, doesn't persist). Use to temporarily change mode.
 
 ## Context Loading (Single Pass)
@@ -305,15 +305,15 @@ const incompletePlans = planConcepts.filter(plan => {
 })
 ```
 
-**Step 2.3: Filter for gap closure if flag set**
+**Step 2.3: Filter for fix plans if flag set**
 
-If `$ARGUMENTS` contains `--gaps-only`:
+If `$ARGUMENTS` contains `--fixes-only`:
 ```
-const gapPlans = incompletePlans.filter(plan => {
+const fixPlans = incompletePlans.filter(plan => {
   const planData = JSON.parse(plan.summary)
-  return planData.gap_closure === true
+  return planData.is_fix === true
 })
-const plansToExecute = gapPlans.length > 0 ? gapPlans : incompletePlans
+const plansToExecute = fixPlans.length > 0 ? fixPlans : incompletePlans
 ```
 
 Else:
@@ -491,7 +491,7 @@ Project State:
 ${JSON.stringify(stateData, null, 2)}
 
 Use plan's objective, tasks, and must_haves to guide implementation.
-Git commit strategy is "${commitStrategy}". If "per-chapter", stage files but do NOT commit — the orchestrator commits when the chapter completes. If "per-plan", stage files and commit once after all tasks complete. If "per-task", commit after each task.
+Git commit strategy is "${commitStrategy}". If "per-chapter", stage files but do NOT commit — the coordinator commits when the chapter completes. If "per-plan", stage files and commit once after all tasks complete. If "per-task", commit after each task.
 When complete, create a summary concept named "${plan.name}-summary" using megamemory:create_concept with execution results.`
 )
 ```
@@ -550,9 +550,9 @@ Status: All summaries created [OK]
 
 ---
 
-9. **Commit chapter (if per-chapter strategy) and handle orchestrator corrections**
+9. **Commit chapter (if per-chapter strategy) and handle coordinator corrections**
 
-**Step 6.1: Stage any orchestrator corrections**
+**Step 6.1: Stage any coordinator corrections**
 
 ```bash
 git status --porcelain
@@ -595,15 +595,15 @@ git commit -m "${generatedMessage}"
 
 **If `commitStrategy === "per-plan"` or `"per-task"`:**
 
-Plans/tasks already committed by executors. Only commit if orchestrator made its own corrections using the same Task tool pattern:
+Plans/tasks already committed by executors. Only commit if coordinator made its own corrections using the same Task tool pattern:
 
 ```
 Task(
   variant="amend",
-  description="Generate orchestrator corrections commit",
+  description="Generate coordinator corrections commit",
   subagent_type="fuska-git-message",
   prompt=`<commit_context>
-**Mode:** orchestrator-corrections
+**Mode:** coordinator-corrections
 **Chapter:** ${chapterSlug}
 **Commit Strategy:** ${commitStrategy}
 
@@ -667,13 +667,13 @@ Use megamemory:understand to:
 
 Use the Read tool to examine source files directly. Do NOT rely on summary claims.
 
-Create a UAT concept named "${chapterSlug}-uat" using megamemory:create_concept with:
+Create a verification concept named "${chapterSlug}-verification" using megamemory:create_concept with:
 - A detailed verification report
 - Which must-haves passed/failed
-- Status: "passed" | "human_needed" | "gaps_found"
-- If gaps_found: list specific gaps to close
+- Status: "passed" | "human_needed" | "issues_found"
+- If issues_found: list specific issues to fix
 
-Return the UAT concept's status and findings.`
+Return the verification concept's status and findings.`
 )
 ```
 
@@ -688,10 +688,10 @@ If verifier returns `human_needed`:
 → If approved → continue to step 8
 → If changes needed → suggest re-planning
 
-If verifier returns `gaps_found`:
-→ Present gaps to user
-→ Suggest: `/fuska-plan ${chapterNumber} --gaps`
-→ Stop (let user run gap closure planning)
+If verifier returns `issues_found`:
+→ Present issues to user
+→ Suggest: `/fuska-plan ${chapterNumber} --fixes`
+→ Stop (let user run fix planning)
 
 ---
 
@@ -850,7 +850,7 @@ Output this markdown directly (not as a code block). Route based on status:
 |--------------|--------|
 | All chapters complete (current_chapter=null, status=milestone_complete) | Route C (all complete) |
 | Milestone complete (status=milestone_complete) | Route B (milestone complete) |
-| `gaps_found` | Route D (gap closure) |
+| `issues_found` | Route D (fix planning) |
 | `human_needed` | Present checklist, then re-route based on approval |
 | `passed` + more chapters | Route A (next chapter) |
 | `passed` + last chapter | Route B (milestone complete) |
@@ -960,34 +960,34 @@ All chapter goals verified [OK]
 **Chapter {Z}: {Name}**
 
 Score: {N}/{M} must-haves verified
-Report: UAT concept {chapter}-uat
+Report: Verification concept {chapter}-verification
 
 ### What's Missing
 
-{Extract gap summaries from UAT concept}
+{Extract gap summaries from verification concept}
 
 ──────────────────────────────────────────────────────────────
 
 ## > Next Up
 
-**Plan gap closure** — create additional plans to complete chapter
-/fuska-plan {Z} --gaps
+**Plan fixes** — create additional plans to complete chapter
+/fuska-plan {Z} --fixes
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- Query UAT details: use megamemory:understand to search for the chapter's UAT concept
+- Query verification details: use megamemory:understand to search for the chapter's verification concept
 - /fuska-review-chapter {Z} — manual testing before planning
 ──────────────────────────────────────────────────────────────
 ```
 
-After user runs `/fuska-plan {Z} --gaps`:
-1. Planner reads UAT concept gaps
-2. Creates additional plans (04, 05, etc.) to close gaps
+After user runs `/fuska-plan {Z} --fixes`:
+1. Planner reads verification concept issues
+2. Creates additional plans (04, 05, etc.) to fix issues
 3. User runs `/fuska-build {Z}` again
-4. Build-chapter runs incomplete plans (04, 05...)
+4. Build runs incomplete plans (04, 05...)
 5. Reviewer runs again → loop until passed
 
 </offer_next>
@@ -1014,7 +1014,7 @@ When auto-fixing, find the plan's summary concept using `megamemory:understand` 
 - [ ] All incomplete plan concepts in chapter executed
 - [ ] Each plan has summary concept created
 - [ ] Chapter goal verified (must_haves checked against codebase)
-- [ ] UAT concept created with verification report
+- [ ] Verification concept created with verification report
 - [ ] State concept updated to reflect completion
 - [ ] Chapter concept status updated to 'complete'
 - [ ] Requirements updated (chapter requirements marked 'complete')

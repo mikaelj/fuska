@@ -1,5 +1,5 @@
 ---
-name: fuska-plan-milestone-gaps
+name: fuska-plan-milestone-fixes
 description: Create chapters to close all gaps identified by milestone audit using MegaMemory
 agent: @../../agents/fuska/fuska-planner.md
 tools:
@@ -19,7 +19,7 @@ tools:
 <objective>
 Create all chapters necessary to close gaps identified by `/fuska-audit-milestone` using MegaMemory.
 
-Reads UAT concept (from audit), groups gaps into logical chapters, creates chapter concepts in MegaMemory, and offers to plan each chapter.
+Reads verification concept (from audit), groups gaps into logical chapters, creates chapter concepts in MegaMemory, and offers to plan each chapter.
 
 One command creates all fix chapters — no manual `/fuska-add-chapter` per gap.
 </objective>
@@ -52,7 +52,7 @@ The important field is **`summary`** — it's a JSON string containing the conce
 
 <context>
 **Audit results:**
-Query UAT concept: `megamemory_understand(query="uat", top_k=10)`
+Query verification concept: `megamemory_understand(query="verification", top_k=10)`
 
 **Original intent (for prioritization):**
 ```
@@ -74,24 +74,24 @@ Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-in
 
 ## 1. Load Audit Results from MegaMemory
 
-**Step 1.1: Query UAT concept**
+**Step 1.1: Query verification concept**
 ```
-megamemory_understand(query="uat", top_k=10)
+megamemory_understand(query="verification", top_k=10)
 ```
 
-**Step 1.2: Check for UAT concept**
+**Step 1.2: Check for verification concept**
 
 If response.matches.length === 0:
-→ Display: "No UAT concept found in MegaMemory"
+→ Display: "No verification concept found in MegaMemory"
 → Suggest: "Run /fuska-audit-milestone first to create audit results"
 → Stop
 
-**Step 1.3: Extract UAT data**
+**Step 1.3: Extract verification data**
 ```
-const uatSummaryString = response.matches[0].summary
-const uatData = JSON.parse(uatSummaryString)
+const verificationSummaryString = response.matches[0].summary
+const verificationData = JSON.parse(verificationSummaryString)
 
-const gaps = uatData.gaps || {
+const gaps = verificationData.gaps || {
   requirements: [],
   integration: [],
   flows: []
@@ -101,7 +101,7 @@ const gaps = uatData.gaps || {
 **Step 1.4: Check for gaps**
 
 If gaps.requirements.length === 0 AND gaps.integration.length === 0 AND gaps.flows.length === 0:
-→ Display: "No gaps found in UAT concept"
+→ Display: "No gaps found in verification concept"
 → Suggest: "Run /fuska-audit-milestone first"
 → Stop
 
@@ -308,7 +308,7 @@ const newChapters = chapterProposals.filter(chapter => includeChapter(chapter)).
   plans: [],
   status: "not_planned",
   priority: chapter.priority,
-  gap_closure: true
+  is_fix: true
 }))
 ```
 
@@ -348,7 +348,7 @@ newChapters.forEach(chapter => {
     status: "not_planned",
     plans: [],
     priority: chapter.priority,
-    gap_closure: true,
+    is_fix: true,
     gaps: chapter.gaps
   }
 
@@ -379,8 +379,8 @@ const stateData = JSON.parse(stateSummaryString)
 ```
 const updatedStateData = {
   ...stateData,
-  gap_closure_chapters_created: true,
-  gap_closure_chapter_count: newChapters.length
+  fix_chapters_created: true,
+  fix_chapter_count: newChapters.length
 }
 ```
 

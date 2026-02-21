@@ -1,16 +1,16 @@
-# UAT Template (MegaMemory-Backed)
+# Verification Template (MegaMemory-Backed)
 
-Template for UAT session tracking using MegaMemory concepts — persistent test tracking across /new invocations.
+Template for verification session tracking using MegaMemory concepts — persistent test tracking across /new invocations.
 
 ---
 
 <megamemory_schema>
 
-## Concept: `uat-session`
+## Concept: `verification-session`
 
 **Kind:** `feature`
 
-**Summary:** User Acceptance Testing session with persistent test tracking, results, gaps, and diagnosis. Supports resumable sessions across /new invocations.
+**Summary:** Verification session with persistent test tracking, results, gaps, and diagnosis. Supports resumable sessions across /new invocations.
 
 **Fields:**
 - `chapter_id` (string) - Chapter identifier
@@ -55,15 +55,15 @@ Template for UAT session tracking using MegaMemory concepts — persistent test 
 
 <megamemory_operations>
 
-## Create UAT Session
+## Create Verification Session
 
 ```typescript
-// When starting new UAT session for a chapter
+// When starting new verification session for a chapter
 await megamemory.create_concept({
-  name: `uat-session:${chapterId}`,
+  name: `verification-session:${chapterId}`,
   kind: "feature",
-  summary: `UAT session for chapter ${chapterId}. Status: testing. ${tests.length} tests from ${source.length} summaries. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending.`,
-  why: "Persistent UAT session tracking across /new invocations, supports resumable testing and gap diagnosis",
+  summary: `Verification session for chapter ${chapterId}. Status: testing. ${tests.length} tests from ${source.length} summaries. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending.`,
+  why: "Persistent verification session tracking across /new invocations, supports resumable testing and gap diagnosis",
   parent_id: `initiative:${initiativeId}`,
   edges: [
     ...source.map((sum, i) => ({
@@ -75,12 +75,12 @@ await megamemory.create_concept({
 })
 ```
 
-## Query UAT Session Status
+## Query Verification Session Status
 
 ```typescript
-// After /new invocation - resume UAT if active
+// After /new invocation - resume verification if active
 const result = await megamemory.understand({
-  query: `uat session for chapter ${chapterId} current test status`,
+  query: `verification session for chapter ${chapterId} current test status`,
   top_k: 3
 })
 
@@ -91,25 +91,25 @@ const result = await megamemory.understand({
 // verify-work agent resumes from pending test
 ```
 
-## Update UAT with Test Result
+## Update Verification with Test Result
 
 ```typescript
 // When user responds to a test
 await megamemory.update_concept({
-  id: `uat-session:${chapterId}`,
+  id: `verification-session:${chapterId}`,
   changes: {
-    summary: `UAT session for chapter ${chapterId}. Status: ${status}. ${tests.length} tests. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending. Gaps: ${gaps.length}.`
+    summary: `Verification session for chapter ${chapterId}. Status: ${status}. ${tests.length} tests. Current: test ${currentTest.number} - ${currentTest.name}. Summary: ${summary.passed} passed, ${summary.issues} issues, ${summary.pending} pending. Gaps: ${gaps.length}.`
   }
 })
 ```
 
-## Link UAT Gaps to Planning
+## Link Verification Gaps to Planning
 
 ```typescript
 // After diagnosis - link gaps to chapter planning
 gaps.forEach(gap => {
   megamemory.link({
-    from: `uat-session:${chapterId}`,
+    from: `verification-session:${chapterId}`,
     to: `chapter-plan:${chapterId}`,
     relation: "connects_to",
     description: `Diagnosed gap: ${gap.truth} - root cause: ${gap.root_cause}`
@@ -121,14 +121,14 @@ gaps.forEach(gap => {
 
 <megamemory_examples>
 
-## Example 1: Creating UAT Session
+## Example 1: Creating Verification Session
 
 ```typescript
-// Starting UAT for Chapter 4: Comments
+// Starting verification for Chapter 4: Comments
 await megamemory.create_concept({
-  name: "uat-session:04-comments",
+  name: "verification-session:04-comments",
   kind: "feature",
-  summary: "UAT session for chapter 04-comments. Status: testing. 6 tests from 2 summaries. Current: test 1 - View Comments on Post. Summary: 0 passed, 0 issues, 6 pending.",
+  summary: "Verification session for chapter 04-comments. Status: testing. 6 tests from 2 summaries. Current: test 1 - View Comments on Post. Summary: 0 passed, 0 issues, 6 pending.",
   why: "Test comment functionality: viewing, creating, replying, deleting, visual nesting, comment counts",
   parent_id: "project:social-app",
   edges: [
@@ -146,12 +146,12 @@ await megamemory.create_concept({
 })
 ```
 
-## Example 2: Resuming UAT After /new
+## Example 2: Resuming Verification After /new
 
 ```typescript
-// User runs /new - verify-work agent checks for active UAT
+// User runs /new - verify-work agent checks for active verification session
 const result = await megamemory.understand({
-  query: "uat session 04-comments current test status pending",
+  query: "verification session 04-comments current test status pending",
   top_k: 3
 })
 
@@ -160,14 +160,14 @@ const result = await megamemory.understand({
 // Summary shows progress: 1 passed, 0 issues, 5 pending
 ```
 
-## Example 3: Updating UAT with Issue
+## Example 3: Updating Verification with Issue
 
 ```typescript
 // User reports issue with test 2
 await megamemory.update_concept({
-  id: "uat-session:04-comments",
+  id: "verification-session:04-comments",
   changes: {
-    summary: "UAT session for chapter 04-comments. Status: testing. 6 tests. Current: test 3 - Reply to a Comment. Summary: 1 passed, 1 issues, 4 pending. Gaps: 1."
+    summary: "Verification session for chapter 04-comments. Status: testing. 6 tests. Current: test 3 - Reply to a Comment. Summary: 1 passed, 1 issues, 4 pending. Gaps: 1."
   }
 })
 
@@ -200,7 +200,7 @@ const gaps = [
 // Link each gap to planning
 gaps.forEach(gap => {
   megamemory.link({
-    from: "uat-session:04-comments",
+    from: "verification-session:04-comments",
     to: "chapter-plan:04-comments",
     relation: "connects_to",
     description: `Diagnosed gap: ${gap.truth} - ${gap.root_cause}`
@@ -211,9 +211,9 @@ gaps.forEach(gap => {
 ## Example 5: Querying All Gaps for Planning
 
 ```typescript
-// plan-chapter --gaps asks: what diagnosed gaps need fixing?
+// plan-chapter --fixes asks: what diagnosed issues need fixing?
 const result = await megamemory.understand({
-  query: `uat session ${chapterId} diagnosed gaps with root cause artifacts missing`,
+  query: `verification session ${chapterId} diagnosed gaps with root cause artifacts missing`,
   top_k: 20
 })
 
@@ -282,7 +282,7 @@ skipped: [N]
 
 ## Gaps
 
-<!-- YAML format for plan-chapter --gaps consumption -->
+<!-- YAML format for plan-chapter --fixes consumption -->
 - truth: "[expected behavior from test]"
   status: failed
   reason: "User reported: [verbatim response]"
@@ -319,10 +319,10 @@ skipped: [N]
 - OVERWRITE counts after each response
 - Tracks: total, passed, issues, pending, skipped
 
-**Gaps:**
+**Issues:**
 - APPEND only when issue found (YAML format)
 - After diagnosis: fill `root_cause`, `artifacts`, `missing`, `debug_session`
-- This section feeds directly into /fuska-plan --gaps
+- This section feeds directly into /fuska-plan --fixes
 
 </section_rules>
 
@@ -333,10 +333,10 @@ skipped: [N]
 1. User runs diagnosis (from verify-work offer or manually)
 2. diagnose-issues workflow spawns parallel debug agents
 3. Each agent investigates one gap, returns root cause
-4. UAT.md Gaps section updated with diagnosis:
+4. Verification concept gaps section updated with diagnosis:
    - Each gap gets `root_cause`, `artifacts`, `missing`, `debug_session` filled
 5. status → "diagnosed"
-6. Ready for /fuska-plan --gaps with root causes
+6. Ready for /fuska-plan --fixes with root causes
 
 **After diagnosis:**
 ```yaml

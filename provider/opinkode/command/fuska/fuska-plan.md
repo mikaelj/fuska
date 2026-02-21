@@ -1,7 +1,7 @@
 ---
 name: fuska-plan
 description: Create detailed execution plan for a chapter with MegaMemory and verification loop
-argument-hint: "[chapter] [--research] [--skip-research] [--gaps] [--skip-verify] [--no-review]"
+argument-hint: "[chapter] [--research] [--skip-research] [--fixes] [--skip-verify] [--no-review]"
 agent: @../../agents/fuska/fuska-planner.md
 tools:
   - read
@@ -66,7 +66,7 @@ Chapter number: `$ARGUMENTS` (optional - auto-detects next unplanned chapter if 
 **Flags:**
 - `--research` — Force re-research even if research concept exists
 - `--skip-research` — Skip research entirely, go straight to planning
-- `--gaps` — Gap closure mode (uses UAT concept for gaps, skips research)
+- `--fixes` — Fix planning mode (uses verification concept for issues, skips research)
 - `--skip-verify` — Skip planner → checker verification loop
 
 Normalize chapter input in step 2 before any MegaMemory lookups.
@@ -264,7 +264,7 @@ The variable `input` contains the raw argument string provided by the user.
 ```
 const hasResearchFlag = input.includes("--research")
 const hasSkipResearchFlag = input.includes("--skip-research")
-const hasGapsFlag = input.includes("--gaps")
+const hasFixesFlag = input.includes("--fixes")
 const hasSkipVerifyFlag = input.includes("--skip-verify")
 const hasNoReviewFlag = input.includes("--no-review")
 
@@ -370,7 +370,7 @@ const chapterId = response.matches[0].id
 
 ## 4. Handle Research
 
-**Step 4.1: Check for --gaps flag**
+**Step 4.1: Check for --fixes flag**
 
 If hasGapsFlag === true:
 → Skip to step 5 (research not needed for gap closure)
@@ -614,7 +614,7 @@ const researchData = researchResponse.matches.length > 0
 const hasResearch = researchResponse.matches.length > 0
 ```
 
-**Step 6.6: Query UAT (if --gaps mode)**
+**Step 6.6: Query Verification (if --fixes mode)**
 
 ```
 let uatData = null
@@ -741,7 +741,7 @@ Each plan: 2-3 tasks maximum
 <planning_context>
 
 **Chapter:** {chapter_number}
-**Mode:** {standard | gap_closure}
+**Mode:** {standard | fix_planning}
 
 **Project State:**
 Include the state concept's summary here — the JSON with current_chapter, status, progress, and last_activity so the planner knows where the project stands.
@@ -758,8 +758,8 @@ Include the context concept's summary here (gathered items, decisions, deferred 
 **Research (if exists):**
 Include the research concept's summary here (domain-specific findings). Omit if research was skipped or not found.
 
-**Gap Closure (if --gaps mode):**
-Include the UAT concept's summary here (gaps and findings). Omit entirely if not in --gaps mode.
+**Fix Planning (if --fixes mode):**
+Include the verification concept's summary here (issues and findings). Omit entirely if not in --fixes mode.
 
 </planning_context>
 
@@ -1428,7 +1428,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 - [ ] MegaMemory validated (roots exist)
 - [ ] Chapter validated against roadmap (chapter concept exists)
-- [ ] Research completed (unless --skip-research or --gaps or exists)
+- [ ] Research completed (unless --skip-research or --fixes or exists)
 - [ ] Research concept created if needed
 - [ ] Existing plan concepts checked
 - [ ] fuska-planner spawned with MegaMemory context

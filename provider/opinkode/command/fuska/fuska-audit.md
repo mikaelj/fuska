@@ -275,9 +275,9 @@ Verify cross-chapter wiring and E2E user flows.
 <output>
 Create/update integration concept: ${milestoneVersion}-integration-audit
 Return integration report with:
-- Status: passed | gaps_found
-- Critical gaps: list of blockers
-- Non-critical gaps: tech debt, warnings
+- Status: passed | issues_found
+- Critical issues: list of blockers
+- Non-critical issues: tech debt, warnings
 - Broken flows: list of E2E flow issues
 - Requirements coverage: which requirements satisfied/blocked
 </output>",
@@ -369,7 +369,7 @@ const techDebt = chapterVerifications.filter(v => v.nonCriticalGaps.length > 0).
 let auditStatus = 'passed'
 
 if (criticalGaps.length > 0) {
-  auditStatus = 'gaps_found'
+  auditStatus = 'issues_found'
 } else if (techDebt.some(t => t.items.length > 0)) {
   auditStatus = 'tech_debt'
 }
@@ -454,9 +454,9 @@ All requirements covered. Cross-chapter integration verified. E2E flows complete
 
 ---
 
-**If gaps_found:**
+**If issues_found:**
 
-## [WARN] Milestone {version} — Gaps Found
+## [WARN] Milestone {version} — Issues Found
 
 **Score:** {N}/{M} requirements satisfied
 
@@ -480,9 +480,9 @@ All requirements covered. Cross-chapter integration verified. E2E flows complete
 
 ## > Next Up
 
-**Plan gap closure** — create chapters to complete milestone
+**Plan fixes** — create chapters to complete milestone
 
-/fuska-plan --gaps
+/fuska-plan --fixes
 
 */new first → fresh context window*
 

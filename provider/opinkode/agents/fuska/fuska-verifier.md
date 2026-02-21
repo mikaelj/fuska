@@ -1,6 +1,6 @@
 ---
 name: fuska-verifier
-description: Verifies chapter goal achievement through goal-backward analysis. Checks codebase delivers what chapter promised, not just that tasks completed. Creates UAT concept in MegaMemory.
+description: Verifies chapter goal achievement through goal-backward analysis. Checks codebase delivers what chapter promised, not just that tasks completed. Creates verification concept in MegaMemory.
 tools:
   read: true
   write: true
@@ -63,20 +63,20 @@ const plans = await megamemory:understand({ query: `${chapterSlug}-plan`, top_k:
 const requirements = await megamemory:understand({ query: "requirements", top_k: 50 });
 ```
 
-### Create UAT Concept
+### Create Verification Concept
 
-ChapterConceptTemplates.createUAT() structure:
-- name: `${chapterSlug}-uat`
+ChapterConceptTemplates.createVerification() structure:
+- name: `${chapterSlug}-verification`
 - kind: `component`
-- summary: generateSummary(uatData) + '\n\n' + generateUATMarkdown(uatData)
+- summary: generateSummary(verificationData) + '\n\n' + generateVerificationMarkdown(verificationData)
 - parent_id: chapterSlug
 - edges: [
     { to: chapterSlug, relation: 'verifies' },
-    ...uatData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
+    ...verificationData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
   ]
 
 ```typescript
-const uatData: UATData = {
+const verificationData: VerificationData = {
   verification_results: ["Auth endpoint returns JWT on valid credentials"],
   issues_found: ["Refresh token rotation not implemented"],
   recommendations: ["Add rate limiting to auth endpoint"],
@@ -87,13 +87,13 @@ const uatData: UATData = {
 // chapter, verified, status, score, gaps, human_verification, re_verification
 
 await megamemory:create_concept({
-  name: `${chapterSlug}-uat`,
+  name: `${chapterSlug}-verification`,
   kind: 'component',
-  summary: uatSummaryContent,
+  summary: verificationSummaryContent,
   parent_id: chapterSlug,
   edges: [
     { to: chapterSlug, relation: 'verifies' },
-    ...uatData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
+    ...verificationData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
   ]
 });
 ```
@@ -101,11 +101,11 @@ await megamemory:create_concept({
 ### Load Previous Verification (Re-verification Mode)
 
 ```typescript
-const previousUAT = await megamemory:understand({ query: `${chapterSlug}-uat`, top_k: 1 });
+const previousVerification = await megamemory:understand({ query: `${chapterSlug}-verification`, top_k: 1 });
 
-if (previousUAT.matches.length > 0) {
-  const uatData = extractJson(previousUAT.matches[0].summary);
-  if (uatData.gaps && uatData.gaps.length > 0) {
+if (previousVerification.matches.length > 0) {
+  const verificationData = extractJson(previousVerification.matches[0].summary);
+  if (verificationData.gaps && verificationData.gaps.length > 0) {
     // Focus re-verification on failed items
   }
 }
@@ -115,23 +115,23 @@ if (previousUAT.matches.length > 0) {
 
 ## Step 0: Check for Previous Verification
 
-Before starting fresh, check if a previous UAT concept exists:
+Before starting fresh, check if a previous verification concept exists:
 
 ```typescript
-const previousUAT = await megamemory:understand({ query: `${chapterSlug}-uat`, top_k: 1 });
+const previousVerification = await megamemory:understand({ query: `${chapterSlug}-verification`, top_k: 1 });
 ```
 
-**If previous UAT exists with `gaps` field → RE-VERIFICATION MODE:**
+**If previous verification exists with `gaps` field → RE-VERIFICATION MODE:**
 
-1. Parse previous UAT data via extractJson()
-2. Extract `must_haves` (truths, artifacts, key_links)
+1. Parse previous verification data via extractJson()
+2. Extract `requirements` (truths, artifacts, key_links)
 3. Extract `gaps` (items that failed)
 4. Set `is_re_verification = true`
 5. **Skip to Step 3** (verify truths) with this optimization:
    - **Failed items:** Full 3-level verification (exists, substantive, wired)
    - **Passed items:** Quick regression check (existence + basic sanity only)
 
-**If no previous UAT OR no `gaps` field → INITIAL MODE:**
+**If no previous verification OR no `gaps` field → INITIAL MODE:**
 
 Set `is_re_verification = false`, proceed with Step 1.
 
@@ -153,24 +153,24 @@ const requirementsResult = await megamemory:understand({ query: "requirements", 
 
 Extract chapter goal from chapter concept. This is the outcome to verify, not the tasks.
 
-## Step 2: Establish Must-Haves (Initial Mode Only)
+## Step 2: Establish Requirements (Initial Mode Only)
 
-Determine what must be verified. In re-verification mode, must-haves come from Step 0.
+Determine what must be verified. In re-verification mode, requirements come from Step 0.
 
-**Option A: Must-haves in plan concepts**
+**Option A: Requirements in plan concepts**
 
-Check if any plan concept has `must_haves` in its summary:
+Check if any plan concept has `requirements` in its summary:
 
 ```typescript
-const planWithMustHaves = planResult.matches.find(
-  plan => extractJson(plan.summary).must_haves
+const planWithRequirements = planResult.matches.find(
+  plan => extractJson(plan.summary).requirements
 );
 ```
 
 If found, extract and use:
 
 ```yaml
-must_haves:
+requirements:
   truths:
     - "User can see existing messages"
     - "User can send a message"
@@ -185,7 +185,7 @@ must_haves:
 
 **Option B: Derive from chapter goal**
 
-If no must_haves in plan concepts, derive using goal-backward process:
+If no requirements in plan concepts, derive using goal-backward process:
 
 1. **State the goal:** Take chapter goal from chapter concept
 
@@ -204,7 +204,7 @@ If no must_haves in plan concepts, derive using goal-backward process:
    - Identify critical wiring (component calls API, API queries DB)
    - These are where stubs hide
 
-5. **Document derived must-haves** before proceeding to verification.
+5. **Document derived requirements** before proceeding to verification.
 
 ## Step 3: Verify Observable Truths
 
@@ -558,7 +558,7 @@ Some things can't be verified programmatically:
 - No blocker anti-patterns
 - (Human verification items are OK — will be prompted)
 
-**Status: gaps_found**
+**Status: issues_found**
 
 - One or more truths FAILED
 - OR one or more artifacts MISSING/STUB
@@ -577,19 +577,19 @@ Some things can't be verified programmatically:
 score = (verified_truths / total_truths)
 ```
 
-## Step 10: Structure Gap Output (If Gaps Found)
+## Step 10: Structure Issue Output (If Issues Found)
 
-When gaps are found, structure them for consumption by `/fuska-plan --gaps`.
+When issues are found, structure them for consumption by `/fuska-plan --fixes`.
 
-**Output structured gaps in YAML frontmatter:**
+**Output structured issues in YAML frontmatter:**
 
 ```yaml
 ---
 chapter: XX-name
 verified: YYYY-MM-DDTHH:MM:SSZ
-status: gaps_found
-score: N/M must-haves verified
-gaps:
+status: issues_found
+score: N/M requirements verified
+issues:
   - truth: "User can see existing messages"
     status: failed
     reason: "Chat.tsx exists but doesn't fetch from API"
@@ -620,20 +620,20 @@ gaps:
 - `artifacts`: Which files have issues and what's wrong
 - `missing`: Specific things that need to be added/fixed
 
-The planner (`/fuska-plan --gaps`) reads this gap analysis and creates appropriate plans.
+The planner (`/fuska-plan --fixes`) reads this issue analysis and creates appropriate plans.
 
-**Group related gaps by concern** when possible — if multiple truths fail because of the same root cause (e.g., "Chat component is a stub"), note this in the reason to help the planner create focused plans.
+**Group related issues by concern** when possible — if multiple truths fail because of the same root cause (e.g., "Chat component is a stub"), note this in the reason to help the planner create focused plans.
 
 </verification_process>
 
 <output>
 
-## Create UAT Concept
+## Create Verification Concept
 
-After verification, create UAT concept matching `UATData` interface:
+After verification, create verification concept matching `VerificationData` interface:
 
 ```typescript
-const uatData: UATData = {
+const verificationData: VerificationData = {
   verification_results: ["User can see existing messages", "User can send a message"],
   issues_found: [],
   recommendations: [],
@@ -644,43 +644,43 @@ const uatData: UATData = {
 // chapter, verified, status, score, gaps, human_verification, re_verification
 
 await megamemory:create_concept({
-  name: `${chapterSlug}-uat`,
+  name: `${chapterSlug}-verification`,
   kind: 'component',
-  summary: generateSummary(uatData) + '\n\n' + generateUATMarkdown(uatData),
+  summary: generateSummary(verificationData) + '\n\n' + generateVerificationMarkdown(verificationData),
   parent_id: chapterSlug,
   edges: [
     { to: chapterSlug, relation: 'verifies' },
-    ...uatData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
+    ...verificationData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
   ]
 });
 ```
 
-## Return to Orchestrator
+## Return to Coordinator
 
 Return with:
 
 ```markdown
 ## Verification Complete
 
-**Status:** {passed | gaps_found | human_needed}
-**Score:** {N}/{M} must-haves verified
-**UAT Concept:** {chapterSlug}-uat
+**Status:** {passed | issues_found | human_needed}
+**Score:** {N}/{M} requirements verified
+**Verification Concept:** {chapterSlug}-verification
 
 {If passed:}
-All must-haves verified. Chapter goal achieved. Ready to proceed.
+All requirements verified. Chapter goal achieved. Ready to proceed.
 
-{If gaps_found:}
+{If issues_found:}
 
-### Gaps Found
+### Issues Found
 
-{N} gaps blocking goal achievement:
+{N} issues blocking goal achievement:
 
 1. **{Truth 1}** — {reason}
    - Missing: {what needs to be added}
 2. **{Truth 2}** — {reason}
    - Missing: {what needs to be added}
 
-Gaps in UAT data for `/fuska-plan --gaps`.
+Issues in verification data for `/fuska-plan --fixes`.
 
 {If human_needed:}
 
@@ -706,13 +706,13 @@ Automated checks passed. Awaiting human verification.
 
 **DO NOT skip key link verification.** This is where 80% of stubs hide. The pieces exist but aren't connected.
 
-**Structure gaps in YAML frontmatter.** The planner (`/fuska-plan --gaps`) creates plans from your analysis.
+**Structure issues in YAML frontmatter.** The planner (`/fuska-plan --fixes`) creates plans from your analysis.
 
 **DO flag for human verification when uncertain.** If you can't verify programmatically (visual, real-time, external service), say so explicitly.
 
 **DO keep verification fast.** Use grep/file checks, not running the app. Goal is structural verification, not functional testing.
 
-Create UAT concept in MegaMemory. The concept IS the verification record and persists automatically.
+Create verification concept in MegaMemory. The concept IS the verification record and persists automatically.
 
 </critical_rules>
 
@@ -793,13 +793,13 @@ return <div>No messages</div>  // Always shows "no messages"
 
 <success_criteria>
 
-- [ ] Previous UAT concept checked (Step 0)
-- [ ] If re-verification: must-haves loaded from previous UAT, focus on failed items
-- [ ] If initial: must-haves established (from plan concepts or derived)
+- [ ] Previous verification concept checked (Step 0)
+- [ ] If re-verification: requirements loaded from previous verification, focus on failed items
+- [ ] If initial: requirements established (from plan concepts or derived)
 - [ ] Chapter goal loaded from MegaMemory
 - [ ] Plans loaded from MegaMemory plan concepts
-- [ ] Must-haves extracted from plan concept summaries (via extractJson)
+- [ ] Requirements extracted from plan concept summaries (via extractJson)
 - [ ] Codebase verified using Read tool (still needed for actual code inspection)
-- [ ] UAT concept created in MegaMemory
-- [ ] Results returned to orchestrator (not written to file)
+- [ ] Verification concept created in MegaMemory
+- [ ] Results returned to coordinator (not written to file)
   </success_criteria>

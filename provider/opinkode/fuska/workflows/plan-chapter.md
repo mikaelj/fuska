@@ -1,7 +1,7 @@
 ---
 name: fuska-plan-megamemory
 description: Create detailed execution plan for a chapter with MegaMemory and verification loop
-argument-hint: "[chapter] [--research] [--skip-research] [--gaps] [--skip-verify]"
+argument-hint: "[chapter] [--research] [--skip-research] [--fixes] [--skip-verify]"
 agent: fuska-planner
 tools:
   - read
@@ -42,7 +42,7 @@ Chapter number: `$ARGUMENTS` (optional - auto-detects next unplanned chapter if 
 **Flags:**
 - `--research` — Force re-research even if research concept exists
 - `--skip-research` — Skip research entirely, go straight to planning
-- `--gaps` — Gap closure mode (uses UAT concept for gaps, skips research)
+- `--fixes` — Fix planning mode (uses verification concept for issues, skips research)
 - `--skip-verify` — Skip planner → checker verification loop
 
 Normalize chapter input in step 2 before any MegaMemory lookups.
@@ -103,7 +103,7 @@ Extract from `$ARGUMENTS`:
 - Chapter number (integer or decimal like `2.1`)
 - `--research` flag to force re-research
 - `--skip-research` flag to skip research
-- `--gaps` flag for gap closure mode
+- `--fixes` flag for fix planning mode
 - `--skip-verify` flag to bypass verification loop
 
 **If no chapter number:** Detect next unplanned chapter from roadmap.
@@ -142,7 +142,7 @@ ROADMAP_RESULTS=$(megamemory understand "chapter ${CHAPTER}" top_k=10)
 
 ## 4. Handle Research
 
-**If `--gaps` flag:** Skip research (gap closure uses UAT concept instead).
+**If `--fixes` flag:** Skip research (fix planning uses verification concept instead).
 
 **If `--skip-research` flag:** Skip to step 6.
 
@@ -280,8 +280,8 @@ CONTEXT_RESULTS=$(megamemory understand "${CHAPTER}-context" top_k=5)
 # Query research if exists
 RESEARCH_RESULTS=$(megamemory understand "${CHAPTER}-research" top_k=5)
 
-# Gap closure concepts (only if --gaps mode)
-UAT_RESULTS=$(megamemory understand "${CHAPTER}-uat" top_k=5)
+# Fix planning concepts (only if --fixes mode)
+VERIFICATION_RESULTS=$(megamemory understand "${CHAPTER}-verification" top_k=5)
 ```
 
 ## 7. Spawn fuska-planner Agent
@@ -302,7 +302,7 @@ Fill prompt with inlined concept data and spawn:
 <planning_context>
 
 **Chapter:** {chapter_number}
-**Mode:** {standard | gap_closure}
+**Mode:** {standard | fix_planning}
 
 **Project State:**
 {state_results.summary}
@@ -319,8 +319,8 @@ Fill prompt with inlined concept data and spawn:
 **Research (if exists):**
 {research_results.summary}
 
-**Gap Closure (if --gaps mode):**
-{uat_results.summary}
+**Fix Planning (if --fixes mode):**
+{verification_results.summary}
 
 </planning_context>
 
@@ -585,7 +585,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 - [ ] MegaMemory validated (roots exist)
 - [ ] Chapter validated against roadmap (chapter concept exists)
-- [ ] Research completed (unless --skip-research or --gaps or exists)
+- [ ] Research completed (unless --skip-research or --fixes or exists)
 - [ ] Research concept created if needed
 - [ ] Existing plan concepts checked
 - [ ] fuska-planner spawned with MegaMemory context

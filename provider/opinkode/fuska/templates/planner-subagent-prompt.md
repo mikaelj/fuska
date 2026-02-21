@@ -10,7 +10,7 @@ Template for spawning fuska-planner agent. Planning context and plans stored in 
 <planning_context>
 
 **Chapter:** {chapter_number}
-**Mode:** {standard | gap_closure}
+**Mode:** {standard | fix_planning}
 
 **Project State:**
 megamemory:understand({query: "project state"})
@@ -27,9 +27,8 @@ megamemory:understand({query: "chapter {chapter} context"})
 **Research (if exists):**
 megamemory:understand({query: "chapter {chapter} research"})
 
-**Gap Closure (if --gaps mode):**
+**Fix Planning (if --fixes mode):**
 megamemory:understand({query: "chapter {chapter} verification"})
-megamemory:understand({query: "chapter {chapter} uat"})
 
 </planning_context>
 

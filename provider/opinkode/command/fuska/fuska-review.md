@@ -1,6 +1,6 @@
 ---
 name: fuska-review
-description: Validate built features through conversational UAT using MegaMemory
+description: Validate built features through conversational verification using MegaMemory
 argument-hint: "[chapter number, e.g., '4']"
 tools:
   - read
@@ -18,7 +18,7 @@ Validate built features through conversational testing with persistent state usi
 
 Purpose: Confirm what OpenCode built actually works from user's perspective. One test at a time, plain text responses, no interrogation. When issues are found, automatically diagnose, plan fixes, and prepare for execution.
 
-Output: {chapter}-uat concept — tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /fuska-build.
+Output: {chapter}-verification concept — tracking all test results. If issues found: diagnosed gaps, verified fix plans ready for /fuska-build.
 
 </objective>
 
@@ -71,7 +71,7 @@ The roadmap concept contains the project chapter structure. Extract the chapter 
 
 Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
-## 1. Check for Active UAT Session or Start New
+## 1. Check for Active Verification Session or Start New
 
 **Step 1.1: Parse chapter number from arguments**
 
@@ -102,51 +102,51 @@ chapterNumber = parseInt(stateData.current_chapter?.replace('chapter-', '') || '
 chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
 ```
 
-**Step 1.3: Query existing UAT concept**
+**Step 1.3: Query existing verification concept**
 
 Call:
 ```
-megamemory_understand(query=`${chapterSlug}-uat`, top_k=1)
+megamemory_understand(query=`${chapterSlug}-verification`, top_k=1)
 ```
 
-**Step 1.4: Check if UAT exists**
+**Step 1.4: Check if verification exists**
 
 If response.matches.length > 0:
 ```
-const uatSummaryString = response.matches[0].summary
-const uatData = JSON.parse(uatSummaryString)
-const uatId = response.matches[0].id
-const uatExists = true
+const verificationSummaryString = response.matches[0].summary
+const verificationData = JSON.parse(verificationSummaryString)
+const verificationId = response.matches[0].id
+const verificationExists = true
 ```
 
 Else:
 ```
-const uatExists = false
-const uatId = null
-const uatData = null
+const verificationExists = false
+const verificationId = null
+const verificationData = null
 ```
 
-**Step 1.5: Handle UAT existence**
+**Step 1.5: Handle verification existence**
 
-If uatExists === true:
+If verificationExists === true:
 → Use question tool:
 ```
-const uatResponse = question(questions=[{
-  header: "Existing UAT Session",
-  question: "UAT concept already exists for this chapter. What would you like to do?",
+const verificationResponse = question(questions=[{
+  header: "Existing Verification",
+  question: "Verification concept already exists for this chapter. What would you like to do?",
   options: [
-    {label: "Resume UAT", description: "Continue existing verification tests"},
-    {label: "Start fresh", description: "Create new UAT concept"}
+    {label: "Resume verification", description: "Continue existing verification tests"},
+    {label: "Start fresh", description: "Create new verification concept"}
   ]
 }])
 ```
 
-If user chooses "Resume UAT":
-→ Display: uatData
+If user chooses "Resume verification":
+→ Display: verificationData
 → Continue to step 2
 
 If user chooses "Start fresh":
-→ Continue to step 1.6 (create new UAT)
+→ Continue to step 1.6 (create new verification)
 
 ---
 
@@ -180,30 +180,30 @@ const summaryConcepts = response.matches.map(match => {
 })
 ```
 
-Extract user-observable outcomes and must-haves from each summary to build the test list.
+Extract user-observable outcomes and requirements from each summary to build the test list.
 
 ---
 
 ## 3. Extract Testable Deliverables
 
-**Step 3.1: Extract user-observable outcomes and must-haves**
+**Step 3.1: Extract user-observable outcomes and requirements**
 
 For each summary concept from step 2.3:
 ```
 const userOutcomes = summaryData.verification_results || []
-const mustHaves = summaryData.must_haves || []
+const requirements = summaryData.requirements || []
 ```
 
 ---
 
-## 4. Create UAT Concept with Test List
+## 4. Create Verification Concept with Test List
 
-**Step 4.1: Build UAT data structure**
+**Step 4.1: Build verification data structure**
 
 ```
 const summaryConceptIds = summaryConcepts.map(sc => sc.id)
 
-const uatData = {
+const verificationData = {
   verification_results: [],
   issues_found: [],
   recommendations: [],
@@ -211,43 +211,43 @@ const uatData = {
 }
 ```
 
-**Step 4.2: Create or update UAT concept**
+**Step 4.2: Create or update verification concept**
 
-If uatExists === true:
+If verificationExists === true:
 → Update existing:
 ```
 megamemory_update_concept(
-  id=uatId,
+  id=verificationId,
   changes={
-    summary: JSON.stringify(uatData)
+    summary: JSON.stringify(verificationData)
   }
 )
 ```
 
-If uatExists === false:
+If verificationExists === false:
 → Create new:
 ```
 megamemory_create_concept(
-  name=`${chapterSlug}-uat`,
+  name=`${chapterSlug}-verification`,
   kind="component",
-  summary=JSON.stringify(uatData),
+  summary=JSON.stringify(verificationData),
   parent_id=chapterSlug,
-  why=`UAT concept created for Chapter ${chapterNumber}`
+  why=`Verification concept created for Chapter ${chapterNumber}`
 )
 ```
 
-**Step 4.3: Save UAT concept ID**
+**Step 4.3: Save verification concept ID**
 
-If uatExists === false:
+If verificationExists === false:
 ```
-const uatId = response.id  // Save the newly created concept's ID
+const verificationId = response.id  // Save the newly created concept's ID
 ```
 
 ---
 
 ## 5. Present Tests One at a Time
 
-**Step 5.1: Build test list from must-haves and outcomes**
+**Step 5.1: Build test list from requirements and outcomes**
 
 ```
 const testList = []
@@ -255,14 +255,14 @@ const testList = []
 for (const summary of summaryConcepts) {
   const summaryData = summary.data
   const userOutcomes = summaryData.verification_results || []
-  const mustHaves = summaryData.must_haves || []
+  const requirements = summaryData.requirements || []
   
   for (const outcome of userOutcomes) {
-    for (const mustHave of mustHaves) {
+    for (const requirement of requirements) {
       testList.push({
         summary_id: summary.id,
         outcome: outcome,
-        must_have: mustHave
+        requirement: requirement
       })
     }
   }
@@ -274,11 +274,11 @@ for (const summary of summaryConcepts) {
 Display:
 ```
 -----------------------------------------------
- Fuska: UAT CHAPTER ${chapterNumber}
+ Fuska: VERIFICATION CHAPTER ${chapterNumber}
 ---------------------------------------------
 
 ${testList.length} tests to run
-${testList.map((test, i) => `${i+1}. ${test.outcome}: ${test.must_have}`).join('\n')}
+${testList.map((test, i) => `${i+1}. ${test.outcome}: ${test.requirement}`).join('\n')}
 ```
 
 **Step 5.3: Run each test and collect responses**
@@ -307,20 +307,20 @@ const result = {
 }
 ```
 
-**Step 5.5: Update UAT concept**
+**Step 5.5: Update verification concept**
 
 ```
-uatData.verification_results.push(result)
+verificationData.verification_results.push(result)
 ```
 
-**Step 5.6: Persist UAT results**
+**Step 5.6: Persist verification results**
 
 Every 5 tests passed or on completion:
 ```
 megamemory_update_concept(
-  id=uatId,
+  id=verificationId,
   changes={
-    summary: JSON.stringify(uatData)
+    summary: JSON.stringify(verificationData)
   }
 )
 ```
@@ -332,22 +332,22 @@ megamemory_update_concept(
 **Step 6.1: Check if all tests passed**
 
 ```
-const allPassed = uatData.verification_results.every(r => r.status === 'passed')
+const allPassed = verificationData.verification_results.every(r => r.status === 'passed')
 ```
 
-**Step 6.2: Commit UAT concept to git using fuska-git-message**
+**Step 6.2: Commit verification concept to git using fuska-git-message**
 
 ```
 Task(
-  description="Generate UAT commit message",
+  description="Generate verification commit message",
   subagent_type="fuska-git-message",
   variant="amend",
   prompt=`<commit_context>
-**Mode:** uat-commit
+**Mode:** verification-commit
 **Chapter:** ${chapterSlug}
 **Commit Strategy:** per-chapter
 
-**UAT Summary:**
+**Verification Summary:**
 ${allPassed ? 'All tests passed' : `${passedCount}/${testList.length} tests passed`}
 
 **Staged files:**
@@ -372,7 +372,7 @@ Display: "All ${testList.length} tests passed [OK]"
 
 Else:
 ```
-Display: `${uatData.verification_results.filter(r => r.status === 'passed').length}/${testList.length} tests passed, ${uatData.verification_results.filter(r => r.status !== 'passed').length} failed`
+Display: `${verificationData.verification_results.filter(r => r.status === 'passed').length}/${testList.length} tests passed, ${verificationData.verification_results.filter(r => r.status !== 'passed').length} failed`
 ```
 
 ---
@@ -382,14 +382,14 @@ Display: `${uatData.verification_results.filter(r => r.status === 'passed').leng
 **Step 7.1: Check for issues**
 
 ```
-const hasIssues = uatData.verification_results.some(r => r.status === 'failed')
+const hasIssues = verificationData.verification_results.some(r => r.status === 'failed')
 ```
 
 **Step 7.2: Diagnose issues with debuggers**
 
 If hasIssues === true:
 ```
-const failedResults = uatData.verification_results.filter(r => r.status === 'failed')
+const failedResults = verificationData.verification_results.filter(r => r.status === 'failed')
 ```
 
 For each failed result:
@@ -404,7 +404,7 @@ Task(
 
 Chapter: ${chapterNumber}
 Test: ${result.outcome}
-Expected: ${result.must_have}
+Expected: ${result.requirement}
 Issue: ${result.issue}
 
 Examine the codebase using Read tool. Identify root cause.
@@ -418,24 +418,24 @@ Collect all diagnosis results.
 **Step 7.3: Plan fixes for gaps**
 
 ```
-const gapDescriptions = uatData.verification_results.filter(r => r.status === 'failed').map(r => r.issue)
+const gapDescriptions = verificationData.verification_results.filter(r => r.status === 'failed').map(r => r.issue)
 ```
 
-Spawn fuska-planner in --gaps mode:
+Spawn fuska-planner in --fixes mode:
 ```
 Task(
   subagent_type="fuska-planner",
   variant="plan",
-  description=`Plan gap closure for Chapter ${chapterNumber}`,
+  description=`Plan fixes for Chapter ${chapterNumber}`,
   model="{planner_model}",
-  prompt=`Create additional plans to close these gaps:
+  prompt=`Create additional plans to fix these issues:
 
 Chapter: ${chapterNumber}
-UAT gaps: ${gapDescriptions.join(', ')}
+Verification issues: ${gapDescriptions.join(', ')}
 
 Each gap should have a plan that:
 - Clearly defines what needs to be fixed
-- Has must_haves for verification
+- Has requirements for verification
 - Is ready for execution
 
 Use MegaMemory:
@@ -474,7 +474,7 @@ Fix plans: ${fixPlanConcepts.map(fp => fp.name).join(', ')}
 
 Check that each plan:
 - Clearly defines what to fix
-- Has must_haves for verification
+- Has requirements for verification
 - Is ready for execution
 
 If plans pass, verification is complete. If issues remain, iterate.
@@ -503,7 +503,7 @@ When all issues resolved and verification complete:
 
 <offer_next>
 
-Output this markdown directly (not as a code block). Route based on UAT results:
+Output this markdown directly (not as a code block). Route based on verification results:
 
 | Status | Route |
 |--------|-------|
@@ -524,7 +524,7 @@ Output this markdown directly (not as a code block). Route based on UAT results:
 **Chapter {Z}: {Name}**
 
 {N}/{N} tests passed
-UAT complete [OK]
+Verification complete [OK]
 
 ──────────────────────────────────────────────────────────────
 
@@ -590,14 +590,14 @@ Fix plans verified [OK]
 
 ### Issues Found
 
-{List issues with severity from UAT concept}
+{List issues with severity from verification concept}
 
 ──────────────────────────────────────────────────────────────
 
 ## > Next Up
 
 **Execute fix plans** — run diagnosed fixes
-/fuska-build {Z} --gaps-only
+/fuska-build {Z} --fixes-only
 
 */new first → fresh context window*
 
@@ -605,7 +605,7 @@ Fix plans verified [OK]
 
 **Also available:**
 - Query fix plans: use megamemory:understand to search for the chapter's plan concepts
-- /fuska-plan {Z} --gaps — regenerate fix plans
+- /fuska-plan {Z} --fixes — regenerate fix plans
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -641,7 +641,7 @@ Review the issues above and either:
 ──────────────────────────────────────────────────────────────
 
 **Options:**
-- /fuska-plan {Z} --gaps — retry fix planning with guidance
+- /fuska-plan {Z} --fixes — retry fix planning with guidance
 - /fuska-design-chapter {Z} — gather more context before replanning
 ──────────────────────────────────────────────────────────────
 ```
@@ -650,11 +650,11 @@ Review the issues above and either:
 
 <success_criteria>
 
-- [ ] UAT concept created with tests from summary concepts
+- [ ] Verification concept created with tests from summary concepts
 - [ ] Tests presented one at a time with expected behavior
 - [ ] Plain text responses (no structured forms)
 - [ ] Severity inferred, never asked
-- [ ] UAT concept updated batched (every 5 passes or completion)
+- [ ] Verification concept updated batched (every 5 passes or completion)
 - [ ] Committed on completion
 - [ ] If issues: Parallel debug agents diagnose root causes
 - [ ] If issues: fuska-planner creates fix plans from diagnosed gaps

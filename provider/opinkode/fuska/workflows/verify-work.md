@@ -1,5 +1,5 @@
 <purpose>
-Validate built features through conversational testing with persistent state. Creates UAT concept in MegaMemory that tracks test progress, survives /new, and feeds gaps into /fuska-plan --gaps.
+Validate built features through conversational testing with persistent state. Creates verification concept in MegaMemory that tracks test progress, survives /new, and feeds issues into /fuska-plan --fixes.
 
 User tests, OpenCode records. One test at a time. Plain text responses.
 </purpose>
@@ -58,12 +58,12 @@ Store resolved models for use in Task calls below.
 </step>
 
 <step name="check_active_session">
-**First: Check for active UAT sessions**
+**First: Check for active verification sessions**
 
-Query MegaMemory for active UAT concepts:
+Query MegaMemory for active verification concepts:
 
 ```bash
-megamemory:understand(query="UAT testing sessions with status testing")
+megamemory:understand(query="verification testing sessions with status testing")
 ```
 
 **If active sessions exist AND no `$ARGUMENTS` provided:**
@@ -73,7 +73,7 @@ Parse each concept's summary JSON to extract (status, chapter) and current_test.
 Display inline:
 
 ```
-## Active UAT Sessions
+## Active Verification Sessions
 
 | # | Chapter | Status | Current Test | Progress |
 |---|-------|--------|--------------|----------|
@@ -86,24 +86,24 @@ Reply with a number to resume, or provide a chapter number to start new.
 Wait for user response.
 
 - If user replies with number (1, 2) → Load that concept, go to `resume_from_concept`
-- If user replies with chapter number → Treat as new session, go to `create_uat_concept`
+- If user replies with chapter number → Treat as new session, go to `create_verification_concept`
 
 **If active sessions exist AND `$ARGUMENTS` provided:**
 
 Check if session exists for that chapter. If yes, offer to resume or restart.
-If no, continue to `create_uat_concept`.
+If no, continue to `create_verification_concept`.
 
 **If no active sessions AND no `$ARGUMENTS`:**
 
 ```
-No active UAT sessions.
+No active verification sessions.
 
 Provide a chapter number to start testing (e.g., /fuska-verify-work 4)
 ```
 
 **If no active sessions AND `$ARGUMENTS` provided:**
 
-Continue to `create_uat_concept`.
+Continue to `create_verification_concept`.
 </step>
 
 <step name="find_summaries">
@@ -154,8 +154,8 @@ Examples:
 Skip internal/non-observable items (refactors, type changes, etc.).
 </step>
 
-<step name="create_uat_concept">
-**Create UAT concept in MegaMemory with all tests:**
+<step name="create_verification_concept">
+**Create verification concept in MegaMemory with all tests:**
 
 Build test list from extracted deliverables.
 
@@ -198,11 +198,11 @@ Create MegaMemory concept:
 
 ```bash
 megamemory:create_concept(
-  name="{chapter} UAT",
+  name="{chapter} verification",
   kind="feature",
   summary="{JSON string}",
   parent_id="{chapter_concept_id}",
-  why="Tracks UAT testing progress for chapter",
+  why="Tracks verification testing progress for chapter",
   created_by_task="verify-work workflow"
 )
 ```
@@ -215,7 +215,7 @@ Proceed to `present_test`.
 <step name="present_test">
 **Present current test to user:**
 
-Query MegaMemory for UAT concept and parse current_test from summary.
+Query MegaMemory for verification concept and parse current_test from summary.
 
 Display using checkpoint box format:
 
@@ -239,7 +239,7 @@ Wait for user response (plain text, no question).
 <step name="process_response">
 **Process user response and update MegaMemory concept:**
 
-Query UAT concept to get current summary JSON.
+Query verification concept to get current summary JSON.
 
 **If response indicates pass:**
 - Empty response, "yes", "y", "ok", "pass", "next", "approved", "[OK]"
@@ -314,22 +314,22 @@ If no more tests → Go to `complete_session`
 **MegaMemory Update:**
 ```bash
 megamemory:update_concept(
-  id="{uat_concept_id}",
+  id="{verification_concept_id}",
   changes={"summary": "{updated JSON string}"}
 )
 ```
 </step>
 
 <step name="resume_from_concept">
-**Resume testing from UAT concept in MegaMemory:**
+**Resume testing from verification concept in MegaMemory:**
 
-Query MegaMemory for UAT concept and parse full summary JSON.
+Query MegaMemory for verification concept and parse full summary JSON.
 
 Find first test with `result: "pending"`.
 
 Announce:
 ```
-Resuming: Chapter {chapter} UAT
+Resuming: Chapter {chapter} verification
 Progress: {passed + issues + skipped}/{total}
 Issues found so far: {issues count}
 
@@ -352,7 +352,7 @@ Update JSON summary:
 **MegaMemory Update:**
 ```bash
 megamemory:update_concept(
-  id="{uat_concept_id}",
+  id="{verification_concept_id}",
   changes={"summary": "{updated JSON string}"}
 )
 ```
@@ -362,12 +362,12 @@ megamemory:update_concept(
 ```bash
 # Note: MegaMemory concepts are not committed to git
 # Only commit actual source code changes made during testing
-git commit -m "test({chapter}): complete UAT - {passed} passed, {issues} issues"
+git commit -m "test({chapter}): complete verification - {passed} passed, {issues} issues"
 ```
 
 Present summary:
 ```
-## UAT Complete: Chapter {chapter}
+## Verification Complete: Chapter {chapter}
 
 | Result | Count |
 |--------|-------|
@@ -407,26 +407,26 @@ Spawning parallel debug agents to investigate each issue.
 - Follow @./diagnose-issues.md
 - Spawn parallel debug agents for each issue
 - Collect root causes
-- Update UAT concept's gaps array with root causes in JSON summary
+- Update verification concept's gaps array with root causes in JSON summary
 - Update MegaMemory concept
-- Proceed to `plan_gap_closure`
+- Proceed to `plan_fixes`
 
 Diagnosis runs automatically - no user prompt. Parallel agents investigate simultaneously, so overhead is minimal and fixes are more accurate.
 </step>
 
-<step name="plan_gap_closure">
-**Auto-plan fixes from diagnosed gaps:**
+<step name="plan_fixes">
+**Auto-plan fixes from diagnosed issues:**
 
 Display:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Fuska: Planning fixes
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[IN_PROGRESS] Spawning planner for gap closure...
+[IN_PROGRESS] Spawning planner for fixes...
 ```
 
-Spawn fuska-planner in --gaps mode:
+Spawn fuska-planner in --fixes mode:
 
 ```
 Task(
@@ -434,10 +434,10 @@ Task(
 <planning_context>
 
 **Chapter:** {chapter_number}
-**Mode:** gap_closure
+**Mode:** fix_planning
 
-**UAT with diagnoses:**
-Query MegaMemory for UAT concept: megamemory:understand(query="{chapter} UAT")
+**Verification with diagnoses:**
+Query MegaMemory for verification concept: megamemory:understand(query="{chapter} verification")
 
 **Project State:**
 Query MegaMemory for STATE concept: megamemory:understand(query="project state")
@@ -487,7 +487,7 @@ Task(
 <verification_context>
 
 **Chapter:** {chapter_number}
-**Chapter Goal:** Close diagnosed gaps from UAT
+**Chapter Goal:** Close diagnosed gaps from verification
 
 **Plans to verify:**
 
@@ -599,7 +599,7 @@ Plans verified and ready for execution.
 
 **Execute fixes** — run fix plans
 
-`/new` then `/fuska-build {chapter} --gaps-only`
+`/new` then `/fuska-build {chapter} --fixes-only`
 
 ───────────────────────────────────────────────────────────────
 ```
@@ -643,15 +643,15 @@ Default to **major** if unclear. User can correct if needed.
 </severity_inference>
 
 <success_criteria>
-- [ ] UAT concept created in MegaMemory with all tests from SUMMARY.md
+- [ ] Verification concept created in MegaMemory with all tests from SUMMARY.md
 - [ ] Tests presented one at a time with expected behavior
 - [ ] User responses processed as pass/issue/skip
 - [ ] Severity inferred from description (never asked)
 - [ ] MegaMemory concept updated: on issue, every 5 passes, or completion
 - [ ] Committed on completion (if enabled)
 - [ ] If issues: parallel debug agents diagnose root causes
-- [ ] If issues: fuska-planner creates fix plans (gap_closure mode)
+- [ ] If issues: fuska-planner creates fix plans (fix_planning mode)
 - [ ] If issues: fuska-plan-checker verifies fix plans
 - [ ] If issues: revision loop until plans pass (max 3 iterations)
-- [ ] Ready for `/fuska-build --gaps-only` when complete
+- [ ] Ready for `/fuska-build --fixes-only` when complete
 </success_criteria>

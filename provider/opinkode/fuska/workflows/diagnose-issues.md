@@ -1,9 +1,9 @@
 <purpose>
-Orchestrate parallel debug agents to investigate UAT gaps and find root causes.
+Orchestrate parallel debug agents to investigate verification issues and find root causes.
 
-After UAT finds gaps, spawn one debug agent per gap. Each agent investigates autonomously with symptoms pre-filled from UAT. Collect root causes, create diagnosis concept in MegaMemory, then hand off to plan-chapter --gaps with actual diagnoses.
+After verification finds issues, spawn one debug agent per issue. Each agent investigates autonomously with symptoms pre-filled from verification. Collect root causes, create diagnosis concept in MegaMemory, then hand off to plan-chapter --fixes with actual diagnoses.
 
-Orchestrator stays lean: parse gaps, spawn agents, collect results, create MM concepts.
+Coordinator stays lean: parse issues, spawn agents, collect results, create MegaMemory concepts.
 </purpose>
 
 @../references/megamemory-integration.md
@@ -25,12 +25,12 @@ If relevant diagnosis concept exists:
 </step>
 
 <step name="parse_gaps">
-**Extract gaps from MM UAT concept:**
+**Extract gaps from MegaMemory verification concept:**
 
-Query the UAT concept for current chapter:
+Query the verification concept for current chapter:
 
 ```
-megamemory:understand with query: "[chapter] UAT test results gaps"
+megamemory:understand with query: "[chapter] verification test results gaps"
 ```
 
 Parse the concept.summary as JSON to extract gaps:
@@ -104,12 +104,12 @@ Task(
 
 Template placeholders:
 - `{truth}`: The expected behavior that failed
-- `{expected}`: From UAT test
+- `{expected}`: From verification test
 - `{actual}`: Verbatim user description from reason field
-- `{errors}`: Any error messages from UAT (or "None reported")
-- `{reproduction}`: "Test {test_num} in UAT"
-- `{timeline}`: "Discovered during UAT"
-- `{goal}`: `find_root_cause_only` (UAT flow - plan-chapter --gaps handles fixes)
+- `{errors}`: Any error messages from verification (or "None reported")
+- `{reproduction}`: "Test {test_num} in verification"
+- `{timeline}`: "Discovered during verification"
+- `{goal}`: `find_root_cause_only` (verification flow - plan-chapter --fixes handles fixes)
 - `{slug}`: Generated from truth
 
 **Debug agent MegaMemory operations:**
@@ -186,7 +186,7 @@ Each agent returns with:
 - {file1}: {what's wrong}
 - {file2}: {related issue}
 
-**Suggested Fix Direction:** {brief hint for plan-chapter --gaps}
+**Suggested Fix Direction:** {brief hint for plan-chapter --fixes}
 ```
 
 Parse each return to extract:
@@ -202,7 +202,7 @@ If agent returns `## INVESTIGATION INCONCLUSIVE`:
 </step>
 
 <step name="create_diagnosis_concepts">
-**Create MM diagnosis concepts for each gap:**
+**Create MegaMemory diagnosis concepts for each gap:**
 
 For each diagnosed gap, create a concept:
 
@@ -237,25 +237,25 @@ megamemory:create_concept with:
 - file_refs: ["src/file1.ts", "src/file2.ts"]
 ```
 
-**DO NOT write to UAT.md files.** Store diagnosis in MM concepts.
+**DO NOT write to verification files.** Store diagnosis in MegaMemory concepts.
 
 **For future retrieval:** Query with `megamemory:understand` for diagnosis concepts.
 </step>
 
-<step name="update_uat_concept">
-**Update MM UAT concept with diagnosis references:**
+<step name="update_verification_concept">
+**Update MegaMemory verification concept with diagnosis references:**
 
-Query the existing UAT concept:
+Query the existing verification concept:
 
 ```
-megamemory:understand with query: "[chapter] UAT test results"
+megamemory:understand with query: "[chapter] verification test results"
 ```
 
 Parse the concept.summary as JSON, then update it:
 
 ```
 megamemory:update_concept with:
-- id: [uat-concept-id]
+- id: [verification-concept-id]
 - changes: {
   summary: JSON with updated gaps:
   {
@@ -282,7 +282,7 @@ megamemory:update_concept with:
 }
 ```
 
-**DO NOT commit UAT.md files.** All updates are in MM.
+**DO NOT commit verification files.** All updates are in MegaMemory.
 </step>
 
 <step name="report_results">
@@ -306,20 +306,20 @@ Debug session concepts created in MegaMemory
 Proceeding to plan fixes...
 ```
 
-Return to verify-work orchestrator for automatic planning.
+Return to verify-work coordinator for automatic planning.
 Do NOT offer manual next steps - verify-work handles the rest.
 </step>
 
 </process>
 
 <context_efficiency>
-**Orchestrator context:** ~15%
-- Query MM for UAT concept
+**Coordinator context:** ~15%
+- Query MegaMemory for verification concept
 - Parse JSON from concept.summary
 - Fill template strings
 - Spawn parallel Task calls
 - Collect results
-- Create MM diagnosis concepts
+- Create MegaMemory diagnosis concepts
 
 **Each debug agent:** Fresh 200k context
 - Loads full debug workflow
@@ -327,8 +327,8 @@ Do NOT offer manual next steps - verify-work handles the rest.
 - Investigates with full capacity
 - Returns root cause
 
-**No symptom gathering.** Agents start with symptoms pre-filled from UAT.
-**No fix application.** Agents only diagnose - plan-chapter --gaps handles fixes.
+**No symptom gathering.** Agents start with symptoms pre-filled from verification.
+**No fix application.** Agents only diagnose - plan-chapter --fixes handles fixes.
 </context_efficiency>
 
 <failure_handling>
@@ -346,16 +346,16 @@ Do NOT offer manual next steps - verify-work handles the rest.
 **All agents fail:**
 - Something systemic (permissions, git, etc.)
 - Report for manual investigation
-- Fall back to plan-chapter --gaps without root causes (less precise)
+- Fall back to plan-chapter --fixes without root causes (less precise)
 </failure_handling>
 
 <success_criteria>
-- [ ] Gaps parsed from MM UAT concept
-- [ ] Existing diagnoses queried from MM
+- [ ] Gaps parsed from MegaMemory verification concept
+- [ ] Existing diagnoses queried from MegaMemory
 - [ ] Debug agents spawned in parallel
 - [ ] Root causes collected from all agents
-- [ ] MM diagnosis concepts created for each gap
-- [ ] MM UAT concept updated with diagnosis references
+- [ ] MegaMemory diagnosis concepts created for each gap
+- [ ] MegaMemory verification concept updated with diagnosis references
 - [ ] Debug session concepts created in MegaMemory
 - [ ] Hand off to verify-work for automatic planning
 </success_criteria>
