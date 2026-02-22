@@ -77,10 +77,12 @@ interface ChapterContextData {
 }
 
 interface TaskData {
+  task_number?: string;
+  slug?: string;
   description?: string;
-  summary?: string;
-  completed?: string;
-  timestamp?: string;
+  status?: string;
+  created_at?: string;
+  completed_at?: string;
   commit?: string;
 }
 
@@ -107,6 +109,9 @@ interface StructuredContext {
   recentSummaries: Array<{ name: string; data: SummaryData }>;
   pendingTodos: TodoItem[];
   activeDebugSessions: DebugSession[];
+  pendingTaskConcepts: Array<{ name: string; data: TaskData }>;
+  doneTaskConcepts: Array<{ name: string; data: TaskData }>;
+  unknownTaskConcepts: Array<{ name: string; slug: string }>;
 }
 
 interface AdHocContext {
@@ -114,6 +119,9 @@ interface AdHocContext {
   projectDescription: string;
   config: ConfigData | null;
   taskConcepts: Array<{ name: string; data: TaskData }>;
+  pendingTaskConcepts: Array<{ name: string; data: TaskData }>;
+  unknownTaskConcepts: Array<{ name: string; slug: string }>;
+  availableInitiatives: string[];
 }
 
 interface NextAction {
@@ -137,6 +145,7 @@ interface JsonOutput {
   recentWork?: Array<{ chapter: string; plan: string; accomplishment: string }>;
   pendingTodos?: number;
   activeDebugSessions?: number;
+  availableInitiatives?: string[];
 }
 
 class ProgressRunner {
@@ -159,7 +168,12 @@ class ProgressRunner {
     const currentSlug = getCurrentInitiativeSlug(this.db);
 
     if (!currentSlug) {
-      console.log('No active initiative. Use /fuska-initiative-switch');
+      const adHocContext = this.buildAdHocContext();
+      if (jsonOutput) {
+        this.outputJson(this.buildAdHocJson(adHocContext));
+      } else {
+        this.renderAdHocReport(adHocContext);
+      }
       return;
     }
 
@@ -219,10 +233,49 @@ class ProgressRunner {
       const start = summary.indexOf('{');
       const end = summary.lastIndexOf('}');
       if (start === -1 || end === -1) return null;
-      return JSON.parse(summary.substring(start, end + 1)) as T;
+      const jsonStr = summary.substring(start, end + 1);
+      return JSON.parse(jsonStr) as T;
     } catch {
-      return null;
+      return this.parseSummaryRegex<T>(summary);
     }
+  }
+
+  private parseSummaryRegex<T>(summary: string): T | null {
+    const extractString = (field: string): string | undefined => {
+      const match = summary.match(new RegExp(`"${field}"\\s*:\\s*"([^"]*)"`, 'i'));
+      return match ? match[1] : undefined;
+    };
+
+    const result: any = {};
+    const taskNumber = extractString('task_number');
+    if (taskNumber) result.task_number = taskNumber;
+    
+    const slug = extractString('slug');
+    if (slug) result.slug = slug;
+    
+    const status = extractString('status');
+    if (status) result.status = status;
+    
+    const createdAt = extractString('created_at');
+    if (createdAt) result.created_at = createdAt;
+    
+    const completedAt = extractString('completed_at');
+    if (completedAt) result.completed_at = completedAt;
+    
+    const description = extractString('description');
+    if (description) result.description = description;
+    
+    const commit = extractString('commit');
+    if (commit) result.commit = commit;
+
+    return Object.keys(result).length > 0 ? result as T : null;
+  }
+
+  private formatDateTime(isoString?: string): string {
+    if (!isoString) return '';
+    const date = isoString.split('T')[0] || '';
+    const time = isoString.split('T')[1]?.substring(0, 5) || '';
+    return time ? `${date} ${time}` : date;
   }
 
   private findState(): StateData | null {
@@ -272,6 +325,19 @@ class ProgressRunner {
       return data?.what_this_is || data?.core_value || data?.description || '';
     }
     return '';
+  }
+
+  private findAvailableInitiatives(): string[] {
+    return this.nodes
+      .filter(n => {
+        if (n.parent_id !== null || n.kind !== 'feature') return false;
+        const data = this.parseSummary<any>(n.summary);
+        if (data?.archived_at) return false;
+        const hasState = this.nodes.some(child => child.name === 'state' && child.parent_id === n.id);
+        const hasConfig = this.nodes.some(child => child.name === 'config' && child.parent_id === n.id);
+        return hasState && hasConfig;
+      })
+      .map(n => n.name);
   }
 
   private findChapterData(chapterSlug: string): ChapterData | null {
@@ -361,9 +427,52 @@ class ProgressRunner {
       .map(n => ({ name: n.name }));
   }
 
+  private getAllTaskConcepts(): { pending: Array<{ name: string; data: TaskData }>; done: Array<{ name: string; data: TaskData }>; unknown: Array<{ name: string; slug: string }> } {
+    const tasks: Array<{ name: string; data: TaskData }> = [];
+    const unknown: Array<{ name: string; slug: string }> = [];
+    
+    this.nodes
+      .filter(n => {
+        if (!n.name.match(/^task-\d+-/) || n.parent_id !== null) return false;
+        if (n.name.endsWith('-research') || n.name.endsWith('-summary') || n.name.endsWith('-verification')) return false;
+        return true;
+      })
+      .forEach(n => {
+        const data = this.parseSummary<TaskData>(n.summary);
+        if (!data) {
+          const slug = n.name.replace(/^task-\d+-/, '');
+          unknown.push({ name: n.name, slug });
+          return;
+        }
+        if (!data.task_number) {
+          const slug = data.slug || n.name.replace(/^task-\d+-/, '');
+          unknown.push({ name: n.name, slug });
+          return;
+        }
+        tasks.push({ name: n.name, data });
+      });
+
+    tasks.sort((a, b) => {
+      const dateA = new Date(a.data.created_at || 0).getTime();
+      const dateB = new Date(b.data.created_at || 0).getTime();
+      return dateB - dateA;
+    });
+
+    return {
+      done: tasks.filter(t => 
+        t.data.status === 'complete' || t.data.status === 'completed'
+      ),
+      pending: tasks.filter(t => 
+        t.data.status !== 'complete' && t.data.status !== 'completed'
+      ),
+      unknown
+    };
+  }
+
   private buildStructuredContext(state: StateData, roadmap: RoadmapData): StructuredContext {
     const currentChapterSlug = state.current_chapter;
     const currentChapter = currentChapterSlug ? this.findChapterData(currentChapterSlug) : null;
+    const taskConcepts = this.getAllTaskConcepts();
 
     return {
       projectName: this.findProjectName(),
@@ -378,44 +487,59 @@ class ProgressRunner {
       chapterVerification: currentChapterSlug ? this.findChapterVerification(currentChapterSlug) : null,
       recentSummaries: this.findRecentSummaries(3),
       pendingTodos: this.getPendingTodos(),
-      activeDebugSessions: this.getActiveDebugSessions()
+      activeDebugSessions: this.getActiveDebugSessions(),
+      pendingTaskConcepts: taskConcepts.pending,
+      doneTaskConcepts: taskConcepts.done,
+      unknownTaskConcepts: taskConcepts.unknown
     };
   }
 
   private buildAdHocContext(): AdHocContext {
-    const taskMap = new Map<string, { name: string; data: TaskData }>();
+    const tasks: Array<{ name: string; data: TaskData }> = [];
+    const unknown: Array<{ name: string; slug: string }> = [];
     
     this.nodes
-      .filter(n => n.name.match(/^task-\d+-/))
+      .filter(n => {
+        if (!n.name.match(/^task-\d+-/) || n.parent_id !== null) return false;
+        if (n.name.endsWith('-research') || n.name.endsWith('-summary') || n.name.endsWith('-verification')) return false;
+        return true;
+      })
       .forEach(n => {
-        const numMatch = n.name.match(/^task-(\d+)-/);
-        if (!numMatch) return;
-        
-        const num = numMatch[1];
         const data = this.parseSummary<TaskData>(n.summary);
-        if (!data) return;
-        
-        const existing = taskMap.get(num);
-        if (!existing || (data.description && !existing.data.description)) {
-          taskMap.set(num, { name: n.name, data });
-        } else if (existing && data.commit && !existing.data.commit) {
-          existing.data.commit = data.commit;
+        if (!data) {
+          const slug = n.name.replace(/^task-\d+-/, '');
+          unknown.push({ name: n.name, slug });
+          return;
         }
+        if (!data.task_number) {
+          const slug = data.slug || n.name.replace(/^task-\d+-/, '');
+          unknown.push({ name: n.name, slug });
+          return;
+        }
+        tasks.push({ name: n.name, data });
       });
 
-    const taskConcepts = Array.from(taskMap.entries())
-      .map(([_, task]) => task)
-      .sort((a, b) => {
-        const numA = parseInt(a.name.match(/^task-(\d+)/)?.[1] || '0');
-        const numB = parseInt(b.name.match(/^task-(\d+)/)?.[1] || '0');
-        return numA - numB;
-      });
+    tasks.sort((a, b) => {
+      const dateA = new Date(a.data.created_at || 0).getTime();
+      const dateB = new Date(b.data.created_at || 0).getTime();
+      return dateB - dateA;
+    });
+
+    const taskConcepts = tasks.filter(t => 
+      t.data.status === 'complete' || t.data.status === 'completed'
+    );
+    const pendingTaskConcepts = tasks.filter(t => 
+      t.data.status !== 'complete' && t.data.status !== 'completed'
+    );
 
     return {
       projectName: this.findProjectName(),
       projectDescription: this.findProjectDescription(),
       config: this.findConfig(),
-      taskConcepts
+      taskConcepts,
+      pendingTaskConcepts,
+      unknownTaskConcepts: unknown,
+      availableInitiatives: this.findAvailableInitiatives()
     };
   }
 
@@ -544,6 +668,36 @@ class ProgressRunner {
       this.out('');
     }
 
+    if (ctx.pendingTaskConcepts.length > 0) {
+      this.out('Pending ad-hoc tasks:');
+      for (const t of ctx.pendingTaskConcepts) {
+        const num = t.data.task_number || '?';
+        const slug = t.data.slug || t.name.replace(/^task-\d+-/, '');
+        const dateTime = this.formatDateTime(t.data.created_at);
+        this.out(`* ${num}: ${slug} (${dateTime})`);
+      }
+      this.out('');
+    }
+
+    if (ctx.doneTaskConcepts.length > 0) {
+      this.out('Completed ad-hoc tasks:');
+      for (const t of ctx.doneTaskConcepts) {
+        const num = t.data.task_number || '?';
+        const slug = t.data.slug || t.name.replace(/^task-\d+-/, '');
+        const dateTime = this.formatDateTime(t.data.completed_at || t.data.created_at);
+        this.out(`* ${num}: ${slug} (${dateTime})`);
+      }
+      this.out('');
+    }
+
+    if (ctx.unknownTaskConcepts.length > 0) {
+      this.out('Unknown tasks (missing task_number):');
+      for (const t of ctx.unknownTaskConcepts) {
+        this.out(`* ${t.slug}`);
+      }
+      this.out('');
+    }
+
     this.out('Configuration:');
     this.out(`* Profile: ${ctx.config?.model_profile || ctx.config?.depth || 'balanced'}`);
     this.out('');
@@ -597,30 +751,52 @@ class ProgressRunner {
   }
 
   private renderAdHocReport(ctx: AdHocContext): void {
-    const desc = ctx.projectDescription ? ` (${ctx.projectDescription})` : '';
-    this.out(`Progress on ${ctx.projectName}${desc}, ad-hoc mode (no chapters).`);
+    this.out('Configuration:');
+    this.out(`* Profile: ${ctx.config?.depth || 'balanced'}`);
     this.out('');
 
-    if (ctx.taskConcepts.length > 0) {
-      this.out('Done:');
-      for (const t of ctx.taskConcepts) {
-        const numMatch = t.name.match(/task-(\d+)/);
-        const num = numMatch ? numMatch[1] : '?';
-        const taskDesc = (t.data.description || t.data.summary || 'No description').slice(0, 60);
-        this.out(`* Task ${num}: ${taskDesc}`);
+    this.out('No initiative active. "fuska initiative switch" to activate. Available:');
+    for (const slug of ctx.availableInitiatives) {
+      this.out(`* ${slug}`);
+    }
+    this.out('');
+
+    if (ctx.pendingTaskConcepts.length > 0) {
+      this.out('Pending ad-hoc tasks:');
+      for (const t of ctx.pendingTaskConcepts) {
+        const num = t.data.task_number || '?';
+        const slug = t.data.slug || t.name.replace(/^task-\d+-/, '');
+        const dateTime = this.formatDateTime(t.data.created_at);
+        this.out(`* ${num}: ${slug} (${dateTime})`);
       }
       this.out('');
     }
 
-    this.out('Configuration:');
-    this.out(`* Profile: ${ctx.config?.depth || 'balanced'}`);
-    this.out('');
+    if (ctx.taskConcepts.length > 0) {
+      this.out('Completed ad-hoc tasks:');
+      for (const t of ctx.taskConcepts) {
+        const num = t.data.task_number || '?';
+        const slug = t.data.slug || t.name.replace(/^task-\d+-/, '');
+        const dateTime = this.formatDateTime(t.data.completed_at || t.data.created_at);
+        this.out(`* ${num}: ${slug} (${dateTime})`);
+      }
+      this.out('');
+    }
+
+    if (ctx.unknownTaskConcepts.length > 0) {
+      this.out('Unknown tasks (missing task_number):');
+      for (const t of ctx.unknownTaskConcepts) {
+        this.out(`* ${t.slug}`);
+      }
+      this.out('');
+    }
 
     this.out('---------');
     this.out('');
 
     this.out('Available commands:');
-    this.out('* /fuska-do — execute a standalone task');
+    this.out('* fuska initiative switch — switch to an initiative');
+    this.out('* fuska do — execute a standalone task');
     this.out('* fuska info — view codebase and domain mappings');
   }
 
@@ -653,11 +829,12 @@ class ProgressRunner {
     return {
       mode: 'ad-hoc',
       projectName: ctx.projectName,
-      status: 'ad-hoc',
+      status: 'no-initiative',
+      availableInitiatives: ctx.availableInitiatives,
       recentWork: ctx.taskConcepts.map(t => ({
         chapter: '',
         plan: t.name,
-        accomplishment: t.data.description || t.data.summary || ''
+        accomplishment: t.data.description || ''
       }))
     };
   }

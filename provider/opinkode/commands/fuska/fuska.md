@@ -24,15 +24,17 @@ tools:
 
 Universal dispatch for Fuska. One command for everything.
 
-- `/fuska` — show where you are and what to do next
-- `/fuska plan` — plan the current chapter (auto-detects chapter number)
-- `/fuska build` — build the current chapter
-- `/fuska do fix the bug` — quick ad-hoc task
-- `/fuska [verb] [args]` — any Fuska action
+- `/fuska` — show where you are and what to do next (PRIMARY USE)
+- `/fuska plan` — plan the current chapter (DEPRECATED: use `/fuska-plan`)
+- `/fuska build` — build the current chapter (DEPRECATED: use `/fuska-build`)
+- `/fuska do fix the bug` — quick ad-hoc task (DEPRECATED: use `/fuska-do fix the bug`)
+- `/fuska [verb] [args]` — any Fuska action (DEPRECATED: use `/fuska-[verb]`)
 
 **Bare invocation:** Read MegaMemory state. Show the full chapter pipeline with current position marked. Explain what each step does and show the command to run it.
 
 **Verb invocation:** Parse verb, auto-detect missing arguments (chapter number), read the target command file, resolve its `@` references, follow its process.
+
+> **DEPRECATED:** Verb dispatch (`/fuska plan`, `/fuska build`) is deprecated. Use direct commands (`/fuska-plan`, `/fuska-build`) instead.
 
 All `/fuska-*` commands remain available for direct use. This command is the universal entry point that routes to them.
 
@@ -297,6 +299,10 @@ Or audit first:
 
 ## 2. Verb Dispatch
 
+> **DEPRECATED:** Use direct commands instead: `/fuska-plan`, `/fuska-build`, etc.
+> Dispatching through `/fuska xxx` is retained for backward compatibility only.
+> Direct commands are faster and clearer.
+
 ### 2.1 Dispatch table
 
 | Verb | Target file | Auto-detect chapter |
@@ -328,7 +334,13 @@ Or audit first:
 | refresh | fuska-refresh.md | no |
 | ask | fuska-ask.md | no |
 
-### 2.2 Auto-detect chapter number
+### 2.2 Deprecation warning
+
+Display to user:
+
+    ⚠️  /fuska ${verb} is deprecated. Use /fuska-${verb} instead.
+
+### 2.3 Auto-detect chapter number
 
 If the verb has "Auto-detect chapter: yes" AND effectiveArgs does not start with a number:
 
@@ -339,14 +351,14 @@ const chapterNumber = parseInt(stateData.current_chapter?.replace("chapter-", ""
 effectiveArgs = chapterNumber + (effectiveArgs ? " " + effectiveArgs : "")
 ```
 
-### 2.3 Read target command file
+### 2.4 Read target command file
 
 Read the target file from: ~/.config/opencode/commands/fuska/{target}
 
 For example, if verb is "design", read:
     ~/.config/opencode/commands/fuska/fuska-design.md
 
-### 2.4 Resolve @ references
+### 2.5 Resolve @ references
 
 Each `@` path is relative to the command file's directory:
 - `@../../fuska/references/X.md` → ~/.config/opencode/fuska/references/X.md
@@ -355,7 +367,7 @@ Each `@` path is relative to the command file's directory:
 
 Construct absolute paths and read each referenced file.
 
-### 2.5 Execute target process
+### 2.6 Execute target process
 
 You now have:
 - The target command file content (objective, megamemory_guide, context, process, success_criteria)
@@ -408,6 +420,7 @@ Unknown verb: "${verb}".
 - [ ] No decorative borders, no progress bar graphics
 
 **Verb dispatch:**
+- [ ] Deprecation warning displayed to user
 - [ ] Verb correctly parsed from $ARGUMENTS
 - [ ] Chapter number auto-detected from MegaMemory state when needed
 - [ ] Target command file read successfully

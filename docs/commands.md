@@ -62,7 +62,7 @@ Run `fuska help` without arguments to see all available commands.
 
 ### `fuska progress` Example
 
-Shows current initiative, completed chapters, next steps, and recommended actions:
+Shows current initiative, completed chapters, next steps, ad-hoc tasks, and recommended actions:
 
 ```
 Progress on submodule-diff-display, 2/4 chapters complete.
@@ -79,6 +79,16 @@ Next:
 Future:
 * Chapter 4: Add unit and integration tests, handle edge cases like missing submodules
 
+Pending ad-hoc tasks:
+* 022: ignore-gitignore-patterns-in-codebase-mapper (2026-02-22 14:30)
+* 021: rename-command-to-commands (2026-02-21 10:15)
+
+Completed ad-hoc tasks:
+* 020: add-json-output-to-progress (2026-02-20 16:45)
+
+Unknown tasks (missing task_number):
+* some-task-without-number
+
 Configuration:
 * Profile: balanced
 
@@ -90,6 +100,13 @@ Gather context for chapter 3 and clarify approach by running:
 or skip design of chapter 3 and plan directly by running:
 * /fuska-plan 3
 ```
+
+**Ad-hoc task sections:**
+- **Pending ad-hoc tasks** — Tasks with `task_number` not yet completed, sorted by date (newest first)
+- **Completed ad-hoc tasks** — Tasks with `task_number` that are complete
+- **Unknown tasks** — Tasks missing `task_number` (shown with slug only for `fuska do` identification)
+
+Auxiliary concepts (ending in `-research`, `-summary`, `-verification`) are filtered from these lists.
 
 Use `--json` for machine-readable output.
 

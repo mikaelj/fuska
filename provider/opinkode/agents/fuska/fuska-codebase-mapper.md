@@ -97,6 +97,50 @@ Based on focus, determine which documents you'll write:
 <step name="explore_codebase">
 Explore the codebase thoroughly for your focus area.
 
+## Read .gitignore Patterns
+
+Before running any exploration commands, read and apply exclusion patterns:
+
+1. **Read `.gitignore` from project root:**
+   ```bash
+   cat .gitignore 2>/dev/null
+   ```
+
+2. **Parse patterns** - Handle comments (lines starting with `#`), negations (`!`), and directory patterns (trailing `/`)
+
+3. **Convert to exclusion flags** - Apply these IN ADDITION to hardcoded defaults:
+
+| .gitignore Pattern | find Exclusion | grep Exclusion |
+|-------------------|----------------|----------------|
+| `node_modules/` | `-not -path '*/node_modules/*'` | `--exclude-dir=node_modules` |
+| `dist/`, `build/` | `-not -path '*/dist/*' -not -path '*/build/*'` | `--exclude-dir=dist --exclude-dir=build` |
+| `*.log` | `-not -name '*.log'` | `--exclude='*.log'` |
+| `.env*` | `-not -name '.env*'` | `--exclude='.env*'` |
+| `.git/` | `-not -path '*/.git/*'` | `--exclude-dir=.git` |
+
+4. **Hardcoded defaults (always apply):**
+   - `.opencode/` - IDE state, local plans, cache
+   - `.claude/` - IDE settings
+   - `.git/` - Version control metadata
+
+5. **Combine patterns:**
+   ```bash
+   # Example: find with both hardcoded and .gitignore exclusions
+   find . -type f \
+     -not -path '*/.opencode/*' \
+     -not -path '*/.claude/*' \
+     -not -path '*/.git/*' \
+     -not -path '*/node_modules/*' \
+     -not -path '*/dist/*'
+   
+   # Example: grep with exclusions
+   grep -r "pattern" src/ \
+     --exclude-dir=.opencode \
+     --exclude-dir=.claude \
+     --exclude-dir=node_modules \
+     --exclude-dir=dist
+   ```
+
 **For tech focus:**
 ```bash
 # Package manifests
@@ -107,14 +151,14 @@ cat package.json 2>/dev/null | head -100
 ls -la *.config.* .env* tsconfig.json .nvmrc .python-version 2>/dev/null
 
 # Find SDK/API imports
-grep -r "import.*stripe\|import.*supabase\|import.*aws\|import.*@" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50
+grep -r "import.*stripe\|import.*supabase\|import.*aws\|import.*@" src/ --include="*.ts" --include="*.tsx" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | head -50
 ```
 
 **For project classification (tech focus only):**
 ```bash
 # Embedded signals
 ls platformio.ini CMakeLists.txt 2>/dev/null
-grep -r "stm32\|esp32\|nrf\|freertos\|ISR\|GPIO\|UART\|SPI\|I2C" . --include="*.c" --include="*.h" --include="*.cpp" 2>/dev/null | head -20
+grep -r "stm32\|esp32\|nrf\|freertos\|ISR\|GPIO\|UART\|SPI\|I2C" . --include="*.c" --include="*.h" --include="*.cpp" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | head -20
 
 # Web framework signals
 grep -r "express\|fastify\|next\|hono\|nestjs\|react\|vue\|svelte" package.json 2>/dev/null
@@ -130,19 +174,19 @@ ls pubspec.yaml 2>/dev/null
 cat pubspec.yaml 2>/dev/null | head -30
 
 # Auth/API signals
-grep -r "auth\|jwt\|session\|login\|passport" . --include="*.ts" --include="*.tsx" 2>/dev/null | head -20
+grep -r "auth\|jwt\|session\|login\|passport" . --include="*.ts" --include="*.tsx" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | head -20
 ```
 
 **For arch focus:**
 ```bash
 # Directory structure
-find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' | head -50
+find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/.opencode/*' -not -path '*/.claude/*' | head -50
 
 # Entry points
 ls src/index.* src/main.* src/app.* src/server.* app/page.* 2>/dev/null
 
 # Import patterns to understand layers
-grep -r "^import" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -100
+grep -r "^import" src/ --include="*.ts" --include="*.tsx" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | head -100
 ```
 
 **For quality focus:**
@@ -153,7 +197,7 @@ cat .prettierrc 2>/dev/null
 
 # Test files and config
 ls jest.config.* vitest.config.* 2>/dev/null
-find . -name "*.test.*" -o -name "*.spec.*" | head -30
+find . -name "*.test.*" -o -name "*.spec.*" -not -path '*/.opencode/*' -not -path '*/.claude/*' | head -30
 
 # Sample source files for convention analysis
 ls src/**/*.ts 2>/dev/null | head -10
@@ -162,25 +206,25 @@ ls src/**/*.ts 2>/dev/null | head -10
 **For concerns focus:**
 ```bash
 # TODO/FIXME comments
-grep -rn "TODO\|FIXME\|HACK\|XXX" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50
+grep -rn "TODO\|FIXME\|HACK\|XXX" src/ --include="*.ts" --include="*.tsx" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | head -50
 
 # Large files (potential complexity)
-find src/ -name "*.ts" -o -name "*.tsx" | xargs wc -l 2>/dev/null | sort -rn | head -20
+find src/ -name "*.ts" -o -name "*.tsx" -not -path '*/.opencode/*' -not -path '*/.claude/*' | xargs wc -l 2>/dev/null | sort -rn | head -20
 
 # Empty returns/stubs
-grep -rn "return null\|return \[\]\|return {}" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -30
+grep -rn "return null\|return \[\]\|return {}" src/ --include="*.ts" --include="*.tsx" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | head -30
 ```
 
 **For domains focus:**
 ```bash
 # Directory-based domains
-find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -maxdepth 3 | grep -E "(lib|src|app)/[^/]+$" | head -30
+find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/.opencode/*' -not -path '*/.claude/*' -maxdepth 3 | grep -E "(lib|src|app)/[^/]+$" | head -30
 
 # File naming clusters
 ls lib/**/*.dart 2>/dev/null | xargs -I{} basename {} | cut -d'_' -f1 | sort | uniq -c | sort -rn | head -20
 
 # Class naming patterns
-grep -rh "^class\|^enum\|^mixin" lib/ --include="*.dart" 2>/dev/null | sed 's/class \|enum \|mixin //g' | cut -d' ' -f1 | head -50
+grep -rh "^class\|^enum\|^mixin" lib/ --include="*.dart" --exclude-dir=.opencode --exclude-dir=.claude 2>/dev/null | sed 's/class \|enum \|mixin //g' | cut -d' ' -f1 | head -50
 ```
 
 read key files identified during exploration. Use glob and grep liberally.

@@ -196,6 +196,12 @@ Next:
 Future:
 * Chapter 4: Add unit and integration tests, handle edge cases like missing submodules
 
+Pending ad-hoc tasks:
+* 022: ignore-gitignore-patterns-in-codebase-mapper (2026-02-22 14:30)
+
+Completed ad-hoc tasks:
+* 020: add-json-output-to-progress (2026-02-20 16:45)
+
 Configuration:
 * Profile: balanced
 

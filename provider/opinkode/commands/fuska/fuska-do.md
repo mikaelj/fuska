@@ -94,6 +94,43 @@ Query MegaMemory upfront. All subsequent steps use cached results — NO additio
 
 ## 2. Parse Arguments and Resolve Mode
 
+**Step 2.0: Check for task resume**
+
+Check if first argument is a task reference (e.g., "22", "task-22"):
+
+```
+const taskRefMatch = input.match(/^(?:task-)?(\d+)(?:\s|$)/)
+let resumeTask = null
+let resumeTaskId = null
+```
+
+If taskRefMatch:
+1. Extract task number: `taskNum = taskRefMatch[1]`
+2. Query MegaMemory: `megamemory_understand(query="task-${taskNum}", top_k=20)`
+3. Filter matches to concepts matching pattern `task-${taskNum}-` (with trailing hyphen to avoid task-22 matching task-221)
+4. **If exactly one match:** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip task ref from input
+5. **If multiple matches:** Use question tool to disambiguate:
+   ```
+   Question: "Found multiple task-${taskNum} concepts. Which one?"
+   Options: each match with label showing:
+     - "{name} (parent: {parent_name || 'none'})"
+   After selection: Set resumeTask and resumeTaskId, strip task ref from input
+   ```
+6. **If no matches:** Display "No task-${taskNum} found. Creating new task." → continue to Step 2.1
+
+If resumeTask:
+- Load task data: `taskData = JSON.parse(resumeTask.summary)`
+- Set DESCRIPTION = taskData.description
+- Set MODE = taskData.mode || "planned"
+- Set planData = taskData (for use in subsequent steps)
+- Set planConceptId = resumeTask.name (the full concept name like 'task-022-rename-command-to-commands')
+- Set taskConceptId = resumeTask.id (the UUID for megamemory updates)
+- Set slug = taskData.slug
+- Set nextNum = taskData.task_number
+- Skip to Step 8 (Plan Review) to confirm execution or Step 9 directly if user wants to execute
+
+---
+
 **Step 2.1: Parse arguments**
 
 ```
@@ -341,7 +378,7 @@ Options: Execute now | Ask a question | Modify the plan | Save and exit
 - **Execute now** → Step 9
 - **Ask a question** → answer from planData context, re-display, loop
 - **Modify the plan** → get feedback, spawn planner revision via Task, re-query, re-display, loop
-- **Save and exit** → Display "Plan saved as task-${nextNum}-${slug}. Run `/fuska-do task-${nextNum}` to execute later." → Stop
+- **Save and exit** → Display "Plan saved as task-${nextNum}-${slug}. Run `/fuska-do ${nextNum}` to execute later." → Stop
 
 ---
 
