@@ -132,7 +132,6 @@ Use `--json` for machine-readable output.
 | <nobr>`/fuska-add-chapter`</nobr> | Add new chapter to current milestone | `<desc>` -- chapter description |
 | <nobr>`/fuska-insert-chapter`</nobr> | Insert chapter between existing chapters | `<N> <desc>` -- position and description |
 | <nobr>`/fuska-remove-chapter`</nobr> | Remove chapter from project | `<N>` -- chapter number |
-| <nobr>`/fuska-list-chapter-assumptions`</nobr> | List assumptions for a chapter | `<N>` -- chapter number |
 
 ### Milestones
 

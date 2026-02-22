@@ -50,7 +50,6 @@ All `/fuska-*` commands below also work directly.
 
 \* `/fuska-design <number>` — Articulate your vision for a chapter before planning.
 \* `/fuska-research-chapter <number>` — Ecosystem research for niche/complex domains.
-\* `/fuska-list-chapter-assumptions <number>` — See what's planned before execution.
 \* `/fuska-plan <number>` — Create detailed execution plan.
 
 ## Execution
@@ -225,15 +224,6 @@ Comprehensive ecosystem research for niche/complex domains.
 - Goes beyond "which library" to ecosystem knowledge
 
 Usage: `/fuska-research-chapter 3`
-
-**`/fuska-list-chapter-assumptions <number>`**
-See what OpenCode is planning to do before it starts.
-
-- Shows OpenCode's intended approach for a chapter
-- Lets you course-correct if OpenCode misunderstood your vision
-- No concepts created - conversational output only
-
-Usage: `/fuska-list-chapter-assumptions 3`
 
 **`/fuska-plan <number>`**
 Create detailed execution plan for a specific chapter.

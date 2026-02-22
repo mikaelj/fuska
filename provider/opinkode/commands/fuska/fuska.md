@@ -306,7 +306,6 @@ Or audit first:
 | build | fuska-build.md | yes |
 | review | fuska-review.md | yes |
 | research | fuska-research-chapter.md | yes |
-| assumptions | fuska-list-chapter-assumptions.md | yes |
 | do | fuska-do.md | no |
 | debug | fuska-debug.md | no |
 | pause | fuska-pause-work.md | no |
@@ -373,7 +372,7 @@ The `@` reference content serves as execution context — the same role it would
 
 If verb does not match any entry in the dispatch table:
 
-Known verbs: plan, design, build, review, research, assumptions, do, debug, pause, resume, todo, todos, configure, map, help, add, insert, remove, complete, milestone, audit, gaps, doc, export, import, refresh, ask.
+Known verbs: plan, design, build, review, research, do, debug, pause, resume, todo, todos, configure, map, help, add, insert, remove, complete, milestone, audit, gaps, doc, export, import, refresh, ask.
 
 Find the verb with smallest edit distance (simple character comparison is fine — no need for full Levenshtein).
 

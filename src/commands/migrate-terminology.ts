@@ -22,7 +22,6 @@ class TerminologyMigration {
       .replace(/fuska-insert-phase/g, 'fuska-insert-chapter')
       .replace(/fuska-research-phase/g, 'fuska-research-chapter')
       .replace(/fuska-review-phase/g, 'fuska-review')
-      .replace(/fuska-list-phase-assumptions/g, 'fuska-list-chapter-assumptions')
       .replace(/phase_boundary/g, 'chapter_boundary')
       .replace(/next_phase_readiness/g, 'next_chapter_readiness')
       .replace(/current_phase/g, 'current_chapter')

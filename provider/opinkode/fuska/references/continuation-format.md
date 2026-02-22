@@ -261,7 +261,7 @@ Standard format for presenting next steps after completing a command or workflow
 
 **Also available:**
 - Review plan before executing
-- `/fuska-list-chapter-assumptions 2` — check assumptions
+- Check roadmap for dependencies
 
 ---
 ```

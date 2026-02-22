@@ -182,6 +182,120 @@ You'll discuss implementation choices for this chapter.
 
 ---
 
+## 1.8. Surface Assumptions
+
+After presenting the chapter overview, surface OpenCode's assumptions before discussion begins. This enables course correction early when assumptions are wrong.
+
+**Step 1.8.1: Query related concepts**
+
+```
+megamemory_understand(query=`${chapterSlug}-research`, top_k=1)
+megamemory_understand(query="requirements", top_k=50)
+megamemory_understand(query="state", top_k=5)
+```
+
+**Step 1.8.2: Extract related data**
+
+From requirements, filter those related to this chapter. From research, extract domain insights. From state, get completed chapters for dependency context.
+
+**Step 1.8.3: Surface assumptions across five areas**
+
+Based on chapter goal and gathered data, surface assumptions:
+
+**Technical Approach:**
+- What tech stack is assumed?
+- What architecture patterns are expected?
+- What frameworks/libraries will be used?
+
+**Implementation Order:**
+- What should be built first?
+- What depends on what?
+- What's the critical path?
+
+**Scope Boundaries:**
+- What's definitely IN scope?
+- What's definitely OUT of scope?
+- What's unclear and needs clarification?
+
+**Risk Areas:**
+- What are the technical risks?
+- What are the integration risks?
+- What could go wrong?
+
+**Dependencies:**
+- What external services are needed?
+- What depends on other chapters?
+- What needs to be in place first?
+
+Display assumptions:
+```
+────────────────────────────────────────────────────────────
+
+**My Assumptions:**
+
+**Technical Approach:**
+- [Assumption 1 from research/context]
+- [Assumption 2]
+- [Assumption 3]
+
+**Implementation Order:**
+1. [First thing to build]
+2. [Second thing - depends on 1]
+3. [Third thing - depends on 2]
+
+**Scope Boundaries:**
+- In scope: [from chapter goal]
+- Out of scope: [from deferred items]
+- Unclear: [items needing discussion]
+
+**Risk Areas:**
+- [Risk 1]: [Mitigation]
+- [Risk 2]: [Mitigation]
+
+**Dependencies:**
+- From prior chapters: [completed work]
+- External: [third-party needs]
+
+────────────────────────────────────────────────────────────
+```
+
+**Step 1.8.4: Prompt for feedback**
+
+Use question tool:
+```
+const assumptionResponse = question(questions=[{
+  header: "Assumptions",
+  question: "How do these assumptions look for Chapter ${chapterNumber}?",
+  options: [
+    {label: "Looks good", description: "Proceed to discuss gray areas"},
+    {label: "Clarify", description: "Discuss a specific assumption"},
+    {label: "Correct", description: "Fix wrong assumptions"},
+    {label: "Add detail", description: "Expand on an area"}
+  ]
+}])
+```
+
+**Step 1.8.5: Handle user response**
+
+If "Looks good":
+→ Continue to Step 2 (Check for Existing Chapter Context)
+
+If "Clarify" or "Correct" or "Add detail":
+→ Discuss the specific area
+→ Capture corrections in `allCorrections` array
+→ Re-prompt until satisfied
+→ Then continue to Step 2
+
+**Step 1.8.6: Track assumption corrections**
+
+```
+const assumptionCorrections = [] // Track what was corrected
+```
+
+These corrections inform the gray areas discussion in Step 3.
+
+---
+
 ## 2. Check for Existing Chapter Context
 
 **Step 2.1: Query chapter context**
@@ -534,6 +648,8 @@ ${allDeferred.map(deferred => `- ${deferred}`).join('\n') || 'No deferred ideas'
 <success_criteria>
 
 - [ ] Chapter number validated against roadmap
+- [ ] Step 1.8 surfaced relevant assumptions
+- [ ] User confirmed or corrected assumptions before discussion
 - [ ] Existing chapter context checked (offered update/view/skip if found)
 - [ ] Gray areas identified through intelligent analysis
 - [ ] User chose which areas to discuss
