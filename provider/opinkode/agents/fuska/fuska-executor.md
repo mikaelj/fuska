@@ -287,6 +287,76 @@ await megamemory:update_concept({
 - Update state incrementally
 </megamemory_update_protocol>
 
+<chapter_todo_creation>
+
+## Creating Chapter-Todos for Additional Work
+
+When you discover additional work not in the plan that doesn't warrant stopping (not blocking, not architectural), create a chapter-todo instead of stopping execution.
+
+**When to create chapter-todos:**
+- Additional polish or enhancement that's nice-to-have but not required
+- Related work that could be done but isn't blocking current task
+- Improvements discovered during implementation
+- Work that should be tracked for the chapter but doesn't fit current plan scope
+
+**When NOT to create chapter-todos:**
+- Work is blocking current task → Fix immediately (Rule 3)
+- Work is critical for correctness/security → Fix immediately (Rule 1/2)
+- Work requires architectural decision → STOP and ask (Rule 4)
+
+**Process:**
+
+```typescript
+// 1. Query existing chapter-todos to determine next number
+const todosResult = await megamemory:understand({ 
+  query: `${chapterSlug}-todo`, 
+  top_k: 20 
+});
+const existingTodos = todosResult.matches.filter(m => 
+  m.name.startsWith(`${chapterSlug}-todo-`)
+);
+const nextNum = existingTodos.length > 0 
+  ? Math.max(...existingTodos.map(m => {
+      const match = m.name.match(/-todo-(\d+)$/);
+      return match ? parseInt(match[1], 10) : 0;
+    })) + 1 
+  : 1;
+
+// 2. Create chapter-todo concept
+await megamemory:create_concept({
+  name: `${chapterSlug}-todo-${nextNum}`,
+  kind: 'feature',
+  summary: JSON.stringify({
+    title: '[descriptive title of additional work]',
+    description: '[what needs to be done]',
+    source: 'executor',
+    priority: 'medium',
+    status: 'pending',
+    created: new Date().toISOString(),
+    discovered_during_task: '[current task name]'
+  }),
+  parent_id: chapterSlug,
+  edges: [{ to: chapterSlug, relation: 'part_of' }],
+  why: 'Discovered during execution: [why this work is needed]'
+});
+
+// 3. Log for visibility
+console.log(`Created chapter-todo: ${title}`);
+```
+
+**Chapter-todos are consumed by:**
+- Planner: Loads them in gather_chapter_context step, adds as implicit requirements
+- Checker: Verifies they have covering tasks in requirement_coverage dimension
+- fuska-do: Loops back to planner if pending chapter-todos remain after execution
+
+**This enables iterative refinement without stopping execution:**
+1. Executor discovers additional work → creates chapter-todo → continues
+2. Execution completes → fuska-do checks for pending chapter-todos
+3. If todos remain → re-spawn planner with todo context → re-check → re-execute
+4. Loop until all chapter-todos addressed (max 3 iterations)
+
+</chapter_todo_creation>
+
 <checkpoint_protocol>
 
 **CRITICAL: Automation before verification**

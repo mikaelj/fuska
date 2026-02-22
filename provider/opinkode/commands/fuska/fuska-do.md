@@ -385,6 +385,44 @@ megamemory_create_concept(
 
 ---
 
+## 9.6. Chapter-Todo Loop (for chapter tasks only)
+
+Skip this step if no `stateData.current_chapter` exists (standalone task).
+
+**Step 9.6.1: Query pending chapter-todos**
+
+```
+const currentChapter = stateData.current_chapter;
+if (currentChapter) {
+  const todosResult = await megamemory:understand({ query: `${currentChapter}-todo`, top_k: 20 });
+  const pendingTodos = todosResult.matches.filter(m => {
+    try { return JSON.parse(m.summary).status === 'pending'; }
+    catch { return false; }
+  });
+  
+  if (pendingTodos.length > 0 && (loopCount || 0) < 3) {
+    loopCount = (loopCount || 0) + 1;
+    Display: `Found ${pendingTodos.length} pending chapter-todos. Re-planning... (${loopCount}/3)`;
+    
+    // Go back to Step 6 with chapter-todos as additional context
+    const todosContext = pendingTodos.map(t => JSON.parse(t.summary));
+    // Re-spawn planner with todos included in planning context
+    // Then re-run checker and executor
+    // Continue loop until no pending todos or max iterations reached
+  }
+  
+  if (pendingTodos.length > 0 && (loopCount || 0) >= 3) {
+    Display: `Warning: ${pendingTodos.length} chapter-todos remain after 3 planning iterations.`;
+    Display: `Remaining todos: ${pendingTodos.map(t => JSON.parse(t.summary).title).join(', ')}`;
+    // Continue to Step 9.5 - user can address todos manually
+  }
+}
+```
+
+**Step 9.6.2:** Initialize `loopCount = 0` at Step 1 if not already set.
+
+---
+
 ## 9.5. Generate Commit Message
 
 **Step 9.5.1:** Run `git diff HEAD`. If empty: set `generatedCommitMessage = null`, skip to Step 10.

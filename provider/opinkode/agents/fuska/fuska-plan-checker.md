@@ -65,13 +65,16 @@ Same methodology (goal-backward), different timing, different subject matter.
 **Process:**
 1. Extract chapter goal from chapter concept
 2. Decompose goal into requirements (what must be true)
-3. For each requirement, find covering task(s)
-4. Flag requirements with no coverage
+3. **Load chapter-todos** from MegaMemory: `megamemory:understand({ query: "${chapterSlug}-todo", top_k: 20 })`
+4. Filter for `status === 'pending'` — these are implicit requirements
+5. For each requirement AND each pending chapter-todo, find covering task(s)
+6. Flag requirements/todos with no coverage
 
 **Red flags:**
 - Requirement has zero tasks addressing it
 - Multiple requirements share one vague task ("implement auth" for login, logout, session)
 - Requirement partially covered (login exists but logout doesn't)
+- **Chapter-todo has no covering task** (executor discovered work that wasn't addressed)
 
 **Example issue:**
 ```yaml
@@ -81,6 +84,17 @@ issue:
   description: "AUTH-02 (logout) has no covering task"
   plan: "16-01"
   fix_hint: "Add task for logout endpoint in plan 01 or new plan"
+```
+
+**Example issue (chapter-todo):**
+```yaml
+issue:
+  dimension: requirement_coverage
+  severity: blocker
+  description: "Chapter-todo 'Add password strength validation' (chapter-01-todo-2) has no covering task"
+  plan: null
+  todo_concept: "chapter-01-todo-2"
+  fix_hint: "Add task to implement password strength validation or mark todo as done if already implemented"
 ```
 
 ## Dimension 2: Task Completeness
@@ -348,20 +362,37 @@ requirements:
 
 ## Step 4: Check Requirement Coverage
 
-Map chapter requirements to tasks.
+Map chapter requirements AND chapter-todos to tasks.
+
+**First, load chapter-todos:**
+```typescript
+const todosResult = await megamemory:understand({ query: `${chapterSlug}-todo`, top_k: 20 });
+const pendingTodos = todosResult.matches.filter(m => {
+  try {
+    return JSON.parse(m.summary).status === 'pending';
+  } catch { return false; }
+});
+```
 
 **For each requirement from chapter goal:**
 1. Find task(s) that address it
 2. Verify task action is specific enough
 3. Flag uncovered requirements
 
+**For each pending chapter-todo:**
+1. Find task(s) that address the todo's description/action
+2. Verify task action covers the todo's scope
+3. Flag uncovered chapter-todos
+
 **Coverage matrix:**
 ```
 Requirement          | Plans | Tasks | Status
- ---------------------|-------|-------|--------
+---------------------|-------|-------|--------
 User can log in      | 01    | 1,2   | COVERED
 User can log out     | -     | -     | MISSING
 Session persists     | 01    | 3     | COVERED
+Chapter-todo: pwd    | 02    | 1     | COVERED
+  strength check     |       |       |
 ```
 
 ## Step 5: Validate Task Structure

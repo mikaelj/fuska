@@ -302,6 +302,32 @@ First, map the codebase so Fuska understands your architecture, then create the 
 | 1 | <nobr>`/fuska do planned "The recipe scraper crashes when the URL contains query parameters like ?ref=share. The URL validator rejects anything after ?. Need to strip or preserve query params before validation."`</nobr> | — | Spawns planner + executor directly. Plans 2 tasks: fix URL validator regex to allow query strings, add test cases for URLs with `?`, `#`, and `&`. Executes immediately. 1 atomic commit. Task logged separately from the roadmap. |
 | 2 | <nobr>`/fuska todos`</nobr> | — | Shows 1 open todo: "Investigate Instacart API for shopping list export" (from earlier). No new todos from the fix. |
 
+### Chapter-Todo Iterative Loop
+
+*While building a chapter, the executor discovers additional work that wasn't in the plan. Chapter-todos capture this and trigger an iterative planning loop.*
+
+| # | Command | You Say | What Happens |
+|---|---------|---------|--------------|
+| 1 | <nobr>`/fuska build`</nobr> | — | Builder starts Chapter 3 (Nutritional Summary). While implementing, discovers the USDA API requires OAuth2 — this wasn't anticipated. Creates chapter-todo: `chapter-03-todo-1: "Add USDA API OAuth2 integration"`. |
+| 2 | *(execution completes)* | — | Chapter 3 tasks complete, but chapter-todos exist. `/fuska-do` detects this and enters the Chapter-Todo Loop (max 3 iterations). |
+| 3 | *(loop iteration 1)* | — | Planner loads chapter-todo `chapter-03-todo-1`. Creates a plan for OAuth2 integration: 4 tasks (env vars, token service, refresh middleware, tests). Checker validates. Executor builds all 4 tasks. |
+| 4 | *(loop check)* | — | No new chapter-todos created. Loop exits. |
+| 5 | <nobr>`/fuska review`</nobr> | — | Reviews Chapter 3 with OAuth2 now in place. All criteria pass. |
+
+**Manually adding a chapter-todo:**
+
+```bash
+/fuska-add-chapter-todo 3 "Add rate limiting for USDA API calls"
+```
+
+Creates `chapter-03-todo-2` scoped to Chapter 3. Next `/fuska build` will pick it up in the todo loop.
+
+**Key points:**
+- Chapter-todos are scoped to a single chapter (not global)
+- Executor creates them automatically when discovering unplanned work
+- Planner loads them as additional requirements for the next iteration
+- Loop runs until all chapter-todos are addressed (max 3 iterations to prevent infinite loops)
+
 ### Multiple Initiatives in One Codebase
 
 *You're working on **Meal Planner** and **Recipe Import** in the same codebase, switching between them.*

@@ -1194,11 +1194,22 @@ megamemory:understand({ query: `${chapterSlug}-research`, top_k: 1 });
 
 // Load discovery concept if exists (from mandatory discovery)
 megamemory:understand({ query: `${chapterSlug}-discovery`, top_k: 1 });
+
+// Load chapter-todos (additional requirements discovered during execution)
+const todosResult = await megamemory:understand({ query: `${chapterSlug}-todo`, top_k: 20 });
+const pendingTodos = todosResult.matches.filter(m => {
+  try {
+    const todoData = JSON.parse(m.summary);
+    return todoData.status === 'pending';
+  } catch { return false; }
+});
 ```
 
 **If context concept exists:** Apply `<context_fidelity>` rules — locked decisions are NON-NEGOTIABLE. Extract user vision, essential features, boundaries from the context concept's decisions, open_code_discretion, and deferred fields. See section above.
 
 **If chapter research concept exists:** Extract standard_stack, architecture_patterns, dont_hand_roll, common_pitfalls from research data. Research has already identified the right tools.
+
+**If chapter-todos exist:** Each pending todo becomes an implicit requirement for the plan. Add todo items to the requirements derived from goal-backward analysis. Chapter-todos are typically created by executors when they discover additional work during execution, or manually via `/fuska-add-chapter-todo` command.
 </step>
 
 <step name="break_into_tasks">

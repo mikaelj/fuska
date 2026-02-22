@@ -149,7 +149,8 @@ Use `--json` for machine-readable output.
 |---------|-------------|-----------|
 | <nobr>`/fuska-pause`</nobr> | Capture mental context for next session | -- |
 | <nobr>`/fuska-resume`</nobr> | Restore context and show task position | -- |
-| <nobr>`/fuska-add-todo`</nobr> | Add todo item | `[description]` -- auto-extracts from conversation if omitted |
+| <nobr>`/fuska-add-todo`</nobr> | Add global todo item | `[description]` -- auto-extracts from conversation if omitted |
+| <nobr>`/fuska-add-chapter-todo`</nobr> | Add chapter-scoped todo item | `<N> <description>` -- chapter number and todo description |
 | <nobr>`/fuska-check-todos`</nobr> | View all todos | -- |
 
 ### Codebase Analysis

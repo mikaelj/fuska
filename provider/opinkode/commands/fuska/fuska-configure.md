@@ -14,8 +14,13 @@ tools:
 ## Usage
 
 ```
-/fuska-configure-initiative
+/fuska-configure [--mode yolo|interactive] [--depth quick|standard|comprehensive] [--parallel true|false] [--commits per-chapter|per-plan|per-task] [--research yes|no] [--plan-check yes|no] [--verifier yes|no]
 ```
+
+**Examples:**
+- `/fuska-configure` — Interactive mode (asks all questions)
+- `/fuska-configure --mode yolo --depth quick --parallel true` — Skip workflow questions, use provided values
+- `/fuska-configure --mode yolo --depth quick --parallel true --commits per-chapter --research yes --plan-check yes --verifier yes` — Full auto, no questions asked
 
 <objective>
 
@@ -79,7 +84,22 @@ This command is run after `fuska init` to complete initiative setup. If a descri
    -----------------------------------------------------
    ```
 
+5. Parse command arguments (if any):
+   - The user prompt may contain flags after `/fuska-configure`
+   - Parse: `--mode (yolo|interactive)`, `--depth (quick|standard|comprehensive)`, `--parallel (true|false)`, `--commits (per-chapter|per-plan|per-task)`, `--research (yes|no)`, `--plan-check (yes|no)`, `--verifier (yes|no)`
+   - Store in `PARSED_ARGS` object
+   - If any args provided: `SKIP_QUESTIONING="yes"` (skip Chapter 1 if HAS_DESCRIPTION)
+   - If ALL workflow args provided (`--mode`, `--depth`, `--parallel`, `--commits`, `--research`, `--plan-check`, `--verifier`): `SKIP_WORKFLOW_QUESTIONS="yes"`
+
 ## Chapter 1: Deep Questioning
+
+**If SKIP_QUESTIONING is set:**
+
+Arguments were provided via command flags. Skip questioning entirely:
+
+1. Use `STORED_DESCRIPTION` (from initiative) or generate defaults from project name
+2. Derive `whatThisIs` and `coreValue` from available context
+3. Skip directly to Chapter 2 (Workflow Preferences)
 
 **If HAS_DESCRIPTION:**
 
@@ -172,6 +192,20 @@ megamemory:update_concept({
 ```
 
 ## Chapter 2: Workflow Preferences
+
+**If SKIP_WORKFLOW_QUESTIONS is set:**
+
+All workflow preferences were provided via command flags. Use `PARSED_ARGS` directly:
+
+- `mode`: PARSED_ARGS.mode or "yolo"
+- `depth`: PARSED_ARGS.depth or "standard"
+- `parallelization`: PARSED_ARGS.parallel === "true"
+- `git.commit_strategy`: PARSED_ARGS.commits
+- `workflow.research`: PARSED_ARGS.research === "yes"
+- `workflow.plan_check`: PARSED_ARGS["plan-check"] === "yes"
+- `workflow.verifier`: PARSED_ARGS.verifier === "yes"
+
+Skip the interactive questions and proceed to "Create/update config concept" below.
 
 **Ask interactive questions:**
 
@@ -579,8 +613,10 @@ All concepts updated/created in MegaMemory knowledge graph:
 
 - [ ] Current initiative loaded from config
 - [ ] Description detection completed (HAS_DESCRIPTION set correctly)
-- [ ] Deep questioning completed (or skipped if description provided)
+- [ ] Arguments parsed (PARSED_ARGS, SKIP_QUESTIONING, SKIP_WORKFLOW_QUESTIONS set correctly)
+- [ ] Deep questioning completed (or skipped if args/description provided)
 - [ ] Initiative root updated with what_this_is and core_value
+- [ ] Workflow preferences collected (from args or interactive questions)
 - [ ] Config concept created/updated with workflow preferences
 - [ ] Research completed (if selected)
 - [ ] Requirements gathered and scoped
