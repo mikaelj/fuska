@@ -209,6 +209,8 @@ Calculate next number from existing `task-NNN-*` concepts. If none: `nextNum = "
 
 **Step 4.2:** Create concept: `name=task-${nextNum}-${slug}`, kind="feature", summary=JSON.stringify(planData).
 
+**Step 4.2a:** Set `planConceptId = task-${nextNum}-${slug}` and `taskConceptId = <returned_concept_id>` for subsequent steps.
+
 **Step 4.3: Display**
 
 ```
@@ -229,7 +231,7 @@ Only for researched, verified modes. Display: `Researching...`
 ```
 const researcherPrompt = `<critical_constraints>
 Return: ## RESEARCH COMPLETE with key findings
-Create concept with name="task-${nextNum}-${slug}-research", kind="pattern"
+Create concept with name="${planConceptId}-research", kind="pattern"
 Keep research focused and concise — this is a standalone task, not a full chapter
 </critical_constraints>
 
@@ -251,7 +253,7 @@ This is a standalone task, not a full chapter. Focus on:
 <output>
 Create research concept:
 megamemory_create_concept(
-  name="task-${nextNum}-${slug}-research",
+  name="${planConceptId}-research",
   kind="pattern",
   summary=JSON.stringify(researchFindings),
   why="Research for task ${nextNum}",
@@ -324,7 +326,7 @@ Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.str
 
 Only for checked, researched, verified modes. Display: `Validating plan...`
 
-**Step 7.1:** Query updated plan concept `task-${nextNum}-${slug}`.
+**Step 7.1:** Query updated plan concept `${planConceptId}`.
 
 **Step 7.2: Build checker prompt**
 
@@ -394,21 +396,21 @@ Display: `Executing...`
 const executorPrompt = `<critical_constraints>
 Execute all tasks in the plan
 Do NOT commit (commit happens at end of fuska-do, not during execution)
-Create summary concept named exactly: task-${nextNum}-${slug}-summary (kind: "config")
+Create summary concept named exactly: ${planConceptId}-summary (kind: "config")
 Do NOT update roadmap concept (standalone tasks are separate from chapters)
 Return: ## EXECUTION COMPLETE
 </critical_constraints>
 
 Execute task ${nextNum}: ${DESCRIPTION}
 
-Plan concept: task-${nextNum}-${slug}
+Plan concept: ${planConceptId}
 Plan data: ${JSON.stringify(planData, null, 2)}
 Project state: ${JSON.stringify(stateData, null, 2)}
 
 <output>
 Create summary concept:
 megamemory_create_concept(
-  name="task-${nextNum}-${slug}-summary",
+  name="${planConceptId}-summary",
   kind="config",
   summary=JSON.stringify(summaryData),
   why="Task ${nextNum} execution summary"
@@ -505,14 +507,14 @@ Only for verified mode. Display: `Reviewing...`
 ```
 const verifierPrompt = `<critical_constraints>
 Return: ## Review Complete with status: passed | issues_found
-Create concept named: task-${nextNum}-${slug}-verification
+Create concept named: ${planConceptId}-verification
 </critical_constraints>
 
 <verification_context>
 Review task ${nextNum}: ${DESCRIPTION}
 
-**Plan concept:** task-${nextNum}-${slug}
-**Summary concept:** task-${nextNum}-${slug}-summary
+**Plan concept:** ${planConceptId}
+**Summary concept:** ${planConceptId}-summary
 
 Verify the task achieved its goal:
 1. Check that committed files exist and are substantive (not stubs)
@@ -521,7 +523,7 @@ Verify the task achieved its goal:
 
 Create concept:
 megamemory_create_concept(
-  name="task-${nextNum}-${slug}-verification",
+  name="${planConceptId}-verification",
   kind="component",
   summary=JSON.stringify(verificationData),
   why="Verification for task ${nextNum}"
@@ -547,7 +549,7 @@ stateData.tasks_completed.push({
   description: DESCRIPTION,
   date: new Date().toISOString().split('T')[0],
   commit: finalCommitHash || null,
-  plan_concept: `task-${nextNum}-${slug}`,
+  plan_concept: planConceptId,
   mode: MODE
 })
 
@@ -568,6 +570,32 @@ Otherwise prompt: Commit now | Edit first | Skip.
 - **Commit now** → `git add -A && git commit`, extract hash
 - **Edit first** → prompt for message, commit if provided
 - **Skip** → `finalCommitHash = null`
+
+---
+
+## 11.6. Update Task Concept
+
+Skip if `resumeTask` is null (new task, not resume).
+
+Update the original task concept with completion status:
+
+```
+if (taskConceptId) {
+  const currentTaskData = JSON.parse(resumeTask.summary)
+  const updatedTaskData = {
+    ...currentTaskData,
+    status: "complete",
+    last_updated: new Date().toISOString()
+  }
+  
+  megamemory_update_concept(
+    id=taskConceptId,
+    changes={ summary: JSON.stringify(updatedTaskData) }
+  )
+}
+```
+
+This ensures the specific disambiguated task concept (e.g., `task-022-rename-command-to-commands`) gets its status updated, not a wrongly reconstructed one.
 
 ---
 
