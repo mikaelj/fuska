@@ -596,7 +596,7 @@ class ConfigRunner {
       case 'no_initiatives':
         console.log('No initiatives found in MegaMemory.');
         console.log('');
-        console.log('Run /fuska-configure-initiative to create one.');
+        console.log('Run /fuska-configure to create one.');
         break;
 
       case 'no_config':
@@ -616,7 +616,7 @@ class ConfigRunner {
     const initiatives = this.integrityStatus.foundInitiatives;
 
     if (initiatives.length === 0) {
-      console.log('No initiatives found. Run /fuska-configure-initiative first.');
+      console.log('No initiatives found. Run /fuska-configure first.');
       return;
     }
 
@@ -1231,7 +1231,7 @@ async function promptInitiativeCreation(): Promise<void> {
     try {
       execSync('fuska init', { stdio: 'inherit' });
       console.log('\nNext: Run this in your AI agent (opencode or claude):');
-      console.log('  /fuska-configure-initiative');
+      console.log('  /fuska-configure');
       console.log('');
     } catch {
       process.exit(1);

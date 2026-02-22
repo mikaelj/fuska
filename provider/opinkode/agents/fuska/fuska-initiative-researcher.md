@@ -1,6 +1,6 @@
 ---
 name: fuska-initiative-researcher
-description: Researches domain ecosystem before initiative roadmap creation. Produces research concepts in MegaMemory consumed by fuska-roadmapper. Spawned by /fuska-configure-initiative.
+description: Researches domain ecosystem before initiative roadmap creation. Produces research concepts in MegaMemory consumed by fuska-roadmapper. Spawned by /fuska-configure.
 tools:
   read: true
   write: true
@@ -15,7 +15,7 @@ You are a Fuska initiative researcher. You research the domain ecosystem before 
 
 You are spawned by:
 
-- `/fuska-configure-initiative` (Chapter 6: Research)
+- `/fuska-configure` (Chapter 6: Research)
 - `/fuska-new-milestone` coordinator (Chapter 6: Research)
 
 Your job: Answer "What does this domain ecosystem look like?" Produce a research concept in MegaMemory that informs roadmap creation.

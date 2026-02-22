@@ -96,18 +96,27 @@ Query MegaMemory upfront. All subsequent steps use cached results — NO additio
 
 **Step 2.0: Check for task resume**
 
-Check if first argument is a task reference (e.g., "22", "task-22"):
+Check if first argument is a task reference. Supports two formats:
+1. Numeric reference: "22" or "task-22"
+2. Slug reference: "ignore-gitignore-patterns" (lowercase with dashes)
 
 ```
 const taskRefMatch = input.match(/^(?:task-)?(\d+)(?:\s|$)/)
+const slugRefMatch = !taskRefMatch && input.match(/^([a-z]+-[a-z0-9-]*[a-z0-9])(?:\s|$)/)
 let resumeTask = null
 let resumeTaskId = null
 ```
 
-If taskRefMatch:
+**If taskRefMatch (numeric):**
 1. Extract task number: `taskNum = taskRefMatch[1]`
-2. Query MegaMemory: `megamemory_understand(query="task-${taskNum}", top_k=20)`
-3. Filter matches to concepts matching pattern `task-${taskNum}-` (with trailing hyphen to avoid task-22 matching task-221)
+2. Query MegaMemory with exhaustive search:
+   ```
+   const query1 = await megamemory_understand(query="task-${taskNum}", top_k=50)
+   const query2 = await megamemory_understand(query="task-${taskNum}-", top_k=50)
+   const allResults = [...query1.concepts, ...query2.concepts]
+   const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
+   ```
+3. Filter uniqueResults to concepts matching pattern `task-${taskNum}-` (with trailing hyphen to avoid task-22 matching task-221)
 4. **If exactly one match:** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip task ref from input
 5. **If multiple matches:** Use question tool to disambiguate:
    ```
@@ -118,7 +127,27 @@ If taskRefMatch:
    ```
 6. **If no matches:** Display "No task-${taskNum} found. Creating new task." → continue to Step 2.1
 
-If resumeTask:
+**If slugRefMatch (slug):**
+1. Extract slug: `slugRef = slugRefMatch[1]`
+2. Query MegaMemory:
+   ```
+   const query1 = await megamemory_understand(query="task-", top_k=50)
+   const query2 = await megamemory_understand(query=slugRef, top_k=50)
+   const allResults = [...query1.concepts, ...query2.concepts]
+   const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
+   ```
+3. Filter uniqueResults to concepts where `name.includes(slugRef)` or `name.endsWith("-" + slugRef)`
+4. **If exactly one match:** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip slug ref from input
+5. **If multiple matches:** Use question tool to disambiguate:
+   ```
+   Question: "Found multiple tasks matching '${slugRef}'. Which one?"
+   Options: each match with label showing:
+     - "{name} (parent: {parent_name || 'none'})"
+   After selection: Set resumeTask and resumeTaskId, strip slug ref from input
+   ```
+6. **If no matches:** Display "No task matching '${slugRef}' found. Creating new task." → continue to Step 2.1
+
+**If resumeTask (from either path):**
 - Load task data: `taskData = JSON.parse(resumeTask.summary)`
 - Set DESCRIPTION = taskData.description
 - Set MODE = taskData.mode || "planned"

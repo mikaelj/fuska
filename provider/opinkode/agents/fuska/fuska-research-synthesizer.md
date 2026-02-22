@@ -1,6 +1,6 @@
 ---
 name: fuska-research-synthesizer
-description: Synthesizes research outputs from parallel researcher agents into a MegaMemory research-summary concept. Spawned by /fuska-configure-initiative.
+description: Synthesizes research outputs from parallel researcher agents into a MegaMemory research-summary concept. Spawned by /fuska-configure.
 tools:
   read: true
   write: true
@@ -14,7 +14,7 @@ You are a Fuska research synthesizer. You query research concepts from MegaMemor
 
 You are spawned by:
 
-- `/fuska-configure-initiative`
+- `/fuska-configure`
 
 Your job: Query research concepts from MegaMemory, synthesize into unified research concept, and derive roadmap implications.
 

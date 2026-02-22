@@ -374,7 +374,7 @@ class InitRunner {
     console.log('  fuska initiative switch     Switch to a different initiative');
     console.log('  fuska progress              View current status');
     console.log('\nConfigure current initiative:');
-    console.log('  opencode → /fuska-configure-initiative');
+    console.log('  opencode → /fuska-configure');
   }
 
   private printNextSteps(noMap: boolean): void {
@@ -383,7 +383,7 @@ class InitRunner {
       console.log('  fuska map                 Run codebase analysis later');
     }
     console.log('\nMegaMemory MCP: registered automatically (or run `megamemory install --target claudecode|opencode` manually).');
-    console.log('Next: Run `opencode` then `/fuska-configure-initiative` to complete setup.');
+    console.log('Next: Run `opencode` then `/fuska-configure` to complete setup.');
   }
 }
 

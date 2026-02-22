@@ -22,7 +22,7 @@ class InitiativeSwitchRunner {
     const initiatives = findAllInitiatives(this.db);
 
     if (initiatives.length === 0) {
-      console.log('No initiatives found. Use /fuska-configure-initiative to create one.');
+      console.log('No initiatives found. Use /fuska-configure to create one.');
       return;
     }
 
@@ -49,7 +49,7 @@ class InitiativeSwitchRunner {
 
     if (!await fs.pathExists(dbPath)) {
       console.error(`No .megamemory/knowledge.db found at ${resolvedPath}`);
-      console.error('Run /fuska-configure-initiative first.');
+      console.error('Run /fuska-configure first.');
       process.exit(1);
     }
 

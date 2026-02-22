@@ -14,13 +14,23 @@ tools:
 ## Usage
 
 ```
-/fuska-configure [--mode yolo|interactive] [--depth quick|standard|comprehensive] [--parallel true|false] [--commits per-chapter|per-plan|per-task] [--research yes|no] [--plan-check yes|no] [--verifier yes|no]
+/fuska-configure [flags...] [description]
 ```
+
+**Flags:**
+- `--mode (yolo|interactive)` — Workflow mode
+- `--depth (quick|standard|comprehensive)` — Planning depth
+- `--parallel (true|false)` — Parallel execution
+- `--commits (per-chapter|per-plan|per-task)` — Commit strategy
+- `--research (yes|no)` — Enable research phase
+- `--plan-check (yes|no)` — Enable plan verification
+- `--verifier (yes|no)` — Enable chapter verification
 
 **Examples:**
 - `/fuska-configure` — Interactive mode (asks all questions)
-- `/fuska-configure --mode yolo --depth quick --parallel true` — Skip workflow questions, use provided values
-- `/fuska-configure --mode yolo --depth quick --parallel true --commits per-chapter --research yes --plan-check yes --verifier yes` — Full auto, no questions asked
+- `/fuska-configure A task management app for teams` — Description provided, asks workflow questions
+- `/fuska-configure --mode yolo --depth quick A task management app` — Description + flags, minimal questions
+- `/fuska-configure --mode yolo --depth quick --parallel true --commits per-chapter --research yes --plan-check yes --verifier yes` — All flags, no questions asked
 
 <objective>
 
@@ -85,25 +95,29 @@ This command is run after `fuska init` to complete initiative setup. If a descri
    ```
 
 5. Parse command arguments (if any):
-   - The user prompt may contain flags after `/fuska-configure`
-   - Parse: `--mode (yolo|interactive)`, `--depth (quick|standard|comprehensive)`, `--parallel (true|false)`, `--commits (per-chapter|per-plan|per-task)`, `--research (yes|no)`, `--plan-check (yes|no)`, `--verifier (yes|no)`
-   - Store in `PARSED_ARGS` object
-   - If any args provided: `SKIP_QUESTIONING="yes"` (skip Chapter 1 if HAS_DESCRIPTION)
+   - The user prompt may contain flags and/or a description
+   - Parse flags first: `--mode (yolo|interactive)`, `--depth (quick|standard|comprehensive)`, `--parallel (true|false)`, `--commits (per-chapter|per-plan|per-task)`, `--research (yes|no)`, `--plan-check (yes|no)`, `--verifier (yes|no)`
+   - Store flags in `PARSED_ARGS` object
+   - Extract remaining non-flag text as `PROVIDED_DESCRIPTION`
+   - If `PROVIDED_DESCRIPTION` is non-empty:
+     - `HAS_DESCRIPTION="yes"`
+     - `STORED_DESCRIPTION = PROVIDED_DESCRIPTION`
+   - If `STORED_DESCRIPTION` exists (either from arguments or initiative): `SKIP_QUESTIONING="yes"`
    - If ALL workflow args provided (`--mode`, `--depth`, `--parallel`, `--commits`, `--research`, `--plan-check`, `--verifier`): `SKIP_WORKFLOW_QUESTIONS="yes"`
 
 ## Chapter 1: Deep Questioning
 
 **If SKIP_QUESTIONING is set:**
 
-Arguments were provided via command flags. Skip questioning entirely:
+Description was provided (via command argument or stored in initiative). Skip questioning entirely:
 
-1. Use `STORED_DESCRIPTION` (from initiative) or generate defaults from project name
-2. Derive `whatThisIs` and `coreValue` from available context
+1. Use `STORED_DESCRIPTION` (from command argument or initiative)
+2. Derive `whatThisIs` and `coreValue` from the description
 3. Skip directly to Chapter 2 (Workflow Preferences)
 
 **If HAS_DESCRIPTION:**
 
-The user provided a description during `fuska init`. Use it to derive context:
+The user provided a description (via command argument or during `fuska init`). Use it to derive context:
 
 1. Parse `STORED_DESCRIPTION`
 2. Derive `whatThisIs` from the description content
@@ -612,9 +626,11 @@ All concepts updated/created in MegaMemory knowledge graph:
 <success_criteria>
 
 - [ ] Current initiative loaded from config
-- [ ] Description detection completed (HAS_DESCRIPTION set correctly)
-- [ ] Arguments parsed (PARSED_ARGS, SKIP_QUESTIONING, SKIP_WORKFLOW_QUESTIONS set correctly)
-- [ ] Deep questioning completed (or skipped if args/description provided)
+- [ ] Flags parsed from $ARGUMENTS into PARSED_ARGS
+- [ ] Positional description extracted as PROVIDED_DESCRIPTION (if any)
+- [ ] Description detection completed (HAS_DESCRIPTION set correctly from PROVIDED_DESCRIPTION or stored initiative)
+- [ ] SKIP_QUESTIONING and SKIP_WORKFLOW_QUESTIONS set correctly
+- [ ] Deep questioning completed (or skipped if description/args provided)
 - [ ] Initiative root updated with what_this_is and core_value
 - [ ] Workflow preferences collected (from args or interactive questions)
 - [ ] Config concept created/updated with workflow preferences

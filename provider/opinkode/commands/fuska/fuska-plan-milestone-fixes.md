@@ -1,7 +1,7 @@
 ---
 name: fuska-plan-milestone-fixes
 description: Create chapters to close all gaps identified by milestone audit using MegaMemory
-agent: @../../agents/fuska/fuska-planner.md
+agent: "@../../agents/fuska/fuska-planner.md"
 tools:
   - read
   - write

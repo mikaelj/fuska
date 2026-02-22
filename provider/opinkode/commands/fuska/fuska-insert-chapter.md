@@ -2,7 +2,7 @@
 name: fuska-insert-chapter
 description: Insert urgent work (e.g., "72.1 quick fix" - immediately after 72.1 chapter) using MegaMemory
 argument-hint: <after> <description>
-agent: @../../agents/fuska/fuska-planner.md
+agent: "@../../agents/fuska/fuska-planner.md"
 tools:
   - read
   - write
