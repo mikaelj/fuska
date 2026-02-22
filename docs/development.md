@@ -15,7 +15,7 @@ fuska/
 │   ├── opinkode/             # Source format for OpenCode
 │   │   ├── command/fuska/    # Slash commands (*.md)
 │   │   ├── agents/fuska/     # Agent definitions (*.md)
-│   │   └── fuska/            # Shared resources (scripts, references)
+│   │   └── fuska/            # Shared resources (references, templates, workflows, config)
 │   │
 │   └── klod/                 # Generated format for Claude Code (build output)
 │       ├── skills/fuska-*/   # Commands as skills (SKILL.md)
@@ -27,6 +27,26 @@ fuska/
 └── scripts/
     └── build-claude.ts       # Transforms opinkode/ -> klod/
 ```
+
+### Shared Resources (`fuska/`)
+
+The `fuska/` directory contains shared content used by commands, agents, and workflows via the `@` include system. In markdown files, `@../../path/to/file.md` inside `<execution_context>` or `<required_reading>` tags injects that file's content at runtime.
+
+Key shared files:
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `megamemory-quick-ref.md` | `references/` | MegaMemory tool API quick reference |
+| `megamemory-integration.md` | `references/` | Full MegaMemory integration guide (patterns, interfaces, naming) |
+| `model-resolution.md` | `references/` | Shared model alias to model ID resolution logic |
+| `checkpoints.md` | `references/` | Checkpoint types and automation rules |
+| `verification-patterns.md` | `references/` | Artifact verification (exists, substantive, wired, functional) |
+| `git-integration.md` | `references/` | Commit message rules, formats, and strategy |
+| `tdd.md` | `references/` | TDD plan structure and RED-GREEN-REFACTOR cycle |
+| `checker-roles.md` | `references/` | Plan checker role definitions |
+| `plan-prompts.md` | `templates/` | Shared planner prompt templates |
+| `review-loop.md` | `templates/` | Plan review interaction patterns |
+| `workflow-modes.md` | `config/` | Workflow mode definitions (planned/checked/researched/verified) |
 
 ---
 

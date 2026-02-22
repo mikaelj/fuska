@@ -72,7 +72,7 @@ Always run. Creates a detailed task list with dependencies, grouped into batches
 /fuska build
 ```
 
-Always run. Implements plan tasks with atomic commits. Handles deviations automatically. Updates state after every task commit.
+Always run. Implements plan tasks with atomic commits. Handles deviations automatically. Updates state after every task commit. TDD plans follow a RED-GREEN-REFACTOR cycle instead of linear execution, producing 2-3 commits per plan. See [concepts.md](concepts.md#plan-types) for plan type details.
 
 ### Review
 
