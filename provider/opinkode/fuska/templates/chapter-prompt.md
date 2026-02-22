@@ -515,7 +515,7 @@ TDD features get dedicated plans with `type: tdd`.
 → Yes: Create a TDD plan
 → No: Standard task in standard plan
 
-See `~/.config/opencode/get-shit-done/references/tdd.md` for TDD plan structure.
+See `~/.config/opencode/fuska/references/tdd.md` for TDD plan structure.
 
 ---
 
@@ -757,7 +757,7 @@ user_setup:
 
 **Result:** Execute-plan generates `{chapter}-USER-SETUP.md` with checklist for the user.
 
-See `~/.config/opencode/get-shit-done/templates/user-setup.md` for full schema and examples
+See `~/.config/opencode/fuska/templates/user-setup.md` for full schema and examples
 
 ---
 
@@ -824,4 +824,4 @@ Task completion ≠ Goal achievement. A task "create chat component" can complet
 5. Gaps found → fix plans created → execute → re-verify
 6. All requirements pass → chapter complete
 
-See `~/.config/opencode/get-shit-done/workflows/verify-chapter.md` for verification logic.
+See `~/.config/opencode/fuska/workflows/verify-chapter.md` for verification logic.

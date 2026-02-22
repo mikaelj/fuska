@@ -866,7 +866,7 @@ After TDD plan completion, ensure:
 - Standard plans: Multiple tasks, 1 commit per task, 2-4 commits total
 - TDD plans: Single feature, 2-3 commits for RED/GREEN/REFACTOR cycle
 
-See `~/.config/opencode/get-shit-done/references/tdd.md` for TDD plan structure.
+See `~/.config/opencode/fuska/references/tdd.md` for TDD plan structure.
 </tdd_plan_execution>
 
 <task_commit>
@@ -1032,7 +1032,7 @@ I'll verify after: [verification]
 - If verification passes or N/A: continue to next task
 - If verification fails: inform user, wait for resolution
 
-See ~/.config/opencode/get-shit-done/references/checkpoints.md for complete checkpoint guidance.
+See ~/.config/opencode/fuska/references/checkpoints.md for complete checkpoint guidance.
 </step>
 
 <step name="checkpoint_return_for_coordinator">
@@ -1145,7 +1145,7 @@ const userSetup = planData.user_setup; // Array or undefined
 
 **If user_setup exists and is not empty:**
 
-Create a USER-SETUP concept using template from `~/.config/opencode/get-shit-done/templates/user-setup.md`:
+Create a USER-SETUP concept using template from `~/.config/opencode/fuska/templates/user-setup.md`:
 
 ```javascript
 megamemory:create_concept({
@@ -1223,7 +1223,7 @@ Set `USER_SETUP_CREATED=true` if concept was created, for use in completion mess
 
 <step name="create_summary">
 Create Summary concept as specified in the prompt's `<output>` section.
-Use ~/.config/opencode/get-shit-done/templates/summary.md for structure reference.
+Use ~/.config/opencode/fuska/templates/summary.md for structure reference.
 
 **Concept creation:**
 

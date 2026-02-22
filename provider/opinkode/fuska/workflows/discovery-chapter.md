@@ -28,7 +28,7 @@ OpenCode's training data is 6-18 months stale. Always verify.
 2. **Official docs** - When Context7 lacks coverage
 3. **webfetch LAST** - For comparisons and trends only
 
-See ~/.config/opencode/get-shit-done/templates/discovery.md `<discovery_protocol>` for full protocol.
+See ~/.config/opencode/fuska/templates/discovery.md `<discovery_protocol>` for full protocol.
 </source_hierarchy>
 
 @../references/megamemory-integration.md
@@ -161,7 +161,7 @@ For: Architectural decisions, novel problems, high-risk choices.
 
 **Process:**
 
-1. **Scope the discovery** using ~/.config/opencode/get-shit-done/templates/discovery.md:
+1. **Scope the discovery** using ~/.config/opencode/fuska/templates/discovery.md:
 
    - Define clear scope
    - Define include/exclude boundaries
@@ -206,7 +206,7 @@ For: Architectural decisions, novel problems, high-risk choices.
    ```
 
    Include in JSON summary:
-   - Full structure from ~/.config/opencode/get-shit-done/templates/discovery.md
+   - Full structure from ~/.config/opencode/fuska/templates/discovery.md
    - Quality report with source attribution
    - Confidence by finding
    - Validation checkpoints if LOW confidence on critical findings
@@ -230,7 +230,7 @@ Ask: What do we need to learn before we can plan this chapter?
   </step>
 
 <step name="create_discovery_scope">
-Use ~/.config/opencode/get-shit-done/templates/discovery.md.
+Use ~/.config/opencode/fuska/templates/discovery.md.
 
 Include:
 

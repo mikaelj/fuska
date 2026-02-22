@@ -96,7 +96,7 @@ Plans are stored as MegaMemory concepts (e.g., `chapter-02-plan-01`) and execute
 - Glue code and wiring
 - Simple CRUD with no business logic
 
-TDD plans are single-feature focused — one behavior per plan, with dedicated commits for each cycle stage. Standard plans can contain multiple tasks across different concerns.
+The planner selects the plan type automatically during `/fuska plan` based on the nature of each task — there is no flag to force TDD. TDD plans are single-feature focused — one behavior per plan, with dedicated commits for each cycle stage. Standard plans can contain multiple tasks across different concerns.
 
 ---
 
