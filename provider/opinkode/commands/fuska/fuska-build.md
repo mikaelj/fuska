@@ -323,9 +323,9 @@ Route based on state status. Output markdown directly:
 ```
 Fuska: Chapter {Z} complete — {Y} plans executed, goal verified [OK]
 > Next Up: Chapter {Z+1}: {Name} — {Goal}
-  /fuska-design-chapter {Z+1}
+  /fuska-design {Z+1}
   */new first → fresh context window*
-Also: /fuska-plan {Z+1}, /fuska-review-chapter {Z}
+Also: /fuska-plan {Z+1}, /fuska-review {Z}
 ```
 
 **Route B: Milestone complete**
@@ -334,7 +334,7 @@ Fuska: Milestone complete — {N} chapters completed, all verified [OK]
 > Next Up: Audit milestone
   /fuska-audit-milestone
   */new first → fresh context window*
-Also: /fuska-review-chapter, /fuska-complete-milestone
+Also: /fuska-review, /fuska-complete-milestone
 ```
 
 **Route C: All chapters complete**
@@ -343,7 +343,7 @@ Fuska: All chapters complete — All {totalChapters} finished, verified [OK]
 > Next Up: Complete Milestone
   /fuska-complete-milestone
   */new first → fresh context window*
-Also: /fuska-review-chapter
+Also: /fuska-review
 ```
 
 **Route D: Gaps found**

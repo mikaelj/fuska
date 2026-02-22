@@ -281,7 +281,7 @@ If status === "ready_to_plan":
 
 **Options:**
 1. Discuss chapter first — Gather context, clarify approach
-   /fuska-design-chapter {currentChapter}
+   /fuska-design {currentChapter}
 
 2. Plan directly — Skip discussion, create plans
    /fuska-plan {currentChapter}
@@ -328,7 +328,7 @@ ${checkpointPlans.length > 0 ? `Checkpoint detected: ${checkpointPlans.map(p => 
    /fuska-build {currentChapter}
 
 2. Verify work — Manual acceptance testing
-   /fuska-review-chapter {currentChapter}
+   /fuska-review {currentChapter}
 
 3. View status — See detailed status of current work
    (Display chapter concepts in detail)
@@ -344,10 +344,10 @@ If status === "chapter_complete":
 
 **Options:**
 1. Next chapter — Move to next chapter in roadmap
-   /fuska-design-chapter {next_chapter}
+   /fuska-design {next_chapter}
 
 2. Verify chapter — Manual acceptance testing before proceeding
-   /fuska-review-chapter {currentChapter}
+   /fuska-review {currentChapter}
 
 3. Audit milestone — If this was last chapter
    /fuska-audit-milestone
@@ -425,10 +425,10 @@ ${status === 'ready_to_plan' && contextExists === true
 All Available Commands:
 
 - fuska progress — View detailed project progress
-- /fuska-design-chapter {N} — Discuss a chapter
+- /fuska-design {N} — Discuss a chapter
 - /fuska-plan {N} — Plan a chapter
 - /fuska-build {N} — Execute a chapter
-- /fuska-review-chapter {N} — Verify work
+- /fuska-review {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
 ─────────────────────────────────────────────────────────────
@@ -454,10 +454,10 @@ All Available Commands:
 **All Available Commands:**
 
 - fuska progress — View detailed project progress
-- /fuska-design-chapter {N} — Discuss a chapter
+- /fuska-design {N} — Discuss a chapter
 - /fuska-plan {N} — Plan a chapter
 - /fuska-build {N} — Execute a chapter
-- /fuska-review-chapter {N} — Verify work
+- /fuska-review {N} — Verify work
 - /fuska-audit-milestone — Audit milestone
 - /fuska-complete-milestone — Complete milestone
 ──────────────────────────────────────────────────────────────
@@ -488,7 +488,7 @@ Based on the status and detection results from step 5, output the appropriate ro
 ──────────────────────────────────────────────────────────────
 
 **Or design first:**
-/fuska-design-chapter {X}
+/fuska-design {X}
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -540,7 +540,7 @@ Incomplete:
 ──────────────────────────────────────────────────────────────
 
 **Or review first:**
-/fuska-review-chapter {X}
+/fuska-review {X}
 ──────────────────────────────────────────────────────────────
 ```
 
@@ -558,14 +558,14 @@ Incomplete:
 ## > Next Up
 
 **Next Chapter**
-/fuska-design-chapter {X+1}
+/fuska-design {X+1}
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Or review first:**
-/fuska-review-chapter {X}
+/fuska-review {X}
 ──────────────────────────────────────────────────────────────
 
 **Or audit milestone:**

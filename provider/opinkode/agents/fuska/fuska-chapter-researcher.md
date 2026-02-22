@@ -33,7 +33,7 @@ Your job: Answer "What do I need to know to PLAN this chapter well?" Produce a r
 </language>
 
 <upstream_input>
-**CONTEXT.md** (if exists) — User decisions from `/fuska-discuss-chapter`
+**CONTEXT.md** (if exists) — User decisions from `/fuska-design`
 
 | Section | How You Use It |
 |---------|----------------|
@@ -462,7 +462,7 @@ Orchestrator provides:
 
 **Load chapter context from MegaMemory:**
 - Query chapter concept to get chapter information
-- Query for chapter-context to get user decisions (if discuss-chapter created one)
+- Query for chapter-context to get user decisions (if /fuska-design created one)
 
 **If chapter context concept exists**, it contains user decisions that MUST constrain your research:
 

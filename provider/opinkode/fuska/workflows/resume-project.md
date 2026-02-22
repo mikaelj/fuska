@@ -182,7 +182,7 @@ What would you like to do?
    OR
 1. Execute chapter (/fuska-build {chapter})
    OR
-1. Discuss Chapter 3 context (/fuska-discuss-chapter 3) [if context_available is false]
+1. Discuss Chapter 3 context (/fuska-design 3) [if context_available is false]
    OR
 1. Plan Chapter 3 (/fuska-plan 3) [if context_available is true or discuss option declined]
 
@@ -228,7 +228,7 @@ Based on user selection, route to appropriate workflow:
   ---
 
   **Also available:**
-  - `/fuska-discuss-chapter [N]` — gather context first
+  - `/fuska-design [N]` — gather context first
   - `/fuska-research-chapter [N]` — investigate unknowns
 
   ---

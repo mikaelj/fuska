@@ -31,7 +31,7 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 - `roadmap` and `chapter-N` — chapter structure
 - Updates `state` — initiative memory
 
-**After this command:** Run `/fuska-design-chapter 1` to start execution.
+**After this command:** Run `/fuska-design 1` to start execution.
 
 </objective>
 
@@ -553,7 +553,7 @@ All v1 requirements mapped to chapters [OK]
 
 **Chapter 1: [Chapter Name]** — [Goal]
 
-/fuska-design-chapter 1 — gather context and clarify approach
+/fuska-design 1 — gather context and clarify approach
 
 */new first → fresh context window*
 
@@ -587,6 +587,6 @@ All concepts updated/created in MegaMemory knowledge graph:
 - [ ] fuska-roadmapper spawned
 - [ ] Chapter concepts created
 - [ ] State concept updated
-- [ ] User knows next step is `/fuska-design-chapter 1`
+- [ ] User knows next step is `/fuska-design 1`
 
 </success_criteria>

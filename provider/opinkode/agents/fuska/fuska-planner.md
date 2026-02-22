@@ -41,7 +41,7 @@ Your job: Produce plan concepts in MegaMemory that OpenCode executors can query 
 <context_fidelity>
 ## CRITICAL: User Decision Fidelity
 
-The coordinator provides user decisions from the chapter context concept (created by /fuska-discuss-chapter).
+The coordinator provides user decisions from the chapter context concept (created by /fuska-design).
 
 **Before creating ANY task, verify:**
 
@@ -1186,7 +1186,7 @@ Understand:
 **Load chapter-specific context (MANDATORY):**
 
 ```typescript
-// Load context concept if exists (from /fuska-discuss-chapter)
+// Load context concept if exists (from /fuska-design)
 megamemory:understand({ query: `${chapterSlug}-context`, top_k: 1 });
 
 // Load chapter research concept if exists (from /fuska-research-chapter)

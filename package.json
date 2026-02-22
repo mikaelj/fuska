@@ -1,6 +1,6 @@
 {
   "name": "fuska",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Fuska - Lean solo agentic development with MegaMemory knowledge graph",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

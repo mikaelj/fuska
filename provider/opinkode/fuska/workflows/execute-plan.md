@@ -1737,7 +1737,7 @@ All {Y} plans finished.
 
 **Also available:**
 - `/fuska-verify-work {Z}` — manual acceptance testing before continuing
-- `/fuska-discuss-chapter {Z+1}` — gather context first
+- `/fuska-design {Z+1}` — gather context first
 - Review chapter accomplishments before continuing
 
 ---

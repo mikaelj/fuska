@@ -1,7 +1,7 @@
 <purpose>
 Surface OpenCode's assumptions about a chapter before planning, enabling users to correct misconceptions early.
 
-Key difference from discuss-chapter: This is ANALYSIS of what OpenCode thinks, not INTAKE of what user knows. No file output - purely conversational to prompt discussion.
+Key difference from /fuska-design: This is ANALYSIS of what OpenCode thinks, not INTAKE of what user knows. No file output - purely conversational to prompt discussion.
 </purpose>
 
 @../references/megamemory-integration.md
@@ -186,7 +186,7 @@ Present next steps:
 
 ```
 What's next?
-1. Discuss context (/fuska-discuss-chapter ${CHAPTER}) - Let me ask you questions to build comprehensive context
+1. Discuss context (/fuska-design ${CHAPTER}) - Let me ask you questions to build comprehensive context
 2. Plan this chapter (/fuska-plan ${CHAPTER}) - Create detailed execution plans
 3. Re-examine assumptions - I'll analyze again with your corrections
 4. Done for now

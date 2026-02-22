@@ -1,0 +1,71 @@
+# Changelog — Fuska
+
+Narrative changelog tracking significant changes to the Fuska prompt framework.
+Organized by theme rather than individual commit.
+
+---
+
+## Unreleased (since v0.0.2-baseline)
+
+**2026-02-21 – 2026-02-22** | 18 commits | 66 files changed, ~1,600 insertions, ~8,800 deletions (net ~7,200 lines removed)
+
+This batch of changes represents a focused token-optimization effort. The prompt files that make up Fuska had grown organically, with substantial duplication across agent and command definitions. The goal was to reduce total token cost without losing any behavioral fidelity — every instruction still exists, it just lives in one place instead of thirty.
+
+### Shared resource extraction (`@include` pattern)
+
+The single biggest lever was identifying blocks of text that appeared verbatim (or near-verbatim) in many files and extracting them into standalone reference files under `provider/opinkode/fuska/`. Each source file now uses a short `@include` directive instead of carrying its own copy.
+
+New shared resources created:
+
+- **megamemory-quick-ref.md** — condensed megamemory usage guide, replacing a ~40-line block duplicated across 26 command files and 4 agent files.
+- **workflow-modes.md** — the three workflow modes (discovery, milestone, chapter) that were copy-pasted into multiple commands.
+- **plan-prompts.md** — plan-type definitions and prompt templates extracted from fuska-plan.md.
+- **review-loop.md** — the review/verify loop template previously inlined in the execute-plan workflow.
+- **model-resolution.md** — model selection logic extracted from command files.
+- **execution-rules.md** — shared execution constraints that were duplicated across agent files.
+- **language.md** — the Swedish-language instruction block, previously inlined in all 19 agent files.
+
+### Reference file condensation
+
+Several large reference documents were condensed significantly while preserving all essential rules. Redundant phrasing, over-explained examples, and verbose formatting were tightened:
+
+| File | Before | After | Reduction | ~Tokens saved |
+|------|--------|-------|-----------|---------------|
+| checkpoints.md | 1,365 lines | 354 lines | 74% | ~3,980 (69%) |
+| verification-patterns.md | 1,056 lines | 268 lines | 75% | ~2,730 (70%) |
+| git-integration.md | 1,048 lines | 219 lines | 79% | ~3,040 (77%) |
+| tdd.md | 987 lines | 207 lines | 79% | ~3,575 (80%) |
+| megamemory-integration.md | 1,562 lines | 655 lines | 58% | ~1,790 (38%) |
+| **Total:** | 6,018 lines | 1,703 lines | 72% | ~15,115 (66%) |
+
+### Command file deduplication
+
+The three largest command files — `fuska-plan.md`, `fuska-do.md`, and `fuska-build.md` — each contained over 1,000 lines because they inlined their own copies of workflow logic, review templates, and plan-type definitions. After extracting shared resources, these shrank dramatically:
+
+| File | Before | After | Shared @includes | ~Tokens saved | ~Saved (cached*) |
+|------|--------|-------|-----------------|---------------|-----------------|
+| fuska-plan.md | 1,446 lines | 450 lines | ~1,180 tokens | ~2,080 (44%) | ~3,140 (66%) |
+| fuska-do.md | 1,163 lines | 534 lines | ~280 tokens | ~1,190 (34%) | ~1,440 (42%) |
+| fuska-build.md | 1,023 lines | 384 lines | ~280 tokens | ~1,400 (45%) | ~1,650 (53%) |
+| **Total:** | 3,632 lines | 1,368 lines | ~1,740 tokens | ~4,670 (41%) | ~6,230 (55%) |
+
+*Cached: shared @includes at prompt-cache read price (90% discount). Before the refactor, this content was inlined and unique to each command file — uncacheable. After extraction to shared paths, it benefits from caching across invocations.
+
+The remaining 26 command files and 19 agent files each lost their inlined megamemory guide, language block, and other duplicated sections — typically 20–50 lines per file, adding up across the full set.
+
+> Token estimates use word count as proxy (~1 word ≈ 1 token for English markdown). "Cached" columns assume shared @include files hit the prompt cache at 90% discount — reasonable since they're stable, shared-path resources loaded identically across commands.
+
+### Documentation updates
+
+- Added `docs/concepts.md` covering plan types, reference architecture, and TDD approach.
+- Minor updates to `docs/development.md` and `docs/workflow.md`.
+
+### Bug fixes
+
+- Fixed stale file paths in internal files that still referenced the old `get-shit-done` project name.
+
+---
+
+## v0.0.2-baseline — 2026-02-21
+
+Baseline tag created before the token-optimization work began. Represents the last state of the prompt framework before the extraction and condensation effort described above.

@@ -13,7 +13,7 @@
 fuska/
 ├── provider/
 │   ├── opinkode/             # Source format for OpenCode
-│   │   ├── command/fuska/    # Slash commands (*.md)
+│   │   ├── commands/fuska/   # Slash commands (*.md)
 │   │   ├── agents/fuska/     # Agent definitions (*.md)
 │   │   └── fuska/            # Shared resources (references, templates, workflows, config)
 │   │
@@ -142,7 +142,7 @@ This uses `npm pack` to create a tarball, then installs it globally — exactly 
 ```bash
 # OpenCode
 ln -s $(pwd)/provider/opinkode/fuska ~/.config/opencode/fuska
-ln -s $(pwd)/provider/opinkode/command/fuska ~/.config/opencode/command/fuska
+ln -s $(pwd)/provider/opinkode/commands/fuska ~/.config/opencode/commands/fuska
 ln -s $(pwd)/provider/opinkode/agents/fuska ~/.config/opencode/agents/fuska
 
 # Claude
@@ -222,7 +222,7 @@ tools:
 ```
 
 These commands:
-- Remain in `provider/opinkode/command/fuska/` for backward compatibility
+- Remain in `provider/opinkode/commands/fuska/` for backward compatibility
 - Are NOT transformed to `provider/klod/skills/`
 - Display deprecation notice when invoked
 

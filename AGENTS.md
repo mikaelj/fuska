@@ -32,7 +32,7 @@ These directories are for INSTALLED packages, NOT source code. You MUST ONLY edi
 
 ### Key Subdirectories in `provider/opinkode/`
 
-- `command/fuska/` — Slash commands (*.md with YAML frontmatter)
+- `commands/fuska/` — Slash commands (*.md with YAML frontmatter)
 - `agents/fuska/` — Agent definitions (*.md)
 - `fuska/` — Shared resources:
   - `references/` — Reference documents for agents
@@ -92,7 +92,7 @@ Command flags are defined in two places:
 2. `commandHelp` object in `src/commands/help.ts` (must stay in sync)
 
 When adding or modifying command flags:
-1. Update `flags:` in `provider/opinkode/command/fuska/fuska-{cmd}.md`
+1. Update `flags:` in `provider/opinkode/commands/fuska/fuska-{cmd}.md`
 2. **Manually sync** to `src/commands/help.ts`
 
 A validation script (`npm run validate:help`) catches mismatches at build time.
@@ -102,7 +102,7 @@ Run it locally before committing flag changes.
 
 ## Always Look Here
 
-- `provider/opinkode/command/fuska/` — Command implementations
+- `provider/opinkode/commands/fuska/` — Command implementations
 - `provider/opinkode/agents/fuska/` — Agent definitions
 - `provider/opinkode/fuska/references/` — Reference documents
 - `provider/opinkode/fuska/workflows/` — Workflow definitions

@@ -712,7 +712,7 @@ Present completion with next steps:
 
 **Chapter [N]: [Chapter Name]** — [Goal from roadmap]
 
-/fuska-design-chapter [N]
+/fuska-design [N]
 
 */new first → fresh context window*
 
@@ -760,7 +760,7 @@ Present completion summary from step 10.
 - [ ] Chapter concepts created in MegaMemory
 - [ ] Roadmap concept updated with chapters continuing from previous milestone
 - [ ] User feedback incorporated (if any)
-- [ ] User knows next step is `/fuska-design-chapter [N]`
+- [ ] User knows next step is `/fuska-design [N]`
 
 **Atomic persistence:** All concepts are created/updated immediately. If context is lost, artifacts persist in MegaMemory.
 

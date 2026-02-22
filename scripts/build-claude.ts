@@ -111,7 +111,7 @@ async function buildClaude(): Promise<void> {
   }
   
   console.log('  Transforming commands to skills...');
-  const commandsDir = path.join(OPENCODE_DIR, 'command/fuska');
+  const commandsDir = path.join(OPENCODE_DIR, 'commands/fuska');
   const commandFiles = await glob('*.md', { cwd: commandsDir, absolute: false });
   
   for (const file of commandFiles) {

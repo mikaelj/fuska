@@ -38,7 +38,7 @@ interface SymlinkMapping {
 
 const OPENCODE_SYMLINKS: SymlinkMapping[] = [
   { targetRel: 'fuska', sourceRel: 'provider/opinkode/fuska' },
-  { targetRel: 'commands/fuska', sourceRel: 'provider/opinkode/command/fuska' },
+  { targetRel: 'commands/fuska', sourceRel: 'provider/opinkode/commands/fuska' },
   { targetRel: 'agents/fuska', sourceRel: 'provider/opinkode/agents/fuska' },
 ];
 

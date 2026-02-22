@@ -64,7 +64,7 @@ The variable `input` contains the raw argument string provided by the user.
 const chapterNumber = input.match(/\d+/)?.[0]
 if (!chapterNumber) {
   Display: "Chapter number is required"
-  Display: "Usage: /fuska-review-chapter <chapter>"
+  Display: "Usage: /fuska-review <chapter>"
   Stop
 }
 
@@ -514,7 +514,7 @@ Verification complete [OK]
 ## > Next Up
 
 **Chapter {Z+1}: {Name}** — {Goal from chapter concept}
-/fuska-design-chapter {Z+1} — gather context and clarify approach
+/fuska-design {Z+1} — gather context and clarify approach
 
 */new first → fresh context window*
 
@@ -625,7 +625,7 @@ Review the issues above and either:
 
 **Options:**
 - /fuska-plan {Z} --fixes — retry fix planning with guidance
-- /fuska-design-chapter {Z} — gather more context before replanning
+- /fuska-design {Z} — gather more context before replanning
 ──────────────────────────────────────────────────────────────
 ```
 

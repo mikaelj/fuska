@@ -312,7 +312,7 @@ Confidence: [level]
 
 What's next?
 
-1. Discuss chapter context (/fuska-discuss-chapter [current-chapter])
+1. Discuss chapter context (/fuska-design [current-chapter])
 2. Create chapter plan (/fuska-plan [current-chapter])
 3. Refine discovery (dig deeper)
 4. Review discovery (query MegaMemory concept)

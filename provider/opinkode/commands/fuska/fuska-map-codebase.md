@@ -550,7 +550,7 @@ ${!stateData.current_chapter
 
 **Also available:**
 - Query codebase concepts: megamemory:understand(query='codebase')
-- /fuska-design-chapter {N} — Discuss a chapter
+- /fuska-design {N} — Discuss a chapter
 - /fuska-plan {N} — Plan a chapter
 - fuska config — View/change checker panel settings
 ────────────────────────────────────────────────────────────

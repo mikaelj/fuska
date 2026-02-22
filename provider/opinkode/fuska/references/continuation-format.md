@@ -307,7 +307,7 @@ Add note that this is the last plan and what comes after:
 ---
 
 **Also available:**
-- `/fuska-design-chapter 2` — gather context first
+- `/fuska-design 2` — gather context first
 - `/fuska-research-chapter 2` — investigate unknowns
 - Review roadmap
 
@@ -336,7 +336,7 @@ Show completion status before next action:
 ---
 
 **Also available:**
-- `/fuska-design-chapter 3` — gather context first
+- `/fuska-design 3` — gather context first
 - `/fuska-research-chapter 3` — investigate unknowns
 - Review what Chapter 2 built
 
@@ -356,7 +356,7 @@ When there's no clear primary action:
 
 **To plan directly:** `/fuska-plan 3`
 
-**To discuss context first:** `/fuska-design-chapter 3`
+**To discuss context first:** `/fuska-design 3`
 
 **To research unknowns:** `/fuska-research-chapter 3`
 

@@ -65,7 +65,7 @@ install_opencode() {
   echo "Creating symlinks..."
   
   create_symlink "$SCRIPT_DIR/opencode/fuska" "$OPENCODE_CONFIG/fuska"
-  create_symlink "$SCRIPT_DIR/opencode/command/fuska" "$OPENCODE_CONFIG/command/fuska"
+  create_symlink "$SCRIPT_DIR/opencode/commands/fuska" "$OPENCODE_CONFIG/commands/fuska"
   create_symlink "$SCRIPT_DIR/opencode/agents/fuska" "$OPENCODE_CONFIG/agents/fuska"
   
   echo ""

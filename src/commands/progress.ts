@@ -570,7 +570,7 @@ class ProgressRunner {
 
       case 'discuss':
         this.out(`Gather context for chapter ${chapterNum} and clarify approach by running:`);
-        this.out(`* /fuska-design-chapter ${chapterNum}`);
+        this.out(`* /fuska-design ${chapterNum}`);
         this.out('');
         this.out(`or skip design of chapter ${chapterNum} and plan directly by running:`);
         this.out(`* /fuska-plan ${chapterNum}`);
@@ -583,7 +583,7 @@ class ProgressRunner {
 
       case 'next-chapter':
         this.out(`Start chapter ${action.chapterNumber} by running:`);
-        this.out(`* /fuska-design-chapter ${action.chapterNumber}`);
+        this.out(`* /fuska-design ${action.chapterNumber}`);
         this.out('');
         this.out(`or skip design and plan directly by running:`);
         this.out(`* /fuska-plan ${action.chapterNumber}`);

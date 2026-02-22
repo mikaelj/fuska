@@ -681,7 +681,7 @@ git push origin v${{version}}
 ```
 **Also available:**
 - fuska progress — View detailed project progress
-- /fuska-review-chapter — Verify work before starting next milestone
+- /fuska-review — Verify work before starting next milestone
 ────────────────────────────────────────────────────────────
 ```
 

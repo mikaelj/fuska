@@ -43,7 +43,7 @@ Fuska creates **symlinks** from your config directories to the npm package:
 | Global Target | Points To |
 |---------------|-----------|
 | `~/.config/opencode/fuska/` | `provider/opinkode/fuska/` |
-| `~/.config/opencode/command/fuska/` | `provider/opinkode/command/fuska/` |
+| `~/.config/opencode/commands/fuska/` | `provider/opinkode/commands/fuska/` |
 | `~/.config/opencode/agents/fuska/` | `provider/opinkode/agents/fuska/` |
 
 #### Claude Code Symlinks

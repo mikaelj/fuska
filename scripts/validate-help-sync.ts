@@ -9,11 +9,11 @@ interface CommandConfig {
 }
 
 const COMMANDS: CommandConfig[] = [
-  { name: 'do', frontmatterPath: 'provider/opinkode/command/fuska/fuska-do.md', helpKey: 'do' },
-  { name: 'refresh', frontmatterPath: 'provider/opinkode/command/fuska/fuska-refresh.md', helpKey: 'refresh' },
-  { name: 'doc', frontmatterPath: 'provider/opinkode/command/fuska/fuska-doc.md', helpKey: 'doc' },
-  { name: 'debug', frontmatterPath: 'provider/opinkode/command/fuska/fuska-debug.md', helpKey: 'debug' },
-  { name: 'ask', frontmatterPath: 'provider/opinkode/command/fuska/fuska-ask.md', helpKey: 'ask' },
+  { name: 'do', frontmatterPath: 'provider/opinkode/commands/fuska/fuska-do.md', helpKey: 'do' },
+  { name: 'refresh', frontmatterPath: 'provider/opinkode/commands/fuska/fuska-refresh.md', helpKey: 'refresh' },
+  { name: 'doc', frontmatterPath: 'provider/opinkode/commands/fuska/fuska-doc.md', helpKey: 'doc' },
+  { name: 'debug', frontmatterPath: 'provider/opinkode/commands/fuska/fuska-debug.md', helpKey: 'debug' },
+  { name: 'ask', frontmatterPath: 'provider/opinkode/commands/fuska/fuska-ask.md', helpKey: 'ask' },
 ];
 
 function extractFlagsFromFrontmatter(filePath: string): string[] {

@@ -623,7 +623,7 @@ Exit skill and invoke Command("/fuska-plan [X+1]")
 ---
 
 **Also available:**
-- `/fuska-discuss-chapter [X+1]` — gather context first
+- `/fuska-design [X+1]` — gather context first
 - `/fuska-research-chapter [X+1]` — investigate unknowns
 - Review roadmap
 

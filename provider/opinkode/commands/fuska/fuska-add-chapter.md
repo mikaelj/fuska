@@ -310,7 +310,7 @@ Output this markdown directly (not as a code block):
 
 **Also available:**
 - /fuska-add-chapter <description> — add another chapter
-- /fuska-design-chapter {N} — gather context first
+- /fuska-design {N} — gather context first
 
 ──────────────────────────────────────────────────────────────
 ```

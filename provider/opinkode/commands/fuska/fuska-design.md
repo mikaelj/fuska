@@ -75,7 +75,7 @@ The variable `input` contains the raw argument string provided by the user.
 const chapterNumber = input.match(/\d+/)?.[0]
 if (!chapterNumber) {
   Display: "Chapter number is required"
-  Display: "Usage: /fuska-design-chapter <chapter>"
+  Display: "Usage: /fuska-design <chapter>"
   Stop
 }
 ```
