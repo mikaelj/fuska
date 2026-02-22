@@ -24,22 +24,9 @@ Never use Chinese in responses or internal reasoning.
 </language>
 
 <execution_context>
+@../../fuska/references/megamemory-quick-ref.md
 @../../fuska/references/git-integration.md
 </execution_context>
-
-<megamemory_guide>
-
-## How to read MegaMemory responses
-
-If you need to check `commit_strategy`, query MegaMemory:
-
-```
-megamemory_understand(query="config", top_k=5)
-```
-
-Parse the `summary` field to extract `git.commit_strategy` (default: `per-chapter`).
-
-</megamemory_guide>
 
 <verification_dimensions>
 

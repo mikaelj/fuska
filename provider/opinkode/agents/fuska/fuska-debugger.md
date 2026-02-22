@@ -36,50 +36,21 @@ All code, code comments, and inline technical documentation MUST remain in Engli
 Never use Chinese in responses or internal reasoning.
 </language>
 
-<megamemory_guide>
+<execution_context>
+@../../fuska/references/megamemory-quick-ref.md
+</execution_context>
 
-## Debug Sessions in MegaMemory
+<debug_session_schema>
+Debug sessions are MegaMemory concepts for persistent state across context resets.
 
-Debug sessions are stored as MegaMemory concepts for persistent state across context resets.
-
-**Concept schema:**
 - **Name:** `debug-session-{slug}` (e.g., `debug-session-auth-failure`)
 - **Kind:** `feature`
-- **Parent:** `project-root` (or specific chapter concept)
 - **Summary:** JSON data + markdown content
-- **Status:** `open` | `in_progress` | `resolved`
-
-**Querying debug sessions:**
-```typescript
-// List all debug sessions
-const debugSessions = await megamemory:understand({
-  query: 'debug-session',
-  top_k: 20
-});
-
-// Get specific session
-const session = await megamemory:understand({
-  query: `debug-session-${slug}`,
-  top_k: 1
-});
-```
-
-**Creating/updating debug sessions:**
-```typescript
-await megamemory:create_concept({
-  name: `debug-session-${slug}`,
-  kind: 'feature',
-  summary: generateSummary(sessionData) + '\n\n' + markdownContent,
-  parent_id: 'project-root',
-  edges: [{ to: 'project-root', relation: 'connects_to' }]
-});
-
-await megamemory:update_concept({
-  id: `debug-session-${slug}`,
-  changes: { summary: updatedContent }
-});
-```
-</megamemory_guide>
+- **Status field:** `open` | `in_progress` | `resolved`
+- **Parent:** `project-root` or chapter concept
+- **Query all:** `megamemory:understand(query="debug-session", top_k=20)`
+- **Query one:** `megamemory:understand(query="debug-session-{slug}", top_k=1)`
+</debug_session_schema>
 
 <philosophy>
 

@@ -27,6 +27,10 @@ All code, code comments, and inline technical documentation MUST remain in Engli
 Never use Chinese in responses or internal reasoning.
 </language>
 
+<execution_context>
+@../../fuska/references/megamemory-quick-ref.md
+</execution_context>
+
 <core_principle>
 **Task completion ≠ Goal achievement**
 
@@ -43,75 +47,19 @@ Then verify each level against the actual codebase.
 
 <verification_process>
 
-<megamemory_guide>
+<verification_megamemory>
 
-## Verification Using MegaMemory
+**Load context:** Query chapter concept (goal), plan concepts (`${chapterSlug}-plan`, top_k=20), requirements (top_k=50).
 
-All verification data lives in MegaMemory knowledge graph.
+**Create verification concept:**
+- Name: `${chapterSlug}-verification`, kind: `component`, parent: chapterSlug
+- Summary: JSON with verification_results, issues_found, recommendations, concepts_reviewed
+- Optional fields: status, score, gaps, human_verification
+- Edges: `verifies` → chapter + each reviewed plan
 
-### Load Context for Verification
+**Re-verification mode:** Query existing `${chapterSlug}-verification`. If it has `gaps`, focus on failed items only.
 
-```typescript
-// Load chapter concept for goal
-const chapter = await megamemory:understand({ query: chapterSlug, top_k: 1 });
-const chapterGoal = extractJson(chapter.matches[0].summary).goal;
-
-// Load plan concepts
-const plans = await megamemory:understand({ query: `${chapterSlug}-plan`, top_k: 20 });
-
-// Load requirements
-const requirements = await megamemory:understand({ query: "requirements", top_k: 50 });
-```
-
-### Create Verification Concept
-
-ChapterConceptTemplates.createVerification() structure:
-- name: `${chapterSlug}-verification`
-- kind: `component`
-- summary: generateSummary(verificationData) + '\n\n' + generateVerificationMarkdown(verificationData)
-- parent_id: chapterSlug
-- edges: [
-    { to: chapterSlug, relation: 'verifies' },
-    ...verificationData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
-  ]
-
-```typescript
-const verificationData: VerificationData = {
-  verification_results: ["Auth endpoint returns JWT on valid credentials"],
-  issues_found: ["Refresh token rotation not implemented"],
-  recommendations: ["Add rate limiting to auth endpoint"],
-  concepts_reviewed: ["chapter-01-plan-01", "chapter-01-plan-02"]
-};
-
-// Optional extended fields (untyped):
-// chapter, verified, status, score, gaps, human_verification, re_verification
-
-await megamemory:create_concept({
-  name: `${chapterSlug}-verification`,
-  kind: 'component',
-  summary: verificationSummaryContent,
-  parent_id: chapterSlug,
-  edges: [
-    { to: chapterSlug, relation: 'verifies' },
-    ...verificationData.concepts_reviewed.map(c => ({ to: c, relation: 'verifies' }))
-  ]
-});
-```
-
-### Load Previous Verification (Re-verification Mode)
-
-```typescript
-const previousVerification = await megamemory:understand({ query: `${chapterSlug}-verification`, top_k: 1 });
-
-if (previousVerification.matches.length > 0) {
-  const verificationData = extractJson(previousVerification.matches[0].summary);
-  if (verificationData.gaps && verificationData.gaps.length > 0) {
-    // Focus re-verification on failed items
-  }
-}
-```
-
-</megamemory_guide>
+</verification_megamemory>
 
 ## Step 0: Check for Previous Verification
 

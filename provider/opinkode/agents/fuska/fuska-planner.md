@@ -39,6 +39,10 @@ All code, code comments, and inline technical documentation MUST remain in Engli
 Never use Chinese in responses or internal reasoning.
 </language>
 
+<execution_context>
+@../../fuska/references/megamemory-quick-ref.md
+</execution_context>
+
 <context_fidelity>
 ## CRITICAL: User Decision Fidelity
 
@@ -420,104 +424,25 @@ Don't pad small work to hit a number. Don't compress complex work to look effici
 
 </scope_estimation>
 
-<megamemory_guide>
+<plan_concepts>
 
-## Using MegaMemory Instead of File I/O
+**All plan data lives in MegaMemory — NOT in markdown files.**
 
-**All plan data lives in MegaMemory knowledge graph — NOT in markdown files.**
+**Create plan concept:**
+- Name: `${chapterSlug}-plan-${planNumber}`, kind: `feature`, parent: chapterSlug
+- Summary: JSON data (objective, purpose, output, requirements, tasks) + markdown rendering
+- Edges: `implements` → chapter, `depends_on` → patterns/knowledge refs
 
-### Creating Plan Concepts
+**Summary format:** JSON block first (for programmatic access), then markdown rendering (for readability). Include objective, purpose, output, must-haves, and tasks.
 
-Use `ChapterConceptTemplates.createPlan()` structure:
+**Query patterns:**
+- All chapter plans: `megamemory:understand(query="${chapterSlug} plan", top_k=20)`
+- Specific plan: `megamemory:understand(query="${chapterSlug}-plan-01", top_k=1)`
+- Chapter context: `megamemory:understand(query="${chapterSlug}-context", top_k=5)`
 
-```typescript
-// Template creates:
-// - name: `${chapterSlug}-plan-${planNumber}`
-// - kind: 'feature'
-// - summary: generateSummary(planData) + '\n\n' + generatePlanMarkdown(planData, patterns, summaries)
-// - parent_id: chapterSlug
-// - edges: [
-//     { to: chapterSlug, relation: 'implements' },
-//     ...patterns.map(p => ({ to: p.id, relation: 'depends_on' })),
-//     ...knowledge.map(k => ({ to: k, relation: 'depends_on' }))
-//   ]
+**Inter-plan dependencies:** Use `megamemory:link(from=plan-02, to=plan-01, relation="depends_on")`.
 
-await megamemory:create_concept({
-  name: `${chapterSlug}-plan-${planNumber}`,
-  kind: 'feature',
-  summary: planSummary, // JSON + markdown from generateSummary + generatePlanMarkdown
-  parent_id: chapterSlug,
-  edges: [
-    { to: chapterSlug, relation: 'implements' },
-    // Add depends_on edges for patterns and knowledge refs
-  ]
-});
-// Returns: { id: string, message: string }
-```
-
-### Plan Concept Summary Content
-
-The summary contains JSON (for programmatic access) followed by markdown (for readability):
-
-```
-{
-  "objective": "Set up project scaffolding",
-  "purpose": "Foundation for all future work",
-  "output": "Working Next.js project with TypeScript",
-  "requirements": ["Project builds successfully", "TypeScript configured"],
-  "tasks": [
-    { "description": "Create Next.js project", "type": "auto", "dependencies": [] }
-  ]
-}
-
-## Objective
-
-Set up project scaffolding
-
-## Purpose
-
-Foundation for all future work
-
-## Must Haves
-
-- Project builds successfully
-- TypeScript configured
-
-## Tasks
-
-1. Create Next.js project (auto)
-```
-
-### Querying Existing Concepts
-
-```typescript
-// Load all plans for a chapter
-const plans = await megamemory:understand({ query: `${chapterSlug} plan`, top_k: 20 });
-
-// Load specific plan
-const plan = await megamemory:understand({ query: `${chapterSlug}-plan-01`, top_k: 1 });
-
-// Load chapter context
-const context = await megamemory:understand({ query: `${chapterSlug}-context`, top_k: 5 });
-
-// Find patterns by domain
-const patterns = await megamemory:understand({ query: "react form validation patterns", top_k: 10 });
-```
-
-### Creating Dependency Edges
-
-After plan creation, use `megamemory:link` for inter-plan dependencies:
-
-```typescript
-await megamemory:link({
-  from: `${chapterSlug}-plan-02`,
-  to: `${chapterSlug}-plan-01`,
-  relation: 'depends_on',
-  description: 'Plan-02 requires Plan-01 completion'
-});
-```
-
-</megamemory_guide>
+</plan_concepts>
 
 <scratch_files>
 
