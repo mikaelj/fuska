@@ -137,7 +137,9 @@ fuska init --no-map "My new project"
 Launch OpenCode (or Claude Code), then run:
 
 ```
-/fuska-configure
+/fuska-configure [--mode yolo|interactive] [--depth quick|standard|comprehensive] 
+                 [--parallel true|false] [--commits per-chapter|per-plan|per-task]
+                 [--research yes|no] [--plan-check yes|no] [--verifier yes|no]
 ```
 
 Walks through initiative configuration:
@@ -151,6 +153,11 @@ Walks through initiative configuration:
 
 **If no description:** Full interactive questioning.
 
+**With all arguments:** Skip all questions entirely:
+```
+/fuska-configure --mode yolo --depth quick --parallel true --commits per-chapter --research yes --plan-check yes --verifier yes
+```
+
 ### CLI Quick Reference
 
 Outside the AI tool, `fuska` gives you project-level control:
@@ -160,10 +167,16 @@ fuska progress                        # Current status and next action
 fuska initiative list                 # All initiatives, sorted by activity
 fuska initiative switch <slug>        # Switch active initiative
 fuska todo                            # Pending and completed tasks
+fuska todo add "description"          # Add a global TODO
 fuska git message                     # Preview commit message for current changes
 fuska git worktree add <name>         # Create git worktree with shared context
 fuska git worktree merge <name>       # Merge worktree back (MegaMemory + git)
 fuska migrate planning <project-dir>  # Import .planning/ into MegaMemory
+```
+
+**Slash commands for chapter TODOs:**
+```
+/fuska-add-chapter-todo <chapter> "description"  # Add chapter-scoped TODO
 ```
 
 #### `fuska progress` Example
@@ -218,6 +231,23 @@ Chapter numbers are auto-detected from your project state. You can also pass the
 That's it — repeat for each chapter until the milestone is complete.
 
 **At any point**, run `/fuska` (bare, no verb) to see exactly where you are and what to do next.
+
+### Chapter TODOs
+
+During execution, if the builder discovers additional work not in the plan, it creates **chapter-scoped TODOs**. These are automatically picked up in a loop:
+
+1. Builder creates chapter-todo for discovered work
+2. Planner re-plans with the new TODO as a requirement
+3. Checker validates the updated plan covers the TODO
+4. Builder executes the new tasks
+
+This loop runs up to 3 iterations per chapter. You can also add TODOs manually:
+
+```
+/fuska-add-chapter-todo <chapter-slug> "Add error handling for API rate limits"
+```
+
+Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — they're scoped to a specific chapter and consumed during the execution loop.
 
 ---
 
