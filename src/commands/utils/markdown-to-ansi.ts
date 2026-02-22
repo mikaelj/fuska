@@ -97,15 +97,12 @@ function formatTable(lines: string[]): string {
     }
   }
 
-  const formattedRows = parsedRows.map((row, rowIndex) => {
-    const cells = row.map((cell, i) => cell.padEnd(widths[i]));
-    const formatted = `| ${cells.join(' | ')} |`;
-    
-    if (isSeparatorRow(row)) {
-      return formatted.replace(/\|/g, '|').replace(/[^|]/g, '-');
-    }
-    return formatted;
-  });
+  const formattedRows = parsedRows
+    .filter(row => !isSeparatorRow(row))
+    .map(row => {
+      const cells = row.map((cell, i) => cell.padEnd(widths[i]));
+      return `| ${cells.join(' | ')} |`;
+    });
 
   return formattedRows.join('\n');
 }
