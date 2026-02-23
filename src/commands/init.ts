@@ -139,7 +139,7 @@ class InitRunner {
     this.projectDir = options.projectDir;
   }
 
-  async run(description: string | undefined, options: { noMap?: boolean; permissionsOnly?: boolean }): Promise<void> {
+  async run(description: string | undefined, options: { map?: boolean; permissionsOnly?: boolean }): Promise<void> {
     const config = await readProviderConfig();
 
     if (options.permissionsOnly) {
@@ -174,7 +174,7 @@ class InitRunner {
       await updatePermissions(this.projectDir, config.provider);
     }
 
-    if (!options.noMap) {
+    if (options.map !== false) {
       await this.runCodeMapping();
       this.printNextSteps(false);
     } else {
@@ -393,7 +393,7 @@ export function initCommand(program: Command) {
     .description('Initialize current directory with a "main" initiative')
     .option('--no-map', 'Skip codebase mapping (run "fuska map" later)')
     .option('--permissions-only', 'Only update local permissions for the configured provider')
-    .action(async (descriptionParts: string[] | undefined, options: { noMap?: boolean; permissionsOnly?: boolean }) => {
+    .action(async (descriptionParts: string[] | undefined, options: { map?: boolean; permissionsOnly?: boolean }) => {
       const description = descriptionParts?.join(' ');
       const runner = new InitRunner({
         projectDir: process.cwd()
