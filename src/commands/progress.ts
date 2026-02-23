@@ -278,6 +278,30 @@ class ProgressRunner {
     return time ? `${date} ${time}` : date;
   }
 
+  private getModeDescription(profile: string): string {
+    const descriptions: Record<string, string> = {
+      quality: 'maximum quality',
+      balanced: 'standard planning depth',
+      budget: 'fast and economical'
+    };
+    return descriptions[profile] || profile;
+  }
+
+  private getStatusDescription(status: string, hasContext: boolean): string {
+    switch (status) {
+      case 'plan_complete':
+        return hasContext ? 'Planning complete. Context gathered.' : 'Planning complete. No context gathered.';
+      case 'in_progress':
+        return 'Execution in progress.';
+      case 'planned':
+        return 'Planning needed.';
+      case 'pending':
+        return 'Ready for context gathering.';
+      default:
+        return status;
+    }
+  }
+
   private findState(): StateData | null {
     const stateNode = this.nodes.find(n => 
       n.name === 'state' && n.parent_id === this.currentInitiativeId
@@ -459,11 +483,11 @@ class ProgressRunner {
     });
 
     return {
-      done: tasks.filter(t => 
-        t.data.status === 'complete' || t.data.status === 'completed'
+      done: tasks.filter(t =>
+        t.data.status === 'complete'
       ),
-      pending: tasks.filter(t => 
-        t.data.status !== 'complete' && t.data.status !== 'completed'
+      pending: tasks.filter(t =>
+        t.data.status !== 'complete'
       ),
       unknown
     };
@@ -525,11 +549,11 @@ class ProgressRunner {
       return dateB - dateA;
     });
 
-    const taskConcepts = tasks.filter(t => 
-      t.data.status === 'complete' || t.data.status === 'completed'
+    const taskConcepts = tasks.filter(t =>
+      t.data.status === 'complete'
     );
-    const pendingTaskConcepts = tasks.filter(t => 
-      t.data.status !== 'complete' && t.data.status !== 'completed'
+    const pendingTaskConcepts = tasks.filter(t =>
+      t.data.status !== 'complete'
     );
 
     return {
@@ -609,30 +633,25 @@ class ProgressRunner {
   }
 
   private renderStructuredReport(ctx: StructuredContext, nextAction: NextAction): void {
-    const completedChapters = ctx.roadmap?.chapters.filter(c => c.status === 'complete').length || 0;
-    const totalChapters = ctx.roadmap?.chapters.length || 0;
     const projectName = ctx.projectName;
+    const profile = ctx.config?.model_profile || ctx.config?.depth || 'balanced';
+    const modeDesc = this.getModeDescription(profile);
 
-    this.out(`Progress on ${projectName}, ${completedChapters}/${totalChapters} chapters complete.`);
+    this.out(`Initiative ${projectName}`);
+    this.out(`Working in ${modeDesc} (${profile}) mode`);
     this.out('');
 
     this.out('Done:');
     if (ctx.recentSummaries.length > 0) {
       for (const s of ctx.recentSummaries) {
         const acc = s.data.accomplishments?.[0] || 'No summary';
-        const chapterNum = s.data.chapter?.replace('chapter-', '') || '?';
-        this.out(`* Chapter ${chapterNum}: ${acc}`);
+        const chapterNum = parseInt(s.data.chapter?.replace('chapter-', '') || '0') || '?';
+        const planMatch = s.data.plan?.match(/-plan-(\d+)/);
+        const planNum = planMatch ? planMatch[1] : '?';
+        this.out(`* Chapter ${chapterNum}, Plan ${planNum}: ${acc}`);
       }
     } else {
       this.out('* (none)');
-    }
-    this.out('');
-
-    this.out('Next:');
-    if (ctx.currentChapter) {
-      this.out(`* Chapter ${ctx.currentChapter.number}: ${ctx.currentChapter.goal}`);
-      this.out(`  - Status: ${ctx.state?.status || 'unknown'}`);
-      this.out(`  - Context: ${ctx.chapterContext ? 'OK' : '-'}`);
     }
     this.out('');
 
@@ -649,6 +668,15 @@ class ProgressRunner {
       if (futureChapters.length === 0) {
         this.out('* (no more chapters)');
       }
+    }
+    this.out('');
+
+    this.out('Next Steps:');
+    if (ctx.currentChapter) {
+      this.out(`* Chapter ${ctx.currentChapter.number}: ${ctx.currentChapter.goal}`);
+      const hasContext = !!ctx.chapterContext;
+      const statusDesc = this.getStatusDescription(ctx.state?.status || '', hasContext);
+      this.out(`  ${statusDesc}`);
     }
     this.out('');
 
@@ -698,10 +726,6 @@ class ProgressRunner {
       this.out('');
     }
 
-    this.out('Configuration:');
-    this.out(`* Profile: ${ctx.config?.model_profile || ctx.config?.depth || 'balanced'}`);
-    this.out('');
-
     this.out('---------');
     this.out('');
 
@@ -710,6 +734,7 @@ class ProgressRunner {
 
   private renderActions(action: NextAction, ctx: StructuredContext): void {
     const chapterNum = action.chapterNumber || ctx.currentChapter?.number || 1;
+    const status = ctx.state?.status || '';
 
     switch (action.route) {
       case 'execute':
@@ -718,16 +743,18 @@ class ProgressRunner {
         break;
 
       case 'plan':
-        this.out(`Plan chapter ${chapterNum} by running:`);
-        this.out(`* /fuska-plan ${chapterNum}`);
+        if (status === 'plan_complete') {
+          this.out(`More context needed? /fuska-design ${chapterNum}`);
+          this.out(`Otherwise, start building: /fuska-build ${chapterNum}`);
+        } else {
+          this.out(`More context needed? /fuska-design ${chapterNum}`);
+          this.out(`Otherwise, start planning: /fuska-plan ${chapterNum}`);
+        }
         break;
 
       case 'discuss':
-        this.out(`Gather context for chapter ${chapterNum} and clarify approach by running:`);
-        this.out(`* /fuska-design ${chapterNum}`);
-        this.out('');
-        this.out(`or skip design of chapter ${chapterNum} and plan directly by running:`);
-        this.out(`* /fuska-plan ${chapterNum}`);
+        this.out(`More context needed? /fuska-design ${chapterNum}`);
+        this.out(`Otherwise, start planning: /fuska-plan ${chapterNum}`);
         break;
 
       case 'issues':
@@ -736,11 +763,8 @@ class ProgressRunner {
         break;
 
       case 'next-chapter':
-        this.out(`Start chapter ${action.chapterNumber} by running:`);
-        this.out(`* /fuska-design ${action.chapterNumber}`);
-        this.out('');
-        this.out(`or skip design and plan directly by running:`);
-        this.out(`* /fuska-plan ${action.chapterNumber}`);
+        this.out(`More context needed? /fuska-design ${action.chapterNumber}`);
+        this.out(`Otherwise, start planning: /fuska-plan ${action.chapterNumber}`);
         break;
 
       case 'complete-milestone':
@@ -751,8 +775,10 @@ class ProgressRunner {
   }
 
   private renderAdHocReport(ctx: AdHocContext): void {
-    this.out('Configuration:');
-    this.out(`* Profile: ${ctx.config?.depth || 'balanced'}`);
+    const profile = ctx.config?.model_profile || ctx.config?.depth || 'balanced';
+    const modeDesc = this.getModeDescription(profile);
+
+    this.out(`Working in ${modeDesc} (${profile}) mode`);
     this.out('');
 
     this.out('No initiative active. "fuska initiative switch" to activate. Available:');
