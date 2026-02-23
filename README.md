@@ -89,7 +89,7 @@ For the full mental model, glossary, and edge relations, see [concepts.md](docs/
 ## Installation
 
 ```bash
-npm install -g fuska
+npm install -g fuska-magistern
 fuska install
 ```
 
