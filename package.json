@@ -1,5 +1,5 @@
 {
-  "name": "fuska",
+  "name": "@mikaelj/fuska",
   "version": "0.0.3",
   "description": "Fuska - Lean solo agentic development with MegaMemory knowledge graph",
   "main": "./dist/index.js",
