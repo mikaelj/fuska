@@ -20,8 +20,20 @@
     "megamemory",
     "agentic"
   ],
-  "author": "",
+  "author": "Mikael Jansson",
+  "homepage": "http://github.com/mikaelj/fuska",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikaelj/fuska.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikaelj/fuska/issues"
+  },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "files": [
     "dist/",
     "provider/opinkode/",
