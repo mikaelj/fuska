@@ -4,7 +4,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import { InitiativeData } from '../types';
+import { InitiativeData, RequirementStatus, UniversalStatus } from '../types';
 import { InitiativeConceptTemplates } from '../initiative-templates';
 import { ChapterConceptTemplates as ChapterTemplates } from '../chapter-templates';
 import { extractJson } from '../helpers';
@@ -840,16 +840,21 @@ class PlanningToMegaMemoryMigration {
     return data;
   }
 
-  private parseRequirementsFile(content: string): Array<{id: string; description: string; status: 'validated' | 'active' | 'out_of_scope'}> {
-    const requirements: Array<{id: string; description: string; status: 'validated' | 'active' | 'out_of_scope'}> = [];
+  private parseRequirementsFile(content: string): Array<{id: string; description: string; status: RequirementStatus}> {
+    const statusMap: Record<string, RequirementStatus> = {
+      'validated': 'complete',
+      'active': 'in_progress',
+      'out_of_scope': 'out_of_scope'
+    };
+    const requirements: Array<{id: string; description: string; status: RequirementStatus}> = [];
     const lines = content.split('\n');
-    let currentStatus: 'validated' | 'active' | 'out_of_scope' = 'active';
+    let currentStatus: RequirementStatus = 'in_progress';
 
     for (const line of lines) {
       if (line.startsWith('## ')) {
-        const status = line.replace('## ', '').toLowerCase().trim();
-        if (status === 'validated' || status === 'active' || status === 'out_of_scope') {
-          currentStatus = status;
+        const raw = line.replace('## ', '').toLowerCase().trim();
+        if (raw in statusMap) {
+          currentStatus = statusMap[raw];
         }
       } else if (line.match(/^\d+\./)) {
         const match = line.match(/^(\d+)\.\s+(.+)$/);
@@ -896,21 +901,21 @@ class PlanningToMegaMemoryMigration {
     return extractJson(content);
   }
 
-  private parseMilestonesFile(content: string): Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; chapters: string[]; description: string}> {
-    const milestones: Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; chapters: string[]; description: string}> = [];
+  private parseMilestonesFile(content: string): Array<{name: string; status: UniversalStatus; chapters: string[]; description: string}> {
+    const milestones: Array<{name: string; status: UniversalStatus; chapters: string[]; description: string}> = [];
     const lines = content.split('\n');
 
     for (const line of lines) {
       const match = line.match(/^## (.+?)\s+\[(.+?)\]$/);
       if (match) {
-        const status = match[2].toLowerCase().trim();
-        let validStatus: 'shipped' | 'in_progress' | 'planned' = 'planned';
-        if (status === 'shipped' || status === 'in_progress' || status === 'planned') {
-          validStatus = status;
-        }
+        const raw = match[2].toLowerCase().trim();
+        let status: UniversalStatus = 'planned';
+        if (raw === 'shipped' || raw === 'complete') status = 'complete';
+        else if (raw === 'in_progress') status = 'in_progress';
+        else if (raw === 'planned') status = 'planned';
         milestones.push({
           name: match[1],
-          status: validStatus,
+          status,
           chapters: [],
           description: ''
         });

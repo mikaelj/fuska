@@ -654,7 +654,7 @@ await megamemory:update_concept({
 });
 ```
 
-This enables resume-work to show exact position without pause-work.
+This enables `/fuska` to show exact position automatically.
 
 </task_position_update>
 

@@ -287,10 +287,11 @@ class ProgressRunner {
     return descriptions[profile] || profile;
   }
 
-  private getStatusDescription(status: string, hasContext: boolean): string {
+  private getStatusDescription(status: string, hasContext: boolean, chapterNum?: number): string {
+    const ctxHint = chapterNum ? ` (Run **/fuska-design ${chapterNum}** to add context)` : '';
     switch (status) {
       case 'plan_complete':
-        return hasContext ? 'Planning complete. Context gathered.' : 'Planning complete. No context gathered.';
+        return hasContext ? 'Planning complete. Context gathered.' : `Planning complete. No context gathered.${ctxHint}`;
       case 'in_progress':
         return 'Execution in progress.';
       case 'planned':
@@ -637,8 +638,7 @@ class ProgressRunner {
     const profile = ctx.config?.model_profile || ctx.config?.depth || 'balanced';
     const modeDesc = this.getModeDescription(profile);
 
-    this.out(`Initiative ${projectName}`);
-    this.out(`Working in ${modeDesc} (${profile}) mode`);
+    this.out(`Initiative **${projectName}** using ${modeDesc} (${profile}) mode`);
     this.out('');
 
     this.out('Done:');
@@ -648,7 +648,7 @@ class ProgressRunner {
         const chapterNum = parseInt(s.data.chapter?.replace('chapter-', '') || '0') || '?';
         const planMatch = s.data.plan?.match(/-plan-(\d+)/);
         const planNum = planMatch ? planMatch[1] : '?';
-        this.out(`* Chapter ${chapterNum}, Plan ${planNum}: ${acc}`);
+        this.out(`* Chapter ${chapterNum}.${parseInt(planNum)}: ${acc}`);
       }
     } else {
       this.out('* (none)');
@@ -671,11 +671,13 @@ class ProgressRunner {
     }
     this.out('');
 
-    this.out('Next Steps:');
+    this.out('Next:');
     if (ctx.currentChapter) {
-      this.out(`* Chapter ${ctx.currentChapter.number}: ${ctx.currentChapter.goal}`);
+      const nextPlanNum = ctx.chapterSummaries.length + 1;
+      const planLabel = ctx.chapterPlans.length > 0 ? `.${nextPlanNum}` : '';
+      this.out(`* Chapter ${ctx.currentChapter.number}${planLabel}: ${ctx.currentChapter.goal}`);
       const hasContext = !!ctx.chapterContext;
-      const statusDesc = this.getStatusDescription(ctx.state?.status || '', hasContext);
+      const statusDesc = this.getStatusDescription(ctx.state?.status || '', hasContext, ctx.currentChapter.number);
       this.out(`  ${statusDesc}`);
     }
     this.out('');
@@ -726,9 +728,6 @@ class ProgressRunner {
       this.out('');
     }
 
-    this.out('---------');
-    this.out('');
-
     this.renderActions(nextAction, ctx);
   }
 
@@ -738,38 +737,32 @@ class ProgressRunner {
 
     switch (action.route) {
       case 'execute':
-        this.out(`Execute plan ${action.planName} by running:`);
-        this.out(`* /fuska-build ${chapterNum}`);
+        this.out(`Run **/fuska-build ${chapterNum}** to continue`);
         break;
 
       case 'plan':
+      case 'discuss':
         if (status === 'plan_complete') {
-          this.out(`More context needed? /fuska-design ${chapterNum}`);
-          this.out(`Otherwise, start building: /fuska-build ${chapterNum}`);
+          this.out(`Run **/fuska-build ${chapterNum}** to continue`);
         } else {
-          this.out(`More context needed? /fuska-design ${chapterNum}`);
-          this.out(`Otherwise, start planning: /fuska-plan ${chapterNum}`);
+          this.out(`Run **/fuska-plan ${chapterNum}** to continue`);
         }
         break;
 
-      case 'discuss':
-        this.out(`More context needed? /fuska-design ${chapterNum}`);
-        this.out(`Otherwise, start planning: /fuska-plan ${chapterNum}`);
-        break;
-
       case 'issues':
-        this.out(`Fix verification issues in chapter ${chapterNum} by running:`);
-        this.out(`* /fuska-plan ${chapterNum} --fixes`);
+        this.out(`Run **/fuska-plan ${chapterNum} --fixes** to fix verification issues`);
         break;
 
       case 'next-chapter':
-        this.out(`More context needed? /fuska-design ${action.chapterNumber}`);
-        this.out(`Otherwise, start planning: /fuska-plan ${action.chapterNumber}`);
+        if (status === 'plan_complete') {
+          this.out(`Run **/fuska-build ${action.chapterNumber}** to continue`);
+        } else {
+          this.out(`Run **/fuska-plan ${action.chapterNumber}** to continue`);
+        }
         break;
 
       case 'complete-milestone':
-        this.out(`Archive and prepare for next milestone by running:`);
-        this.out(`* /fuska-complete-milestone`);
+        this.out(`Run **/fuska-complete-milestone** to continue`);
         break;
     }
   }
@@ -781,7 +774,7 @@ class ProgressRunner {
     this.out(`Working in ${modeDesc} (${profile}) mode`);
     this.out('');
 
-    this.out('No initiative active. "fuska initiative switch" to activate. Available:');
+    this.out('No initiative active. Run **fuska initiative switch** to activate. Available:');
     for (const slug of ctx.availableInitiatives) {
       this.out(`* ${slug}`);
     }
@@ -817,13 +810,10 @@ class ProgressRunner {
       this.out('');
     }
 
-    this.out('---------');
-    this.out('');
-
     this.out('Available commands:');
-    this.out('* fuska initiative switch — switch to an initiative');
-    this.out('* fuska do — execute a standalone task');
-    this.out('* fuska info — view codebase and domain mappings');
+    this.out('**fuska initiative switch** — switch to an initiative');
+    this.out('**fuska do** — execute a standalone task');
+    this.out('**fuska info** — view codebase and domain mappings');
   }
 
   private buildStructuredJson(ctx: StructuredContext, nextAction: NextAction): JsonOutput {

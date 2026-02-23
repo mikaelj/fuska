@@ -5,7 +5,7 @@ describe('ChapterConceptTemplates', () => {
     it('creates chapter context concept', () => {
       const contextData = {
         gathered: '2025-01-20',
-        status: 'ready_for_planning',
+        status: 'planned',
         chapter_boundary: 'Implement JWT authentication',
         decisions: {
           auth_type: 'JWT',

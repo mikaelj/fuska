@@ -27,7 +27,7 @@ export function advancePlan(stateData: StateData, plans: string[]): StateData {
     return {
       ...stateData,
       current_plan: plans[nextIndex],
-      status: 'executing',
+      status: 'in_progress',
     };
   }
 

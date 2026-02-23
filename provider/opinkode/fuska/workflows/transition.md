@@ -178,7 +178,7 @@ Update the JSON:
 - Mark current chapter: status: "complete", completed_date: "[today]"
 - Update plans_complete to final (e.g., 3, plans_total: 3)
 - Update progress array with completion date
-- Keep next chapter as status: "not_started"
+- Keep next chapter as status: "pending"
 - Update updated timestamp
 
 **Example update:**
@@ -198,7 +198,7 @@ Update the JSON:
     {
       "number": 2,
       "name": "Authentication",
-      "status": "not_started",
+      "status": "pending",
       "plans_complete": 0,
       "plans_total": 2,
       "description": "..."
@@ -209,14 +209,14 @@ Update the JSON:
       "chapter": 1,
       "plans_complete": 3,
       "plans_total": 3,
-      "status": "Complete",
+      "status": "complete",
       "completed": "2025-01-15"
     },
     {
       "chapter": 2,
       "plans_complete": 0,
       "plans_total": 2,
-      "status": "Not started",
+      "status": "pending",
       "completed": null
     }
   ],
@@ -363,7 +363,7 @@ Update current_position in STATE concept.summary to reflect chapter completion a
     "total_chapters": 4,
     "chapter_name": "Authentication",
     "plan": "2 of 2",
-    "status": "Chapter complete",
+    "status": "chapter_complete",
     "progress_percent": 60
   },
   "updated": "..."
@@ -373,8 +373,8 @@ Update current_position in STATE concept.summary to reflect chapter completion a
 **Instructions:**
 
 - Increment chapter number to next chapter
-- Reset plan to "Not started"
-- Set status to "Ready to plan"
+- Reset plan to null
+- Set status to "ready_to_plan"
 - Recalculate progress_percent based on completed plans
 
 **Example — transitioning from Chapter 2 to Chapter 3:**
@@ -387,7 +387,7 @@ Before:
     "total_chapters": 4,
     "chapter_name": "Authentication",
     "plan": "2 of 2",
-    "status": "Chapter complete",
+    "status": "chapter_complete",
     "progress_percent": 60
   }
 }
@@ -400,8 +400,8 @@ After:
     "chapter": 3,
     "total_chapters": 4,
     "chapter_name": "Core Features",
-    "plan": "Not started",
-    "status": "Ready to plan",
+    "plan": null,
+    "status": "ready_to_plan",
     "progress_percent": 60
   }
 }
@@ -418,8 +418,8 @@ megamemory:update_concept(
 **Step complete when:**
 
 - [ ] Chapter number incremented to next chapter
-- [ ] Plan status reset to "Not started"
-- [ ] Status shows "Ready to plan"
+- [ ] Plan status reset to null
+- [ ] Status shows "ready_to_plan"
 - [ ] Progress percent reflects total completed plans
 
 </step>

@@ -2,7 +2,7 @@
 name: fuska-insert-chapter
 description: Insert urgent work (e.g., "72.1 quick fix" - immediately after 72.1 chapter) using MegaMemory
 argument-hint: <after> <description>
-agent: "@../../agents/fuska/fuska-planner.md"
+agent: "fuska-planner"
 tools:
   - read
   - write
@@ -139,7 +139,7 @@ Available chapters: [list chapter numbers from roadmapData.chapters]
 Stop.
 
 **Step 6: Verify chapter is in current milestone (not completed/archived)**
-Check chapter status is not "complete" or "archived".
+Check chapter status is not "complete" or "skipped".
 </step>
 
 <step name="find_existing_decimals">
@@ -186,7 +186,7 @@ const chapterData = {
   name: description,
   goal: "[Urgent work - to be planned]",
   depends_on: `chapter-${after_chapter.toString().padStart(2, '0')}`,
-  status: "not_planned",
+  status: "pending",
   plans: [],
   marker: "INSERTED"
 }
@@ -225,7 +225,7 @@ New chapter entry:
   "goal": "[Urgent work - to be planned]",
   "depends_on": "{after_chapter}",
   "plans": [],
-  "status": "not_planned",
+  "status": "pending",
   "marker": "INSERTED"
 }
 ```

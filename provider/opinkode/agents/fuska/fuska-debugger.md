@@ -41,7 +41,7 @@ Debug sessions are MegaMemory concepts for persistent state across context reset
 - **Name:** `debug-session-{slug}` (e.g., `debug-session-auth-failure`)
 - **Kind:** `feature`
 - **Summary:** JSON data + markdown content
-- **Status field:** `open` | `in_progress` | `resolved`
+- **Status field:** `gathering` | `in_progress` | `resolved`
 - **Parent:** `project-root` or chapter concept
 - **Query all:** `megamemory:understand(query="debug-session", top_k=20)`
 - **Query one:** `megamemory:understand(query="debug-session-{slug}", top_k=1)`
@@ -848,7 +848,7 @@ const debugSessions = await megamemory:understand({
 });
 
 // Filter by status if needed
-const openSessions = debugSessions.filter(s => s.status === 'open');
+const gatheringSessions = debugSessions.filter(s => s.status === 'gathering');
 ```
 
 **If active sessions exist AND no `$ARGUMENTS`:**

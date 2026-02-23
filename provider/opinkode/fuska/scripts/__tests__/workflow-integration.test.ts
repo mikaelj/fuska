@@ -106,7 +106,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         kind: 'feature',
         summary: JSON.stringify({
           description: 'User can login',
-          status: 'active'
+          status: 'in_progress'
         }),
         parent_id: 'test-project/requirements',
         edges: [{ to: 'requirements', relation: 'implements' }]
@@ -172,7 +172,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
     it('should create chapter context concept', async () => {
       const contextData = {
         gathered: '2025-01-20',
-        status: 'ready_for_planning',
+        status: 'planned',
         chapter_boundary: 'Implement JWT authentication',
         decisions: {
           auth_type: 'JWT',

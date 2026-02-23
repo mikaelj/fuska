@@ -500,7 +500,7 @@ For each requirement, create in MegaMemory:
   kind: "feature",
   summary: JSON.stringify({
     description: requirementText,
-    status: "active",
+    status: "in_progress",
     hypothesis: true  // For greenfield, all requirements are hypotheses
   }),
   parent_id: `${initiativeSlug}/requirements`,

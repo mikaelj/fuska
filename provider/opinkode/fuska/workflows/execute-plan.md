@@ -105,7 +105,7 @@ megamemory:understand({query: "roadmap"})
 ```
 
 Parse roadmap concept summary for chapter structure. Look for:
-- Chapter marked as "In progress" or first unstarted chapter
+- Chapter marked as "in_progress" or first unstarted chapter
 - Chapter number and directory name
 
 2. **Query chapter plans:**
@@ -298,7 +298,7 @@ No segmentation benefit - execute entirely in main
      plan: "{plan}",
      segment: null,
      timestamp: "[current ISO timestamp]",
-     status: "spawned",
+     status: "in_progress",
      completion_timestamp: null
    };
 
@@ -335,7 +335,7 @@ No segmentation benefit - execute entirely in main
          current_agent_id: null,
          agent_history: trackingData.agent_history.map(e =>
            e.agent_id === agentId
-             ? {...e, status: "completed", completion_timestamp: "[current ISO timestamp]"}
+             ? {...e, status: "complete", completion_timestamp: "[current ISO timestamp]"}
              : e
          )
        })
@@ -440,13 +440,13 @@ megamemory:update_concept({
 **5. Prune old entries (housekeeping):**
 
 If `trackingData.agent_history.length > trackingData.max_entries`:
-- Keep ALL entries with status `"spawned"` (may need resume)
+- Keep ALL entries with status `"in_progress"` (may need resume)
 - Keep newest completed entries up to `max_entries` total
 - Update concept summary with pruned array
 
 ```javascript
-const spawned = trackingData.agent_history.filter(e => e.status === "spawned");
-const completed = trackingData.agent_history.filter(e => e.status === "completed");
+const spawned = trackingData.agent_history.filter(e => e.status === "in_progress");
+const completed = trackingData.agent_history.filter(e => e.status === "complete");
 const keepCompleted = completed.slice(0, trackingData.max_entries - spawned.length);
 trackingData.agent_history = [...spawned, ...keepCompleted];
 
@@ -536,7 +536,7 @@ For Pattern A (fully autonomous) and Pattern C (decision-dependent), skip this s
         plan: "{plan}",
         segment: [segment_number],
         timestamp: "[current ISO timestamp]",
-        status: "spawned",
+        status: "in_progress",
         completion_timestamp: null
       };
 
@@ -572,7 +572,7 @@ For Pattern A (fully autonomous) and Pattern C (decision-dependent), skip this s
             current_agent_id: null,
             agent_history: trackingData.agent_history.map(e =>
               e.agent_id === agentId
-                ? {...e, status: "completed", completion_timestamp: "[current ISO timestamp]"}
+                ? {...e, status: "complete", completion_timestamp: "[current ISO timestamp]"}
                 : e
             )
           })
@@ -1335,7 +1335,7 @@ megamemory:update_concept({
       current_chapter_name: "{chapter name}",
       current_plan: "{just completed}",
       current_plan_of_total: "{N} of {total in current chapter}",
-      status: "In progress", // or "Chapter complete"
+      status: "in_progress", // or "chapter_complete"
       progress_percent: {calculate percentage}
       // Keep decisions, blockers, alignment arrays from existing state
     })
@@ -1377,7 +1377,7 @@ After state:
   "current_chapter_name": "Authentication",
   "current_plan": "1",
   "current_plan_of_total": "1 of 2",
-  "status": "In progress",
+  "status": "in_progress",
   "progress_percent": 50,
   "progress_bar": "███████░░░",
   "decisions": [...],
@@ -1495,7 +1495,7 @@ megamemory:update_concept({
         {
           number: "{chapter}",
           name: "{chapter name}",
-          status: "In progress", // or "Complete"
+          status: "in_progress", // or "complete"
           plans_complete: "{N} of {total}"
         }
         // ...
@@ -1508,11 +1508,11 @@ megamemory:update_concept({
 **If more plans remain in this chapter:**
 
 - Update plan count: "2/3 plans complete"
-- Keep chapter status as "In progress"
+- Keep chapter status as "in_progress"
 
 **If this was the last plan in the chapter:**
 
-- Mark chapter complete: status → "Complete"
+- Mark chapter complete: status → "complete"
 - Add completion date
 </step>
 

@@ -1,4 +1,4 @@
-import { FuskaConcept, InitiativeData, StateData, ConfigData, MilestoneData } from './types';
+import { FuskaConcept, InitiativeData, StateData, ConfigData, MilestoneData, RequirementStatus } from './types';
 import { generateSummary } from './helpers';
 
 export class InitiativeConceptTemplates {
@@ -23,7 +23,7 @@ export class InitiativeConceptTemplates {
     };
   }
 
-  static createRequirement(initiativeSlug: string, id: string, description: string, status: 'validated' | 'active' | 'out_of_scope'): FuskaConcept {
+  static createRequirement(initiativeSlug: string, id: string, description: string, status: RequirementStatus): FuskaConcept {
     return {
       name: `req-${id}`,
       kind: 'feature',

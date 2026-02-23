@@ -253,9 +253,9 @@ class InitiativesRunner {
   private getStatusIndicator(status: string): string {
     const statusLower = (status || '').toLowerCase();
 
-    if (statusLower === 'completed' || statusLower === 'done' || statusLower === 'shipped' || statusLower === 'complete') {
+    if (statusLower === 'complete') {
       return '✓';
-    } else if (statusLower === 'in_progress' || statusLower === 'in-progress' || statusLower === 'active') {
+    } else if (statusLower === 'in_progress') {
       return '●';
     } else {
       return '○';

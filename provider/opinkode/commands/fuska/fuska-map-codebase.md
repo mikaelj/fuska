@@ -2,7 +2,7 @@
 name: fuska-map-codebase
 description: Analyze codebase with serial mapper agents to produce MegaMemory concepts
 argument-hint: "[optional: specific area to map]"
-agent: "@../../agents/fuska/fuska-codebase-mapper.md"
+agent: "fuska-codebase-mapper"
 tools:
   - read
   - bash

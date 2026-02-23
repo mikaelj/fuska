@@ -80,7 +80,7 @@ describe('Helper Functions', () => {
     it('generates markdown with all sections', () => {
       const contextData = {
         gathered: '2025-01-20',
-        status: 'ready_for_planning',
+        status: 'planned',
         chapter_boundary: 'Implement authentication',
         decisions: {
           auth_type: 'JWT',

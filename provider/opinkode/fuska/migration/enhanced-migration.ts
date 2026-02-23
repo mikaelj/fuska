@@ -1670,16 +1670,20 @@ class EnhancedPlanningToMegaMemoryMigration {
     return data;
   }
 
-  private parseRequirementsFile(content: string): Array<{id: string; description: string; status: 'validated' | 'active' | 'out_of_scope'}> {
-    const requirements: Array<{id: string; description: string; status: 'validated' | 'active' | 'out_of_scope'}> = [];
+  private parseRequirementsFile(content: string): Array<{id: string; description: string; status: 'complete' | 'in_progress' | 'out_of_scope'}> {
+    const requirements: Array<{id: string; description: string; status: 'complete' | 'in_progress' | 'out_of_scope'}> = [];
     const lines = content.split('\n');
-    let currentStatus: 'validated' | 'active' | 'out_of_scope' = 'active';
+    let currentStatus: 'complete' | 'in_progress' | 'out_of_scope' = 'in_progress';
+    const statusMap: Record<string, 'complete' | 'in_progress' | 'out_of_scope'> = {
+      'validated': 'complete', 'active': 'in_progress', 'out_of_scope': 'out_of_scope',
+      'complete': 'complete', 'in_progress': 'in_progress'
+    };
 
     for (const line of lines) {
       if (line.startsWith('## ')) {
         const status = line.replace('## ', '').toLowerCase().trim();
-        if (status === 'validated' || status === 'active' || status === 'out_of_scope') {
-          currentStatus = status;
+        if (status in statusMap) {
+          currentStatus = statusMap[status];
         }
       } else if (line.match(/^\d+\./)) {
         const match = line.match(/^(\d+)\.\s+(.+)$/);
@@ -1739,7 +1743,7 @@ class EnhancedPlanningToMegaMemoryMigration {
         const chapterNumMatch = section.match(/\*\*Chapter:\*\*\s*(\d+)/);
         const chapterNum = chapterNumMatch ? parseInt(chapterNumMatch[1]) : 1;
         result.current_plan = completed < total ? `chapter-${chapterNum.toString().padStart(2, '0')}-01` : null;
-        result.status = completed > 0 ? 'executing' : 'ready_to_plan';
+        result.status = completed > 0 ? 'in_progress' : 'ready_to_plan';
       }
 
       const activityMatch = section.match(/\*\*Last Activity:\*\*\s*(.+)/);
@@ -1785,17 +1789,21 @@ class EnhancedPlanningToMegaMemoryMigration {
     return this.parseStateMarkdown(content);
   }
 
-  private parseMilestonesFile(content: string): Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; chapters: string[]; description: string}> {
-    const milestones: Array<{name: string; status: 'shipped' | 'in_progress' | 'planned'; chapters: string[]; description: string}> = [];
+  private parseMilestonesFile(content: string): Array<{name: string; status: 'complete' | 'in_progress' | 'planned'; chapters: string[]; description: string}> {
+    const milestones: Array<{name: string; status: 'complete' | 'in_progress' | 'planned'; chapters: string[]; description: string}> = [];
     const lines = content.split('\n');
 
     for (const line of lines) {
       const match = line.match(/^## (.+?)\s+\[(.+?)\]$/);
       if (match) {
         const status = match[2].toLowerCase().trim();
-        let validStatus: 'shipped' | 'in_progress' | 'planned' = 'planned';
-        if (status === 'shipped' || status === 'in_progress' || status === 'planned') {
-          validStatus = status;
+        let validStatus: 'complete' | 'in_progress' | 'planned' = 'planned';
+        if (status === 'shipped' || status === 'complete') {
+          validStatus = 'complete';
+        } else if (status === 'in_progress') {
+          validStatus = 'in_progress';
+        } else if (status === 'planned') {
+          validStatus = 'planned';
         }
         milestones.push({
           name: match[1],

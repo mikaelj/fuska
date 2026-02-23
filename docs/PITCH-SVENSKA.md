@@ -44,11 +44,11 @@ Du skriver: `/fuska-do verified implementera OAuth-inloggning med Google och Git
 4. En **byggaragent** implementerar varje uppgift med atomära commits.
 5. En **verifieringsagent** kontrollerar att resultatet faktiskt levererar det som planen utlovade.
 
-Du godkänner, och det är klart. Fem agenter har jobbat i sekvens, var och en med sin specialitet. Du behövde aldrig lämna editorn. Samma sak fungerar med `fuska do verified` direkt i terminalen. Och vill du ha mer kontroll kan du köra varje steg för sig — `/fuska design`, `/fuska plan`, `/fuska build`, `/fuska review` — precis som du vill.
+Du godkänner, och det är klart. Fem agenter har jobbat i sekvens, var och en med sin specialitet. Du behövde aldrig lämna editorn. Samma sak fungerar med `fuska do verified` direkt i terminalen. Och vill du ha mer kontroll kan du köra varje steg för sig — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — precis som du vill.
 
 ## Varför det spelar roll
 
-**Persistent minne.** Fredag klockan fyra pausar du mitt i fas 2. Måndag morgon startar du bara din kodagent — Fuska har redan sparat var du var, vilken uppgift som var näst på tur, och vad du höll på att tänka kring.
+**Persistent minne.** Fredag klockan fyra stänger du editorn mitt i kapitel 2. Måndag morgon kör du `/fuska` — den visar exakt vilket kapitel, vilken uppgift och vad som kommer härnäst. Ingen manuell sparning, inget resume-kommando. Din position är alltid aktuell.
 
 **Kvalitetssäkring före kodning.** Planer valideras *innan* en rad kod skrivs. Det är som att ha en arkitekturgranskning innan spaden sätts i jorden, istället för att försöka rätta till bärande väggar i efterhand.
 
@@ -94,7 +94,7 @@ Fuska bygger vidare på **GSD** (Get Shit Done) — ett tidigare system med samm
 
 ### Där Fuska är bättre
 
-**Sessionsminne som faktiskt fungerar.** Du startar kodagenten och Fuska vet redan var du var — vilken fas, vilken uppgift, vad som återstår. GSD:s STATE.md är en manuellt uppdaterad checklista som kan bli inaktuell om agenten avbryter mitt i.
+**Sessionsminne som faktiskt fungerar.** Stäng editorn när du vill — nästa gång du kör `/fuska` vet den exakt vilket kapitel, vilken uppgift och vad som kommer härnäst. Inget pauskommando, inget resume-kommando, ingen manuell sparning. GSD kräver att du kör `/gsd-pause-work` innan du slutar och `/gsd-resume` för att komma tillbaka — hoppar du över något av stegen försvinner kontexten.
 
 **Dynamisk expertpanel.** Tre specialiserade granskare som sätts samman utifrån projektet och planen, jämfört med GSD:s enda generiska granskare. Korsvalidering — när två oberoende granskare flaggar samma problem — eskalerar allvarlighetsgraden automatiskt. Det fångar kategorier av fel som en ensam granskare missar.
 
@@ -104,7 +104,7 @@ Fuska bygger vidare på **GSD** (Get Shit Done) — ett tidigare system med samm
 
 **Bättre git-meddelanden.** En dedikerad commit-agent läser plan, faktisk kod och befintlig historik för att formulera meddelanden som förklarar avsikten. GSD:s commit-meddelanden genereras som en bisyssla av exekveringsagenten.
 
-**Domänkartläggning och kodfrågor.** Fuska kan mappa affärsdomäner separat från teknisk arkitektur — den vet att `PaymentService` tillhör betalningsdomänen. GSD saknar detta helt. Dessutom kan du ställa frågor direkt mot mappningen: "var hanteras autentisering?", "vilka filer importerar OrderService?", "finns det oanvänd exporterad kod?". Det fungerar både som `/fuska ask` inne i kodagenten och som `fuska ask` i terminalen — det senare utan LLM-kostnad. Du får svar baserat på den indexerade importgrafen istället för att agenten söker igenom filträdet varje gång.
+**Domänkartläggning och kodfrågor.** Fuska kan mappa affärsdomäner separat från teknisk arkitektur — den vet att `PaymentService` tillhör betalningsdomänen. GSD saknar detta helt. Dessutom kan du ställa frågor direkt mot mappningen: "var hanteras autentisering?", "vilka filer importerar OrderService?", "finns det oanvänd exporterad kod?". Det fungerar både som `/fuska-ask` inne i kodagenten och som `fuska ask` i terminalen — det senare utan LLM-kostnad. Du får svar baserat på den indexerade importgrafen istället för att agenten söker igenom filträdet varje gång.
 
 **Modellval.** Fuska stöder valfri modell via konfigurerbara profiler — du kan använda en dyr modell för planering och en billigare för byggande. GSD är mer låst till specifika modeller.
 

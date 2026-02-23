@@ -404,12 +404,33 @@ If iterationCount >= 3 and still issues: display remaining issues, offer Proceed
 
 **Step 8.3: Review loop**
 
-Options: Execute now | Ask a question | Modify the plan | Save and exit
+Use question tool with these options:
 
-- **Execute now** → Step 9
-- **Ask a question** → answer from planData context, re-display, loop
-- **Modify the plan** → get feedback, spawn planner revision via Task, re-query, re-display, loop
-- **Save and exit** → Display "Plan saved as task-${nextNum}-${slug}. Run `/fuska-do ${nextNum}` to execute later." → Stop
+| Option | Description |
+|--------|-------------|
+| Execute now | Start building immediately |
+| Ask a question | Get clarification about the plan |
+| Modify the plan | Request changes to the plan |
+| Save and exit | Save plan for later execution |
+
+**Execute now** → Step 9
+
+**Ask a question** →
+1. Question tool: "What would you like to know about the plan?"
+2. Answer from planData context
+3. Go to Step 8.1 (re-display plan + options)
+
+**Modify the plan** →
+1. Question tool: "What changes would you like to make?"
+2. Spawn planner with revision context (current plan + user feedback)
+3. Planner MUST call `megamemory_update_concept()` to save changes
+4. Go to Step 7 (re-run plan-checker)
+5. If checker passes → Step 8.1 (re-display updated plan + options)
+
+**Save and exit** →
+1. Display: `Plan saved as task-${nextNum}-${slug}`
+2. Display: `Run /fuska-do ${nextNum} to execute later`
+3. Stop
 
 ---
 

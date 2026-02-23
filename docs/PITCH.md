@@ -45,11 +45,11 @@ You type: `/fuska-do verified implementera OAuth-inloggning med Google och GitHu
 4. A **builder agent** implements each task with atomic commits.
 5. A **verification agent** checks that the result actually delivers what the plan promised.
 
-You approve, and it's done. Five agents have worked in sequence, each with their own speciality. You never had to leave the editor. The same thing works with `fuska do verified` directly in the terminal. And if you want more control, you can run each step separately — `/fuska design`, `/fuska plan`, `/fuska build`, `/fuska review` — exactly as you like.
+You approve, and it's done. Five agents have worked in sequence, each with their own speciality. You never had to leave the editor. The same thing works with `fuska do verified` directly in the terminal. And if you want more control, you can run each step separately — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — exactly as you like.
 
 ## Why It Matters
 
-**Persistent memory.** Friday at four o'clock you pause in the middle of phase 2. Monday morning you simply start your code agent — Fuska has already saved where you were, which task was next in line, and what you were mulling over.
+**Persistent memory.** Friday at four o'clock you close the editor in the middle of chapter 2. Monday morning you run `/fuska` — it shows exactly which chapter, which task, and what comes next. No manual saving, no resume command. Your position is always current.
 
 **Quality assurance before coding.** Plans are validated *before* a single line of code is written. It's like having an architecture review before breaking ground, instead of trying to fix load-bearing walls after the fact.
 
@@ -95,7 +95,7 @@ Fuska builds on **GSD** (Get Shit Done) — an earlier system with the same core
 
 ### Where Fuska Is Better
 
-**Session memory that actually works.** You start the code agent and Fuska already knows where you were — which phase, which task, what remains. GSD's STATE.md is a manually updated checklist that can go stale if the agent is interrupted mid-flow.
+**Session memory that actually works.** Close the editor whenever you want — next time you run `/fuska`, it knows exactly which chapter, which task, and what comes next. No pause command, no resume command, no manual saving. GSD requires you to run `/gsd-pause-work` before stopping and `/gsd-resume` to get back — skip either step and context is lost.
 
 **Dynamic expert panel.** Three specialised reviewers assembled based on the project and the plan, compared to GSD's single generic reviewer. Cross-validation — when two independent reviewers flag the same issue — automatically escalates the severity. This catches categories of bugs that a lone reviewer misses.
 
@@ -105,7 +105,7 @@ Fuska builds on **GSD** (Get Shit Done) — an earlier system with the same core
 
 **Better git messages.** A dedicated commit agent reads the plan, the actual code, and the existing history to craft messages that explain the intent. GSD's commit messages are generated as a side job by the execution agent.
 
-**Domain mapping and code queries.** Fuska can map business domains separately from technical architecture — it knows that `PaymentService` belongs to the payments domain. GSD lacks this entirely. You can also query the mapping directly: "where is authentication handled?", "which files import OrderService?", "is there any unused exported code?". This works both as `/fuska ask` inside the code agent and as `fuska ask` in the terminal — the latter without LLM cost. You get answers based on the indexed import graph instead of the agent trawling through the file tree every time.
+**Domain mapping and code queries.** Fuska can map business domains separately from technical architecture — it knows that `PaymentService` belongs to the payments domain. GSD lacks this entirely. You can also query the mapping directly: "where is authentication handled?", "which files import OrderService?", "is there any unused exported code?". This works both as `/fuska-ask` inside the code agent and as `fuska ask` in the terminal — the latter without LLM cost. You get answers based on the indexed import graph instead of the agent trawling through the file tree every time.
 
 **Model selection.** Fuska supports any model via configurable profiles — you can use an expensive model for planning and a cheaper one for building. GSD is more locked to specific models.
 

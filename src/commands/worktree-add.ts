@@ -323,7 +323,7 @@ class WorktreeAddRunner {
     const stateSummary = JSON.stringify({
       chapter: 1,
       plan: 0,
-      status: 'Ready to plan',
+      status: 'ready_to_plan',
       last_activity: `Worktree initialized: ${name}`,
       progress: 0
     });

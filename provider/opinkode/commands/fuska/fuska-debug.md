@@ -130,7 +130,7 @@ If response.matches.length > 0:
 const activeSessions = response.matches.filter(match => {
   const summaryString = match.summary
   const sessionData = JSON.parse(summaryString)
-  return sessionData.status === "active"
+  return sessionData.status === "in_progress"
 })
 ```
 
@@ -173,7 +173,7 @@ const sessionConceptData = {
   errors: errors,
   reproduction: reproduction,
   timeline: timeline,
-  status: "active",
+  status: "in_progress",
   created_at: new Date().toISOString()
 }
 

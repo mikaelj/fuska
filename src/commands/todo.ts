@@ -84,9 +84,8 @@ class TodoRunner {
       return dateB - dateA; // Newest first
     });
 
-    const done = todoDataList.filter(t => 
-      t.data.status === 'done' || 
-      t.data.status === 'completed'
+    const done = todoDataList.filter(t =>
+      t.data.status === 'complete'
     );
     
     const pending = todoDataList.filter(t => 
@@ -142,7 +141,7 @@ class TodoRunner {
         const summaryText = jsonMatch ? jsonMatch[0] : node.summary;
         const data = JSON.parse(summaryText);
         
-        if (data.title !== undefined && (data.status === 'pending' || data.status === 'done' || data.status === 'completed')) {
+        if (data.title !== undefined && (data.status === 'pending' || data.status === 'complete')) {
           todos.push(node);
         }
       } catch (e) {

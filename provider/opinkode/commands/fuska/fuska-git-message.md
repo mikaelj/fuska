@@ -2,7 +2,7 @@
 name: fuska-git-message
 description: Generate a commit message using Fuska rules without committing, or regenerate for an existing commit or commit range
 argument-hint: "<commit-hash | commit-range | chapter-X-plan-Y>"
-agent: "@../../agents/fuska/fuska-git-message.md"
+agent: "fuska-git-message"
 tools:
   - read
   - bash

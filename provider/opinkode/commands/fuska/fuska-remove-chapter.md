@@ -172,7 +172,7 @@ Only future chapters can be removed:
 - Current chapter: {currentChapterNumber}
 - Chapter {chapterNumber} is current or completed
 
-To abandon current work, use /fuska-pause-work instead.
+Run /fuska to see your current position.
 ```
 
 Exit.

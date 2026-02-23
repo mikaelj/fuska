@@ -96,7 +96,7 @@ Plans are stored as MegaMemory concepts (e.g., `chapter-02-plan-01`) and execute
 - Glue code and wiring
 - Simple CRUD with no business logic
 
-The planner selects the plan type automatically during `/fuska plan` based on the nature of each task — there is no flag to force TDD. TDD plans are single-feature focused — one behavior per plan, with dedicated commits for each cycle stage. Standard plans can contain multiple tasks across different concerns.
+The planner selects the plan type automatically during `/fuska-plan` based on the nature of each task — there is no flag to force TDD. TDD plans are single-feature focused — one behavior per plan, with dedicated commits for each cycle stage. Standard plans can contain multiple tasks across different concerns.
 
 ---
 
@@ -200,7 +200,7 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | Term | Definition |
 |------|-----------|
 | **Atomic commit** | A small, self-contained code change that implements a single task from the plan |
-| **Checkpoint** | A structured pause point during execution where user verification is required (e.g., visual review, decision input). **Not the same as pause-work** — task progress is tracked continuously. |
+| **Checkpoint** | A structured pause point during execution where user verification is required (e.g., visual review, decision input). Task progress is tracked continuously. |
 | **Checker panel** | A role-based plan verification system with three specialized checkers (base, contextual, expert) that verify plans from different perspectives. See [configuration.md](configuration.md#checker-panel). |
 | **Concept** | A unit of knowledge in MegaMemory (e.g., an initiative, requirement, plan, or chapter) |
 | **Dead code** | An exported symbol with no incoming `uses` edges in the import graph — detected by `/fuska-refresh --dead-code` |

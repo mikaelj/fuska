@@ -54,8 +54,8 @@ Flags:
 
 Examples:
   /fuska-do planned fix typo in README
-  /fuska-do checked "add input validation"
-  /fuska-do verified "implement auth" --auto-commit
+  /fuska-do checked add input validation
+  /fuska-do verified implement auth --auto-commit
 ```
 
 Run `fuska help` without arguments to see all available commands.
@@ -65,40 +65,21 @@ Run `fuska help` without arguments to see all available commands.
 Shows current initiative, completed chapters, next steps, ad-hoc tasks, and recommended actions:
 
 ```
-Progress on submodule-diff-display, 2/4 chapters complete.
+Initiative main using standard planning depth (balanced) mode
 
 Done:
-* Chapter 01: Created ResolveSubmoduleRepository function that parses submodule URLs and matches to local Forgejo instance
-* Chapter 02: Created PopulateAllNestedFiles function that iterates over diff files and populates NestedFiles for same-instance submodules
-
-Next:
-* Chapter 3: Render submodule diffs with links and icons in commit and PR/compare views
-  - Status: ready_to_plan
-  - Context: -
+* Chapter 1.1: Created training configuration for Swedish voices (sv_SE-lisa-medium, sv_SE-nst-medium)
+* Chapter 1.2: Created PreRollBuffer class with thread-safe 500ms circular buffer
 
 Future:
-* Chapter 4: Add unit and integration tests, handle edge cases like missing submodules
+* Chapter 2: User can navigate hierarchical menu by voice with Swedish name-based commands
+* Chapter 3: User can control audio playback with Swedish voice commands
 
-Pending ad-hoc tasks:
-* 022: ignore-gitignore-patterns-in-codebase-mapper (2026-02-22 14:30)
-* 021: rename-command-to-commands (2026-02-21 10:15)
+Next:
+* Chapter 1: User can activate the assistant with Swedish wake word "Snabeldrake"
+  Planning complete. No context gathered. (Run "/fuska-design 1" to add context)
 
-Completed ad-hoc tasks:
-* 020: add-json-output-to-progress (2026-02-20 16:45)
-
-Unknown tasks (missing task_number):
-* some-task-without-number
-
-Configuration:
-* Profile: balanced
-
----------
-
-Gather context for chapter 3 and clarify approach by running:
-* /fuska-design 3
-
-or skip design of chapter 3 and plan directly by running:
-* /fuska-plan 3
+Run "/fuska-build 1" to continue
 ```
 
 **Ad-hoc task sections:**
@@ -120,7 +101,7 @@ Use `--json` for machine-readable output.
 |---------|-------------|-----------|
 | <nobr>`/fuska`</nobr> | Universal entry point -- navigate, plan, execute, and more | `[verb] [args]` -- see below; bare invocation shows current position and next step |
 
-`/fuska` routes to all other commands. Run it bare to see where you are, or with a verb: `/fuska plan`, `/fuska build`, `/fuska do fix the bug`, etc. Chapter numbers are auto-detected.
+`/fuska` routes to all other commands. Run it bare to see where you are, or with a verb: `/fuska-plan`, `/fuska-build`, `/fuska-do fix the bug`, etc. Chapter numbers are auto-detected.
 
 ### Initiative Setup
 
@@ -154,7 +135,7 @@ Use `--json` for machine-readable output.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-new-milestone`</nobr> | Create new milestone | `"[name]"` -- milestone name |
+| <nobr>`/fuska-new-milestone`</nobr> | Create new milestone | `[name]` -- milestone name |
 | <nobr>`/fuska-audit`</nobr> | Audit milestone status | -- |
 | <nobr>`/fuska-complete`</nobr> | Mark milestone complete | -- |
 | <nobr>`/fuska-plan-milestone-gaps`</nobr> | Plan gaps between milestones | -- |
@@ -163,8 +144,6 @@ Use `--json` for machine-readable output.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-pause`</nobr> | Capture mental context for next session | -- |
-| <nobr>`/fuska-resume`</nobr> | Restore context and show task position | -- |
 | <nobr>`/fuska-add-todo`</nobr> | Add global todo item | `[description]` -- auto-extracts from conversation if omitted |
 | <nobr>`/fuska-add-chapter-todo`</nobr> | Add chapter-scoped todo item | `<N> <description>` -- chapter number and todo description |
 | <nobr>`/fuska-check-todos`</nobr> | View all todos | -- |
@@ -221,9 +200,9 @@ Falls back to grep when import graph data is unavailable.
 
 **Examples:**
 ```bash
-/fuska-doc "API authentication flow" --type implementation --audience team
-/fuska-doc verified "Migration plan" --type migration --audience stakeholder
-/fuska-doc "System architecture" --type architecture --output docs/arch.md
+/fuska-doc API authentication flow --type implementation --audience team
+/fuska-doc verified Migration plan --type migration --audience stakeholder
+/fuska-doc System architecture --type architecture --output docs/arch.md
 ```
 
 ### Git Integration

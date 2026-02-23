@@ -10,7 +10,7 @@ Works with **OpenCode** and (*probably, maybe, very little testing*) **Claude Co
 
 Based on [gsd-opencode](https://github.com/rokicool/gsd-opencode) and [Get Shit Done](https://github.com/gsd-build/get-shit-done).
 
-> *"Fuska is like having three navigators, each a specialist in different types of road — who raise the alarm if they independently spot the same hazard ahead."* — [Read the full pitch](PITCH.md)
+> *"Fuska is like having three navigators, each a specialist in different types of road — who raise the alarm if they independently spot the same hazard ahead."* — [Read the full pitch](docs/PITCH.md)
 
 **THE AUTHOR TAKES NO RESPONSIBILITY FOR DATA LOSS IN EXISTING PROJECTS. USE AT YOUR OWN PERIL.**
 
@@ -160,23 +160,44 @@ Walks through initiative configuration:
 
 ### CLI Quick Reference
 
-Outside the AI tool, `fuska` gives you project-level control:
+Outside the AI tool, `fuska` gives you project-level control. Run `fuska --help` for grouped output.
 
+**AI-Powered Commands** (spawn an AI agent):
 ```bash
+fuska do <mode> [description]         # Execute unplanned tasks with agent chain
+fuska map [area]                      # Map codebase structure and domains to MegaMemory
+fuska ask [question]                  # Ask questions about the codebase using import graph
+fuska refresh                         # Refresh import graph with file/symbol indexing
+```
+
+**Local Commands** (pure Node.js, no AI):
+```bash
+fuska init [description]              # Initialize project with "main" initiative
+fuska config                          # Configure Fuska settings (TUI)
 fuska progress                        # Current status and next action
-fuska initiative list                 # All initiatives, sorted by activity
-fuska initiative switch <slug>        # Switch active initiative
 fuska todo                            # Pending and completed tasks
-fuska todo add "description"          # Add a global TODO
-fuska git message                     # Preview commit message for current changes
-fuska git worktree add <name>         # Create git worktree with shared context
+fuska info                            # Display codebase and domain mappings
+fuska export                          # Export MegaMemory to markdown files
+fuska install [target]                # Install commands/agents via symlinks
+fuska provider                        # View/change AI provider
+```
+
+**Command Groups:**
+```bash
+fuska initiative list                 # List all initiatives
+fuska initiative switch [slug]        # Switch active initiative
+fuska git message                     # Generate commit message for current changes
+fuska git worktree add <name>         # Create worktree with shared context
 fuska git worktree merge <name>       # Merge worktree back (MegaMemory + git)
-fuska migrate planning <project-dir>  # Import .planning/ into MegaMemory
+fuska migrate planning <dir>          # Import .planning/ into MegaMemory
+fuska migrate terminology [dir]       # Rename phase->chapter, wave->batch
+fuska migrate multi-initiative [path] # Migrate to multi-initiative support
+fuska migrate statuses [dir]          # Migrate old status values
 ```
 
 **Slash commands for chapter TODOs:**
 ```
-/fuska-add-chapter-todo <chapter> "description"  # Add chapter-scoped TODO
+/fuska-add-chapter-todo <chapter> description  # Add chapter-scoped TODO
 ```
 
 #### `fuska progress` Example
@@ -219,20 +240,20 @@ See [commands.md](docs/commands.md) for the full reference.
 ### Work Through Chapters
 
 ```
-fuska init -> /fuska-configure -> /fuska plan -> /fuska build -> repeat
+fuska init -> /fuska-configure -> /fuska-plan -> /fuska-build -> repeat
 ```
 
 | Step | Command | When to Use |
 |------|---------|-------------|
-| **Design** (optional) | `/fuska design` | Requirements have gray areas (UI, UX, behavior) — asks targeted questions to clarify |
-| **Plan** | `/fuska plan` | Always — creates detailed task list with dependencies |
-| **Build** | `/fuska build` | Always — implements tasks with atomic commits |
-| **Review** (optional) | `/fuska review` | Need confidence the code delivers what the chapter promised |
-| **Next chapter** | `/fuska plan` | Start the next chapter (auto-detects chapter number) |
+| **Design** (optional) | `/fuska-design` | Requirements have gray areas (UI, UX, behavior) — asks targeted questions to clarify |
+| **Plan** | `/fuska-plan` | Always — creates detailed task list with dependencies |
+| **Build** | `/fuska-build` | Always — implements tasks with atomic commits |
+| **Review** (optional) | `/fuska-review` | Need confidence the code delivers what the chapter promised |
+| **Next chapter** | `/fuska-plan` | Start the next chapter (auto-detects chapter number) |
 
 Chapter numbers are auto-detected from your project state. You can also pass them explicitly: `/fuska plan 3`.
 
-**Typical flow:** Most chapters skip design and go straight to `/fuska plan`. Use design when you're uncertain about implementation details.
+**Typical flow:** Most chapters skip design and go straight to `/fuska-plan`. Use design when you're uncertain about implementation details.
 
 That's it — repeat for each chapter until the milestone is complete.
 
@@ -250,7 +271,7 @@ During execution, if the builder discovers additional work not in the plan, it c
 This loop runs up to 3 iterations per chapter. You can also add TODOs manually:
 
 ```
-/fuska-add-chapter-todo <chapter-slug> "Add error handling for API rate limits"
+/fuska-add-chapter-todo <chapter-slug> Add error handling for API rate limits
 ```
 
 Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — they're scoped to a specific chapter and consumed during the execution loop.
@@ -284,8 +305,8 @@ Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — 
 | **CLI Tool** | None (all via opencode commands) | **`fuska` CLI** — install, config, migrate, export, projects, todo, worktree management |
 | **Storage Backend** | `.planning/` markdown files | **MegaMemory** knowledge graph — 700x faster semantic queries, survives git resets |
 | **Migration** | N/A | **Import existing** `.planning/` directories with `fuska migrate planning` |
-| **Session continuity** | Requires `/gsd-pause-work` to capture context | **Automatic** — task position tracked after every commit; pause-work optional for mental context only |
-| **Codebase mapping** | Manual exploration | **`/fuska map`** — auto-detects tech, architecture, quality, concerns, domains, and import graph |
+| **Session continuity** | Manual — requires `/gsd-pause-work` before ending a session, `/gsd-resume` to restore context | **Automatic** — state saved after every commit; just run `/fuska` to pick up where you left off. No pause, no resume, no manual saving. |
+| **Codebase mapping** | Manual exploration | **`/fuska-map-codebase`** — auto-detects tech, architecture, quality, concerns, domains, and import graph |
 | **Import graph** | N/A | **`fuska refresh`** / **`fuska ask`** — file and symbol-level indexing with dead code detection and impact analysis |
 
 ### Expert Panel Checker

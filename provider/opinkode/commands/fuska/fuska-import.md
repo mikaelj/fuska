@@ -352,7 +352,7 @@ megamemory_create_concept({
     number: chapter.number,
     name: chapter.name,
     goal: chapter.goal,
-    status: chapter.status || "not_started",
+    status: chapter.status || "pending",
     depends_on: chapter.depends_on || []
   }),
   parent_id: initiativeId,
@@ -612,7 +612,7 @@ megamemory_create_concept({
   summary: JSON.stringify({
     title: title,
     area: area || "general",
-    status: todoDir === "done" ? "done" : "pending",
+    status: todoDir === "done" ? "complete" : "pending",
     created_at: created,
     problem: problem,
     solution: solution,

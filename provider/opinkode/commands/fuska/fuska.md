@@ -121,15 +121,7 @@ Store `stateData`, `roadmapData`.
 
 **If no config concept or no roadmap concept exists** → state is `INIT_ONLY`.
 
-### 1.3 Check for paused work
-
-```
-megamemory:understand({ query: "handoff", top_k: 3 })
-```
-
-If a handoff concept exists with status that is NOT "resolved" → state is `PAUSED`.
-
-### 1.4 Classify lifecycle position
+### 1.3 Classify lifecycle position
 
 Extract from state:
 ```
@@ -165,7 +157,6 @@ From roadmap:
 
 ```
 if (!configExists || !roadmapExists)     → INIT_ONLY
-if (handoffExists && !handoffResolved)   → PAUSED
 if (planCount === 0 && !contextExists)   → CHAPTER_START
 if (planCount === 0 && contextExists)    → DISCUSSED
 if (planCount > 0 && summaryCount < planCount) → PLANNED
@@ -173,7 +164,7 @@ if (planCount > 0 && summaryCount >= planCount) → CHAPTER_DONE
 if (all roadmap chapters complete)         → MILESTONE_DONE
 ```
 
-### 1.5 Display pipeline
+### 1.4 Display pipeline
 
 Output depends on classified state. Use the exact format below — no markdown headers in the pipeline area, no decorative borders, no progress bars. Plain indented text.
 
@@ -188,19 +179,6 @@ Fuska: ${projectName} — needs configuration
 
 This walks you through questioning, research,
 requirements, and roadmap creation.
-```
-
-→ Stop
-
-**PAUSED:**
-
-```
-Fuska: ${projectName} — paused
-
-You left off at Chapter ${chapterNumber}: ${chapterName}
-${handoffData.mental_context ? handoffData.mental_context : ''}
-
-    /fuska-resume
 ```
 
 → Stop
@@ -271,11 +249,11 @@ Chapter ${chapterNumber} of ${totalChapters}: ${chapterName}
     share your vision    ${contextExists ? 'done' : 'skipped'}
     plan into tasks      done
     build it             done
-  > check it works       /fuska review
+  > check it works       /fuska-review
 
 Built. Walk through what was created and verify it works.
 
-${nextChapterExists ? 'Or move to the next chapter:\n    /fuska plan ' + (chapterNumber + 1) : ''}
+${nextChapterExists ? 'Or move to the next chapter:\n    /fuska-plan ' + (chapterNumber + 1) : ''}
 ```
 
 → Stop
@@ -285,12 +263,12 @@ ${nextChapterExists ? 'Or move to the next chapter:\n    /fuska plan ' + (chapte
 ```
 Fuska: ${projectName} -- all ${totalChapters} chapters complete
 
-    /fuska complete
+    /fuska-complete
 
 Archive this milestone and prepare for what's next.
 
 Or audit first:
-    /fuska audit
+    /fuska-audit
 ```
 
 → Stop
@@ -314,8 +292,6 @@ Or audit first:
 | research | fuska-research-chapter.md | yes |
 | do | fuska-do.md | no |
 | debug | fuska-debug.md | no |
-| pause | fuska-pause-work.md | no |
-| resume | fuska-resume.md | no |
 | todo | fuska-add-todo.md | no |
 | todos | fuska-check-todos.md | no |
 | configure | fuska-configure.md | no |
@@ -384,7 +360,7 @@ The `@` reference content serves as execution context — the same role it would
 
 If verb does not match any entry in the dispatch table:
 
-Known verbs: plan, design, build, review, research, do, debug, pause, resume, todo, todos, configure, map, help, add, insert, remove, complete, milestone, audit, gaps, doc, export, import, refresh, ask.
+Known verbs: plan, design, build, review, research, do, debug, todo, todos, configure, map, help, add, insert, remove, complete, milestone, audit, gaps, doc, export, import, refresh, ask.
 
 Find the verb with smallest edit distance (simple character comparison is fine — no need for full Levenshtein).
 

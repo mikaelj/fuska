@@ -37,31 +37,31 @@ describe('InitiativeConceptTemplates', () => {
   });
 
   describe('createRequirement', () => {
-    it('creates requirement concept with active status', () => {
+    it('creates requirement concept with in_progress status', () => {
       const concept = InitiativeConceptTemplates.createRequirement(
         'my-initiative',
         'AUTH-01',
         'User can login with email/password',
-        'active'
+        'in_progress'
       );
 
       expect(concept.name).toBe('req-AUTH-01');
       expect(concept.kind).toBe('feature');
       expect(concept.summary).toContain('"description":"User can login with email/password"');
-      expect(concept.summary).toContain('"status":"active"');
+      expect(concept.summary).toContain('"status":"in_progress"');
       expect(concept.parent_id).toBe('my-initiative/requirements');
       expect(concept.edges).toEqual([{ to: 'requirements', relation: 'part_of' }]);
     });
 
-    it('creates requirement concept with validated status', () => {
+    it('creates requirement concept with complete status', () => {
       const concept = InitiativeConceptTemplates.createRequirement(
         'my-initiative',
         'AUTH-01',
         'User can login',
-        'validated'
+        'complete'
       );
 
-      expect(concept.summary).toContain('"status":"validated"');
+      expect(concept.summary).toContain('"status":"complete"');
     });
 
     it('creates requirement concept with out_of_scope status', () => {
@@ -168,7 +168,7 @@ describe('InitiativeConceptTemplates', () => {
     it('creates milestone concept', () => {
       const milestone = {
         name: 'MVP',
-        status: 'shipped' as const,
+        status: 'complete' as const,
         chapters: ['chapter-01', 'chapter-02'],
         description: 'Minimum viable product'
       };
@@ -178,7 +178,7 @@ describe('InitiativeConceptTemplates', () => {
       expect(concept.name).toBe('milestone-mvp');
       expect(concept.kind).toBe('feature');
       expect(concept.summary).toContain('"name":"MVP"');
-      expect(concept.summary).toContain('"status":"shipped"');
+      expect(concept.summary).toContain('"status":"complete"');
       expect(concept.summary).toContain('"description":"Minimum viable product"');
       expect(concept.summary).toContain('"chapters":["chapter-01","chapter-02"]');
       expect(concept.parent_id).toBe('my-initiative/milestones');

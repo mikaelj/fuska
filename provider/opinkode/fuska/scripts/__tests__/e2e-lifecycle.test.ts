@@ -86,7 +86,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
         kind: 'config',
         summary: JSON.stringify({
           gathered: new Date().toISOString().split('T')[0],
-          status: 'ready_for_planning',
+          status: 'planned',
           chapter_boundary: 'Implement JWT authentication',
           decisions: {
             auth_type: 'JWT',
@@ -482,7 +482,7 @@ describe('Full Fuska Lifecycle E2E Test', () => {
       await megaMemory.create_concept({
         name: 'req-AUTH-01',
         kind: 'feature',
-        summary: JSON.stringify({ description: 'User can login', status: 'active' }),
+        summary: JSON.stringify({ description: 'User can login', status: 'in_progress' }),
         parent_id: 'test-project/requirements',
         edges: [{ to: 'requirements', relation: 'implements' }]
       });

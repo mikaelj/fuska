@@ -163,8 +163,6 @@ ${chalk.bold('Milestones:')}
   audit       Audit milestone
 
 ${chalk.bold('Work Management:')}
-  resume      Resume work
-  pause       Pause work
   todos       Manage todos
 
 ${chalk.bold('Codebase Analysis:')}

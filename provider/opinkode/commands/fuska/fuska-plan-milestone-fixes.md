@@ -1,7 +1,7 @@
 ---
 name: fuska-plan-milestone-fixes
 description: Create chapters to close all gaps identified by milestone audit using MegaMemory
-agent: "@../../agents/fuska/fuska-planner.md"
+agent: "fuska-planner"
 tools:
   - read
   - write
@@ -287,7 +287,7 @@ const newChapters = chapterProposals.filter(chapter => includeChapter(chapter)).
   goal: `Close gaps: ${chapter.gaps.map(g => gapDescription(g)).join(', ')}`,
   depends_on: [], // Will be calculated based on existing chapters
   plans: [],
-  status: "not_planned",
+  status: "pending",
   priority: chapter.priority,
   is_fix: true
 }))
@@ -326,7 +326,7 @@ newChapters.forEach(chapter => {
     name: chapter.name,
     goal: chapter.goal,
     depends_on: chapter.depends_on || [],
-    status: "not_planned",
+    status: "pending",
     plans: [],
     priority: chapter.priority,
     is_fix: true,

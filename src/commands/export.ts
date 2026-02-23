@@ -332,16 +332,16 @@ class ExportToMarkdown {
     sections.push(`# ${data.name || concept.name}\n`);
     sections.push(`${concept.summary}\n`);
 
-    const validated = reqItems.filter(r => this.extractJson(r.summary).status === 'validated');
-    const active = reqItems.filter(r => this.extractJson(r.summary).status === 'active');
+    const complete = reqItems.filter(r => this.extractJson(r.summary).status === 'complete');
+    const inProgress = reqItems.filter(r => this.extractJson(r.summary).status === 'in_progress');
     const outOfScope = reqItems.filter(r => this.extractJson(r.summary).status === 'out_of_scope');
 
-    if (validated.length > 0) {
-      sections.push(`## Validated\n\n${validated.map(r => `- ${this.extractJson(r.summary).description}`).join('\n')}\n`);
+    if (complete.length > 0) {
+      sections.push(`## Complete\n\n${complete.map(r => `- ${this.extractJson(r.summary).description}`).join('\n')}\n`);
     }
 
-    if (active.length > 0) {
-      sections.push(`## Active\n\n${active.map(r => `- ${this.extractJson(r.summary).description}`).join('\n')}\n`);
+    if (inProgress.length > 0) {
+      sections.push(`## In Progress\n\n${inProgress.map(r => `- ${this.extractJson(r.summary).description}`).join('\n')}\n`);
     }
 
     if (outOfScope.length > 0) {

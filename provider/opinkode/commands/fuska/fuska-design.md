@@ -520,7 +520,7 @@ After all areas explored, compile decisions into context data structure:
 ```
 const contextData = {
   gathered: new Date().toISOString().split('T')[0],
-  status: 'ready_for_planning',
+  status: 'planned',
   chapter_boundary: chapterGoal,
   decisions: allDecisions,
   open_code_discretion: [],

@@ -6,6 +6,8 @@ MegaMemory is a persistent knowledge graph for Fuska projects. All project data 
 
 **Why MegaMemory instead of files:** Semantic embeddings enable queries like "authentication patterns" → matches "login", "JWT", "token validation". Edges enable automatic traversal (chapter → plan → summary). All state persists across sessions without file parsing.
 
+> **Status values:** See [status-values.md](status-values.md) for the canonical list of all status values used across chapters, todos, requirements, milestones, and debug sessions.
+
 ## Core Concepts
 
 ### Concepts
@@ -545,8 +547,10 @@ async function findRelevantPatterns(megamemory: MegaMemoryClient, chapterSlug: s
 
 ### Update Chapter Status
 
+> **Canonical chapter statuses:** `pending | planned | in_progress | complete | blocked` — see [status-values.md](status-values.md)
+
 ```typescript
-async function updateChapterStatus(megamemory: MegaMemoryClient, chapterSlug: string, status: 'planned' | 'in_progress' | 'complete' | 'blocked') {
+async function updateChapterStatus(megamemory: MegaMemoryClient, chapterSlug: string, status: 'pending' | 'planned' | 'in_progress' | 'complete' | 'blocked') {
   const chapter = await megamemory.understand({ query: chapterSlug });
   if (chapter.concepts.length === 0) throw new Error(`Chapter ${chapterSlug} not found`);
 

@@ -518,7 +518,7 @@ interface TraceabilityEntry {
   requirementId: string;
   requirementDescription: string;
   chapter: string;
-  status: "Pending" | "In Progress" | "Complete" | "Blocked";
+  status: "pending" | "in_progress" | "complete" | "blocked";
 }
 
 async function mapRequirementToChapter(
@@ -544,7 +544,7 @@ async function mapRequirementToChapter(
     }
 
     // Add new entry
-    const newEntry = `${requirementId} → ${chapterName}: Pending`;
+    const newEntry = `${requirementId} → ${chapterName}: pending`;
     const updated = [...lines, newEntry].join('\n');
 
     // Update coverage
@@ -570,7 +570,7 @@ async function mapRequirementToChapter(
 async function updateRequirementStatus(
   initiativeName: string,
   requirementId: string,
-  status: "In Progress" | "Complete" | "Blocked"
+  status: "in_progress" | "complete" | "blocked"
 ) {
   const traceability = await megamemory.understand({
     query: "Requirement Traceability"
@@ -583,7 +583,7 @@ async function updateRequirementStatus(
     // Find and update the entry
     const updatedLines = lines.map(line => {
       if (line.startsWith(`${requirementId} →`)) {
-        return line.replace(/: (Pending|In Progress|Complete|Blocked)$/, `: ${status}`);
+        return line.replace(/: (pending|in_progress|complete|blocked)$/, `: ${status}`);
       }
       return line;
     });
@@ -599,8 +599,8 @@ async function updateRequirementStatus(
 
 // Usage
 await mapRequirementToChapter("CommunityApp", "AUTH-01", "Chapter 1");
-await updateRequirementStatus("CommunityApp", "AUTH-01", "In Progress");
-await updateRequirementStatus("CommunityApp", "AUTH-01", "Complete");
+await updateRequirementStatus("CommunityApp", "AUTH-01", "in_progress");
+await updateRequirementStatus("CommunityApp", "AUTH-01", "complete");
 ```
 
 ## Requirements Query Helper
@@ -674,7 +674,7 @@ async function getRequirements(initiativeName: string): Promise<{
 // Usage
 const reqs = await getRequirements("CommunityApp");
 console.log(`Coverage: ${reqs.coverage.mapped}/${reqs.coverage.total} (${reqs.coverage.unmapped} unmapped)`);
-console.log(`V1 Complete: ${reqs.v1.filter(r => r.status === "Complete").length}`);
+console.log(`V1 Complete: ${reqs.v1.filter(r => r.status === "complete").length}`);
 ```
 
 </megamemory_examples>
@@ -805,7 +805,7 @@ Which chapters cover which requirements. Updated during roadmap creation.
 3. Move requirements to v2/out of scope if descoped
 
 **Requirement completion criteria:**
-- Requirement is "Complete" when:
+- Requirement is "complete" when:
   - Feature is implemented
   - Feature is verified (tests pass, manual check done)
   - Feature is committed

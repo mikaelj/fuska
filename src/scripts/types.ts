@@ -1,3 +1,13 @@
+export type UniversalStatus = 'pending' | 'planned' | 'in_progress' | 'complete' | 'blocked' | 'failed' | 'skipped';
+
+export type StateStatus = 'initialized' | 'defining_requirements' | 'ready_to_plan' | 'ready_to_execute' | 'in_progress' | 'chapter_complete' | 'milestone_complete';
+
+export type DebugPhase = 'gathering' | 'investigating' | 'fixing' | 'verifying' | 'resolved';
+
+export type VerificationOutcome = 'passed' | 'issues_found' | 'human_needed' | 'failed';
+
+export type RequirementStatus = 'pending' | 'in_progress' | 'complete' | 'out_of_scope' | 'blocked';
+
 export interface FuskaConcept {
   id?: string;
   name: string;
@@ -78,7 +88,7 @@ export interface InitiativeData {
 export interface Requirement {
   id: string;
   description: string;
-  status: 'validated' | 'active' | 'out_of_scope';
+  status: RequirementStatus;
 }
 
 export interface Chapter {
@@ -163,7 +173,7 @@ export interface VerificationData {
 export interface StateData {
   current_chapter: string;
   current_plan: string | null;
-  status: string;
+  status: StateStatus;
   progress: number;
   last_activity: string;
 }
@@ -175,7 +185,7 @@ export interface ConfigData {
 
 export interface MilestoneData {
   name: string;
-  status: 'shipped' | 'in_progress' | 'planned';
+  status: UniversalStatus;
   chapters: string[];
   description?: string;
 }

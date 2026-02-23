@@ -2,7 +2,7 @@
 name: fuska-research-chapter
 description: Research how to implement a chapter (standalone - usually use /fuska-plan instead) using MegaMemory
 argument-hint: "[chapter]"
-agent: "@../../agents/fuska/fuska-chapter-researcher.md"
+agent: "fuska-chapter-researcher"
 tools:
   - read
   - bash

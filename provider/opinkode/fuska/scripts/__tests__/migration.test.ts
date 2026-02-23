@@ -132,7 +132,7 @@ describe('Migration Tests', () => {
         kind: 'feature',
         summary: JSON.stringify({
           description: 'User authentication',
-          status: 'validated'
+          status: 'complete'
         }),
         parent_id: 'test-project/requirements',
         edges: [{ to: 'requirements', relation: 'implements' }]
@@ -143,14 +143,14 @@ describe('Migration Tests', () => {
         kind: 'feature',
         summary: JSON.stringify({
           description: 'User authorization',
-          status: 'active'
+          status: 'in_progress'
         }),
         parent_id: 'test-project/requirements',
         edges: [{ to: 'requirements', relation: 'implements' }]
       };
 
-      expect(req1.summary).toContain('"status":"validated"');
-      expect(req2.summary).toContain('"status":"active"');
+      expect(req1.summary).toContain('"status":"complete"');
+      expect(req2.summary).toContain('"status":"in_progress"');
     });
 
     it('should migrate chapters correctly', async () => {
@@ -197,7 +197,7 @@ describe('Migration Tests', () => {
         kind: 'config',
         summary: JSON.stringify({
           gathered: '2025-01-20',
-          status: 'ready_for_planning',
+          status: 'planned',
           chapter_boundary: 'Implement core',
           decisions: { tech_stack: 'TypeScript' }
         }),
@@ -270,7 +270,7 @@ describe('Migration Tests', () => {
           const statusMatch = section.match(/Status:\s*(\d+)\/(\d+)\s+plans\s+executed/);
           if (statusMatch) {
             const completed = parseInt(statusMatch[1]);
-            status = completed > 0 ? 'executing' : 'ready_to_plan';
+            status = completed > 0 ? 'in_progress' : 'ready_to_plan';
           }
         }
         expect(status).toBe('ready_to_plan');

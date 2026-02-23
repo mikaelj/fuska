@@ -176,7 +176,7 @@ megamemory_create_concept(
     goal: "To be planned",
     depends_on: [maxChapterNumber > 0 ? `chapter-${maxChapterNumber.toString().padStart(2, '0')}` : null],
     plans: 0,
-    status: "not_planned"
+    status: "pending"
   }),
   parent_id=roadmapId,
   edges=[],
@@ -202,7 +202,7 @@ const newChapter = {
   goal: "To be planned",
   depends_on: maxChapterNumber > 0 ? `chapter-${maxChapterNumber.toString().padStart(2, '0')}` : null,
   plans: 0,
-  status: "not_planned"
+  status: "pending"
 }
 
 const updatedRoadmapData = {

@@ -28,14 +28,14 @@ Output ONLY the reference content below. Do NOT add:
 ## Quick Start
 
 ```
-fuska init → /fuska configure → /fuska plan → /fuska build → repeat
+fuska init → /fuska-configure → /fuska-plan → /fuska-build → repeat
 ```
 
 **`/fuska`** is the universal entry point. Run it bare to see where you are, or with a verb to act:
 \* `/fuska` — show current position and what to do next
-\* `/fuska plan` — plan the current chapter (auto-detects chapter number)
-\* `/fuska build` — build the current chapter
-\* `/fuska do [mode] [desc]` — quick ad-hoc task
+\* `/fuska-plan` — plan the current chapter (auto-detects chapter number)
+\* `/fuska-build` — build the current chapter
+\* `/fuska-do [mode] [desc]` — quick ad-hoc task
 
 All `/fuska-*` commands below also work directly.
 
@@ -70,8 +70,8 @@ All `/fuska-*` commands below also work directly.
 ## Progress Tracking
 
 \* `fuska progress` — Check project status and intelligently route to next action.
-\* `/fuska-resume` — Resume work from previous session with full context restoration.
-\* `/fuska-pause-work` — Capture mental context when pausing work mid-chapter.
+
+> **Session continuity is automatic.** Your task position is tracked after every commit. Run `/fuska` anytime to see exactly where you are — no manual saving or resume command needed.
 
 ## Debugging
 
@@ -149,14 +149,14 @@ Configure in your OpenCode model definition under `"variants"`. See `fuska confi
 ## Quick Start
 
 1. `fuska init "My Project"` - Initialize project foundation (git, .megamemory/)
-2. `/fuska` - See what to do next (or `/fuska configure` directly)
-3. `/fuska plan` - Plan the current chapter (auto-detects chapter number)
-4. `/fuska build` - Build the current chapter
+2. `/fuska` - See what to do next (or `/fuska-configure` directly)
+3. `/fuska-plan` - Plan the current chapter (auto-detects chapter number)
+4. `/fuska-build` - Build the current chapter
 
 ## Core Workflow
 
 ```
-fuska init → /fuska configure → /fuska plan → /fuska build → repeat
+fuska init → /fuska-configure → /fuska-plan → /fuska-build → repeat
 ```
 
 **`/fuska`** is the universal entry point. Run bare to navigate, or with a verb to act. All `/fuska-*` commands also work directly.
@@ -257,7 +257,7 @@ Add new chapter to end of current milestone.
 - Uses next sequential number
 - Creates chapter concept
 
-Usage: `/fuska-add-chapter "Add admin dashboard"`
+Usage: `/fuska-add-chapter Add admin dashboard`
 
 **`/fuska-insert-chapter <after> <description>`**
 Insert urgent work as decimal chapter between existing chapters.
@@ -266,7 +266,7 @@ Insert urgent work as decimal chapter between existing chapters.
 - Useful for discovered work that must happen mid-milestone
 - Maintains chapter ordering
 
-Usage: `/fuska-insert-chapter 7 "Fix critical auth bug"`
+Usage: `/fuska-insert-chapter 7 Fix critical auth bug`
 Result: Creates Chapter 7.1 concept
 
 **`/fuska-remove-chapter <number>`**
@@ -292,7 +292,7 @@ Start a new milestone through unified flow.
 
 Similar to `/fuska-configure` flow for brownfield projects (existing initiative concept).
 
-Usage: `/fuska-new-milestone "v2.0 Features"`
+Usage: `/fuska-new-milestone v2.0 Features`
 
 **`/fuska-complete <version>`**
 Archive completed milestone and prepare for next version.
@@ -318,28 +318,6 @@ Check project status and intelligently route to next action.
 
 Usage: `fuska progress`
 
-### Session Management
-
-**`/fuska-resume`**
-Resume work from previous session with full context restoration.
-
-- Shows exact task position from state (e.g., "Task 4 of 7")
-- If paused earlier, shows your mental context
-- Detects incomplete work and checkpoints
-- Routes to appropriate next action
-
-Usage: `/fuska-resume`
-
-**`/fuska-pause-work`**
-Capture mental context when pausing work mid-chapter.
-
-- Asks for your mental context (approach, next steps)
-- Creates handoff concept with mental context + modified files
-- Task position is already tracked continuously (no calculation needed)
-- Optional: creates WIP commit for uncommitted changes
-
-Usage: `/fuska-pause-work`
-
 ### Debugging
 
 **`/fuska-debug [issue description]`**
@@ -351,7 +329,7 @@ Systematic debugging with persistent state across context resets using MegaMemor
 - Survives `/new` — run `/fuska-debug` with no args to resume
 - Archives resolved issues to resolved concepts
 
-Usage: `/fuska-debug "login button doesn't work"`
+Usage: `/fuska-debug login button doesn't work`
 Usage: `/fuska-debug` (resume active session)
 
 ### Todo Management
@@ -461,7 +439,7 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees.
 - Creates standalone task concepts (not tied to roadmap)
 
 Usage: `/fuska-do planned fix typo in README`
-Usage: `/fuska-do planned "fix typo in README" --no-review --auto-commit`
+Usage: `/fuska-do planned fix typo in README --no-review --auto-commit`
 Usage: `/fuska-do` (prompts for mode and description)
 
  ### Codebase Analysis
@@ -496,8 +474,8 @@ Usage: `/fuska-do` (prompts for mode and description)
 
  Falls back to grep if import graph is empty or stale.
 
- Usage: `/fuska-ask "Who uses AuthService?"`
- Usage: `/fuska-ask "Is ItemSelectionSheet dead code?"`
+ Usage: `/fuska-ask Who uses AuthService?`
+ Usage: `/fuska-ask Is ItemSelectionSheet dead code?`
 
  ### Utility Commands
 
@@ -581,11 +559,11 @@ Without variants, all agents use the model's default thinking budget.
 
 ```
 fuska init "My Project"    # Initialize project foundation
-/fuska configure           # Questioning, research, requirements, roadmap
+/fuska-configure           # Questioning, research, requirements, roadmap
 /new
-/fuska plan                # Plan current chapter (auto-detects chapter 1)
+/fuska-plan                # Plan current chapter (auto-detects chapter 1)
 /new
-/fuska build               # Build the current chapter
+/fuska-build               # Build the current chapter
 ```
 
 Or just `/fuska` at any point to see where you are.
@@ -594,41 +572,40 @@ Or just `/fuska` at any point to see where you are.
 
 ```
 /fuska                     # See where you are and what to do next
-/fuska resume              # Full context restoration from previous session
 ```
 
 **Adding urgent mid-milestone work:**
 
 ```
-/fuska insert 5 "Critical security fix"
-/fuska plan 5.1
-/fuska build 5.1
+/fuska-insert 5 "Critical security fix"
+/fuska-plan 5.1
+/fuska-build 5.1
 ```
 
 **Completing a milestone:**
 
 ```
-/fuska complete 1.0.0
+/fuska-complete 1.0.0
 /new
-/fuska milestone           # Start next milestone
+/fuska-milestone           # Start next milestone
 ```
 
 **Capturing ideas during work:**
 
 ```
-/fuska todo                        # Capture from conversation context
-/fuska todo Fix modal z-index      # Capture with explicit description
-/fuska todos                       # Review and work on todos
-/fuska todos api                   # Filter by area
+/fuska-add-todo                       # Capture from conversation context
+/fuska-add-todoFix modal z-index      # Capture with explicit description
+/fuska-check-todos                       # Review and work on todos
+/fuska-check-todos api                   # Filter by area
 ```
 
 **Debugging an issue:**
 
 ```
-/fuska debug "form submission fails silently"  # Start debug session
+/fuska-debug "form submission fails silently"  # Start debug session
 # ... investigation happens, context fills up ...
 /new
-/fuska debug                                    # Resume from where you left off
+/fuska-debug                                    # Resume from where you left off
 ```
 
 ## Getting Help

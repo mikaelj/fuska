@@ -52,7 +52,7 @@ Expected results:
 
 ---
 
-**Once all items complete:** Mark status as "Complete" at top.
+**Once all items complete:** Mark status as "complete" at top.
 ```
 
 ---
@@ -512,7 +512,7 @@ Expected: Build passes, webhook returns 400 (signature validation working).
 
 ---
 
-**Once all items complete:** Mark status as "Complete" at top.
+**Once all items complete:** Mark status as "complete" at top.
 ```
 
 ### Supabase Example
@@ -566,7 +566,7 @@ npx supabase status
 
 ---
 
-**Once all items complete:** Mark status as "Complete" at top.
+**Once all items complete:** Mark status as "complete" at top.
 ```
 
 ### SendGrid Example
@@ -621,7 +621,7 @@ curl -X POST http://localhost:3000/api/test-email \
 
 ---
 
-**Once all items complete:** Mark status as "Complete" at top.
+**Once all items complete:** Mark status as "complete" at top.
 ```
 ```
 

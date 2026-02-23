@@ -2,7 +2,7 @@
 name: fuska-map-domains
 description: Discover business domains in codebase for MegaMemory
 argument-hint: "[optional: specific area to focus on]"
-agent: "@../../agents/fuska/fuska-codebase-mapper.md"
+agent: "fuska-codebase-mapper"
 tools:
   - read
   - bash

@@ -251,7 +251,7 @@ ${currentMilestone.definition_of_done ? `**Definition of Done:** ${currentMilest
 ${chapters.map(chapter => `### Chapter ${chapter.number}: ${chapter.name}
 
 **Goal:** ${chapter.goal || 'TBD'}
-**Status:** ${chapter.status || 'not_started'}
+**Status:** ${chapter.status || 'pending'}
 **Depends on:** ${chapter.depends_on ? chapter.depends_on.map(d => `Chapter ${d}`).join(', ') : 'None'}
 
 ${chapter.description ? `**Description:** ${chapter.description}` : ''}
@@ -715,7 +715,7 @@ const dateStr = todoData.created_at || todo.created_at || new Date().toISOString
 const slug = todo.name.replace('todo-', '')
 const status = todoData.status || todo.status || 'pending'
 
-const todoDir = status === 'done' ? "$outputDir/todos/done" : "$outputDir/todos/pending"
+const todoDir = status === 'complete' ? "$outputDir/todos/done" : "$outputDir/todos/pending"
 const todoFile = "${todoDir}/${dateStr}-${slug}.md"
 
 write to todoFile:

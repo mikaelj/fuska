@@ -306,14 +306,14 @@ Wait for user response and proceed based on selection.
 
 **Step 9.1: Work on it now**
 
-Update the todo concept status to "done":
+Update the todo concept status to "complete":
 ```
 const todoId = selectedTodo.id
 const todoSummaryString = selectedTodo.summary
 const todoData = JSON.parse(todoSummaryString)
 const updatedTodoData = {
   ...todoData,
-  status: "done",
+  status: "complete",
   completedAt: new Date().toISOString()
 }
 
@@ -429,7 +429,7 @@ Wait for user response and route accordingly.
 
 <output>
 
-- Todo concept updated to status "done" (if "Work on it now")
+- Todo concept updated to status "complete" (if "Work on it now")
 - State concept updated with pending_todos_count (if applicable)
 - Git commit created (if configured and applicable)
 
@@ -438,7 +438,7 @@ Wait for user response and route accordingly.
 <anti_patterns>
 
 - Don't delete todo concepts — use megamemory:remove_concept only when truly obsolete
-- Don't start work without moving todo to "done" status first
+- Don't start work without moving todo to "complete" status first
 - Don't create plans from this command — route to /fuska-plan or /fuska-add-chapter
 
 </anti_patterns>

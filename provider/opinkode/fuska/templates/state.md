@@ -66,7 +66,7 @@ parent_id: "[Project Name] State"
 ```
 name: "Session Continuity"
 kind: "component"
-summary: "Last session: [YYYY-MM-DD HH:MM]\nStopped at: [Description of last completed action]\nResume file: [Path to .continue-here*.md or None]"
+summary: "Last session: [YYYY-MM-DD HH:MM]\nLast action: [Description of last completed action]"
 parent_id: "[Project Name] State"
 ```
 
@@ -116,7 +116,7 @@ await megamemory.create_concept({
 await megamemory.create_concept({
   name: "Session Continuity",
   kind: "component",
-  summary: "Last session: None\nStopped at: Initial state created\nResume file: None",
+  summary: "Last session: None\nLast action: Initial state created",
   parent_id: state.id
 });
 ```
@@ -196,7 +196,7 @@ await megamemory.update_concept({
 await megamemory.update_concept({
   id: "Session Continuity",
   changes: {
-    summary: "Last session: 2025-01-20 14:30\nStopped at: Completed plan 01-01, ready to start execution\nResume concept: chapter-plan:01-01"
+    summary: "Last session: 2025-01-20 14:30\nLast action: Completed plan 01-01, ready to start execution"
   }
 });
 ```
@@ -216,7 +216,7 @@ const blockers = await megamemory.understand({
 
 // Get session continuity
 const session = await megamemory.understand({
-  query: "Session continuity resume"
+  query: "Session continuity"
 });
 
 // Get performance metrics
@@ -272,7 +272,7 @@ async function initializeInitiativeState(initiativeName: string, totalChapters: 
   await megamemory.create_concept({
     name: "Session Continuity",
     kind: "component",
-    summary: "Last session: None\nStopped at: Initial state created\nResume file: None",
+    summary: "Last session: None\nLast action: Initial state created",
     parent_id: state.id
   });
 
@@ -303,7 +303,6 @@ interface InitiativeState {
   session: {
     lastSession?: string;
     stoppedAt: string;
-    resumeFile?: string;
   };
 }
 
@@ -354,8 +353,7 @@ async function getInitiativeState(initiativeName: string): Promise<InitiativeSta
       case "Session Continuity":
         const sessionLines = concept.summary.split('\n');
         state.session.lastSession = sessionLines.find(l => l.startsWith('Last session'))?.split(': ').slice(1).join(': ');
-        state.session.stoppedAt = sessionLines.find(l => l.startsWith('Stopped at'))?.split(': ').slice(1).join(': ') || "";
-        state.session.resumeFile = sessionLines.find(l => l.startsWith('Resume file'))?.split(': ').slice(1).join(': ');
+        state.session.stoppedAt = sessionLines.find(l => l.startsWith('Last action'))?.split(': ').slice(1).join(': ') || "";
         break;
     }
   }
@@ -482,7 +480,6 @@ Progress calculation: (completed plans) / (total plans across all chapters) × 1
 Enables instant resumption:
 - When was last session
 - What was last completed
-- Is there a resume file
 
 </sections>
 
@@ -524,6 +521,6 @@ The goal is "read once, know where we are" — if it's too long, that fails.
 - Recent Decisions: Decision summaries
 - Pending Todos: Todo count
 - Blockers/Concerns: Active issues
-- Session Continuity: Resume information
+- Session Continuity: Last session and last action
 
 </Guidelines>

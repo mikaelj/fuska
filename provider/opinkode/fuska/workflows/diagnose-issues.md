@@ -159,7 +159,7 @@ Each debug agent should:
      summary: JSON.stringify({
        ...existing data,
        resolution: "Root cause: {specific cause}",
-       status: "completed"
+       status: "resolved"
      }),
      file_refs: ["file1:lines", "file2:lines"]
    }
