@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 VERSION=$(node -p "require('./package.json').version")
-TARBALL="fuska-${VERSION}.tgz"
+TARBALL="fuska-magistern-${VERSION}.tgz"
 
 echo "Cleaning dist..."
 rm -rf dist

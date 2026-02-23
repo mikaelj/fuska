@@ -30,6 +30,8 @@ That validation isn't a generic checklist. A panel of three specialized reviewer
 
 ## Quick Start
 
+> **Prerequisites:** Fuska must be [installed](#installation) and your project [initialized](#initialize-your-project) before running these commands.
+
 ### See It In Action
 
 Just tell Fuska what you want. It researches, plans, verifies the plan, and executes with atomic commits.
@@ -89,7 +91,7 @@ For the full mental model, glossary, and edge relations, see [concepts.md](docs/
 ## Installation
 
 ```bash
-npm install -g fuska-magistern
+npm install -g fuska-magistern@latest
 fuska install
 ```
 

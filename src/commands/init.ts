@@ -149,6 +149,9 @@ class InitRunner {
       }
       console.log(`Updating ${config.provider} permissions...`);
       await updatePermissions(this.projectDir, config.provider);
+      if (config.provider === 'claude') {
+        await this.ensureClaudePermissions();
+      }
       return;
     }
 
