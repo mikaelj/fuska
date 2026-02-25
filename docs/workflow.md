@@ -5,6 +5,39 @@
 **Audience:** Daily users, anyone wanting to see complete workflows
 **Prerequisites:** [Key Concepts](concepts.md)
 
+## Table of Contents
+
+- [Workflow Modes](#workflow-modes)
+  - [Planned](#planned)
+  - [Checked](#checked)
+  - [Researched](#researched)
+  - [Verified](#verified)
+  - [Override Behavior](#override-behavior)
+- [Chapter Lifecycle](#chapter-lifecycle)
+  - [Design](#design)
+  - [Plan](#plan)
+  - [Build](#build)
+  - [Review](#review)
+- [Ad-hoc Tasks with /fuska-do](#ad-hoc-tasks-with-fuska-do)
+  - [Quick Mode vs /fuska-do](#quick-mode-vs-fuska-do)
+  - [Decision Guide](#decision-guide)
+- [Session Continuity](#session-continuity)
+  - [What's Tracked Automatically](#whats-tracked-automatically)
+  - [Getting Back to Where You Were](#getting-back-to-where-you-were)
+- [Scenarios](#scenarios)
+  - [Building a Feature from Scratch](#building-a-feature-from-scratch)
+  - [Resuming Across Sessions](#resuming-across-sessions)
+  - [Discovering Unplanned Work](#discovering-unplanned-work)
+  - [Verification Failure and Recovery](#verification-failure-and-recovery)
+  - [Quick Fix for a Production Bug](#quick-fix-for-a-production-bug)
+  - [Code Review Catching a Bug (Real-World Example)](#code-review-catching-a-bug-real-world-example)
+  - [Chapter-Todo Iterative Loop](#chapter-todo-iterative-loop)
+  - [Multiple Initiatives in One Codebase](#multiple-initiatives-in-one-codebase)
+  - [Milestones and Releases](#milestones-and-releases)
+  - [Merging Knowledge from Git Worktrees](#merging-knowledge-from-git-worktrees)
+  - [Revisiting Old Initiatives](#revisiting-old-initiatives)
+- [See Also](#see-also)
+
 ---
 
 ## Workflow Modes
@@ -271,6 +304,92 @@ Command for step 1:
 ```
 | 2 | <nobr>`/fuska-check-todos`</nobr> | — | Shows 1 open todo: "Investigate Instacart API for shopping list export" (from earlier). No new todos from the fix. |
 
+### Code Review Catching a Bug (Real-World Example)
+
+*You run `/fuska-do checked` to improve the config mode display — replacing misleading percentages with actual agent pipelines. The code reviewer catches a typo that would have broken the display. See [fuska-do-session-distilled.md](fuska-do-session-distilled.md) for the full annotated walkthrough.*
+
+**Builder completes the task.** Modifies `src/commands/config.ts` — replaces percentage-based mode descriptions (like "Standard (90%)") with agent pipeline descriptions (like "Researcher → Planner → Checker → Executor → Verifier") across 4 display locations.
+
+**Code reviewer (iteration 1) — ISSUES FOUND:**
+
+```
+ISSUES FOUND
+Task: Improve config mode display - Replace misleading percentages with actual agent pipelines
+Files reviewed: 1
+Issues: 1 blocker
+
+Blockers (must fix)
+1. [Anti-Patterns] Typo in property access path
+- File: src/commands/config.ts
+- Line: 542
+- Fix: Change this.config.workflow.workflow.mode to this.config.workflow.mode
+The second display location has a typo that causes nested property access which will
+result in undefined, making the mode description fail to display.
+
+Structured Issues
+issues:
+  - dimension: "anti_patterns"
+    severity: "blocker"
+    file: "src/commands/config.ts"
+    description: "Typo: 'this.config.workflow.workflow.mode' should be 'this.config.workflow.mode'"
+    fix_hint: "Remove the duplicate 'workflow' property reference on line 542"
+
+Recommendation
+1 blocker requires revision. Returning to builder with feedback.
+
+▣  Fuska-Code-Reviewer · glm-4.7 · 47.2s
+```
+
+**Builder revises.** Fixes the typo on line 542: `this.config.workflow.workflow.mode` → `this.config.workflow.mode`.
+
+**Code reviewer (iteration 2) — REVIEW PASSED:**
+
+```
+REVIEW PASSED
+Task: Improve config mode display - Replace misleading percentages with actual agent pipelines
+Files reviewed: 1 (src/commands/config.ts)
+Status: All checks passed
+
+Review Summary
+| Dimension          | Status | Notes                                                |
+|--------------------|--------|------------------------------------------------------|
+| Plan Fulfillment   | PASS   | All 5 display locations updated from % to pipelines  |
+| Completeness       | PASS   | No stubs detected                                    |
+| Wiring             | PASS   | MODE_DESCRIPTIONS used consistently across locations |
+| Anti-Patterns      | PASS   | No issues found                                      |
+| Research Compliance| PASS   | N/A — no research context                            |
+
+Detailed Verification
+1. Plan Fulfillment
+   ✓ MODE_DESCRIPTIONS constant with pipeline notation
+   ✓ displayTreeView() — shows "Workflow: <mode> - <pipeline>"
+   ✓ displayState() — pipeline description instead of percentage
+   ✓ setWorkflowMode() — choices show "standard - Researcher → Planner → ..."
+   ✓ displaySettingsBanner() — pipeline with proper padding
+
+2. Completeness
+   ✓ No TODO/FIXME/HACK/PLACEHOLDER comments
+   ✓ All functions have complete implementations
+   ✓ Note: "placeholder values" on line 224 is user-facing messaging, not a stub
+
+3. Wiring
+   ✓ MODE_DESCRIPTIONS used in 4 functions, no orphaned code
+
+4. Anti-Patterns
+   ✓ No empty catches, debug logs, hardcoded values, or unused imports
+
+5. Edge Cases
+   ✓ Fallback to mode name if not in MODE_DESCRIPTIONS
+   ✓ Optional chaining used correctly (this.config.workflow?.mode)
+
+Ready for Commit
+Code review passed. Changes are ready to commit.
+
+▣  Fuska-Code-Reviewer · glm-4.7 · 2m 9s
+```
+
+> **Note:** The code reviewer was configured to use `glm-4.7` (fast and cost-effective) while the builder used a different model. Model assignment is per-agent — configure it via `fuska config` profile stages.
+
 ### Chapter-Todo Iterative Loop
 
 *While building a chapter, the executor discovers additional work that wasn't in the plan. Chapter-todos capture this and trigger an iterative planning loop.*
@@ -370,92 +489,6 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 - All knowledge (chapters, summaries, decisions) is always preserved
 - Switch to any initiative at any time
 
-### Code Review Catching a Bug
-
-*You run `/fuska-do checked` to improve the config mode display — replacing misleading percentages with actual agent pipelines. The code reviewer catches a typo that would have broken the display.*
-
-**Builder completes the task.** Modifies `src/commands/config.ts` — replaces percentage-based mode descriptions (like "Standard (90%)") with agent pipeline descriptions (like "Researcher → Planner → Checker → Executor → Verifier") across 4 display locations.
-
-**Code reviewer (iteration 1) — ISSUES FOUND:**
-
-```
-ISSUES FOUND
-Task: Improve config mode display - Replace misleading percentages with actual agent pipelines
-Files reviewed: 1
-Issues: 1 blocker
-
-Blockers (must fix)
-1. [Anti-Patterns] Typo in property access path
-- File: src/commands/config.ts
-- Line: 542
-- Fix: Change this.config.workflow.workflow.mode to this.config.workflow.mode
-The second display location has a typo that causes nested property access which will
-result in undefined, making the mode description fail to display.
-
-Structured Issues
-issues:
-  - dimension: "anti_patterns"
-    severity: "blocker"
-    file: "src/commands/config.ts"
-    description: "Typo: 'this.config.workflow.workflow.mode' should be 'this.config.workflow.mode'"
-    fix_hint: "Remove the duplicate 'workflow' property reference on line 542"
-
-Recommendation
-1 blocker requires revision. Returning to builder with feedback.
-
-▣  Fuska-Code-Reviewer · glm-4.7 · 47.2s
-```
-
-**Builder revises.** Fixes the typo on line 542: `this.config.workflow.workflow.mode` → `this.config.workflow.mode`.
-
-**Code reviewer (iteration 2) — REVIEW PASSED:**
-
-```
-REVIEW PASSED
-Task: Improve config mode display - Replace misleading percentages with actual agent pipelines
-Files reviewed: 1 (src/commands/config.ts)
-Status: All checks passed
-
-Review Summary
-| Dimension          | Status | Notes                                                |
-|--------------------|--------|------------------------------------------------------|
-| Plan Fulfillment   | PASS   | All 5 display locations updated from % to pipelines  |
-| Completeness       | PASS   | No stubs detected                                    |
-| Wiring             | PASS   | MODE_DESCRIPTIONS used consistently across locations |
-| Anti-Patterns      | PASS   | No issues found                                      |
-| Research Compliance| PASS   | N/A — no research context                            |
-
-Detailed Verification
-1. Plan Fulfillment
-   ✓ MODE_DESCRIPTIONS constant with pipeline notation
-   ✓ displayTreeView() — shows "Workflow: <mode> - <pipeline>"
-   ✓ displayState() — pipeline description instead of percentage
-   ✓ setWorkflowMode() — choices show "standard - Researcher → Planner → ..."
-   ✓ displaySettingsBanner() — pipeline with proper padding
-
-2. Completeness
-   ✓ No TODO/FIXME/HACK/PLACEHOLDER comments
-   ✓ All functions have complete implementations
-   ✓ Note: "placeholder values" on line 224 is user-facing messaging, not a stub
-
-3. Wiring
-   ✓ MODE_DESCRIPTIONS used in 4 functions, no orphaned code
-
-4. Anti-Patterns
-   ✓ No empty catches, debug logs, hardcoded values, or unused imports
-
-5. Edge Cases
-   ✓ Fallback to mode name if not in MODE_DESCRIPTIONS
-   ✓ Optional chaining used correctly (this.config.workflow?.mode)
-
-Ready for Commit
-Code review passed. Changes are ready to commit.
-
-▣  Fuska-Code-Reviewer · glm-4.7 · 2m 9s
-```
-
-> **Note:** The code reviewer was configured to use `glm-4.7` (fast and cost-effective) while the builder used a different model. Model assignment is per-agent — configure it via `fuska config` profile stages.
-
 ---
 
 ## See Also
@@ -463,3 +496,4 @@ Code review passed. Changes are ready to commit.
 - [configuration.md](configuration.md) — Workflow mode settings and model profiles
 - [commands.md](commands.md) — Full command reference
 - [concepts.md](concepts.md) — Mental model behind these workflows
+- [fuska-do-session-distilled.md](fuska-do-session-distilled.md) — Full annotated walkthrough of a `/fuska-do checked` session showing the plan-checker and code-reviewer in action

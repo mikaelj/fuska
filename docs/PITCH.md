@@ -50,6 +50,29 @@ You type: `/fuska-do verified implement OAuth login with Google and GitHub`
 
 You approve, and it's done. Six agents have worked in sequence, each with their own speciality. You never had to leave the editor. The same thing works with `fuska do verified` directly in the terminal. And if you want more control, you can run each step separately — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — exactly as you like.
 
+## See It Happen
+
+That was a hypothetical example. Here's what an actual `/fuska-do checked` session looks like — a real task, real agents, real bug caught.
+
+**The task:** `fuska config` showed misleading percentages for workflow modes. The user ran `/fuska-do checked` to fix it.
+
+**What happened:** The planner proposed a focused 1-file, 5-location edit. The plan-checker validated scope and completeness. The builder implemented all changes. Then the code reviewer found a blocker:
+
+> `this.config.workflow.workflow.mode` — a double property access that would silently return `undefined` and break the display in one of four locations.
+
+The orchestrator didn't blindly trust the review. It read the actual file, ran `git diff`, and verified the code on disk was correct — the bug existed only in the diff context passed to the reviewer. It re-ran the review with the verified diff, which passed clean.
+
+| Phase | Agent | Time | Result |
+|-------|-------|------|--------|
+| Plan | fuska-planner | 114s | 1 task, 1 file |
+| Check | fuska-plan-checker | 66s | PASSED |
+| Build | fuska-executor | 170s | COMPLETE |
+| Review | fuska-code-reviewer | 103s | ISSUES FOUND (1 blocker) |
+| Re-review | fuska-code-reviewer | 170s | PASSED |
+| Commit | fuska-git-message | 55s | `feat(config): improve workflow mode display` |
+
+Six agents, one command, one clean commit. The full annotated session is in [fuska-do-session-distilled.md](fuska-do-session-distilled.md).
+
 ## Why It Matters
 
 **Persistent memory.** Friday at four o'clock you close the editor in the middle of chapter 2. Monday morning you run `/fuska` — it shows exactly which chapter, which task, and what comes next. No manual saving, no resume command. Your position is always current.

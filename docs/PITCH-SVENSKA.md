@@ -49,6 +49,29 @@ Du skriver: `/fuska-do verified implementera OAuth-inloggning med Google och Git
 
 Du godkänner, och det är klart. Sex agenter har jobbat i sekvens, var och en med sin specialitet. Du behövde aldrig lämna editorn. Samma sak fungerar med `fuska do verified` direkt i terminalen. Och vill du ha mer kontroll kan du köra varje steg för sig — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — precis som du vill.
 
+## Se det hända
+
+Det var ett hypotetiskt exempel. Här är vad en faktisk `/fuska-do checked`-session ser ut — en riktig uppgift, riktiga agenter, riktig bugg hittad.
+
+**Uppgiften:** `fuska config` visade missvisande procenttal för arbetslägen. Användaren körde `/fuska-do checked` för att fixa det.
+
+**Vad som hände:** Planeraren föreslog en fokuserad ändring: 1 fil, 5 platser. Plan-checkern validerade scope och fullständighet. Byggaren implementerade alla ändringar. Sedan hittade kodgranskaren en blockerare:
+
+> `this.config.workflow.workflow.mode` — en dubbel property-access som tyst skulle returnera `undefined` och bryta visningen på en av fyra platser.
+
+Orkestratorn litade inte blint på granskningen. Den läste den faktiska filen, körde `git diff`, och verifierade att koden på disk var korrekt — buggen fanns bara i diff-kontexten som skickats till granskaren. Den körde om granskningen med den verifierade diffen, som passerade rent.
+
+| Fas | Agent | Tid | Resultat |
+|-----|-------|-----|----------|
+| Plan | fuska-planner | 114s | 1 uppgift, 1 fil |
+| Check | fuska-plan-checker | 66s | GODKÄND |
+| Bygg | fuska-executor | 170s | KLAR |
+| Granskning | fuska-code-reviewer | 103s | PROBLEM HITTADE (1 blockerare) |
+| Omgranskning | fuska-code-reviewer | 170s | GODKÄND |
+| Commit | fuska-git-message | 55s | `feat(config): improve workflow mode display` |
+
+Sex agenter, ett kommando, en ren commit. Hela den annoterade sessionen finns i [fuska-do-session-distilled.md](fuska-do-session-distilled.md).
+
 ## Varför det spelar roll
 
 **Persistent minne.** Fredag klockan fyra stänger du editorn mitt i kapitel 2. Måndag morgon kör du `/fuska` — den visar exakt vilket kapitel, vilken uppgift och vad som kommer härnäst. Ingen manuell sparning, inget resume-kommando. Din position är alltid aktuell.

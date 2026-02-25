@@ -10,7 +10,9 @@ Works with **OpenCode** and (*probably, maybe, very little testing*) **Claude Co
 
 Based on [gsd-opencode](https://github.com/rokicool/gsd-opencode) and [Get Shit Done](https://github.com/gsd-build/get-shit-done).
 
-> *"Fuska is like having three navigators, each a specialist in different types of road — who raise the alarm if they independently spot the same hazard ahead."* — [Read the full pitch](docs/PITCH.md)
+> *"Fuska is like having three navigators who raise the alarm if they independently spot the same hazard — and a co-driver who inspects every metre you actually drove."* — [Read the full pitch](docs/PITCH.md)
+>
+> **It works.** In a real session, the code reviewer caught a typo (`this.config.workflow.workflow.mode`) that would have silently broken the display — the builder fixed it, the second review passed, and the commit landed clean. [Full walkthrough →](docs/fuska-do-session-distilled.md)
 
 **THE AUTHOR TAKES NO RESPONSIBILITY FOR DATA LOSS IN EXISTING PROJECTS. USE AT YOUR OWN PERIL.**
 
@@ -290,6 +292,7 @@ Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — 
 |--------------|---------|
 | Understand the mental model | [concepts.md](docs/concepts.md) — Initiatives, chapters, plans, MegaMemory, glossary |
 | See full workflows in action | [workflow.md](docs/workflow.md#scenarios) — 9 end-to-end scenarios |
+| See a real session end-to-end | [fuska-do-session-distilled.md](docs/fuska-do-session-distilled.md) — Annotated `/fuska-do checked` session: plan-checker validates, code-reviewer catches a bug |
 | Look up a command | [commands.md](docs/commands.md) — Every CLI and slash command |
 | Configure modes, models, git strategy | [configuration.md](docs/configuration.md) — All the knobs |
 | See why MegaMemory over .planning/ | [development.md](docs/development.md#performance-benchmarks) — Performance benchmarks |
