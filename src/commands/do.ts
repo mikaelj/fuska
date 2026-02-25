@@ -6,7 +6,7 @@ export function doCommand(program: Command) {
     .command('do <mode> [description...]')
     .description('Execute an unplanned task with mode-aware agent chain (planned|checked|researched|verified)')
     .action(async (mode: string, description: string[]) => {
-      const args = ['--no-review', '--auto-commit', mode, ...description];
+      const args = [mode, '--no-review', '--auto-commit', ...description];
       try {
         const code = await runOpenCodeJson({
           command: '/fuska-do',

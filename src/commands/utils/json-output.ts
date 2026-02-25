@@ -31,7 +31,8 @@ function formatElapsed(ms: number): string {
  */
 function buildProviderArgs(provider: ProviderType, command: string, args?: string[]): string[] {
   if (provider === 'opencode') {
-    return ['run', '--format', 'json', command, ...(args || [])];
+    const message = args && args.length > 0 ? `${command} ${args.join(' ')}` : command;
+    return ['run', '--format', 'json', message];
   } else {
     // Claude CLI uses --print for non-interactive mode and --output-format stream-json for streaming
     // The command is passed as the prompt argument
