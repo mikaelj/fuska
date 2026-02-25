@@ -14,9 +14,11 @@ ${chalk.bold('Modes:')}
   verified   Full pipeline + Reviewer (auto-build)
 
 ${chalk.bold('Flags:')}
-  --review       Force plan review before executing
-  --no-review    Skip plan review (auto-execute)
-  --auto-commit  Auto-commit without prompt
+  --review          Force plan review before executing
+  --no-review       Skip plan review (auto-execute)
+  --auto-commit     Auto-commit without prompt
+  --code-review     Enable code review step
+  --no-code-review  Skip code review step
 
 ${chalk.bold('Examples:')}
   /fuska-do planned fix typo in README

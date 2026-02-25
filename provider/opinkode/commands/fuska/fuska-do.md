@@ -2,7 +2,7 @@
 name: fuska-do
 description: Execute unplanned tasks with mode-aware agent chain using MegaMemory
 argument-hint: "[mode] [description]"
-flags: --review, --no-review, --auto-commit
+flags: --review, --no-review, --auto-commit, --code-review, --no-code-review
 tools:
   - read
   - write
@@ -65,15 +65,17 @@ Execute unplanned tasks with mode-aware agent chain.
 Usage: /fuska-do [mode] [description]
 
 Modes:
-  planned    - Planner → Builder | Review: Skipped | You have a plan, just build it
-  checked    - Planner → Plan Checker → Builder | Review: Prompted | Plan gets validated, you review before building
-  researched - Researcher → Planner → Plan Checker → Builder | Review: Prompted | Research adds context, review before committing
-  verified   - Researcher → Planner → Plan Checker → Builder → Reviewer | Review: Skipped | Full pipeline with post-build review
+  planned    Planner -> Builder -> Code Reviewer (auto-build)
+  checked    Planner -> Plan Checker -> Builder -> Code Reviewer (ask first)
+  researched Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer (ask first)
+  verified   Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer -> Reviewer (auto-build)
 
 Flags:
-  --review       Force plan review before executing (any mode)
-  --no-review    Skip plan review (any mode)
-  --auto-commit  Auto-commit with generated message (no prompt)
+  --review          Force plan review before executing (any mode)
+  --no-review       Skip plan review (any mode)
+  --auto-commit     Auto-commit with generated message (no prompt)
+  --no-code-review  Skip code review loop (any mode)
+  --code-review     Force code review loop (any mode, already default)
 ```
 
 ---
@@ -168,7 +170,9 @@ const words = input.trim().split(/\s+/)
 const hasReviewFlag = input.includes("--review") && !input.includes("--no-review")
 const hasNoReviewFlag = input.includes("--no-review")
 const hasAutoCommitFlag = input.includes("--auto-commit")
-const flagPattern = /--(?:no-review|review|auto-commit)/gi
+const hasCodeReviewFlag = input.includes("--code-review") && !input.includes("--no-code-review")
+const hasNoCodeReviewFlag = input.includes("--no-code-review")
+const flagPattern = /--(?:no-review|review|auto-commit|no-code-review|code-review)/gi
 
 if (validModes.includes(words[0]?.toLowerCase())) {
   MODE = words[0].toLowerCase()
@@ -182,10 +186,10 @@ if (validModes.includes(words[0]?.toLowerCase())) {
 
 | Option | Description |
 |--------|-------------|
-| Planned | Planner → Builder. Auto-build. You have a plan, just build it. |
-| Checked | Planner → Plan Checker → Builder. Ask first. Plan gets validated. |
-| Researched | Researcher → Planner → Plan Checker → Builder. Ask first. Research adds context. |
-| Verified | Full pipeline with Reviewer. Auto-build. Critical systems, production code. |
+| Planned | Planner → Builder → Code Reviewer. Auto-build. You have a plan, just build it. |
+| Checked | Planner → Plan Checker → Builder → Code Reviewer. Ask first. Plan gets validated. |
+| Researched | Researcher → Planner → Plan Checker → Builder → Code Reviewer. Ask first. Research adds context. |
+| Verified | Full pipeline with Code Reviewer + Reviewer. Auto-build. Critical systems, production code. |
 
 **Step 2.3:** If DESCRIPTION is null, prompt user: "What do you want to do?"
 
@@ -193,14 +197,16 @@ if (validModes.includes(words[0]?.toLowerCase())) {
 
 ```
 modeConfig = {
-  planned:    { research: false, planCheck: false, verifier: false, autoExecute: true },
-  checked:    { research: false, planCheck: true,  verifier: false, autoExecute: false },
-  researched: { research: true,  planCheck: true,  verifier: false, autoExecute: false },
-  verified:   { research: true,  planCheck: true,  verifier: true,  autoExecute: true }
+  planned:    { research: false, planCheck: false, codeReview: true, verifier: false, autoExecute: true },
+  checked:    { research: false, planCheck: true,  codeReview: true, verifier: false, autoExecute: false },
+  researched: { research: true,  planCheck: true,  codeReview: true, verifier: false, autoExecute: false },
+  verified:   { research: true,  planCheck: true,  codeReview: true, verifier: true,  autoExecute: true }
 }[MODE]
 
 if (hasReviewFlag) modeConfig.autoExecute = false
 if (hasNoReviewFlag) modeConfig.autoExecute = true
+if (hasCodeReviewFlag) modeConfig.codeReview = true
+if (hasNoCodeReviewFlag) modeConfig.codeReview = false
 if (hasDebugContext) modeConfig.research = false
 ```
 
@@ -215,9 +221,10 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 | fuska-plan-checker | balanced_model | balanced_model | budget_model |
 | fuska-executor | quality_model | balanced_model | balanced_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
+| fuska-code-reviewer | budget_model | budget_model | budget_model |
 
 ```
-const models = modelLookup[modelProfile]  // { researcher, planner, checker, executor, verifier }
+const models = modelLookup[modelProfile]  // { researcher, planner, checker, executor, verifier, codeReviewer }
 ```
 
 Display: `Mode: ${MODE} | Profile: ${modelProfile}`
@@ -438,6 +445,12 @@ Use question tool with these options:
 
 Display: `Executing...`
 
+**Step 9.0: Capture pre-existing dirty state**
+
+```
+const preExistingDirtyFiles = await bash("git diff HEAD --name-only").trim()
+```
+
 **Step 9.1:** Query plan concept for planner's latest updates.
 
 **Step 9.2: Build executor prompt**
@@ -470,7 +483,101 @@ megamemory_create_concept(
 
 **Step 9.3:** Spawn Task(subagent_type="fuska-executor", model=models.executor, variant="execute").
 
-**Step 9.4:** If `## EXECUTION COMPLETE` → Step 9.5. If error → Stop.
+**Step 9.4:** If `## EXECUTION COMPLETE` → Step 9.7. If error → Stop.
+
+---
+
+## 9.7. Code Review Loop (if modeConfig.codeReview)
+
+Display: `Reviewing code...`
+
+**Step 9.7.0: Check for pre-existing uncommitted changes**
+
+If `preExistingDirtyFiles` is non-empty:
+- Get current dirty files: `currentDirtyFiles = await bash("git diff HEAD --name-only")`
+- Check overlap: files in both `preExistingDirtyFiles` and current task's plan files
+- Display warning:
+  ```
+  ⚠ Found uncommitted changes from before this task.
+  Pre-existing modified files: ${preExistingDirtyFiles}
+  Code review will include ALL uncommitted changes, not just this task's.
+  ```
+- Use question tool:
+
+  | Option | Action |
+  |--------|--------|
+  | Commit existing first | Run `git add -A && git commit` for the pre-existing changes (prompt user for commit message), then continue to code review |
+  | Stash existing | Run `git stash push -m "pre-fuska-do stash"`, continue to code review, remind user to `git stash pop` later |
+  | Skip code review | Jump to Step 9.6, skip code review entirely |
+  | Proceed anyway | Continue — code review will see everything (old behavior) |
+
+**Step 9.7.1:** Run `git diff HEAD`. If empty → skip to Step 9.6 (nothing to review).
+
+**Step 9.7.2:** Get modified files list: `git diff HEAD --name-only`.
+
+**Step 9.7.3: Build code reviewer prompt**
+
+```
+const codeReviewerPrompt = `<critical_constraints>
+Return one of:
+- ## REVIEW PASSED -- code is ready
+- ## ISSUES FOUND -- structured issue list with fix hints
+Review ONLY the diff and modified files. Do NOT create MegaMemory concepts.
+</critical_constraints>
+
+<review_context>
+
+**Task:** ${DESCRIPTION}
+**Plan Data:** ${JSON.stringify(planData, null, 2)}
+
+${researchData ? `**Research Findings:**\n${JSON.stringify(researchData, null, 2)}` : ''}
+
+**Modified Files:**
+${modifiedFiles.join('\n')}
+
+**Git Diff:**
+${diffOutput}
+
+</review_context>`
+```
+
+**Step 9.7.4:** Spawn Task(subagent_type="fuska-code-reviewer", model=models.codeReviewer, variant="validate").
+
+**Step 9.7.5: Handle return + revision loop**
+
+Track `buildIterationCount = 1`.
+
+If `## REVIEW PASSED` → continue to Step 9.6.
+
+If `## ISSUES FOUND` and buildIterationCount < 3:
+- Display: `Code reviewer found issues. Fixing... (${buildIterationCount}/3)`
+- Build revision prompt with reviewer issues:
+
+```
+const revisionPrompt = `<critical_constraints>
+Fix ONLY the flagged issues — surgical precision, not a rewrite.
+Do NOT commit (commit happens at end of fuska-do).
+Return: ## REVISION COMPLETE
+</critical_constraints>
+
+<revision_context>
+${reviewerIssuesYaml}
+</revision_context>
+
+Execute task ${nextNum}: ${DESCRIPTION}
+
+Plan concept: ${planConceptId}
+Plan data: ${JSON.stringify(planData, null, 2)}
+Project state: ${JSON.stringify(stateData, null, 2)}`
+```
+
+- Spawn Task(subagent_type="fuska-executor", model=models.executor, variant="execute")
+- Re-run code reviewer with updated diff
+- Increment buildIterationCount
+
+If buildIterationCount >= 3 and still issues:
+- Display remaining issues
+- Use question tool: Proceed anyway / Provide guidance / Abort
 
 ---
 
@@ -680,6 +787,7 @@ This ensures the specific disambiguated task concept (e.g., `task-022-rename-com
 - [ ] Auto-execute for planned/verified; ask-before for checked/researched (overridable)
 - [ ] Plan displayed; review loop with modify/question/save options
 - [ ] Builder spawns, creates summary concept (no commit during build)
+- [ ] Code reviewer spawned for all modes (skippable with --no-code-review); build revision loop works (max 3)
 - [ ] Git-message agent generates commit; user confirms or auto-commits
 - [ ] Reviewer spawned for verified mode
 - [ ] State updated, completion banner displayed

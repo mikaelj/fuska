@@ -33,19 +33,22 @@ And here's the crucial difference: before a single line of code is written, the 
 
 If two reviewers independently flag the same issue, the severity is automatically escalated. All of this happens before the build even starts.
 
-Then a builder agent implements the code. Git commits don't happen automatically after each step — you choose the strategy yourself: one commit per task, per plan, or per phase. You can also approve each commit manually. Clean history, but on your terms.
+Then a builder agent implements the code. But the work isn't done yet — a **code reviewer agent** examines the actual diff, checking for bugs, security issues, and deviations from the plan. If it finds problems, the builder fixes them automatically — up to three review-fix iterations before you're asked to intervene. Only after the code passes review does it reach commit stage.
+
+Git commits don't happen automatically after each step — you choose the strategy yourself: one commit per task, per plan, or per phase. You can also approve each commit manually. Clean history, but on your terms.
 
 ## A Concrete Example
 
-You type: `/fuska-do verified implementera OAuth-inloggning med Google och GitHub`
+You type: `/fuska-do verified implement OAuth login with Google and GitHub`
 
 1. A **research agent** investigates OAuth2 flows, analyses your existing login patterns, and identifies security concerns.
 2. A **planner agent** creates a task list with dependencies and security checks.
 3. Three **reviewer agents** validate the plan — code quality, security, and OAuth expertise.
 4. A **builder agent** implements each task with atomic commits.
-5. A **verification agent** checks that the result actually delivers what the plan promised.
+5. A **code reviewer agent** examines the diff for bugs, security holes, and plan deviations — if it finds issues, the builder fixes them automatically (up to 3 iterations).
+6. A **verification agent** checks that the result actually delivers what the plan promised.
 
-You approve, and it's done. Five agents have worked in sequence, each with their own speciality. You never had to leave the editor. The same thing works with `fuska do verified` directly in the terminal. And if you want more control, you can run each step separately — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — exactly as you like.
+You approve, and it's done. Six agents have worked in sequence, each with their own speciality. You never had to leave the editor. The same thing works with `fuska do verified` directly in the terminal. And if you want more control, you can run each step separately — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — exactly as you like.
 
 ## Why It Matters
 

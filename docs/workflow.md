@@ -13,35 +13,36 @@
 
 ### Planned
 
-**Pipeline:** Planner -> Builder
+**Pipeline:** Planner -> Builder -> Code Reviewer
 **Plan Review:** Skipped
 
-Task breakdown, atomic commits, MegaMemory state. Use when you have a plan and just want to execute it. Small tasks, trusted patterns.
+Task breakdown, atomic commits, MegaMemory state. Code Reviewer validates the implementation against the plan, fixing stubs and wiring issues (up to 3 iterations). Use when you have a plan and just want to execute it. Small tasks, trusted patterns. Skip code review with `--no-code-review`.
 
 ### Checked
 
-**Pipeline:** Planner -> Plan Checker -> Builder
+**Pipeline:** Planner -> Plan Checker -> Builder -> Code Reviewer
 **Plan Review:** Prompted
 
-Adds requirement coverage, task completeness, and dependency validation. Use when you want validated plans before execution. Familiar tech, need confidence.
+Adds requirement coverage, task completeness, and dependency validation. Code Reviewer validates the implementation against the plan, fixing stubs and wiring issues (up to 3 iterations). Use when you want validated plans before execution. Familiar tech, need confidence. Skip code review with `--no-code-review`.
 
 ### Researched
 
-**Pipeline:** Researcher -> Planner -> Plan Checker -> Builder
+**Pipeline:** Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer
 **Plan Review:** Prompted
 
-Adds ecosystem research, standard patterns, and pitfall avoidance. Use when you need research context. New libraries, unfamiliar domains, integration work.
+Adds ecosystem research, standard patterns, and pitfall avoidance. Code Reviewer validates the implementation against the plan, fixing stubs and wiring issues (up to 3 iterations). Use when you need research context. New libraries, unfamiliar domains, integration work. Skip code review with `--no-code-review`.
 
 ### Verified
 
-**Pipeline:** Researcher -> Planner -> Plan Checker -> Builder -> Reviewer
+**Pipeline:** Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer -> Reviewer
 **Plan Review:** Skipped
 
-Full pipeline with code-level verification and gap detection. Use for critical systems, production code, high stakes.
+Full pipeline with code review and code-level verification. Code Reviewer validates the implementation against the plan (up to 3 iterations), then Reviewer does deep goal-backward verification. Use for critical systems, production code, high stakes. Skip code review with `--no-code-review`.
 
 ### Override Behavior
 
 - **Plan review** can be overridden per-invocation with `--review` (force) or `--no-review` (skip), or set permanently via `fuska config` → `interactive_review`
+- **Code review** runs in all modes by default. Skip with `--no-code-review` or force with `--code-review`. If the working directory has uncommitted changes from before the task, Fuska warns you before code review starts and offers: commit existing changes first, stash them, skip code review, or proceed anyway. This prevents the reviewer from seeing (and "fixing") unrelated changes
 - **Commit** always prompts by default regardless of mode — the generated message is shown and you choose: commit, edit, or skip. Override per-invocation with `--auto-commit` to commit without prompting. There is no persistent config for commit behavior.
 - Use `fuska config` to change default workflow mode
 - Per-chapter flags (`--research`, `--skip-verify`) augment your selected mode but never reduce it
@@ -101,7 +102,7 @@ Both `--mode quick` (on `/fuska-plan`) and `/fuska-do` use a lightweight agent c
 | Aspect | `--mode quick` (on `/fuska-plan`) | `/fuska-do` |
 |--------|----------------------------------------|-------------|
 | **Scope** | Work within an existing chapter | Standalone work outside chapter structure |
-| **Agent flow** | Planner -> Builder | Planner -> Builder |
+| **Agent flow** | Planner -> Builder | Planner -> Builder -> Code Reviewer |
 | **Concept storage** | Chapter-based: `chapter-02-plan-003` | Standalone: `task-001-fix-typo` |
 | **Roadmap ties** | Updates chapter status and roadmap | Separate from roadmap |
 | **Commit strategy** | Follows project's git strategy | Per-task commits |

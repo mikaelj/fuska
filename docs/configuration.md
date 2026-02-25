@@ -114,7 +114,7 @@ A **stage** is a category of work in the Fuska workflow. Each stage uses differe
 |-------|--------|---------|
 | **Planning** | planner, plan-checker, researcher, roadmapper, project-researcher, research-synthesizer, codebase-mapper | Chapter decomposition, dependency analysis, goal-backward verification |
 | **Build** | builder, debugger | Implementing plan tasks with atomic commits, deviation handling |
-| **Review** | reviewer, integration-checker | Goal-backward verification, quality assurance |
+| **Review** | reviewer, code-reviewer, integration-checker | Goal-backward verification, code quality assurance |
 
 **Why planning gets the strongest models:** Planning involves architecture decisions, goal decomposition, and task design — where model quality has the highest impact. Execution follows the plan's explicit instructions, so mid-tier models suffice.
 
@@ -290,6 +290,10 @@ You can also override per-chapter with flags on `/fuska plan`:
 You can override per-chapter with flags on `/fuska build`:
 - `--mode <MODE>` — Override workflow mode for this chapter only (one-off, doesn't persist)
 - `--verify` — Force verifier to run (even in modes that normally skip it)
+
+You can override per-invocation on `/fuska-do`:
+- `--code-review` — Force code review loop (already default in all modes)
+- `--no-code-review` — Skip code review loop
 
 ---
 

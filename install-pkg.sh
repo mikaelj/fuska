@@ -23,6 +23,6 @@ echo "Cleaning up tarball..."
 rm "$TARBALL"
 
 echo ""
-echo "[OK] fuska v${VERSION} installed to global node_modules!"
+echo "[OK] fuska-magistern v${VERSION} installed to global node_modules!"
 echo "  Run: fuska --help"
 echo "  Run: fuska install opencode"

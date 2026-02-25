@@ -1,7 +1,7 @@
 ---
 name: fuska-build
 description: Execute all plans in a chapter with batch-based parallelization using MegaMemory
-argument-hint: "<chapter-number> [--fixes-only]"
+argument-hint: "<chapter-number> [--fixes-only] [--no-code-review]"
 tools:
   - read
   - edit
@@ -42,6 +42,8 @@ Chapter: `$ARGUMENTS`
 **Flags:**
 - `--fixes-only` — Execute only fix plans (plans with is_fix marker). Use after verify-work creates fix plans.
 - `--mode MODE` — Override workflow mode for this chapter only (one-off, doesn't persist).
+- `--code-review` — Force code review loop (default: enabled)
+- `--no-code-review` — Skip code review loop
 
 ## Context Loading (Single Pass)
 
@@ -51,6 +53,8 @@ Load all MegaMemory concepts upfront. All subsequent steps use cached results �
 const chapterNumber = input.match(/\d+/)?.[0]
 const chapterSlug = `chapter-${chapterNumber.padStart(2, '0')}`
 const modeOverride = input.match(/--mode\s+(\S+)/)?.[1] || null
+const hasNoCodeReviewFlag = input.includes("--no-code-review")
+const hasCodeReviewFlag = input.includes("--code-review") && !hasNoCodeReviewFlag
 
 // Load all context in sequence
 const configResponse = megamemory_understand(query="config", top_k=5)
@@ -101,9 +105,10 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 |-------|---------|----------|--------|
 | fuska-executor | quality_model | balanced_model | balanced_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
+| fuska-code-reviewer | budget_model | budget_model | budget_model |
 
 ```
-const models = modelLookup[modelProfile]  // { executor, verifier }
+const models = modelLookup[modelProfile]  // { executor, verifier, codeReviewer }
 ```
 
 ---
@@ -156,6 +161,12 @@ If "View details" → show full plan details, re-offer. If "Cancel" → Stop.
 
 ## 5. Execute Batches
 
+**Pre-execution:** Capture base commit and pre-existing dirty state:
+```
+const baseCommit = await bash("git rev-parse HEAD")
+const preExistingDirtyFiles = await bash("git diff HEAD --name-only").trim()
+```
+
 **For each batch in sorted order:**
 
 **Step 5.1:** Load current state for context (query "state", top_k=5). Load plan details for each plan in batch.
@@ -206,6 +217,110 @@ Query `${plan.name}-summary` for each plan. Display:
 Executed: ${plansToExecute.length} plan(s)
 Status: All summaries created [OK]
 ```
+
+---
+
+## 6.5. Code Review Loop
+
+Skip if `hasNoCodeReviewFlag`.
+
+**Step 6.5.0: Check for pre-existing uncommitted changes**
+
+If `preExistingDirtyFiles` is non-empty:
+- Display warning (strategy-aware):
+  - If `commitStrategy === "per-chapter"`:
+    ```
+    ⚠ Found uncommitted changes from before this chapter build.
+    Pre-existing modified files: ${preExistingDirtyFiles}
+    Code review will include ALL uncommitted changes, not just this chapter's.
+    ```
+  - If `commitStrategy === "per-plan"` or `"per-task"`:
+    ```
+    ⚠ Found uncommitted changes from before this chapter build.
+    Pre-existing modified files: ${preExistingDirtyFiles}
+    Code review uses committed changes only, but uncommitted files may conflict with execution.
+    ```
+- Use question tool:
+
+  | Option | Action |
+  |--------|--------|
+  | Commit existing first | Run `git add -A && git commit` for the pre-existing changes (prompt user for commit message), recapture `baseCommit = await bash("git rev-parse HEAD")`, then continue |
+  | Stash existing | Run `git stash push -m "pre-fuska-build stash"`, recapture `baseCommit`, continue, remind user to `git stash pop` later |
+  | Skip code review | Jump to Step 7 |
+  | Proceed anyway | Continue — reviewer sees everything (old behavior) |
+
+**Step 6.5.1:** Determine diff command based on commit strategy:
+- `per-chapter`: `git diff HEAD` (changes are staged but uncommitted)
+- `per-plan` or `per-task`: `git diff ${baseCommit}..HEAD` (changes already committed)
+
+If diff is empty → skip to Step 7.
+
+**Step 6.5.2:** Get modified files list (same strategy-aware diff command with `--name-only`).
+
+**Step 6.5.3: Build code reviewer prompt**
+
+```
+const codeReviewerPrompt = `<critical_constraints>
+Return one of:
+- ## REVIEW PASSED -- code is ready
+- ## ISSUES FOUND -- structured issue list with fix hints
+Review ONLY the diff and modified files. Do NOT create MegaMemory concepts.
+</critical_constraints>
+
+<review_context>
+
+**Chapter:** ${chapterSlug}
+**Chapter Goal:** ${chapterGoal}
+
+**Plan Data:**
+${plansToExecute.map(p => JSON.stringify(p, null, 2)).join('\n\n')}
+
+${researchData ? `**Research Findings:**\n${JSON.stringify(researchData, null, 2)}` : ''}
+
+**Modified Files:**
+${modifiedFiles.join('\n')}
+
+**Git Diff:**
+${diffOutput}
+
+</review_context>`
+```
+
+**Step 6.5.4:** Spawn Task(subagent_type="fuska-code-reviewer", model=models.codeReviewer, variant="validate").
+
+**Step 6.5.5: Handle return + revision loop**
+
+Track `reviewIterationCount = 1`.
+
+If `## REVIEW PASSED` → continue to Step 7.
+
+If `## ISSUES FOUND` and reviewIterationCount < 3:
+- Display: `Code reviewer found issues. Fixing... (${reviewIterationCount}/3)`
+- Build revision prompt with reviewer issues:
+
+```
+const revisionPrompt = `<critical_constraints>
+Fix ONLY the flagged issues — surgical precision, not a rewrite.
+Do NOT commit (commit strategy is "${commitStrategy}").
+Return: ## REVISION COMPLETE
+</critical_constraints>
+
+<revision_context>
+${reviewerIssuesYaml}
+</revision_context>
+
+Chapter: ${chapterSlug}
+Chapter Goal: ${chapterGoal}
+Commit Strategy: ${commitStrategy}`
+```
+
+- Spawn Task(subagent_type="fuska-executor", model=models.executor, variant="execute")
+- Re-run code reviewer with updated diff
+- Increment reviewIterationCount
+
+If reviewIterationCount >= 3 and still issues:
+- Display remaining issues
+- Use question tool: Proceed anyway / Provide guidance / Abort
 
 ---
 
@@ -375,6 +490,7 @@ Only rule 4 requires user intervention. Update plan's summary concept via megame
 <success_criteria>
 
 - [ ] All incomplete plans in chapter executed, each has summary concept
+- [ ] Code review loop runs after execution (skippable with --no-code-review); revision loop max 3
 - [ ] Chapter goal verified (requirements checked against codebase)
 - [ ] Verification concept created
 - [ ] State and chapter concepts updated

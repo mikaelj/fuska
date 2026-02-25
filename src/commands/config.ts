@@ -1107,7 +1107,8 @@ class ConfigRunner {
       "fuska-debugger": { "model": effective.build },
       "fuska-verifier": { "model": effective.review },
       "fuska-integration-checker": { "model": effective.review },
-      "fuska-commit-checker": { "model": effective.review }
+      "fuska-commit-checker": { "model": effective.review },
+      "fuska-code-reviewer": { "model": effective.review }
     };
 
     if (exploreModel) {

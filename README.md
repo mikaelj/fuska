@@ -26,6 +26,8 @@ But memory is just the start. Fuska doesn't hand a vague prompt to a model and h
 
 That validation isn't a generic checklist. A panel of three specialized reviewers interrogates each plan from different angles: one always present for baseline quality, one derived from your project type (a security auditor for web apps, a resource guardian for embedded systems), and one dynamically selected for the specific domain of the work (auth, payments, data architecture, real-time systems). When two reviewers independently flag the same problem, severity escalates automatically. By the time an executor agent touches your codebase, the plan has already survived a gauntlet designed around *your* project.
 
+And validation doesn't stop at the plan. After the builder finishes, a **code reviewer agent** examines the actual diff — checking for bugs, security issues, and deviations from the plan. If it finds problems, the builder fixes them automatically, up to three review-fix iterations. Code gets reviewed before it's committed, not after. If the working directory was already dirty before the task started, Fuska warns you and offers options (commit, stash, skip review, or proceed) — preventing the reviewer from accidentally "fixing" unrelated changes.
+
 ---
 
 ## Quick Start
@@ -46,6 +48,7 @@ Just tell Fuska what you want. It researches, plans, verifies the plan, and exec
 2. **Plan Checker** validates the plan is complete and achievable
 3. You review and approve
 4. **Builder** runs all tasks with atomic commits
+5. **Code Reviewer** validates the implementation against the plan (up to 3 iterations)
 
 **Verified Mode — Full Assurance:**
 
@@ -57,18 +60,19 @@ Just tell Fuska what you want. It researches, plans, verifies the plan, and exec
 2. **Planner** creates a detailed plan with security checkpoints
 3. **Plan Checker** validates completeness, security, error handling
 4. **Builder** implements with atomic commits, handles any deviations
-5. **Reviewer** confirms the implementation actually works end-to-end
+5. **Code Reviewer** validates the implementation against the plan (up to 3 iterations)
+6. **Reviewer** confirms the implementation actually works end-to-end
 
 ### Four Workflow Modes
 
 | Mode | Pipeline | Plan Review | Best For |
 |------|----------|-------------|----------|
-| `planned` | Planner -> Builder | Skipped | You have a plan, just build it |
-| `checked` | Planner -> Plan Checker -> Builder | Prompted | Plan gets validated, you review before building |
-| `researched` | Researcher -> Planner -> Plan Checker -> Builder | Prompted | Research adds context, review before committing |
-| `verified` | Researcher -> Planner -> Plan Checker -> Builder -> Reviewer | Skipped | Full pipeline with post-build review |
+| `planned` | Planner -> Builder -> Code Reviewer | Skipped | You have a plan, just build it |
+| `checked` | Planner -> Plan Checker -> Builder -> Code Reviewer | Prompted | Plan gets validated, you review before building |
+| `researched` | Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer | Prompted | Research adds context, review before committing |
+| `verified` | Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer -> Reviewer | Skipped | Full pipeline with post-build review |
 
-Override plan review with `--review` or `--no-review`, or set it permanently via `fuska config` (`interactive_review`). Commit always prompts by default — override per-invocation with `--auto-commit` to skip the prompt. For details, see [workflow.md](docs/workflow.md#workflow-modes).
+Override plan review with `--review` or `--no-review`, or set it permanently via `fuska config` (`interactive_review`). Commit always prompts by default — override per-invocation with `--auto-commit` to skip the prompt. Skip code review with `--no-code-review`. For details, see [workflow.md](docs/workflow.md#workflow-modes).
 
 **Prefer hands-on control?** The chapter lifecycle gives you the full step-by-step sequence — design, plan, build, review — each as a separate command you run when you're ready. More deliberate, more visibility at each stage. See [workflow.md](docs/workflow.md#chapter-lifecycle).
 
@@ -299,7 +303,7 @@ Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — 
 | Feature | GSD (Get Shit Done) | Fuska |
 |---------|---------------------|-------|
 | **Plan Verification** | Single plan-checker agent | **Expert Panel** — 3 specialized checkers (base quality advocate + contextual role + plan-derived expert) with cross-validation severity boosting |
-| **Ad-hoc Tasks** | `/gsd-quick` — single mode (planner -> executor) | **`/fuska-do`** — 4 modes (planned/checked/researched/verified) with configurable agent chain |
+| **Ad-hoc Tasks** | `/gsd-quick` — single mode (planner -> executor) | **`/fuska-do`** — 4 modes (planned/checked/researched/verified) with configurable agent chain including code review loop |
 | **Commit Messages** | Path-based scope extraction, manual formatting | **Domain-aware scopes** from MegaMemory mapping + commit checker agent validates format, content, and quality |
 | **Model Selection** | Claude models only (via profiles) | **Any OpenCode-supported model** — configure aliases for quality/balanced/budget tiers |
 | **Commit Strategy** | Per-task (fixed) | **Configurable** — per-chapter / per-plan / per-task, with smarter commits via checker panel + domain knowledge |

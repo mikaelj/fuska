@@ -202,6 +202,7 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | **Atomic commit** | A small, self-contained code change that implements a single task from the plan |
 | **Checkpoint** | A structured pause point during execution where user verification is required (e.g., visual review, decision input). Task progress is tracked continuously. |
 | **Checker panel** | A role-based plan verification system with three specialized checkers (base, contextual, expert) that verify plans from different perspectives. See [configuration.md](configuration.md#checker-panel). |
+| **Code reviewer** | An agent that validates code changes against the plan after the builder completes. Catches stubs, missing wiring, plan deviations, and anti-patterns. Loops with the builder up to 3 times. Enabled by default in all `/fuska-do` modes; skip with `--no-code-review`. Includes dirty-directory protection: if uncommitted changes exist from before the task, warns the user and offers options (commit, stash, skip review, proceed) to prevent reviewing unrelated code. |
 | **Concept** | A unit of knowledge in MegaMemory (e.g., an initiative, requirement, plan, or chapter) |
 | **Dead code** | An exported symbol with no incoming `uses` edges in the import graph — detected by `/fuska-refresh --dead-code` |
 | **Deviation** | When execution diverges from the planned tasks — handled automatically by the builder |
@@ -224,7 +225,7 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | **Success criteria** | Observable behaviors that must be true when a chapter completes — used for goal-backward verification |
 | **Reviewer** | An agent that performs goal-backward verification after a chapter is built |
 | **Batch** | A group of tasks within a plan that can be executed in parallel (tasks in the same batch have no dependencies on each other) |
-| **Workflow mode** | A preconfigured combination of agents (planned, checked, researched, verified) that balances speed vs. quality. See [workflow.md](workflow.md#workflow-modes). |
+| **Workflow mode** | A preconfigured combination of agents (planned, checked, researched, verified) that balances speed vs. quality. All modes include a Code Reviewer loop after the builder. See [workflow.md](workflow.md#workflow-modes). |
 | **Worktree merge** | The process of merging independent `.megamemory/knowledge.db` files from git worktree feature branches back into the main worktree's database |
 
 ---

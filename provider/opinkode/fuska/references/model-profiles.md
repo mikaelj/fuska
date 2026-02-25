@@ -83,7 +83,8 @@ const STAGE_AGENTS: StageAgentMapping = {
   review: [
     'fuska-verifier',
     'fuska-integration-checker',
-    'fuska-commit-checker'
+    'fuska-commit-checker',
+    'fuska-code-reviewer'
   ]
 };
 ```
@@ -425,7 +426,7 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 | Design | fuska-planner, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer |
 | Plan | fuska-plan-checker, fuska-chapter-researcher, fuska-codebase-mapper |
 | Build | fuska-executor, fuska-debugger |
-| Review | fuska-verifier, fuska-integration-checker, fuska-commit-checker |
+| Review | fuska-verifier, fuska-integration-checker, fuska-commit-checker, fuska-code-reviewer |
 
 ## Model Aliases
 
@@ -451,6 +452,7 @@ Model aliases provide an indirection layer between lookup tables and actual mode
 | fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-git-message | balanced_model | budget_model | budget_model |
 | fuska-commit-checker | budget_model | budget_model | budget_model |
+| fuska-code-reviewer | budget_model | budget_model | budget_model |
 
 **Resolution flow:**
 

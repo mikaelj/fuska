@@ -42,15 +42,17 @@ fuska help do
 Execute unplanned tasks with mode-aware agent chain.
 
 Modes:
-  planned    Planner → Builder (auto-build)
+  planned    Planner → Builder → Code Reviewer (auto-build)
   checked    + Plan Checker (ask first)
   researched + Researcher (ask first)
-  verified   Full pipeline + Reviewer (auto-build)
+  verified   Full pipeline + Code Reviewer + Reviewer (auto-build)
 
 Flags:
-  --review       Force plan review before executing
-  --no-review    Skip plan review (auto-execute)
-  --auto-commit  Auto-commit without prompt
+  --review          Force plan review before executing
+  --no-review       Skip plan review (auto-execute)
+  --auto-commit     Auto-commit without prompt
+  --no-code-review  Skip code review loop
+  --code-review     Force code review loop (already default)
 
 Examples:
   /fuska-do planned fix typo in README
@@ -120,7 +122,7 @@ Use `--json` for machine-readable output.
 | <nobr>`/fuska-design`</nobr> | Design chapter details before planning | `<N>` -- chapter number |
 | <nobr>`/fuska-plan`</nobr> | Create detailed chapter plan | `<N>` `[--research \| --skip-research \| --skip-verify \| --mode <MODE>]` |
 | <nobr>`/fuska-research-chapter`</nobr> | Research chapter requirements | `<N>` -- chapter number |
-| <nobr>`/fuska-build`</nobr> | Build chapter tasks | `<N>` `[--mode <MODE>]` -- chapter number and optional mode override |
+| <nobr>`/fuska-build`</nobr> | Build chapter tasks | `<N>` `[--mode <MODE>] [--no-code-review]` -- chapter number, optional mode override, optional code review skip |
 | <nobr>`/fuska-review`</nobr> | Review chapter completion | `<N>` -- chapter number |
 
 ### Chapter Management
@@ -177,7 +179,7 @@ Falls back to grep when import graph data is unavailable.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-do`</nobr> | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` -- mode: planned/checked/researched/verified, flags: --review/--no-review/--auto-commit |
+| <nobr>`/fuska-do`</nobr> | Execute unplanned tasks with mode-aware agent chain | `[mode] [description]` -- mode: planned/checked/researched/verified, flags: --review/--no-review/--auto-commit/--code-review/--no-code-review |
 | <nobr>`/fuska-help`</nobr> | Show all available commands | -- |
 
 ### Documentation

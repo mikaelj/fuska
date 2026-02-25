@@ -32,7 +32,9 @@ Och här kommer den avgörande skillnaden: innan en enda rad kod skrivs granskas
 
 Om två granskare flaggar samma problem oberoende av varandra eskaleras allvarlighetsgraden automatiskt. Allt detta händer innan bygget ens startar.
 
-Sedan implementerar en byggaragent koden. Git-commits sker inte automatiskt efter varje steg — du väljer själv strategi: en commit per uppgift, per plan eller per fas. Det går också att godkänna varje commit manuellt. Ren historik, men på dina villkor.
+Sedan implementerar en byggaragent koden. Men arbetet är inte klart ännu — en **kodgranskaragent** undersöker den faktiska diffen och letar efter buggar, säkerhetsproblem och avvikelser från planen. Hittar den problem fixar byggaragenten dem automatiskt — upp till tre gransknings-fix-iterationer innan du behöver ingripa. Först efter att koden klarar granskningen når den commit-steget.
+
+Git-commits sker inte automatiskt efter varje steg — du väljer själv strategi: en commit per uppgift, per plan eller per fas. Det går också att godkänna varje commit manuellt. Ren historik, men på dina villkor.
 
 ## Ett konkret exempel
 
@@ -42,9 +44,10 @@ Du skriver: `/fuska-do verified implementera OAuth-inloggning med Google och Git
 2. En **planeraregent** skapar en uppgiftslista med beroenden och säkerhetskontroller.
 3. Tre **granskaregenter** validerar planen — kodkvalitet, säkerhet och OAuth-expertis.
 4. En **byggaragent** implementerar varje uppgift med atomära commits.
-5. En **verifieringsagent** kontrollerar att resultatet faktiskt levererar det som planen utlovade.
+5. En **kodgranskaragent** undersöker diffen efter buggar, säkerhetshål och planavvikelser — hittar den problem fixar byggaragenten dem automatiskt (upp till 3 iterationer).
+6. En **verifieringsagent** kontrollerar att resultatet faktiskt levererar det som planen utlovade.
 
-Du godkänner, och det är klart. Fem agenter har jobbat i sekvens, var och en med sin specialitet. Du behövde aldrig lämna editorn. Samma sak fungerar med `fuska do verified` direkt i terminalen. Och vill du ha mer kontroll kan du köra varje steg för sig — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — precis som du vill.
+Du godkänner, och det är klart. Sex agenter har jobbat i sekvens, var och en med sin specialitet. Du behövde aldrig lämna editorn. Samma sak fungerar med `fuska do verified` direkt i terminalen. Och vill du ha mer kontroll kan du köra varje steg för sig — `/fuska-design`, `/fuska-plan`, `/fuska-build`, `/fuska-review` — precis som du vill.
 
 ## Varför det spelar roll
 
