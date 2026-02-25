@@ -198,7 +198,7 @@ Use `--force` to skip the prompt.
 ## Troubleshooting
 
 **Permission denied during install:**
-Check your npm prefix with `npm prefix -g`. If it points to a system directory (e.g., `/usr/local`), either use `sudo npm install -g fuska` or configure npm to use a user-writable prefix.
+Check your npm prefix with `npm prefix -g`. If it points to a system directory (e.g., `/usr/local`), either use `sudo npm install -g fuska-magistern` or configure npm to use a user-writable prefix.
 
 **Symlinks not resolving:**
 Verify with `ls -la ~/.config/opencode/fuska` — it should show a symlink arrow (`->`) pointing to the package directory. If it's a regular directory, run `fuska install --force` to replace it.

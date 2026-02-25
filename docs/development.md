@@ -88,15 +88,17 @@ npm run build               # Rebuild if TypeScript changed
 
 ### CLI Install (End Users)
 
+End users install from npm with `npm install -g fuska-magistern`. For development, use `./install-pkg.sh` instead (see [Production-Like Install](#production-like-install) below).
+
 ```bash
-npm install -g fuska
+./install-pkg.sh
 fuska install opencode      # or claude or both
 ```
 
 Creates symlinks from target directories to the npm package location.
 
 **How symlinks work:** When you run `fuska install`, the CLI creates symlinks pointing to the **package root**:
-- **npm install -g fuska**: Symlinks point to `node_modules/fuska/`
+- **./install-pkg.sh**: Symlinks point to `node_modules/fuska-magistern/`
 - **npm link**: Symlinks point to your local development directory
 
 With `npm link`, any changes you make to the source are immediately available to opencode/claude without reinstalling.
@@ -130,7 +132,7 @@ To test the package as if installed from npm (symlinks point to global node_modu
 fuska install opencode
 ```
 
-This uses `npm pack` to create a tarball, then installs it globally — exactly like `npm install -g fuska` from the registry.
+This uses `npm pack` to create a tarball, then installs it globally — exactly like `npm install -g fuska-magistern` from the registry.
 
 **When to use:**
 - Testing the actual installation experience

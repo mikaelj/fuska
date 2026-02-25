@@ -34,6 +34,8 @@ Om två granskare flaggar samma problem oberoende av varandra eskaleras allvarli
 
 Sedan implementerar en byggaragent koden. Men arbetet är inte klart ännu — en **kodgranskaragent** undersöker den faktiska diffen och letar efter buggar, säkerhetsproblem och avvikelser från planen. Hittar den problem fixar byggaragenten dem automatiskt — upp till tre gransknings-fix-iterationer innan du behöver ingripa. Först efter att koden klarar granskningen når den commit-steget.
 
+Och du behöver inte följa det formella arbetsflödet för att dra nytta av plangranskningen. Om Fuska är initialiserat kan du när som helst be AI:n köra en plan genom checkern — beskriv bara din approach i konversationen. Samma expertpanel granskar den direkt. Tänk dig det som att ha din arkitekturgranskning på snabbval.
+
 Git-commits sker inte automatiskt efter varje steg — du väljer själv strategi: en commit per uppgift, per plan eller per fas. Det går också att godkänna varje commit manuellt. Ren historik, men på dina villkor.
 
 ## Ett konkret exempel
@@ -112,7 +114,7 @@ Fuska bygger vidare på **GSD** (Get Shit Done) — ett tidigare system med samm
 
 **Enkelhet vid snabba uppgifter.** GSD:s `/gsd-quick` kräver inga val — du kör och det händer. Fuskas `/fuska-do` kräver att du väljer mellan fyra arbetslägen. För en enkel buggfix eller ett stavfel är det onödig friktion. Fuska erbjuder visserligen `planned`-läget som hoppar över granskning, men du måste fortfarande *veta* att du vill det.
 
-**Enklare mental modell.** GSD har 14 agenter med ett fast flöde — du behöver inte tänka på vilka som körs. Fuska har 19 agenter och fyra arbetslägen. Å andra sidan: väljer du `planned`-läget i Fuska kör du *färre* steg än GSD:s standardflöde, och MegaMemory kräver avsevärt färre verktygsanrop för att ladda kontext jämfört med GSD:s filbaserade läsning. I praktiken kan Fuska vara snabbare — men du behöver förstå lägesvalet.
+**Enklare mental modell.** GSD har 14 agenter med ett fast flöde — du behöver inte tänka på vilka som körs. Fuska har 20 agenter och fyra arbetslägen. Å andra sidan: väljer du `planned`-läget i Fuska kör du *färre* steg än GSD:s standardflöde, och MegaMemory kräver avsevärt färre verktygsanrop för att ladda kontext jämfört med GSD:s filbaserade läsning. I praktiken kan Fuska vara snabbare — men du behöver förstå lägesvalet.
 
 **Färre beroenden.** GSD behöver bara OpenCode och git. Fuska kräver dessutom Node.js, npm och MegaMemory som installerat paket. Fler beroenden betyder fler saker som kan gå sönder vid uppgraderingar. Å andra sidan ger Fuskas CLI-verktyg mycket tillbaka — se nedan.
 
@@ -147,7 +149,7 @@ GSD passar bättre om du vill ha ett enkelt, transparent system utan extra beroe
 Fuska är, kort sagt, ett projektledningssystem för AI-driven utveckling. Istället för att chatta fram kod rad för rad får du en hel kedja av specialiserade agenter som forskar, planerar, granskar, bygger och verifierar. Och allt minns de till nästa gång.
 
 ```
-npm install -g fuska && fuska init
+npm install -g fuska-magistern && fuska init
 ```
 
 Fungerar med OpenCode och Claude Code. Allt som krävs är Node.js och en terminal.

@@ -35,6 +35,8 @@ If two reviewers independently flag the same issue, the severity is automaticall
 
 Then a builder agent implements the code. But the work isn't done yet — a **code reviewer agent** examines the actual diff, checking for bugs, security issues, and deviations from the plan. If it finds problems, the builder fixes them automatically — up to three review-fix iterations before you're asked to intervene. Only after the code passes review does it reach commit stage.
 
+And you're not locked into the formal workflow to benefit from plan checking. If Fuska is initialized, you can ask the AI at any time to run a plan through the checker — just describe your approach in the conversation. The same expert panel reviews it on the spot. Think of it as having your architecture review panel on speed dial.
+
 Git commits don't happen automatically after each step — you choose the strategy yourself: one commit per task, per plan, or per phase. You can also approve each commit manually. Clean history, but on your terms.
 
 ## A Concrete Example
@@ -113,7 +115,7 @@ Fuska builds on **GSD** (Get Shit Done) — an earlier system with the same core
 
 **Simplicity for quick tasks.** GSD's `/gsd-quick` requires no choices — you run it and things happen. Fuska's `/fuska-do` requires you to choose between four work modes. For a simple bug fix or a typo, that's unnecessary friction. Fuska does offer the `planned` mode which skips review, but you still have to *know* that's what you want.
 
-**Simpler mental model.** GSD has 14 agents with a fixed flow — you don't need to think about which ones run. Fuska has 19 agents and four work modes. On the other hand: if you choose the `planned` mode in Fuska, you run *fewer* steps than GSD's standard flow, and MegaMemory requires significantly fewer tool calls to load context compared to GSD's file-based reading. In practice, Fuska can be faster — but you need to understand the mode selection.
+**Simpler mental model.** GSD has 14 agents with a fixed flow — you don't need to think about which ones run. Fuska has 20 agents and four work modes. On the other hand: if you choose the `planned` mode in Fuska, you run *fewer* steps than GSD's standard flow, and MegaMemory requires significantly fewer tool calls to load context compared to GSD's file-based reading. In practice, Fuska can be faster — but you need to understand the mode selection.
 
 **Fewer dependencies.** GSD only needs OpenCode and git. Fuska additionally requires Node.js, npm, and MegaMemory as an installed package. More dependencies means more things that can break during upgrades. On the other hand, Fuska's CLI tools give a lot back — see below.
 
@@ -148,7 +150,7 @@ GSD is a better fit if you want a simple, transparent system with no extra depen
 Fuska is, in short, a project management system for AI-driven development. Instead of chatting your way to code line by line, you get an entire chain of specialised agents that research, plan, review, build, and verify. And they remember everything for next time.
 
 ```
-npm install -g fuska && fuska init
+npm install -g fuska-magistern && fuska init
 ```
 
 Works with OpenCode and Claude Code. All you need is Node.js and a terminal.
