@@ -91,12 +91,12 @@ const MODE_CONFIG: Record<WorkflowMode, { research: boolean; plan_check: boolean
 };
 
 const MODE_DESCRIPTIONS: Record<WorkflowMode, string> = {
-  standard: 'Full workflow with all agents',
-  thorough: 'Research + plan check, no verifier',
-  balanced: 'Research + executor, no plan check/verifier',
-  fast: 'Plan check + executor, no research',
-  quick: 'Planner → Executor only',
-  direct: 'Planner only'
+  direct: 'Planner only',
+  quick: 'Planner → Executor',
+  fast: 'Planner → Checker → Executor',
+  balanced: 'Researcher → Planner → Executor',
+  thorough: 'Researcher → Planner → Checker → Executor',
+  standard: 'Researcher → Planner → Checker → Executor → Verifier'
 };
 
 class ConfigRunner {
@@ -476,7 +476,8 @@ class ConfigRunner {
     if (this.config.workflow) {
       const modeConfig = MODE_CONFIG[this.config.workflow.mode] || MODE_CONFIG.standard;
       console.log('');
-      console.log(`Workflow: ${this.config.workflow.mode || '<not set>'} (${modeConfig.percentage}%)`);
+      const modeDesc = this.config.workflow.mode ? (MODE_DESCRIPTIONS[this.config.workflow.mode] || this.config.workflow.mode) : '<not set>';
+      console.log(`Workflow: ${this.config.workflow.mode || '<not set>'} - ${modeDesc}`);
       console.log(`* research = ${this.config.workflow.research ? 'on' : 'off'}`);
       console.log(`* plan_check = ${this.config.workflow.plan_check ? 'on' : 'off'}`);
       console.log(`* verifier = ${this.config.workflow.verifier ? 'on' : 'off'}`);
@@ -540,7 +541,8 @@ class ConfigRunner {
 
     if (this.config.workflow) {
       console.log('');
-      console.log(`Workflow: ${this.config.workflow.mode || '<not set>'}${modeConfig ? ` (${modeConfig.percentage}%)` : ''}`);
+      const modeDesc = this.config.workflow.mode ? (MODE_DESCRIPTIONS[this.config.workflow.mode] || this.config.workflow.mode) : '';
+      console.log(`Workflow: ${this.config.workflow.mode || '<not set>'}${modeDesc ? ` - ${modeDesc}` : ''}`);
       console.log(`* research = ${this.config.workflow.research ? 'on' : 'off'}`);
       console.log(`* plan_check = ${this.config.workflow.plan_check ? 'on' : 'off'}`);
       console.log(`* verifier = ${this.config.workflow.verifier ? 'on' : 'off'}`);
@@ -760,12 +762,12 @@ class ConfigRunner {
         name: 'mode',
         message: 'Select workflow mode',
         choices: [
-          { name: 'Standard (90%)', value: 'standard' },
-          { name: 'Thorough (70%)', value: 'thorough' },
-          { name: 'Balanced (50%)', value: 'balanced' },
-          { name: 'Fast (30%)', value: 'fast' },
-          { name: 'Quick (15%)', value: 'quick' },
-          { name: 'Direct (0%)', value: 'direct' }
+          { name: `standard - ${MODE_DESCRIPTIONS.standard}`, value: 'standard' },
+          { name: `thorough - ${MODE_DESCRIPTIONS.thorough}`, value: 'thorough' },
+          { name: `balanced - ${MODE_DESCRIPTIONS.balanced}`, value: 'balanced' },
+          { name: `fast - ${MODE_DESCRIPTIONS.fast}`, value: 'fast' },
+          { name: `quick - ${MODE_DESCRIPTIONS.quick}`, value: 'quick' },
+          { name: `direct - ${MODE_DESCRIPTIONS.direct}`, value: 'direct' }
         ],
         default: this.config.workflow.mode || 'standard'
       }
@@ -1137,7 +1139,8 @@ class ConfigRunner {
     console.log('| Setting            | Value                     |');
     console.log('|--------------------|---------------------------|');
     console.log(`| Model Profile      | ${(this.config.profiles?.active_profile || '<not set>').padEnd(25)} |`);
-    console.log(`| Workflow Mode      | ${this.config.workflow?.mode || '<not set>'}${modeConfig ? ` (${modeConfig.percentage}%)` : ''}`.padEnd(28) + ' '.repeat(12) + '|');
+    const modeDesc = this.config.workflow?.mode ? (MODE_DESCRIPTIONS[this.config.workflow.mode] || '') : '';
+    console.log(`| Workflow Mode      | ${(this.config.workflow?.mode || '<not set>') + (modeDesc ? ` - ${modeDesc}` : '')}`.padEnd(40) + '|');
     console.log('');
     console.log('Derived settings (read-only):');
     if (this.config.workflow) {
