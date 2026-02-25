@@ -5,11 +5,63 @@ Organized by theme rather than individual commit.
 
 ---
 
-## Unreleased (since v0.0.2-baseline)
+## Unreleased (4ff6207)
 
-**2026-02-21 – 2026-02-22** | 18 commits | 66 files changed, ~1,600 insertions, ~8,800 deletions (net ~7,200 lines removed)
+_No changes since v0.1.1_
 
-This batch of changes represents a focused token-optimization effort. The prompt files that make up Fuska had grown organically, with substantial duplication across agent and command definitions. The goal was to reduce total token cost without losing any behavioral fidelity — every instruction still exists, it just lives in one place instead of thirty.
+---
+
+## v0.1.1 — 2026-02-25
+
+**2 commits** | 7 files changed, 495 insertions, 90 deletions
+
+### Documentation
+
+- Enhanced code review pitch and blurb documentation (English and Swedish)
+
+---
+
+## v0.1.0 — 2026-02-25
+
+**4 commits** | 18 files changed, 957 insertions, 79 deletions
+
+### New Features
+
+- **Code Review Command** — New `/fuska-code-review` command with execution loop and agent pipelines
+- **Workflow Mode Display** — Improved config command shows agent pipelines per workflow mode
+
+### Documentation
+
+- Added code review example and Swedish pitch
+- Updated workflow and configuration docs
+
+---
+
+## v0.0.5 — 2026-02-23
+
+**2 commits** | 5 files changed, 16 insertions, 11 deletions
+
+### Improvements
+
+- Updated README and init command for Claude's MegaMemory permissions
+
+---
+
+## v0.0.4 — 2026-02-23
+
+**2 commits** | 3 files changed, 5 insertions, 5 deletions
+
+### Package
+
+- Renamed npm package to `fuska-magistern`
+
+---
+
+## v0.0.3 — 2026-02-23
+
+**31 commits** | 66 files changed, ~1,600 insertions, ~8,800 deletions (net ~7,200 lines removed)
+
+This release represents a focused token-optimization effort. The prompt files that make up Fuska had grown organically, with substantial duplication across agent and command definitions. The goal was to reduce total token cost without losing any behavioral fidelity — every instruction still exists, it just lives in one place instead of thirty.
 
 ### Shared resource extraction (`@include` pattern)
 
@@ -55,14 +107,23 @@ The remaining 26 command files and 19 agent files each lost their inlined megame
 
 > Token estimates use word count as proxy (~1 word ≈ 1 token for English markdown). "Cached" columns assume shared @include files hit the prompt cache at 90% discount — reasonable since they're stable, shared-path resources loaded identically across commands.
 
-### Documentation updates
+### Improvements
 
-- Added `docs/concepts.md` covering plan types, reference architecture, and TDD approach.
-- Minor updates to `docs/development.md` and `docs/workflow.md`.
+- Added chapter-scoped todos for iterative refinement
+- Renamed `/fuska-configure-initiative` to `/fuska-configure`
+- Merged `list-chapter-assumptions` into design command
+- Added `.gitignore` and IDE directory exclusions to codebase mapper
 
-### Bug fixes
+### Documentation
 
-- Fixed stale file paths in internal files that still referenced the old `get-shit-done` project name.
+- Added `docs/concepts.md` covering plan types, reference architecture, and TDD approach
+- Minor updates to `docs/development.md` and `docs/workflow.md`
+
+### Bug Fixes
+
+- Fixed stale file paths referencing old `get-shit-done` project name
+- Fixed `--no-map` flag in init command
+- Improved table formatting for terminal display
 
 ---
 
