@@ -1,6 +1,6 @@
 {
   "name": "fuska-magistern",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Fuska - Lean solo agentic development with MegaMemory knowledge graph",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
