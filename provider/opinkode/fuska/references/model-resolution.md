@@ -32,6 +32,17 @@ const modelLookup = {
 const models = modelLookup[modelProfile]
 ```
 
+## Profile-Independent Agents
+
+Some agents use the same model regardless of profile. Resolve directly from aliases:
+
+```
+const gitMessageModel = aliases.explore_model || aliases.budget_model
+```
+
+Currently profile-independent:
+- `fuska-git-message` → `explore_model` (simple summary task)
+
 ## Validation
 
 After resolution, validate model strings against `~/.config/opencode/opencode.jsonc` using model-validation.md patterns. If invalid: show error with available providers, suggest `fuska config`, stop.

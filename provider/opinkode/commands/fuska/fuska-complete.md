@@ -499,6 +499,8 @@ If response.matches.length > 0:
 const configSummaryString = response.matches[0].summary
 const configData = JSON.parse(configSummaryString)
 const branchingStrategy = configData.git?.branching_strategy
+const aliases = configData.model_aliases || {}
+const gitMessageModel = aliases.explore_model || aliases.budget_model
 ```
 
 If `branchingStrategy` is not set or is `"none"`:
@@ -561,6 +563,7 @@ for (const branch of featureBranches) {
   // Generate commit message for squash merge
   Task(
     description="Generate merge commit message",
+    model=gitMessageModel,
     subagent_type="fuska-git-message",
     variant="amend",
     prompt=`<commit_context>
@@ -585,6 +588,7 @@ for (const branch of featureBranches) {
   // Generate commit message for merge
   Task(
     description="Generate merge commit message",
+    model=gitMessageModel,
     subagent_type="fuska-git-message",
     variant="amend",
     prompt=`<commit_context>

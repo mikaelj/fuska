@@ -14,6 +14,8 @@ Based on [gsd-opencode](https://github.com/rokicool/gsd-opencode) and [Get Shit 
 >
 > **It works.** In a real session, the code reviewer caught a typo (`this.config.workflow.workflow.mode`) that would have silently broken the display — the builder fixed it, the second review passed, and the commit landed clean. [Full walkthrough →](docs/fuska-do-session-distilled.md)
 
+New here? Check the [FAQ](docs/faq.md).
+
 **THE AUTHOR TAKES NO RESPONSIBILITY FOR DATA LOSS IN EXISTING PROJECTS. USE AT YOUR OWN PERIL.**
 
 ---
@@ -208,6 +210,11 @@ fuska migrate statuses [dir]          # Migrate old status values
 /fuska-add-chapter-todo <chapter> description  # Add chapter-scoped TODO
 ```
 
+**Standalone code review:**
+```
+/fuska-code-review                              # Review uncommitted changes against project context
+```
+
 #### `fuska progress` Example
 
 ```
@@ -267,6 +274,8 @@ That's it — repeat for each chapter until the milestone is complete.
 
 **At any point**, run `/fuska` (bare, no verb) to see exactly where you are and what to do next.
 
+**Ad-hoc plan checking:** If Fuska is initialized, you can ask the AI to run any suggested plan through the plan checker at any time — no Fuska command needed. Just describe the plan or paste it into the conversation and say "run this through the plan checker." The same expert panel that validates plans during `/fuska-plan` will review it on the spot.
+
 ### Chapter TODOs
 
 During execution, if the builder discovers additional work not in the plan, it creates **chapter-scoped TODOs**. These are automatically picked up in a loop:
@@ -297,6 +306,7 @@ Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — 
 | Configure modes, models, git strategy | [configuration.md](docs/configuration.md) — All the knobs |
 | See why MegaMemory over .planning/ | [development.md](docs/development.md#performance-benchmarks) — Performance benchmarks |
 | Contribute to Fuska | [development.md](docs/development.md) — Build process and architecture |
+| Get answers to common questions | [faq.md](docs/faq.md) — 10 Q&As on data, models, cost, teams, and more |
 | Set up from scratch | [getting-started.md](docs/getting-started.md) — Full install guide with troubleshooting |
 
 ---
@@ -327,6 +337,8 @@ Instead of a single plan-checker, Fuska uses a **panel of specialized checkers**
 - **Expert (plan-derived):** Dynamically selected based on plan content (Security Veteran, Distributed Systems Engineer, Payments Expert, etc.)
 
 **Cross-validation:** When 2+ checkers flag the same issue, it gets a `cross_validated` badge and severity boost.
+
+For a detailed cost/token comparison, see the [FAQ](docs/faq.md#how-much-does-fuska-cost-in-tokensmoney).
 
 ### Smarter Commit Messages
 

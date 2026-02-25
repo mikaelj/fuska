@@ -104,6 +104,10 @@ All `/fuska-*` commands below also work directly.
 
 \* `/fuska-do [mode] [description]` — Execute unplanned, ad-hoc tasks with Fuska guarantees. **Flags:** --review, --no-review, --auto-commit
 
+## Code Review
+
+\* `/fuska-code-review` — Review uncommitted git changes against project context from MegaMemory.
+
 ## Codebase Analysis
 
 \* `/fuska-refresh` — Refresh import graph with symbol indexing. **Flags:** --full, --dead-code, --json, --prune
@@ -438,11 +442,26 @@ Execute unplanned, ad-hoc tasks with Fuska guarantees.
 - Override commit with --auto-commit to skip the prompt and commit automatically
 - Creates standalone task concepts (not tied to roadmap)
 
-Usage: `/fuska-do planned fix typo in README`
-Usage: `/fuska-do planned fix typo in README --no-review --auto-commit`
-Usage: `/fuska-do` (prompts for mode and description)
+ Usage: `/fuska-do planned fix typo in README`
+ Usage: `/fuska-do planned fix typo in README --no-review --auto-commit`
+ Usage: `/fuska-do` (prompts for mode and description)
 
- ### Codebase Analysis
+ ### Code Review
+
+ **`/fuska-code-review`**
+ Review uncommitted git changes against project context from MegaMemory.
+
+ - Loads current chapter, plan, and research from MegaMemory for context
+ - Gets git diff HEAD for all uncommitted changes
+ - Spawns fuska-code-reviewer agent to check for bugs, security issues, plan deviations
+ - Checks for stubs, missing wiring, and anti-patterns
+ - Does NOT commit — returns findings for you to act on
+
+ Use after manual coding, or when you want a quality check without the full `/fuska-do` pipeline.
+
+ Usage: `/fuska-code-review`
+
+  ### Codebase Analysis
 
  **`/fuska-refresh [--full] [--dead-code] [--json] [--prune]`**
  Refresh the import graph stored in MegaMemory.

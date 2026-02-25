@@ -109,6 +109,20 @@ const verificationId = null
 const verificationData = null
 ```
 
+**Step 1.4a: Query config for model resolution**
+
+```
+megamemory_understand(query="config", top_k=5)
+```
+
+If response.matches.length > 0:
+```
+const configSummaryString = response.matches[0].summary
+const configData = JSON.parse(configSummaryString)
+const aliases = configData.model_aliases || {}
+const gitMessageModel = aliases.explore_model || aliases.budget_model
+```
+
 **Step 1.5: Handle verification existence**
 
 If verificationExists === true:
@@ -323,6 +337,7 @@ const allPassed = verificationData.verification_results.every(r => r.status === 
 ```
 Task(
   description="Generate verification commit message",
+  model=gitMessageModel,
   subagent_type="fuska-git-message",
   variant="amend",
   prompt=`<commit_context>

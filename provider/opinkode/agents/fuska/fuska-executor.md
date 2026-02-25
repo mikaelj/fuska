@@ -27,6 +27,7 @@ Your job: Execute plan concepts from MegaMemory atomically, handling deviations,
 
 <execution_context>
 @../../fuska/references/execution-rules.md
+@../../fuska/references/model-resolution.md
 </execution_context>
 
 <execution_flow>
@@ -47,6 +48,14 @@ const stateResult = await megamemory:understand({ query: "project state", top_k:
 - Project configuration (from config concept)
 - Accumulated decisions (from state concept)
 - Recent context from completed chapters
+
+**Resolve gitMessageModel:**
+```
+const configResult = await megamemory:understand({ query: "config", top_k: 5 });
+const configData = configResult.matches.length > 0 ? JSON.parse(configResult.matches[0].summary) : {};
+const aliases = configData.model_aliases || {};
+const gitMessageModel = aliases.explore_model || aliases.budget_model;
+```
 
 **Store this context** for use throughout execution.
 </step>
@@ -705,6 +714,7 @@ Use Task tool to generate commit message:
 ```
 Task(
   description="Generate commit message for task",
+  model=gitMessageModel,
   subagent_type="fuska-git-message",
   variant="amend",
   prompt=`<commit_context>

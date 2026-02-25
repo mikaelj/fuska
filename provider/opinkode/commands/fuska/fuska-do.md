@@ -222,9 +222,11 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 | fuska-executor | quality_model | balanced_model | balanced_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
 | fuska-code-reviewer | budget_model | budget_model | budget_model |
+| fuska-git-message | explore_model | explore_model | explore_model |
 
 ```
 const models = modelLookup[modelProfile]  // { researcher, planner, checker, executor, verifier, codeReviewer }
+const gitMessageModel = aliases.explore_model || aliases.budget_model
 ```
 
 Display: `Mode: ${MODE} | Profile: ${modelProfile}`
@@ -648,7 +650,7 @@ Generate a commit message following Fuska format:
 
 Return ONLY the commit message, nothing else.`
 
-Task(subagent_type="fuska-git-message", variant="amend", description="Generate commit message")
+Task(subagent_type="fuska-git-message", model=gitMessageModel, variant="amend", description="Generate commit message")
 ```
 
 **Step 9.5.3:** Store `generatedCommitMessage = agentOutput.trim()`.

@@ -345,6 +345,8 @@ If response.matches.length > 0:
 ```
 const configSummaryString = response.matches[0].summary
 const configData = JSON.parse(configSummaryString)
+const aliases = configData.model_aliases || {}
+const gitMessageModel = aliases.explore_model || aliases.budget_model
 ```
 
 **Step 6.3: Write config.json**
@@ -804,6 +806,7 @@ Total files: ${totalFileCount}
   # Generate commit message
   Task(
     description="Generate export commit message",
+    model=gitMessageModel,
     subagent_type="fuska-git-message",
     variant="amend",
     prompt=`<commit_context>

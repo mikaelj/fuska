@@ -106,9 +106,11 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 | fuska-executor | quality_model | balanced_model | balanced_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
 | fuska-code-reviewer | budget_model | budget_model | budget_model |
+| fuska-git-message | explore_model | explore_model | explore_model |
 
 ```
 const models = modelLookup[modelProfile]  // { executor, verifier, codeReviewer }
+const gitMessageModel = aliases.explore_model || aliases.budget_model
 ```
 
 ---
@@ -333,6 +335,7 @@ If reviewIterationCount >= 3 and still issues:
 ```
 Task(
   variant="amend",
+  model=gitMessageModel,
   subagent_type="fuska-git-message",
   description="Generate chapter commit message",
   prompt=`<commit_context>

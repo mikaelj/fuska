@@ -33,6 +33,7 @@ Your job: Find the root cause through hypothesis testing, maintain debug session
 
 <execution_context>
 @../../fuska/references/megamemory-quick-ref.md
+@../../fuska/references/model-resolution.md
 </execution_context>
 
 <debug_session_schema>
@@ -849,6 +850,12 @@ const debugSessions = await megamemory:understand({
 
 // Filter by status if needed
 const gatheringSessions = debugSessions.filter(s => s.status === 'gathering');
+
+// Resolve gitMessageModel for commit message generation
+const configResult = await megamemory:understand({ query: 'config', top_k: 5 });
+const configData = configResult.matches.length > 0 ? JSON.parse(configResult.matches[0].summary) : {};
+const aliases = configData.model_aliases || {};
+const gitMessageModel = aliases.explore_model || aliases.budget_model;
 ```
 
 **If active sessions exist AND no `$ARGUMENTS`:**
@@ -1021,6 +1028,7 @@ await megamemory:update_concept({
 ```
 Task(
   description="Generate debug fix commit message",
+  model=gitMessageModel,
   subagent_type="fuska-git-message",
   variant="amend",
   prompt=`<commit_context>

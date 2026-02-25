@@ -450,9 +450,11 @@ Model aliases provide an indirection layer between lookup tables and actual mode
 | fuska-plan-checker | balanced_model | balanced_model | budget_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
 | fuska-chapter-researcher | quality_model | balanced_model | budget_model |
-| fuska-git-message | balanced_model | budget_model | budget_model |
+| fuska-git-message | explore_model | explore_model | explore_model |
 | fuska-commit-checker | budget_model | budget_model | budget_model |
 | fuska-code-reviewer | budget_model | budget_model | budget_model |
+
+**Profile-independent agents:** fuska-git-message uses `explore_model` regardless of active profile. Resolve directly from `aliases.explore_model` (fallback to `budget_model` if not defined).
 
 **Resolution flow:**
 

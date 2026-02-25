@@ -21,6 +21,7 @@
 - [Ad-hoc Tasks with /fuska-do](#ad-hoc-tasks-with-fuska-do)
   - [Quick Mode vs /fuska-do](#quick-mode-vs-fuska-do)
   - [Decision Guide](#decision-guide)
+- [Ad-hoc Plan Checking](#ad-hoc-plan-checking)
 - [Session Continuity](#session-continuity)
   - [What's Tracked Automatically](#whats-tracked-automatically)
   - [Getting Back to Where You Were](#getting-back-to-where-you-were)
@@ -181,6 +182,21 @@ task-001-fix-footer-alignment:
 ```
 
 The key difference: `--mode quick` keeps your work organized within the chapter structure, while `/fuska-do` creates isolated task concepts for unplanned work.
+
+---
+
+### Ad-hoc Plan Checking
+
+You don't need a Fuska command to use the plan checker. If Fuska is initialized in your project, you can ask the AI to run any plan through the plan checker at any time — just describe it in natural language.
+
+**Examples:**
+- "I'm thinking of refactoring the auth module into three services. Can you run that through the plan checker?"
+- "Here's my plan for the migration — check it with the plan checker before I start."
+- "Run the current plan through the fuska plan checker."
+
+The same expert panel (quality advocate + contextual reviewer + domain expert) evaluates your plan, with cross-validation and severity boosting. You get structured feedback — blockers, warnings, and suggestions — without entering the formal workflow.
+
+This works because the plan checker is a standalone agent. The `/fuska-plan` command orchestrates it automatically, but you can invoke it directly whenever you want a second opinion on an approach.
 
 ---
 
