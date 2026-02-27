@@ -1,5 +1,17 @@
 #!/bin/bash
 
-fuska do planned 'update the @CHANGELOG.md from the available git tags plus an "Unreleased (<git-short-hash-of-HEAD>)" section w/ changes from the latest release to HEAD. This way, if the script is run before a new commit has been made, no changes are required (so check the unreleased section against git-hash-of-HEAD first). If there is nothing to commit for git (staged or otherwise), do a git diff from last released version to HEAD and upate the changelog with version' $1 'for the "Unreleased" version'
+VERSION="${1:-}"
+
+if [[ -n "$VERSION" ]]; then
+  VERSION_INFO="v${VERSION#v} (pretend HEAD is tagged as v${VERSION#v})"
+else
+  VERSION_INFO="Unreleased (\$(git rev-parse --short HEAD))"
+fi
+
+fuska do planned "Update @CHANGELOG.md:
+1. Check if there are uncommitted changes (staged or unstaged). If nothing to commit, exit with no changes.
+2. Get git log between latest tag and HEAD.
+3. Create/update section for ${VERSION_INFO} with the changes.
+4. Keep format consistent with existing entries (theme-based, not commit-by-commit)."
 
 
