@@ -130,6 +130,27 @@ ${chalk.bold('Examples:')}
   /fuska-build 3
   /fuska-build 3 --fixes-only
 `,
+
+  lessons: `
+${chalk.bold('fuska lessons [project-path] [--json]')}
+
+List all lessons learned from plan-checker and code-reviewer.
+
+${chalk.bold('Flags:')}
+  --json  Output as machine-readable JSON
+
+${chalk.bold('Output:')}
+  Lessons are grouped by source (Plan Lessons, Code Lessons)
+  Each lesson shows: category/dimension, error, solution, files involved
+
+${chalk.bold('Time format:')}
+  < 30 days: relative time (5m ago, 3h ago, 2d ago, 1w ago)
+  >= 30 days: yyyy-mm-dd hh:mm
+
+${chalk.bold('Examples:')}
+  fuska lessons
+  fuska lessons --json
+`,
 };
 
 const allCommands = `
@@ -166,6 +187,7 @@ ${chalk.bold('Milestones:')}
 
 ${chalk.bold('Work Management:')}
   todos       Manage todos
+  lessons     List lessons learned
 
 ${chalk.bold('Codebase Analysis:')}
   refresh     Refresh import graph

@@ -25,6 +25,7 @@ import { initiativeNewCommand } from './commands/initiative-new';
 import { refreshCommand } from './commands/refresh';
 import { askCommand } from './commands/ask';
 import { doCommand } from './commands/do';
+import { lessonsCommand } from './commands/lessons';
 
 const AI_COMMANDS = new Set(['do', 'map', 'ask', 'refresh']);
 const GROUP_COMMANDS = new Set(['git', 'initiative', 'migrate']);
@@ -115,6 +116,7 @@ helpCommand(program);
 configCommand(program);
 mapCommand(program);
 todoCommand(program);
+lessonsCommand(program);
 progressCommand(program);
 infoCommand(program);
 refreshCommand(program);

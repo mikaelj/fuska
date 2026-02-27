@@ -21,6 +21,7 @@
 | <nobr>`fuska initiative list`</nobr> | List all initiatives sorted by recent activity | -- |
 | <nobr>`fuska initiative switch [slug]`</nobr> | Switch to another initiative | `[slug]` -- initiative to switch to |
 | <nobr>`fuska todo`</nobr> | List completed and pending tasks | -- |
+| <nobr>`fuska lessons`</nobr> | Query and display lessons-learned concepts from MegaMemory | `--json` for JSON output |
 | <nobr>`fuska info`</nobr> | Display codebase and domain mappings from MegaMemory | `--long` for all files, `--verbose` for small domains |
 | <nobr>`fuska help [command]`</nobr> | Show help for Fuska commands | `[command]` -- specific command for detailed help |
 | <nobr>`fuska progress`</nobr> | Check project progress and show next action | `--json` for machine-readable output |

@@ -162,6 +162,8 @@ Each lesson concept includes:
 - **Plan-checker** creates lesson concepts for blocker/warning issues found
 - **Code-reviewer** creates lesson concepts for blocker issues found
 
+**CLI access:** Use `fuska lessons` to query and display all lesson concepts. Output is grouped by source (Plan Lessons, Code Lessons) and sorted by date. Recent lessons (< 30 days) show relative time; older lessons show `yyyy-mm-dd hh:mm` format. Use `--json` for machine-readable output.
+
 ---
 
 ## Import Graph

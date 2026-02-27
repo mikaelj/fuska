@@ -188,6 +188,7 @@ fuska init [description]              # Initialize project with "main" initiativ
 fuska config                          # Configure Fuska settings (TUI)
 fuska progress                        # Current status and next action
 fuska todo                            # Pending and completed tasks
+fuska lessons                         # Lessons learned from plan-checker/code-reviewer
 fuska info                            # Display codebase and domain mappings
 fuska export                          # Export MegaMemory to markdown files
 fuska install [target]                # Install commands/agents via symlinks
