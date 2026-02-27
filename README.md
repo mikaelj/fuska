@@ -278,6 +278,8 @@ That's it — repeat for each chapter until the milestone is complete.
 
 **Ad-hoc plan checking:** If Fuska is initialized, you can ask the AI to run any suggested plan through the plan checker at any time — no Fuska command needed. Just describe the plan or paste it into the conversation and say "run this through the plan checker." The same expert panel that validates plans during `/fuska-plan` will review it on the spot.
 
+**Formalize as you go:** You don't need to decide upfront whether a conversation becomes real work. At any point, tell the AI "create a chapter of this" or "send this to the researcher" — Fuska creates the full chapter structure from your conversation. Start informal, formalize when ready. See [workflow.md](docs/workflow.md#formalize-as-you-go).
+
 ### Chapter TODOs
 
 During execution, if the builder discovers additional work not in the plan, it creates **chapter-scoped TODOs**. These are automatically picked up in a loop:

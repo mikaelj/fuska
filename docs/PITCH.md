@@ -29,11 +29,15 @@ Fuska solves the memory problem with **MegaMemory** — a persistent knowledge g
 
 Each phase follows a simple lifecycle: **design → plan → build → review**. You can run the steps manually one at a time, or let Fuska run the entire chain automatically with a single command — either as `/fuska-do` inside the code agent or as `fuska do` directly in the terminal.
 
+And you don't have to choose upfront between "just chatting" and "structured work." You can be tossing ideas around with the AI, and at any point say "create a chapter of this" or "send this to the researcher." Fuska formalizes the conversation into a full chapter with requirements, plans, and tasks — ready to build. Start loose, formalize when the idea is ready.
+
 And here's the crucial difference: before a single line of code is written, the plan is reviewed by a **dynamic expert panel** — three specialised AI reviewers assembled based on your specific plan. A base reviewer always watches over code quality and testability. A contextual reviewer is chosen based on project type — for instance, a security reviewer for web projects or a resource reviewer for embedded systems. The third is a domain expert chosen dynamically based on the plan's content: if it involves OAuth you get a security veteran, if it involves databases you get a data architect, if it involves payments you get a Stripe expert.
 
 If two reviewers independently flag the same issue, the severity is automatically escalated. All of this happens before the build even starts.
 
 Then a builder agent implements the code. But the work isn't done yet — a **code reviewer agent** examines the actual diff, checking for bugs, security issues, and deviations from the plan. If it finds problems, the builder fixes them automatically — up to three review-fix iterations before you're asked to intervene. Only after the code passes review does it reach commit stage.
+
+**Lessons learned** are captured automatically. When the plan-checker or code-reviewer finds issues, they create lesson concepts in MegaMemory — recording what went wrong, which category it falls into, and how to fix it. The planner queries plan-lessons before planning; the executor queries code-lessons before coding. Mistakes found once are prevented in future tasks. The system gets smarter over time.
 
 And you're not locked into the formal workflow to benefit from plan checking. If Fuska is initialized, you can ask the AI at any time to run a plan through the checker — just describe your approach in the conversation. The same expert panel reviews it on the spot. Think of it as having your architecture review panel on speed dial.
 
@@ -119,7 +123,7 @@ Fuska builds on **GSD** (Get Shit Done) — an earlier system with the same core
 
 **Fewer dependencies.** GSD only needs OpenCode and git. Fuska additionally requires Node.js, npm, and MegaMemory as an installed package. More dependencies means more things that can break during upgrades. On the other hand, Fuska's CLI tools give a lot back — see below.
 
-**No startup cost.** GSD maps the codebase on demand. Fuska runs automatic mapping at `init` which takes 30–60 seconds and costs tokens — even if you just want to try the tool on a small project.
+**No startup cost.** GSD maps the codebase on demand. Fuska runs automatic mapping at `init` which takes 30–60 seconds and costs tokens — even if you just want to try the tool on a small project. (You can skip it with `fuska init --no-map` and run `fuska map` later, but mapping is the default.)
 
 ### Where Fuska Is Better
 

@@ -28,11 +28,15 @@ Fuska löser minnesproblemet med **MegaMemory** — en persistent kunskapsgraf l
 
 Varje fas följer en enkel livscykel: **design → plan → build → review**. Du kan köra stegen manuellt ett i taget, eller låta Fuska köra hela kedjan automatiskt med ett enda kommando — antingen som `/fuska-do` inne i kodagenten eller som `fuska do` direkt i terminalen.
 
+Och du behöver inte bestämma i förväg om en konversation är "bara prat" eller "riktigt arbete." Du kan kasta idéer med AI:n, och när som helst säga "skapa ett kapitel av det här" eller "skicka det här till forskaragenten." Fuska formaliserar konversationen till ett fullständigt kapitel med krav, planer och uppgifter — redo att bygga. Börja löst, formalisera när idén är mogen.
+
 Och här kommer den avgörande skillnaden: innan en enda rad kod skrivs granskas planen av en **dynamisk expertpanel** — tre specialiserade AI-granskare som sätts samman utifrån just din plan. En basgranskare bevakar alltid kodkvalitet och testbarhet. En kontextuell granskare väljs utifrån projekttyp — exempelvis en säkerhetsgranskare för webbprojekt eller en resursgranskare för inbyggda system. Den tredje är en domänexpert som väljs dynamiskt utifrån planens innehåll: handlar det om OAuth får du en säkerhetsveteran, handlar det om databaser får du en dataarkitekt, handlar det om betalningar får du en Stripe-expert.
 
 Om två granskare flaggar samma problem oberoende av varandra eskaleras allvarlighetsgraden automatiskt. Allt detta händer innan bygget ens startar.
 
 Sedan implementerar en byggaragent koden. Men arbetet är inte klart ännu — en **kodgranskaragent** undersöker den faktiska diffen och letar efter buggar, säkerhetsproblem och avvikelser från planen. Hittar den problem fixar byggaragenten dem automatiskt — upp till tre gransknings-fix-iterationer innan du behöver ingripa. Först efter att koden klarar granskningen når den commit-steget.
+
+**Lärdomar** fångas automatiskt. När plancheckern eller kodgranskaren hittar problem skapar de lärdomskoncept i MegaMemory — vad som gick fel, vilken kategori det tillhör och hur man fixar det. Planeraren frågar efter planlärdomarna innan den planerar; byggaren frågar efter kodlärdomarna innan den kodar. Misstag som hittas en gång förhindras i framtida uppgifter. Systemet blir smartare över tid.
 
 Och du behöver inte följa det formella arbetsflödet för att dra nytta av plangranskningen. Om Fuska är initialiserat kan du när som helst be AI:n köra en plan genom checkern — beskriv bara din approach i konversationen. Samma expertpanel granskar den direkt. Tänk dig det som att ha din arkitekturgranskning på snabbval.
 
@@ -118,7 +122,7 @@ Fuska bygger vidare på **GSD** (Get Shit Done) — ett tidigare system med samm
 
 **Färre beroenden.** GSD behöver bara OpenCode och git. Fuska kräver dessutom Node.js, npm och MegaMemory som installerat paket. Fler beroenden betyder fler saker som kan gå sönder vid uppgraderingar. Å andra sidan ger Fuskas CLI-verktyg mycket tillbaka — se nedan.
 
-**Ingen uppstartskostnad.** GSD kartlägger kodbasen vid behov. Fuska kör automatisk kartläggning vid `init` som tar 30–60 sekunder och kostar tokens — även om du bara vill testa verktyget på ett litet projekt.
+**Ingen uppstartskostnad.** GSD kartlägger kodbasen vid behov. Fuska kör automatisk kartläggning vid `init` som tar 30–60 sekunder och kostar tokens — även om du bara vill testa verktyget på ett litet projekt. (Du kan hoppa över det med `fuska init --no-map` och köra `fuska map` senare, men kartläggning är standard.)
 
 ### Där Fuska är bättre
 

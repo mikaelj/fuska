@@ -21,7 +21,7 @@
 - [Ad-hoc Tasks with /fuska-do](#ad-hoc-tasks-with-fuska-do)
   - [Quick Mode vs /fuska-do](#quick-mode-vs-fuska-do)
   - [Decision Guide](#decision-guide)
-- [Ad-hoc Plan Checking](#ad-hoc-plan-checking)
+- [Formalize as You Go](#formalize-as-you-go)
 - [Session Continuity](#session-continuity)
   - [What's Tracked Automatically](#whats-tracked-automatically)
   - [Getting Back to Where You Were](#getting-back-to-where-you-were)
@@ -37,6 +37,7 @@
   - [Milestones and Releases](#milestones-and-releases)
   - [Merging Knowledge from Git Worktrees](#merging-knowledge-from-git-worktrees)
   - [Revisiting Old Initiatives](#revisiting-old-initiatives)
+  - [Formalizing a Conversation into a Chapter](#formalizing-a-conversation-into-a-chapter)
 - [See Also](#see-also)
 
 ---
@@ -185,18 +186,19 @@ The key difference: `--mode quick` keeps your work organized within the chapter 
 
 ---
 
-### Ad-hoc Plan Checking
+## Formalize as You Go
 
-You don't need a Fuska command to use the plan checker. If Fuska is initialized in your project, you can ask the AI to run any plan through the plan checker at any time — just describe it in natural language.
+You don't need to decide upfront whether a conversation is "just chatting" or "real work." At any point, you can formalize what you've been discussing into Fuska's structured workflow.
 
-**Examples:**
-- "I'm thinking of refactoring the auth module into three services. Can you run that through the plan checker?"
-- "Here's my plan for the migration — check it with the plan checker before I start."
-- "Run the current plan through the fuska plan checker."
+**Three escalation paths:**
 
-The same expert panel (quality advocate + contextual reviewer + domain expert) evaluates your plan, with cross-validation and severity boosting. You get structured feedback — blockers, warnings, and suggestions — without entering the formal workflow.
+- **"Send this to the researcher"** — Spawns the researcher agent with your conversation context. It investigates the topic — ecosystem options, standard patterns, potential pitfalls — and stores findings in MegaMemory for later planning.
 
-This works because the plan checker is a standalone agent. The `/fuska-plan` command orchestrates it automatically, but you can invoke it directly whenever you want a second opinion on an approach.
+- **"Run this through the plan checker"** — The same expert panel (quality advocate + contextual reviewer + domain expert) evaluates your approach, with cross-validation and severity boosting. You get structured feedback — blockers, warnings, and suggestions — without entering the formal workflow. Just describe your plan or paste it into the conversation.
+
+- **"Create a chapter of this"** — Creates a full chapter in MegaMemory from the conversation. Fuska derives requirements from what you discussed, generates plans with tasks, and marks the chapter ready to `/fuska-build`. You go from brainstorming to structured work in one phrase.
+
+**Why this works:** The researcher, planner, and plan checker are standalone agents. The `/fuska-plan` command orchestrates them automatically, but each can be invoked directly from any conversation — they don't require the formal pipeline to have been started.
 
 ---
 
@@ -504,6 +506,17 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 - No archiving needed — inactive initiatives naturally sort to the bottom by last activity
 - All knowledge (chapters, summaries, decisions) is always preserved
 - Switch to any initiative at any time
+
+### Formalizing a Conversation into a Chapter
+
+*You've been chatting with the AI about whether RecipeVault should support meal prep timers — how long each step takes, when to start the next dish so everything's ready at the same time. Partway through, you realize this is a real feature.*
+
+| # | Command | You Say | What Happens |
+|---|---------|---------|--------------|
+| 1 | *(conversation)* | *"What if we added prep timers? Like, you're making lasagna and it tells you when to start the salad so both are ready at 6pm."* | You're just chatting — brainstorming the idea, discussing edge cases (parallel steps, variable prep times, oven preheat). No Fuska commands yet. |
+| 2 | *(conversation)* | *"Actually, create a chapter of this."* | Fuska formalizes the conversation into a new chapter: "Meal Prep Timers." Derives requirements from your discussion (parallel step scheduling, countdown timers, "everything ready at X" target time). Creates the chapter in MegaMemory with goal and success criteria. |
+| 3 | <nobr>`/fuska-plan`</nobr> | — | Plans the chapter: 8 tasks across 2 batches — timer data model, scheduling algorithm, countdown UI, notification system. The planner has the full conversation context as requirements. |
+| 4 | <nobr>`/fuska-build`</nobr> | — | Builds the timers. The conversation context means the builder knows about edge cases you discussed (parallel steps, preheat time) without them needing to be formally written as requirements. |
 
 ---
 
