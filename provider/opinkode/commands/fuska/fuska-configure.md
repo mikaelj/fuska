@@ -223,14 +223,11 @@ Skip the interactive questions and proceed to "Create/update config concept" bel
 
 **Ask interactive questions:**
 
-**Round 1 — Core workflow settings (4 questions):**
-
 ```
 questions: [
   {
     header: "Mode",
     question: "How do you want to work?",
-    multiSelect: false,
     options: [
       { label: "YOLO (Recommended)", description: "Auto-approve, just execute" },
       { label: "Interactive", description: "Confirm at each step" }
@@ -239,7 +236,6 @@ questions: [
   {
     header: "Depth",
     question: "How thorough should planning be?",
-    multiSelect: false,
     options: [
       { label: "Quick", description: "Ship fast (3-5 chapters, 1-3 plans each)" },
       { label: "Standard", description: "Balanced scope and speed (5-8 chapters, 3-5 plans each)" },
@@ -249,7 +245,6 @@ questions: [
   {
     header: "Execution",
     question: "Run plans in parallel?",
-    multiSelect: false,
     options: [
       { label: "Parallel (Recommended)", description: "Independent plans run simultaneously" },
       { label: "Sequential", description: "One plan at a time" }
@@ -258,26 +253,15 @@ questions: [
   {
     header: "Commits",
     question: "How should git commits be structured?",
-    multiSelect: false,
     options: [
       { label: "Per chapter (Recommended)", description: "One commit when all plans in a chapter complete" },
       { label: "Per plan", description: "One commit per plan (groups all tasks in a plan)" },
       { label: "Per task", description: "One commit per task (most granular)" }
     ]
   },
-]
-```
-
-**Round 2 — Workflow agents:**
-
-These spawn additional agents during planning/execution. They add tokens and time but improve quality.
-
-```
-questions: [
   {
     header: "Research",
     question: "Research before planning each chapter? (adds tokens/time)",
-    multiSelect: false,
     options: [
       { label: "Yes (Recommended)", description: "Investigate domain, find patterns, surface gotchas" },
       { label: "No", description: "Plan directly from requirements" }
@@ -286,7 +270,6 @@ questions: [
   {
     header: "Plan Check",
     question: "Verify plans will achieve their goals? (adds tokens/time)",
-    multiSelect: false,
     options: [
       { label: "Yes (Recommended)", description: "Catch gaps before execution starts" },
       { label: "No", description: "Execute plans without verification" }
@@ -295,7 +278,6 @@ questions: [
   {
     header: "Reviewer",
     question: "Review work satisfies requirements after each chapter? (adds tokens/time)",
-    multiSelect: false,
     options: [
       { label: "Yes (Recommended)", description: "Confirm deliverables match chapter goals" },
       { label: "No", description: "Trust execution, skip verification" }

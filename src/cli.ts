@@ -21,6 +21,7 @@ import { migrateMultiInitiativeCommand } from './commands/migrate-multi-initiati
 import { migrateTerminologyCommand } from './commands/migrate-terminology';
 import { migrateStatusesCommand } from './commands/migrate-statuses';
 import { initiativeSwitchCommand } from './commands/initiative-switch';
+import { initiativeNewCommand } from './commands/initiative-new';
 import { refreshCommand } from './commands/refresh';
 import { askCommand } from './commands/ask';
 import { doCommand } from './commands/do';
@@ -130,6 +131,7 @@ worktreeMergeCommand(worktreeCmd);
 const initiativeCmd = program.command('initiative').description('Manage Fuska initiatives');
 initiativeListCommand(initiativeCmd);
 initiativeSwitchCommand(initiativeCmd);
+initiativeNewCommand(initiativeCmd);
 
 const migrateCmd = program.command('migrate').description('Migration utilities');
 migrateCommand(migrateCmd);
