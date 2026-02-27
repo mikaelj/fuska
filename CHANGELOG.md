@@ -5,6 +5,21 @@ Organized by theme rather than individual commit.
 
 ---
 
+## v0.3.0 - 2026-02-27
+
+**3 commits** | 10 files changed, 276 insertions, 1 deletion
+
+### New Features
+
+- **Cross-Task Learning System** — Plan-checker and code-reviewer now create lessons; planner and executor query them before work, enabling knowledge reuse across sessions
+
+### Bug Fixes
+
+- Fixed changelog script parameter handling
+- Fixed prepublish login issue
+
+---
+
 ## v0.2.1 - 2026-02-27
 
 **2 commits** | 4 files changed, 180 insertions, 20 deletions
