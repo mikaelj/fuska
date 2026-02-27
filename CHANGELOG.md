@@ -5,6 +5,21 @@ Organized by theme rather than individual commit.
 
 ---
 
+## v0.4.0 - 2026-02-27
+
+**2 commits** | 9 files changed, 293 insertions, 11 deletions
+
+### New Features
+
+- **Lessons Command** — New `fuska lessons` CLI command queries MegaMemory for plan and code review lessons, grouped by source with relative timestamps and `--json` output
+
+### Documentation
+
+- Added "Formalize as You Go" section with three escalation paths from ad-hoc fixes to full chapters
+- Documented lessons-learned capture workflow in pitch documents
+
+---
+
 ## v0.3.0 - 2026-02-27
 
 **3 commits** | 10 files changed, 276 insertions, 1 deletion
