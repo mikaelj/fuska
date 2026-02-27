@@ -273,6 +273,82 @@ For each issue found, classify severity:
 
 </review_process>
 
+<lesson_creation>
+
+## Step 6: Create Lesson Concepts (if issues_found)
+
+If review returns `## ISSUES FOUND`, create lesson concepts for each blocker issue. This enables executors to learn from past mistakes.
+
+**Process:**
+
+1. **Ensure lessons module structure exists in MegaMemory:**
+
+```typescript
+// Check for lessons module
+const lessonsResult = await megamemory:understand({ query: "lessons", top_k: 5 });
+if (!lessonsResult.matches.some(m => m.name === 'lessons')) {
+  // Create parent lessons module
+  await megamemory:create_concept({
+    name: 'lessons',
+    kind: 'module',
+    summary: 'Learned lessons from plan-checker and code-reviewer issues',
+    why: 'Prevent repeating mistakes by storing patterns to avoid'
+  });
+}
+
+// Check for code-lessons submodule
+const codeLessonsResult = await megamemory:understand({ query: "code-lessons", top_k: 5 });
+if (!codeLessonsResult.matches.some(m => m.name === 'code-lessons')) {
+  await megamemory:create_concept({
+    name: 'code-lessons',
+    kind: 'module',
+    summary: 'Lessons from code-reviewer issues',
+    parent_id: 'lessons',
+    edges: [{ to: 'lessons', relation: 'part_of' }]
+  });
+}
+```
+
+2. **For each blocker issue, create a lesson concept:**
+
+```typescript
+for (const issue of issues.filter(i => i.severity === 'blocker')) {
+  // Generate descriptive slug from issue
+  const slugBase = issue.description
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+  
+  const lessonName = `lesson-code-${issue.dimension}-${slugBase}`;
+  
+  await megamemory:create_concept({
+    name: lessonName,
+    kind: 'pattern',
+    summary: JSON.stringify({
+      source: 'code-reviewer',
+      category: issue.dimension,
+      error: issue.description,
+      solution: issue.fix_hint,
+      files_involved: [issue.file],
+      severity: issue.severity,
+      created: new Date().toISOString()
+    }),
+    why: `Code lesson: ${issue.description}`,
+    parent_id: 'code-lessons',
+    edges: [{ to: 'code-lessons', relation: 'part_of' }]
+  });
+}
+```
+
+**Naming convention:**
+- Lowercase, hyphen-separated
+- Max 50 characters
+- Include category for querying: `lesson-code-{dimension}-{description}`
+- Example: `lesson-code-wiring-unimported-component`
+
+</lesson_creation>
+
 <structured_returns>
 
 ## REVIEW PASSED

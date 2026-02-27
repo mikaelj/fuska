@@ -1027,6 +1027,39 @@ Load state from MegaMemory:
 If state concept missing, continue without state context.
 </step>
 
+<step name="query_plan_lessons" priority="after_load_project_state">
+Query plan-lessons before planning to avoid repeating past mistakes.
+
+**Query:**
+```typescript
+const lessonsResult = await megamemory:understand({
+  query: "plan-lessons",
+  top_k: 20
+});
+```
+
+**Extract relevant lessons:**
+- Filter for lessons matching current planning context
+- Extract error patterns and solutions from lesson summaries
+
+**Include in planning context:**
+```
+const planLessons = lessonsResult.matches
+  .filter(m => m.name.startsWith('lesson-plan-'))
+  .map(m => {
+    const data = JSON.parse(m.summary);
+    return {
+      category: data.category,
+      error: data.error,
+      solution: data.solution,
+      files_involved: data.files_involved
+    };
+  });
+```
+
+**Instruction:** Apply lesson solutions to avoid repeating mistakes identified in previous plan checks. When creating tasks, check against plan-lessons to ensure common issues (missing verify elements, incomplete task fields, scope violations) are addressed proactively.
+</step>
+
 <step name="load_codebase_context">
 Check for codebase map concepts in MegaMemory.
 

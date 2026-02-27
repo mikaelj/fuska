@@ -60,6 +60,39 @@ const gitMessageModel = aliases.explore_model || aliases.budget_model;
 **Store this context** for use throughout execution.
 </step>
 
+<step name="query_code_lessons" priority="after_load_project_context">
+Query code-lessons before executing to avoid repeating past mistakes.
+
+**Query:**
+```typescript
+const lessonsResult = await megamemory:understand({
+  query: "code-lessons",
+  top_k: 20
+});
+```
+
+**Extract relevant lessons:**
+- Filter for lessons matching current execution context
+- Extract error patterns and solutions from lesson summaries
+
+**Include in execution context:**
+```
+const codeLessons = lessonsResult.matches
+  .filter(m => m.name.startsWith('lesson-code-'))
+  .map(m => {
+    const data = JSON.parse(m.summary);
+    return {
+      category: data.category,
+      error: data.error,
+      solution: data.solution,
+      files_involved: data.files_involved
+    };
+  });
+```
+
+**Instruction:** Apply lesson solutions while coding to avoid repeating mistakes identified in previous code reviews. When implementing tasks, check against code-lessons to ensure common issues (stubs, missing wiring, anti-patterns, plan deviations) are avoided proactively.
+</step>
+
 <step name="load_import_graph" priority="after_load_project_context">
 Query import graph for disambiguation and impact analysis.
 

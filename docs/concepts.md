@@ -136,6 +136,34 @@ A **concept** is the fundamental unit of knowledge in MegaMemory. Every piece of
 
 ---
 
+## Lesson
+
+A **lesson** is a reusable pattern captured from mistakes found during plan-checking or code review. Lessons enable cross-task learning — the system remembers what went wrong and how to fix it, preventing the same mistakes from recurring.
+
+**Structure:**
+- **plan-lessons** — Lessons from plan-checker (incomplete tasks, missing verify steps, circular dependencies)
+- **code-lessons** — Lessons from code-reviewer (stubs, missing wiring, anti-patterns)
+
+Each lesson concept includes:
+- `source` — Agent that created it (`plan-checker` or `code-reviewer`)
+- `category` — Issue dimension (e.g., `task_completeness`, `wiring`)
+- `error` — What went wrong
+- `solution` — How to fix/prevent it
+- `files_involved` — Relevant files
+- `created` — Timestamp
+
+**Naming convention:**
+- Plan lessons: `lesson-plan-{dimension}-{slug}` (e.g., `lesson-plan-task_completeness-missing-verify`)
+- Code lessons: `lesson-code-{dimension}-{slug}` (e.g., `lesson-code-wiring-unimported-component`)
+
+**Agent integration:**
+- **Planner** queries `plan-lessons` before planning — applies solutions to avoid repeating mistakes
+- **Executor** queries `code-lessons` before executing — applies solutions while coding
+- **Plan-checker** creates lesson concepts for blocker/warning issues found
+- **Code-reviewer** creates lesson concepts for blocker issues found
+
+---
+
 ## Import Graph
 
 The **import graph** is a granular, machine-queryable representation of your codebase's file and symbol dependencies stored in MegaMemory. It is built automatically during `fuska init` (via `/fuska-map-codebase`) and updated incrementally by `/fuska-refresh`.
@@ -210,6 +238,7 @@ These relations are created by `/fuska-refresh` and queried by `/fuska-ask`:
 | **Fix complexity** | Assessment of how difficult a bug fix will be (simple/moderate/complex), used to recommend execution mode for debug handoff |
 | **Goal-backward verification** | Checking whether code delivers what a chapter *promised* (its goal and success criteria), not just whether tasks were completed |
 | **Import graph** | A granular dependency map of files and symbols stored in MegaMemory. Built by `/fuska-map-codebase` during init, updated by `/fuska-refresh`. Powers `/fuska-ask` queries and dead code detection. |
+| **Lesson** | A reusable pattern captured from plan-checker or code-reviewer mistakes. Stored as `lesson-plan-*` or `lesson-code-*` concepts under the `lessons` module. Queried by planner/executor to prevent recurring mistakes. |
 | **Integration checker** | An agent that verifies external integrations (APIs, services) work correctly |
 | **Milestone** | An optional grouping of chapters into a release (e.g., "v1.0") |
 | **Model profile** | A preset (quality/balanced/budget) that determines which AI model is used at each stage. See [configuration.md](configuration.md#model-profiles). |

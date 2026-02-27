@@ -348,6 +348,11 @@ Research is complete (debug investigation done). Use these findings directly - n
 
 </planning_context>
 
+<lesson_context>
+Query plan-lessons before planning. Include relevant lessons in planning context.
+Apply lesson solutions to avoid repeating mistakes identified in previous plan checks.
+</lesson_context>
+
 <output>
 Update plan concept: ${planConceptId}
 Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.stringify(updatedPlanData)})
@@ -398,6 +403,7 @@ If `## VERIFICATION PASSED`: output checker response with iteration summary → 
 
 If `## ISSUES FOUND` and iterationCount < 3:
 - Display: `Checker found issues. Revising... (N/3)`
+- Note: Checker creates lesson concepts for each blocker/warning issue under plan-lessons module
 - Spawn planner with revision context (mode=revision, current plan, checker issues)
 - Re-run checker, increment iterationCount
 
@@ -471,6 +477,11 @@ Execute task ${nextNum}: ${DESCRIPTION}
 Plan concept: ${planConceptId}
 Plan data: ${JSON.stringify(planData, null, 2)}
 Project state: ${JSON.stringify(stateData, null, 2)}
+
+<lesson_context>
+Query code-lessons before executing. Include relevant lessons in execution context.
+Apply lesson solutions while coding to avoid repeating mistakes identified in previous code reviews.
+</lesson_context>
 
 <output>
 Create summary concept:
@@ -553,6 +564,7 @@ If `## REVIEW PASSED` → continue to Step 9.6.
 
 If `## ISSUES FOUND` and buildIterationCount < 3:
 - Display: `Code reviewer found issues. Fixing... (${buildIterationCount}/3)`
+- Note: Reviewer creates lesson concepts for each blocker issue under code-lessons module
 - Build revision prompt with reviewer issues:
 
 ```

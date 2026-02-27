@@ -32,6 +32,8 @@ That validation isn't a generic checklist. A panel of three specialized reviewer
 
 And validation doesn't stop at the plan. After the builder finishes, a **code reviewer agent** examines the actual diff — checking for bugs, security issues, and deviations from the plan. If it finds problems, the builder fixes them automatically, up to three review-fix iterations. Code gets reviewed before it's committed, not after. If the working directory was already dirty before the task started, Fuska warns you and offers options (commit, stash, skip review, or proceed) — preventing the reviewer from accidentally "fixing" unrelated changes.
 
+**Lessons learned** are captured automatically — when plan-checker or code-reviewer find issues, they create lesson concepts in MegaMemory. The planner and executor query these lessons before each run, applying solutions to prevent recurring mistakes. The system gets smarter over time.
+
 ---
 
 ## Quick Start

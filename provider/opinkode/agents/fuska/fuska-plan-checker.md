@@ -521,6 +521,83 @@ Based on all dimension checks:
 
 </verification_process>
 
+<lesson_creation>
+
+## Step 11: Create Lesson Concepts (if issues_found)
+
+If verification returns `## ISSUES FOUND`, create lesson concepts for each blocker and warning issue. This enables planners to learn from past mistakes.
+
+**Process:**
+
+1. **Ensure lessons module structure exists in MegaMemory:**
+
+```typescript
+// Check for lessons module
+const lessonsResult = await megamemory:understand({ query: "lessons", top_k: 5 });
+if (!lessonsResult.matches.some(m => m.name === 'lessons')) {
+  // Create parent lessons module
+  await megamemory:create_concept({
+    name: 'lessons',
+    kind: 'module',
+    summary: 'Learned lessons from plan-checker and code-reviewer issues',
+    why: 'Prevent repeating mistakes by storing patterns to avoid'
+  });
+}
+
+// Check for plan-lessons submodule
+const planLessonsResult = await megamemory:understand({ query: "plan-lessons", top_k: 5 });
+if (!planLessonsResult.matches.some(m => m.name === 'plan-lessons')) {
+  await megamemory:create_concept({
+    name: 'plan-lessons',
+    kind: 'module',
+    summary: 'Lessons from plan-checker verification issues',
+    parent_id: 'lessons',
+    edges: [{ to: 'lessons', relation: 'part_of' }]
+  });
+}
+```
+
+2. **For each blocker/warning issue, create a lesson concept:**
+
+```typescript
+for (const issue of issues.filter(i => i.severity === 'blocker' || i.severity === 'warning')) {
+  // Generate descriptive slug from issue
+  const slugBase = issue.description
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+  
+  const lessonName = `lesson-plan-${issue.dimension}-${slugBase}`;
+  
+  await megamemory:create_concept({
+    name: lessonName,
+    kind: 'pattern',
+    summary: JSON.stringify({
+      source: 'plan-checker',
+      category: issue.dimension,
+      error: issue.description,
+      solution: issue.fix_hint,
+      files_involved: issue.plan ? [issue.plan] : [],
+      applies_to_pattern: issue.dimension,
+      severity: issue.severity,
+      created: new Date().toISOString()
+    }),
+    why: `Plan lesson: ${issue.description}`,
+    parent_id: 'plan-lessons',
+    edges: [{ to: 'plan-lessons', relation: 'part_of' }]
+  });
+}
+```
+
+**Naming convention:**
+- Lowercase, hyphen-separated
+- Max 50 characters
+- Include category for querying: `lesson-plan-{dimension}-{description}`
+- Example: `lesson-plan-task_completeness-missing-verify-element`
+
+</lesson_creation>
+
 <scratch_files>
 
 ## Temporary Verification Files
