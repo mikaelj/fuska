@@ -5,9 +5,24 @@ Organized by theme rather than individual commit.
 
 ---
 
-## Unreleased (4ff6207)
+## Unreleased (a126053)
 
-_No changes since v0.1.1_
+_No changes since v0.2.0_
+
+---
+
+## v0.2.0 — 2026-02-25
+
+**6 commits** | 24 files changed, 558 insertions, 27 deletions
+
+### New Features
+
+- **Code Review Command** — New `fuska-code-review` command for reviewing uncommitted changes
+
+### Documentation
+
+- Added FAQ with GSD cost comparison, expanded README with links and new features
+- Fixed npm package name and agent count in pitch and docs
 
 ---
 
