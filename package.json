@@ -8,6 +8,7 @@
     "fuska": "./dist/cli.js"
   },
   "scripts": {
+    "prepublishOnly": "npm whoami",
     "build": "tsc && npm run build:claude",
     "build:claude": "ts-node scripts/build-claude.ts",
     "prepare": "npm run validate:help && npm run build",
