@@ -5,9 +5,13 @@ Organized by theme rather than individual commit.
 
 ---
 
-## Unreleased (a126053)
+## v0.2.1 - 2026-02-27
 
-_No changes since v0.2.0_
+**2 commits** | 4 files changed, 180 insertions, 20 deletions
+
+### New Features
+
+- **Initiative New Command** — New `fuska initiative new` CLI command for creating initiatives with slug validation and auto-switch
 
 ---
 
