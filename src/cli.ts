@@ -26,9 +26,10 @@ import { refreshCommand } from './commands/refresh';
 import { askCommand } from './commands/ask';
 import { doCommand } from './commands/do';
 import { lessonsCommand } from './commands/lessons';
+import { decisionCommand } from './commands/decision';
 
 const AI_COMMANDS = new Set(['do', 'map', 'ask', 'refresh']);
-const GROUP_COMMANDS = new Set(['git', 'initiative', 'migrate']);
+const GROUP_COMMANDS = new Set(['git', 'initiative', 'migrate', 'decision']);
 
 const program = new Command();
 
@@ -122,6 +123,7 @@ infoCommand(program);
 refreshCommand(program);
 askCommand(program);
 doCommand(program);
+decisionCommand(program);
 
 const gitCmd = program.command('git').description('Git utilities');
 gitMessageCommand(gitCmd);

@@ -1,5 +1,33 @@
 export type UniversalStatus = 'pending' | 'planned' | 'in_progress' | 'complete' | 'blocked' | 'failed' | 'skipped';
 
+export type DecisionStatus = 'proposed' | 'accepted' | 'rejected' | 'deprecated' | 'superseded';
+
+export interface DecisionAlternative {
+  option: string;
+  considered: boolean;
+  reason: string;
+}
+
+export interface DecisionConsequences {
+  positive: string[];
+  negative: string[];
+  risks: string[];
+}
+
+export interface DecisionData {
+  id: string;
+  title: string;
+  context: string;
+  decision: string;
+  alternatives: DecisionAlternative[];
+  consequences: DecisionConsequences;
+  status: DecisionStatus;
+  created_at: string;
+  decided_at: string | null;
+  superseded_by: string | null;
+  related_chapters: string[];
+}
+
 export type StateStatus = 'initialized' | 'defining_requirements' | 'ready_to_plan' | 'ready_to_execute' | 'in_progress' | 'chapter_complete' | 'milestone_complete';
 
 export type DebugPhase = 'gathering' | 'investigating' | 'fixing' | 'verifying' | 'resolved';
