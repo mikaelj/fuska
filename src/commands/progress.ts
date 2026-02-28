@@ -319,7 +319,7 @@ class ProgressRunner {
 
   private findConfig(): ConfigData | null {
     const configNode = this.nodes.find(n => 
-      n.name === 'config' && n.parent_id === this.currentInitiativeId
+      n.name === 'config' && n.kind === 'config' && !n.parent_id
     );
     return configNode ? this.parseSummary<ConfigData>(configNode.summary) : null;
   }
@@ -358,9 +358,8 @@ class ProgressRunner {
         if (n.parent_id !== null || n.kind !== 'feature') return false;
         const data = this.parseSummary<any>(n.summary);
         if (data?.archived_at) return false;
-        const hasState = this.nodes.some(child => child.name === 'state' && child.parent_id === n.id);
-        const hasConfig = this.nodes.some(child => child.name === 'config' && child.parent_id === n.id);
-        return hasState && hasConfig;
+        const hasState = this.nodes.some(child => child.name === 'state' && child.kind === 'config' && child.parent_id === n.id);
+        return hasState;
       })
       .map(n => n.name);
   }
