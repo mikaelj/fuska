@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as jsonc from 'jsonc-parser';
 import { execSync } from 'child_process';
+import inquirer from 'inquirer';
 import { runOpenCodeJson } from './utils/json-output';
 import { findInitiativeBySlug } from './utils/initiative-utils';
 import { readProviderConfig, ProviderType } from './utils/provider-config';
@@ -180,8 +181,46 @@ class InitRunner {
     if (options.map !== false) {
       await this.runCodeMapping();
       this.printNextSteps(false);
+    } else if (description) {
+      await this.runAutoConfigure();
     } else {
       this.printNextSteps(true);
+    }
+  }
+
+  private async runAutoConfigure(): Promise<void> {
+    const { mode } = await inquirer.prompt([{
+      type: 'list',
+      name: 'mode',
+      message: 'How should configure run?',
+      choices: [
+        { name: 'Interactive (review each step)', value: 'interactive' },
+        { name: 'YOLO (fully autonomous)', value: 'yolo' }
+      ],
+      default: 'interactive'
+    }]);
+
+    console.log('\nRunning /fuska-configure...');
+    
+    const configureArgs = [
+      '--mode', mode,
+      '--depth', 'quick',
+      '--parallel', 'true',
+      '--commits', 'per-chapter',
+      '--research', 'yes',
+      '--plan-check', 'yes',
+      '--verifier', 'no'
+    ];
+
+    try {
+      await runOpenCodeJson({
+        command: '/fuska-configure',
+        args: configureArgs,
+        progressLabel: 'Configuring initiative'
+      });
+    } catch (err: any) {
+      console.warn(`Warning: Configure failed: ${err.message}`);
+      console.log('\nRun `/fuska-configure` manually in opencode to complete setup.');
     }
   }
 
