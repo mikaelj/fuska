@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as jsonc from 'jsonc-parser';
 import { execSync } from 'child_process';
-import inquirer from 'inquirer';
 import { runOpenCodeJson } from './utils/json-output';
 import { findInitiativeBySlug } from './utils/initiative-utils';
 import { readProviderConfig, ProviderType } from './utils/provider-config';
@@ -140,7 +139,7 @@ class InitRunner {
     this.projectDir = options.projectDir;
   }
 
-  async run(description: string | undefined, options: { map?: boolean; permissionsOnly?: boolean }): Promise<void> {
+  async run(options: { map?: boolean; permissionsOnly?: boolean }): Promise<void> {
     const config = await readProviderConfig();
 
     if (options.permissionsOnly) {
@@ -165,7 +164,7 @@ class InitRunner {
 
     try {
       await this.createMegaMemory();
-      await this.createInitiative(description);
+      await this.createInitiative();
     } catch (err: any) {
       this.handleMegaMemoryError(err);
       process.exit(1);
@@ -180,48 +179,8 @@ class InitRunner {
 
     if (options.map !== false) {
       await this.runCodeMapping();
-      this.printNextSteps(false);
-    } else if (description) {
-      await this.runAutoConfigure();
-    } else {
-      this.printNextSteps(true);
     }
-  }
-
-  private async runAutoConfigure(): Promise<void> {
-    const { mode } = await inquirer.prompt([{
-      type: 'list',
-      name: 'mode',
-      message: 'How should configure run?',
-      choices: [
-        { name: 'Interactive (review each step)', value: 'interactive' },
-        { name: 'YOLO (fully autonomous)', value: 'yolo' }
-      ],
-      default: 'interactive'
-    }]);
-
-    console.log('\nRunning /fuska-configure...');
-    
-    const configureArgs = [
-      '--mode', mode,
-      '--depth', 'quick',
-      '--parallel', 'true',
-      '--commits', 'per-chapter',
-      '--research', 'yes',
-      '--plan-check', 'yes',
-      '--verifier', 'no'
-    ];
-
-    try {
-      await runOpenCodeJson({
-        command: '/fuska-configure',
-        args: configureArgs,
-        progressLabel: 'Configuring initiative'
-      });
-    } catch (err: any) {
-      console.warn(`Warning: Configure failed: ${err.message}`);
-      console.log('\nRun `/fuska-configure` manually in opencode to complete setup.');
-    }
+    this.printNextSteps(options.map === false);
   }
 
   private handleMegaMemoryError(err: any): void {
@@ -283,7 +242,7 @@ class InitRunner {
     this.db = new KnowledgeDB(path.join(megamemoryPath, 'knowledge.db'));
   }
 
-  private async createInitiative(description: string | undefined): Promise<void> {
+  private async createInitiative(): Promise<void> {
     const { createConcept } = await import('megamemory/dist/tools.js');
     const { InitiativeConceptTemplates } = await import('../scripts/initiative-templates');
 
@@ -293,7 +252,7 @@ class InitRunner {
     const rootConcept = {
       name: slug,
       kind: 'feature' as const,
-      summary: `Initiative: ${name}\n\n${description || ''}`,
+      summary: `Initiative: ${name}`,
       why: '',
       parent_id: undefined,
       edges: []
@@ -424,22 +383,21 @@ class InitRunner {
     if (noMap) {
       console.log('  fuska map                 Run codebase analysis later');
     }
-    console.log('\nMegaMemory MCP: registered automatically (or run `megamemory install --target claudecode|opencode` manually).');
-    console.log('Next: Run `opencode` then `/fuska-configure` to complete setup.');
+    console.log('\nMegaMemory MCP: registered automatically.');
+    console.log('Next: Run `opencode` then `/fuska-configure <description>` to complete setup.');
   }
 }
 
 export function initCommand(program: Command) {
   program
-    .command('init [description...]')
+    .command('init')
     .description('Initialize current directory with a "main" initiative')
     .option('--no-map', 'Skip codebase mapping (run "fuska map" later)')
     .option('--permissions-only', 'Only update local permissions for the configured provider')
-    .action(async (descriptionParts: string[] | undefined, options: { map?: boolean; permissionsOnly?: boolean }) => {
-      const description = descriptionParts?.join(' ');
+    .action(async (options: { map?: boolean; permissionsOnly?: boolean }) => {
       const runner = new InitRunner({
         projectDir: process.cwd()
       });
-      await runner.run(description, options);
+      await runner.run(options);
     });
 }
