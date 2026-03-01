@@ -180,7 +180,7 @@ class InitRunner {
     if (options.map !== false) {
       await this.runCodeMapping();
     }
-    this.printNextSteps(options.map === false);
+    this.printNextSteps(options.map === false, config?.provider ?? null);
   }
 
   private handleMegaMemoryError(err: any): void {
@@ -378,13 +378,14 @@ class InitRunner {
     console.log('  opencode → /fuska-configure');
   }
 
-  private printNextSteps(noMap: boolean): void {
+  private printNextSteps(noMap: boolean, provider: ProviderType | null): void {
     console.log();
     if (noMap) {
       console.log('  fuska map                 Run codebase analysis later');
     }
     console.log('\nMegaMemory MCP: registered automatically.');
-    console.log('Next: Run `opencode` then `/fuska-configure <description>` to complete setup.');
+    const tool = provider || 'opencode';
+    console.log(`Next: Run \`${tool}\` then \`/fuska-configure <description>\` to complete setup.`);
   }
 }
 
