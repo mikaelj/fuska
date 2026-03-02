@@ -377,7 +377,21 @@ Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.str
 
 ## 6.5. Decision Collection (Planning)
 
-**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 7. }
+**ADR OPT-IN CHECK:**
+
+```typescript
+// Query config to check adr_enabled
+const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
+const configData = configResult.concepts.length > 0 
+  ? JSON.parse(configResult.concepts[0].summary) 
+  : {};
+
+// Skip decision collection if ADR is not enabled
+if (configData?.workflow?.adr_enabled !== true) {
+  // Skip to Step 7 (Plan Review)
+  return;
+}
+```
 
 Extract decisions created by planner agent.
 
@@ -412,7 +426,15 @@ for (const match of decisionsQuery.concepts) {
 
 ## 6.6. Decision Confirmation (Planning)
 
-**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 9 (Plan Review) }
+**ADR OPT-IN CHECK:**
+
+```typescript
+// Skip if ADR not enabled (already checked in Step 6.5)
+if (configData?.workflow?.adr_enabled !== true) {
+  // Skip to Step 9 (Plan Review)
+  return;
+}
+```
 
 If `plannerDecisions.length > 0`, prompt user for confirmation.
 
@@ -693,7 +715,21 @@ If buildIterationCount >= 3 and still issues:
 
 ## 9.7.5. Decision Collection (Execution)
 
-**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 9.6 (Chapter-Todo Loop) }
+**ADR OPT-IN CHECK:**
+
+```typescript
+// Query config to check adr_enabled
+const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
+const configData = configResult.concepts.length > 0 
+  ? JSON.parse(configResult.concepts[0].summary) 
+  : {};
+
+// Skip decision collection if ADR is not enabled
+if (configData?.workflow?.adr_enabled !== true) {
+  // Skip to Step 9.6 (Chapter-Todo Loop)
+  return;
+}
+```
 
 Extract decisions created by executor agent.
 
@@ -740,7 +776,15 @@ if (summaryQuery.concepts.length > 0) {
 
 ## 9.7.6. Decision Confirmation (Execution)
 
-**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 9.6 (Chapter-Todo Loop). }
+**ADR OPT-IN CHECK:**
+
+```typescript
+// Skip if ADR not enabled (already checked in Step 9.7.5)
+if (configData?.workflow?.adr_enabled !== true) {
+  // Skip to Step 9.6 (Chapter-Todo Loop)
+  return;
+}
+```
 
 If `executorDecisions.length > 0`, prompt user for confirmation.
 
