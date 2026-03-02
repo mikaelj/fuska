@@ -25,12 +25,13 @@ tools:
 - `--research (yes|no)` — Enable research phase
 - `--plan-check (yes|no)` — Enable plan verification
 - `--verifier (yes|no)` — Enable chapter verification
+- `--adr (yes|no)` — Enable Architecture Decision Records logging
 
 **Examples:**
 - `/fuska-configure` — Interactive mode (asks all questions)
 - `/fuska-configure A task management app for teams` — Description provided, asks workflow questions
 - `/fuska-configure --mode yolo --depth quick A task management app` — Description + flags, minimal questions
-- `/fuska-configure --mode yolo --depth quick --parallel true --commits per-chapter --research yes --plan-check yes --verifier yes` — All flags, no questions asked
+- `/fuska-configure --mode yolo --depth quick --parallel true --commits per-chapter --research yes --plan-check yes --verifier yes --adr no` — All flags, no questions asked
 
 <objective>
 
@@ -96,14 +97,14 @@ This command is run after `fuska init` to complete initiative setup. If a descri
 
 5. Parse command arguments (if any):
    - The user prompt may contain flags and/or a description
-   - Parse flags first: `--mode (yolo|interactive)`, `--depth (quick|standard|comprehensive)`, `--parallel (true|false)`, `--commits (per-chapter|per-plan|per-task)`, `--research (yes|no)`, `--plan-check (yes|no)`, `--verifier (yes|no)`
-   - Store flags in `PARSED_ARGS` object
-   - Extract remaining non-flag text as `PROVIDED_DESCRIPTION`
-   - If `PROVIDED_DESCRIPTION` is non-empty:
-     - `HAS_DESCRIPTION="yes"`
-     - `STORED_DESCRIPTION = PROVIDED_DESCRIPTION`
-   - If `STORED_DESCRIPTION` exists (either from arguments or initiative): `SKIP_QUESTIONING="yes"`
-   - If ALL workflow args provided (`--mode`, `--depth`, `--parallel`, `--commits`, `--research`, `--plan-check`, `--verifier`): `SKIP_WORKFLOW_QUESTIONS="yes"`
+    - Parse flags first: `--mode (yolo|interactive)`, `--depth (quick|standard|comprehensive)`, `--parallel (true|false)`, `--commits (per-chapter|per-plan|per-task)`, `--research (yes|no)`, `--plan-check (yes|no)`, `--verifier (yes|no)`, `--adr (yes|no)`
+    - Store flags in `PARSED_ARGS` object
+    - Extract remaining non-flag text as `PROVIDED_DESCRIPTION`
+    - If `PROVIDED_DESCRIPTION` is non-empty:
+      - `HAS_DESCRIPTION="yes"`
+      - `STORED_DESCRIPTION = PROVIDED_DESCRIPTION`
+    - If `STORED_DESCRIPTION` exists (either from arguments or initiative): `SKIP_QUESTIONING="yes"`
+    - If ALL workflow args provided (`--mode`, `--depth`, `--parallel`, `--commits`, `--research`, `--plan-check`, `--verifier`, `--adr`): `SKIP_WORKFLOW_QUESTIONS="yes"`
 
 ## Chapter 1: Deep Questioning
 
@@ -218,6 +219,7 @@ All workflow preferences were provided via command flags. Use `PARSED_ARGS` dire
 - `workflow.research`: PARSED_ARGS.research === "yes"
 - `workflow.plan_check`: PARSED_ARGS["plan-check"] === "yes"
 - `workflow.verifier`: PARSED_ARGS.verifier === "yes"
+- `workflow.adr_enabled`: PARSED_ARGS.adr === "yes"
 
 Skip the interactive questions and proceed to "Create/update config concept" below.
 
@@ -282,6 +284,14 @@ questions: [
       { label: "Yes (Recommended)", description: "Confirm deliverables match chapter goals" },
       { label: "No", description: "Trust execution, skip verification" }
     ]
+  },
+  {
+    header: "ADR",
+    question: "Enable Architecture Decision Records (ADR) logging? Captures design decisions during planning and execution for traceability.",
+    options: [
+      { label: "No (Recommended)", description: "Skip decision logging to save tokens" },
+      { label: "Yes", description: "Log architecture decisions for future reference" }
+    ]
   }
 ]
 ```
@@ -304,7 +314,8 @@ megamemory:update_concept({
       workflow: {
         research: true|false,
         plan_check: true|false,
-        verifier: true|false
+        verifier: true|false,
+        adr_enabled: true|false
       },
       git: {
         commit_strategy: "per-chapter|per-plan|per-task"

@@ -1340,6 +1340,24 @@ For each plan:
 <step name="detect_and_create_decisions">
 After creating plan concepts, perform decision detection: identify significant choices made during planning and create decision concepts.
 
+**ADR OPT-IN CHECK:**
+
+Before creating any decision concepts, check if ADR is enabled for this initiative:
+
+```typescript
+// Query config to check adr_enabled
+const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
+const configData = configResult.concepts.length > 0 
+  ? JSON.parse(configResult.concepts[0].summary) 
+  : {};
+
+// Skip decision detection if ADR is not enabled
+if (configData?.workflow?.adr_enabled !== true) {
+  // Skip to next step - no decisions to collect
+  return;
+}
+```
+
 **When to create a decision concept:**
 - Multiple valid options were considered (check task action for 'vs', 'alternatives', 'options', 'either', 'or')
 - Technology choices (libraries, frameworks, patterns) with trade-offs documented

@@ -377,6 +377,8 @@ Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.str
 
 ## 6.5. Decision Collection (Planning)
 
+**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 7. }
+
 Extract decisions created by planner agent.
 
 **Step 6.5.1:** Parse planner return for decisions created:
@@ -409,6 +411,8 @@ for (const match of decisionsQuery.concepts) {
 ---
 
 ## 6.6. Decision Confirmation (Planning)
+
+**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 9 (Plan Review) }
 
 If `plannerDecisions.length > 0`, prompt user for confirmation.
 
@@ -689,6 +693,8 @@ If buildIterationCount >= 3 and still issues:
 
 ## 9.7.5. Decision Collection (Execution)
 
+**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 9.6 (Chapter-Todo Loop) }
+
 Extract decisions created by executor agent.
 
 **Step 9.7.5.1:** Parse execution summary for decisions made:
@@ -733,6 +739,8 @@ if (summaryQuery.concepts.length > 0) {
 ---
 
 ## 9.7.6. Decision Confirmation (Execution)
+
+**ONLY if ADR is enabled in config: `if (configData?.workflow?.adr_enabled !== true) { Skip to Step 9.6 (Chapter-Todo Loop). }
 
 If `executorDecisions.length > 0`, prompt user for confirmation.
 

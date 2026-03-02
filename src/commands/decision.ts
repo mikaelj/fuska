@@ -18,6 +18,24 @@ interface DecisionNode {
   updated_at?: string;
 }
 
+interface QueryFilters {
+  status?: string;
+  domain?: string;
+  search?: string;
+  after?: string;
+  before?: string;
+  'decided-after'?: string;
+  'decided-before'?: string;
+  chapter?: string;
+  limit?: number;
+}
+
+interface ExportOptions extends QueryFilters {
+  format?: 'markdown' | 'json';
+  outputDir?: string;
+  force?: boolean;
+}
+
 const STATUS_ICONS: Record<DecisionStatus, string> = {
   proposed: '○',
   accepted: '✓',
@@ -62,6 +80,309 @@ class DecisionRunner {
   async runDeprecate(id: string): Promise<void> {
     await this.preflightCheck();
     await this.updateDecisionStatus(id, 'deprecated', 'accepted');
+  }
+
+  async runQuery(filters: QueryFilters): Promise<void> {
+    await this.preflightCheck();
+    const nodes: DecisionNode[] = this.db.getAllActiveNodes();
+    const decisions = this.findDecisions(nodes);
+    const filtered = this.applyFilters(decisions, filters);
+
+    if (filtered.length === 0) {
+      console.log('No decisions found matching filters.');
+      return;
+    }
+
+    await this.displayDecisions(undefined, filtered);
+  }
+
+  async runExport(options: ExportOptions): Promise<void> {
+    await this.preflightCheck();
+    const nodes: DecisionNode[] = this.db.getAllActiveNodes();
+    const decisions = this.findDecisions(nodes);
+    const filtered = this.applyFilters(decisions, options);
+
+    if (filtered.length === 0) {
+      console.log('No decisions found matching filters.');
+      return;
+    }
+
+    const format = options.format || 'markdown';
+    const outputDir = options.outputDir || 'docs/adr';
+
+    if (format === 'markdown') {
+      await this.exportAsMarkdown(filtered, outputDir, options.force);
+    } else if (format === 'json') {
+      await this.exportAsJson(filtered, outputDir, options.force);
+    }
+  }
+
+  private generateMarkdownContent(data: DecisionData, counter: number): string {
+    const adrNumber = String(counter).padStart(4, '0');
+    let content = `# ADR-${adrNumber}: ${data.title || 'Untitled Decision'}\n\n`;
+    content += `**Status:** ${data.status}\n\n`;
+
+    if (data.created_at) {
+      content += `**Created:** ${this.formatDate(data.created_at)}\n\n`;
+    }
+
+    if (data.decided_at) {
+      content += `**Decided:** ${this.formatDate(data.decided_at)}\n\n`;
+    }
+
+    if (data.context) {
+      content += `## Context\n\n${data.context}\n\n`;
+    }
+
+    if (data.decision) {
+      content += `## Decision\n\n${data.decision}\n\n`;
+    }
+
+    if (data.alternatives && data.alternatives.length > 0) {
+      content += `## Alternatives Considered\n\n`;
+      for (const alt of data.alternatives) {
+        content += `- **${alt.option}**`;
+        if (alt.reason) {
+          content += ` — ${alt.reason}`;
+        }
+        content += '\n';
+      }
+      content += '\n';
+    }
+
+    if (data.consequences) {
+      content += `## Consequences\n\n`;
+
+      if (data.consequences.positive && data.consequences.positive.length > 0) {
+        content += `### Positive\n\n`;
+        for (const c of data.consequences.positive) {
+          content += `- ${c}\n`;
+        }
+        content += '\n';
+      }
+
+      if (data.consequences.negative && data.consequences.negative.length > 0) {
+        content += `### Negative\n\n`;
+        for (const c of data.consequences.negative) {
+          content += `- ${c}\n`;
+        }
+        content += '\n';
+      }
+
+      if (data.consequences.risks && data.consequences.risks.length > 0) {
+        content += `### Risks\n\n`;
+        for (const r of data.consequences.risks) {
+          content += `- ${r}\n`;
+        }
+        content += '\n';
+      }
+    }
+
+    if (data.related_chapters && data.related_chapters.length > 0) {
+      content += `## Related Chapters\n\n`;
+      for (const chapter of data.related_chapters) {
+        content += `- ${chapter}\n`;
+      }
+      content += '\n';
+    }
+
+    if (data.superseded_by) {
+      content += `## Superseded By\n\n${data.superseded_by}\n\n`;
+    }
+
+    return content;
+  }
+
+  private formatDate(dateString: string): string {
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    } catch {
+      return dateString;
+    }
+  }
+
+  private async exportAsMarkdown(
+    decisions: DecisionNode[],
+    outputDir: string,
+    force?: boolean
+  ): Promise<void> {
+    const adrDir = path.resolve(outputDir);
+
+    if (!await fs.pathExists(adrDir)) {
+      await fs.ensureDir(adrDir);
+      console.log(`Created directory: ${adrDir}`);
+    }
+
+    const sortedDecisions = [...decisions].sort((a, b) => {
+      const dataA = this.parseDecisionSummary(a.summary);
+      const dataB = this.parseDecisionSummary(b.summary);
+      const dateA = dataA?.created_at ? new Date(dataA.created_at).getTime() : 0;
+      const dateB = dataB?.created_at ? new Date(dataB.created_at).getTime() : 0;
+      return dateA - dateB;
+    });
+
+    let exported = 0;
+    let skipped = 0;
+
+    for (let i = 0; i < sortedDecisions.length; i++) {
+      const decision = sortedDecisions[i];
+      const data = this.parseDecisionSummary(decision.summary);
+      if (!data) continue;
+
+      const counter = i + 1;
+      const adrNumber = String(counter).padStart(4, '0');
+      const slug = data.id || this.slugify(data.title || 'untitled');
+      const filename = `${adrNumber}-${slug}.md`;
+      const filepath = path.join(adrDir, filename);
+
+      if (await fs.pathExists(filepath) && !force) {
+        console.log(`Skipped (exists): ${filename}`);
+        skipped++;
+        continue;
+      }
+
+      const content = this.generateMarkdownContent(data, counter);
+      await fs.writeFile(filepath, content, 'utf-8');
+      console.log(`Exported: ${filename}`);
+      exported++;
+    }
+
+    console.log('');
+    console.log(`Export complete: ${exported} decisions exported, ${skipped} skipped`);
+    console.log(`Output directory: ${adrDir}`);
+  }
+
+  private async exportAsJson(
+    decisions: DecisionNode[],
+    outputDir: string,
+    force?: boolean
+  ): Promise<void> {
+    const adrDir = path.resolve(outputDir);
+
+    if (!await fs.pathExists(adrDir)) {
+      await fs.ensureDir(adrDir);
+      console.log(`Created directory: ${adrDir}`);
+    }
+
+    const filepath = path.join(adrDir, 'decisions.json');
+
+    if (await fs.pathExists(filepath) && !force) {
+      console.log(`Skipped (exists): decisions.json`);
+      console.log('Use --force to overwrite.');
+      return;
+    }
+
+    const decisionDataList: DecisionData[] = [];
+    for (const decision of decisions) {
+      const data = this.parseDecisionSummary(decision.summary);
+      if (data) {
+        decisionDataList.push(data);
+      }
+    }
+
+    decisionDataList.sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateA - dateB;
+    });
+
+    const content = JSON.stringify(decisionDataList, null, 2);
+    await fs.writeFile(filepath, content, 'utf-8');
+
+    console.log(`Exported: decisions.json (${decisionDataList.length} decisions)`);
+    console.log(`Output: ${filepath}`);
+  }
+
+  private applyFilters(decisions: DecisionNode[], filters: QueryFilters): DecisionNode[] {
+    let filtered = [...decisions];
+
+    if (filters.status) {
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        return data && data.status === filters.status;
+      });
+    }
+
+    if (filters.domain) {
+      try {
+        const domainMatches = this.semanticSearch(filters.domain);
+        const matchIds = new Set(domainMatches.map(d => d.id));
+        filtered = filtered.filter(decision => matchIds.has(decision.id));
+      } catch (error) {
+        console.error('Warning: Semantic search unavailable, using text matching fallback for domain filter');
+        filtered = filtered.filter(decision => {
+          const data = this.parseDecisionSummary(decision.summary);
+          if (!data) return false;
+          const searchText = `${data.title} ${data.context} ${data.decision}`.toLowerCase();
+          return searchText.includes(filters.domain!.toLowerCase());
+        });
+      }
+    }
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        if (!data) return false;
+        const title = (data.title || '').toLowerCase();
+        const context = (data.context || '').toLowerCase();
+        const decisionText = (data.decision || '').toLowerCase();
+        return title.includes(searchLower) || 
+               context.includes(searchLower) || 
+               decisionText.includes(searchLower);
+      });
+    }
+
+    if (filters.after) {
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        if (!data || !data.created_at) return false;
+        return new Date(data.created_at) >= new Date(filters.after!);
+      });
+    }
+
+    if (filters.before) {
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        if (!data || !data.created_at) return false;
+        return new Date(data.created_at) <= new Date(filters.before!);
+      });
+    }
+
+    if (filters['decided-after']) {
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        if (!data || !data.decided_at) return false;
+        return new Date(data.decided_at) >= new Date(filters['decided-after']!);
+      });
+    }
+
+    if (filters['decided-before']) {
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        if (!data || !data.decided_at) return false;
+        return new Date(data.decided_at) <= new Date(filters['decided-before']!);
+      });
+    }
+
+    if (filters.chapter) {
+      filtered = filtered.filter(decision => {
+        const data = this.parseDecisionSummary(decision.summary);
+        if (!data || !data.related_chapters) return false;
+        return data.related_chapters.includes(filters.chapter!);
+      });
+    }
+
+    if (filters.limit && filters.limit > 0) {
+      filtered = filtered.slice(0, filters.limit);
+    }
+
+    return filtered;
+  }
+
+  private semanticSearch(query: string): DecisionNode[] {
+    throw new Error('Semantic search requires MCP tool context - use megamemory_understand directly');
   }
 
   private async preflightCheck(): Promise<void> {
@@ -181,31 +502,43 @@ class DecisionRunner {
     await createConcept(this.db, concept);
   }
 
-  private async displayDecisions(statusFilter?: string): Promise<void> {
-    const nodes: DecisionNode[] = this.db.getAllActiveNodes();
+  private async displayDecisions(statusFilter?: string, prefilteredDecisions?: DecisionNode[]): Promise<void> {
+    let decisionDataList: Array<{ node: DecisionNode; data: DecisionData }> = [];
 
-    const decisions = this.findDecisions(nodes);
-
-    if (decisions.length === 0) {
-      console.log('No decisions found in MegaMemory.');
-      console.log('');
-      console.log('To create a new decision, run:');
-      console.log('  fuska decision new');
-      return;
-    }
-
-    const decisionDataList: Array<{ node: DecisionNode; data: DecisionData }> = [];
-
-    for (const decision of decisions) {
-      try {
-        const data = this.parseDecisionSummary(decision.summary);
-        if (data) {
-          if (!statusFilter || data.status === statusFilter) {
+    if (prefilteredDecisions) {
+      for (const decision of prefilteredDecisions) {
+        try {
+          const data = this.parseDecisionSummary(decision.summary);
+          if (data) {
             decisionDataList.push({ node: decision, data });
           }
+        } catch {
+          // Skip unparseable decisions
         }
-      } catch {
-        // Skip unparseable decisions
+      }
+    } else {
+      const nodes: DecisionNode[] = this.db.getAllActiveNodes();
+      const decisions = this.findDecisions(nodes);
+
+      if (decisions.length === 0) {
+        console.log('No decisions found in MegaMemory.');
+        console.log('');
+        console.log('To create a new decision, run:');
+        console.log('  fuska decision new');
+        return;
+      }
+
+      for (const decision of decisions) {
+        try {
+          const data = this.parseDecisionSummary(decision.summary);
+          if (data) {
+            if (!statusFilter || data.status === statusFilter) {
+              decisionDataList.push({ node: decision, data });
+            }
+          }
+        } catch {
+          // Skip unparseable decisions
+        }
       }
     }
 
@@ -566,5 +899,42 @@ export function decisionCommand(program: Command) {
     .action(async (id: string) => {
       const runner = new DecisionRunner({ projectDir: process.cwd() });
       await runner.runDeprecate(id);
+    });
+
+  decisionCmd
+    .command('query')
+    .description('Query decisions with filters')
+    .option('--status <status>', 'Filter by status (proposed, accepted, rejected, deprecated, superseded)')
+    .option('--domain <domain>', 'Filter by domain using semantic search')
+    .option('--search <text>', 'Search in title, context, and decision fields')
+    .option('--after <date>', 'Filter decisions created after date (YYYY-MM-DD)')
+    .option('--before <date>', 'Filter decisions created before date (YYYY-MM-DD)')
+    .option('--decided-after <date>', 'Filter decisions decided after date (YYYY-MM-DD)')
+    .option('--decided-before <date>', 'Filter decisions decided before date (YYYY-MM-DD)')
+    .option('--chapter <chapter>', 'Filter by related chapter')
+    .option('--limit <number>', 'Limit number of results', parseInt)
+    .action(async (options) => {
+      const runner = new DecisionRunner({ projectDir: process.cwd() });
+      await runner.runQuery(options);
+    });
+
+  decisionCmd
+    .command('export')
+    .description('Export decisions to markdown ADR files or JSON')
+    .option('--format <format>', 'Output format: markdown or json', 'markdown')
+    .option('--output <dir>', 'Output directory', 'docs/adr')
+    .option('--force', 'Overwrite existing files')
+    .option('--status <status>', 'Filter by status (proposed, accepted, rejected, deprecated, superseded)')
+    .option('--domain <domain>', 'Filter by domain using semantic search')
+    .option('--search <text>', 'Search in title, context, and decision fields')
+    .option('--after <date>', 'Filter decisions created after date (YYYY-MM-DD)')
+    .option('--before <date>', 'Filter decisions created before date (YYYY-MM-DD)')
+    .option('--decided-after <date>', 'Filter decisions decided after date (YYYY-MM-DD)')
+    .option('--decided-before <date>', 'Filter decisions decided before date (YYYY-MM-DD)')
+    .option('--chapter <chapter>', 'Filter by related chapter')
+    .option('--limit <number>', 'Limit number of results', parseInt)
+    .action(async (options) => {
+      const runner = new DecisionRunner({ projectDir: process.cwd() });
+      await runner.runExport(options);
     });
 }

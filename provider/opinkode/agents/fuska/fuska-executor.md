@@ -252,6 +252,24 @@ Execute each task in the plan.
 
 ## Detect Implementation Decisions
 
+**ADR OPT-IN CHECK:**
+
+Before detecting any decisions, check if ADR is enabled for this initiative:
+
+```typescript
+// Query config to check adr_enabled
+const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
+const configData = configResult.concepts.length > 0 
+  ? JSON.parse(configResult.concepts[0].summary) 
+  : {};
+
+// Skip decision detection if ADR is not enabled
+if (configData?.workflow?.adr_enabled !== true) {
+  // No decisions to log - skip this section
+  return;
+}
+```
+
 After completing each task, scan execution for significant choices that should be logged:
 
 **When to log a decision:**
