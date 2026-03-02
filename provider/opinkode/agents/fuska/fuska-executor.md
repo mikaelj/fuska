@@ -259,9 +259,15 @@ Before detecting any decisions, check if ADR is enabled for this initiative:
 ```typescript
 // Query config to check adr_enabled
 const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
-const configData = configResult.concepts.length > 0 
-  ? JSON.parse(configResult.concepts[0].summary) 
-  : {};
+let configData = {};
+try {
+  configData = configResult.concepts.length > 0 
+    ? JSON.parse(configResult.concepts[0].summary) 
+    : {};
+} catch (error) {
+  console.warn('Warning: Failed to parse config JSON, defaulting to adr_enabled=false:', error.message);
+  configData = {};
+}
 
 // Skip decision detection if ADR is not enabled
 if (configData?.workflow?.adr_enabled !== true) {

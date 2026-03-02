@@ -382,9 +382,15 @@ Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.str
 ```typescript
 // Query config to check adr_enabled
 const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
-const configData = configResult.concepts.length > 0 
-  ? JSON.parse(configResult.concepts[0].summary) 
-  : {};
+let configData = {};
+try {
+  configData = configResult.concepts.length > 0 
+    ? JSON.parse(configResult.concepts[0].summary) 
+    : {};
+} catch (error) {
+  console.warn('Warning: Failed to parse config JSON, defaulting to adr_enabled=false:', error.message);
+  configData = {};
+}
 
 // Skip decision collection if ADR is not enabled
 if (configData?.workflow?.adr_enabled !== true) {
@@ -720,9 +726,15 @@ If buildIterationCount >= 3 and still issues:
 ```typescript
 // Query config to check adr_enabled
 const configResult = await megamemory:understand({ query: 'config', top_k: 1 });
-const configData = configResult.concepts.length > 0 
-  ? JSON.parse(configResult.concepts[0].summary) 
-  : {};
+let configData = {};
+try {
+  configData = configResult.concepts.length > 0 
+    ? JSON.parse(configResult.concepts[0].summary) 
+    : {};
+} catch (error) {
+  console.warn('Warning: Failed to parse config JSON, defaulting to adr_enabled=false:', error.message);
+  configData = {};
+}
 
 // Skip decision collection if ADR is not enabled
 if (configData?.workflow?.adr_enabled !== true) {
