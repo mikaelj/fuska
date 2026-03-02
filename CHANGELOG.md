@@ -5,6 +5,27 @@ Organized by theme rather than individual commit.
 
 ---
 
+## v0.5.0 - 2026-03-02
+
+**11 commits** | 15 files changed, 3070 insertions, 53 deletions
+
+### New Features
+
+- **Architecture Decision Records (ADR)** — Full ADR lifecycle system with CLI commands (`fuska decision query/export/list`), decision concept schema in MegaMemory, logging template, and automatic workflow integration in `fuska-do` when ADR opt-in is enabled
+
+### Improvements
+
+- **Init Command Refactor** — Streamlined command by removing unnecessary `description` argument and broken `--debug` flag, improved provider display in next steps
+
+### Bug Fixes
+
+- Fixed tutorial documentation
+- Added try-catch to ADR config JSON parsing for better error handling
+- Corrected ADR opt-in check syntax in fuska-do workflow
+- Fixed progress command to find global config and simplify initiative detection
+
+---
+
 ## v0.4.0 - 2026-02-27
 
 **2 commits** | 9 files changed, 293 insertions, 11 deletions
