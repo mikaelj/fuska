@@ -231,6 +231,7 @@ Execute each task in the plan.
    - **When you discover additional work not in plan:** Apply deviation rules automatically
    - Run verification
    - Confirm done criteria met
+   - **Detect Implementation Decisions** (see decision_detection)
    - **Commit the task** (see task_commit_protocol)
    - Track task completion and commit hash for Summary
    - **Update MegaMemory** with what was built (see megamemory_update_protocol)
@@ -245,7 +246,92 @@ Execute each task in the plan.
 4. Run overall verification checks from `<verification>` section
 5. Confirm all success criteria from `<success_criteria>` section met
 6. Document all deviations in Summary
-  </step>
+   </step>
+
+<decision_detection>
+
+## Detect Implementation Decisions
+
+After completing each task, scan execution for significant choices that should be logged:
+
+**When to log a decision:**
+- Multiple valid options existed (you chose between alternatives)
+- Architectural patterns applied (singleton, factory, middleware, etc.)
+- Library/framework choices (which package to use for a feature)
+- Error handling strategies (retry, circuit breaker, fallback)
+- Data structure choices (array vs Map, normalized vs denormalized)
+- Workarounds for limitations (edge cases, platform constraints)
+
+**When NOT to log:**
+- Only one reasonable option (no real choice)
+- Trivial implementation detail
+- Standard practice for the language/framework
+
+**Decision Detection Process:**
+
+1. **Review task execution:**
+   - What choices were made during implementation?
+   - Were there alternatives considered but not chosen?
+   - What trade-offs were accepted?
+
+2. **For each significant choice:**
+   ```typescript
+   // Generate decision ID from choice context
+   const decisionSlug = generateSlug(choiceDescription);
+   const decisionId = `decision-${decisionSlug}`;
+   
+   // Extract decision details
+   const decisionData = {
+     id: decisionSlug,
+     title: '[Brief title of the choice]',
+     context: '[Why this choice was needed - what problem was being solved]',
+     decision: '[What was chosen and implemented]',
+     alternatives: [
+       // Options that were considered
+       { option: '[alternative 1]', considered: true, reason: '[why not chosen]' },
+       { option: '[alternative 2]', considered: false, reason: '[not seriously considered]' }
+     ],
+     consequences: {
+       positive: ['[benefit 1]', '[benefit 2]'],
+       negative: ['[tradeoff 1]'],
+       risks: ['[risk to watch]']
+     },
+     status: 'proposed',
+     created_at: new Date().toISOString(),
+     decided_at: null,
+     superseded_by: null,
+     related_chapters: [chapterSlug]
+   };
+   ```
+
+3. **Create decision concept:**
+   ```typescript
+   await megamemory:create_concept({
+     name: decisionId,
+     kind: 'decision',
+     summary: JSON.stringify(decisionData),
+     why: `Captures implementation choice made during ${planName}: ${decisionData.title}`,
+     parent_id: chapterSlug,
+     edges: [
+       { to: chapterSlug, relation: 'addresses', description: 'Decision addresses concerns for this chapter' },
+       { to: planConceptId, relation: 'implements', description: 'Decision made during plan execution' }
+     ]
+   });
+   ```
+
+4. **Track decision ID for summary:**
+   ```typescript
+   // Store in execution context
+   executionContext.decisions.push({
+     id: decisionId,
+     title: decisionData.title,
+     status: 'proposed'
+   });
+   ```
+
+**Reference:** See `provider/opinkode/fuska/templates/decision.md` for full schema.
+
+</decision_detection>
 
 </execution_flow>
 
@@ -834,32 +920,90 @@ const summaryData: SummaryData = {
   accomplishments: [...],
   task_commits: [...],
   files_modified: [...],
-  decisions_made: {...},
+  decisions_made: collectDecisionsMade(executionContext.decisions),
   deviations: [...],
   issues_encountered: [],
   next_chapter_readiness: "ready"
 };
 
-// ChapterConceptTemplates.createSummary() structure:
-// - name: `${chapterSlug}-plan-${planNumber}-summary`
-// - kind: 'component'
-// - summary: generateSummary(summaryData) + '\n\n' + generateSummaryMarkdown(summaryData)
-// - parent_id: chapterSlug
-// - edges: [
-//     { to: `${chapterSlug}-plan-${planNumber}`, relation: 'completes' },
-//     { to: chapterSlug, relation: 'connects_to' }
-//   ]
-// - created_by_task: `${chapterSlug}-plan-${planNumber}`
+```
 
+**Collect Decisions Made:**
+```typescript
+function collectDecisionsMade(trackedDecisions: TrackedDecision[]): Record<string, DecisionSummary> {
+  const decisionsMade: Record<string, DecisionSummary> = {};
+  
+  for (const decision of trackedDecisions) {
+    decisionsMade[decision.id] = {
+      id: decision.id,
+      title: decision.title,
+      status: decision.status,
+      context: 'extracted from decision concept',
+      created_during: 'execution'
+    };
+  }
+  
+  return decisionsMade;
+}
+
+interface TrackedDecision {
+  id: string;
+  title: string;
+  status: 'proposed' | 'accepted' | 'rejected';
+}
+
+interface DecisionSummary {
+  id: string;
+  title: string;
+  status: string;
+  context: string;
+  created_during: string;
+}
+```
+
+**Generate Summary Markdown with Decisions Section:**
+```typescript
+function generateSummaryMarkdown(data: SummaryData): string {
+  let markdown = `## Summary
+
+### Accomplishments
+${data.accomplishments.map(a => `- ${a}`).join('\n')}
+
+### Key Files
+- **Created:** ${data.key_files.created.join(', ') || 'none'}
+- **Modified:** ${data.key_files.modified.join(', ') || 'none'}
+`;
+
+  // Add decisions section if any decisions were logged
+  if (Object.keys(data.decisions_made).length > 0) {
+    markdown += `
+### Decisions Made
+
+| Decision | Context | Status |
+|----------|---------|--------|
+${Object.values(data.decisions_made).map(d => 
+  `| ${d.id} | ${d.context} | ${d.status} |`
+).join('\n')}
+
+    markdown += `\n_${Object.keys(data.decisions_made).length} decisions logged during execution_\n`;
+  }
+
+  return markdown;
+}
+```
+
+**Create Concept:**
+```typescript
 await megamemory:create_concept({
   name: `${chapterSlug}-plan-${planNumber}-summary`,
   kind: 'component',
-  summary: summaryContent,
+  summary: JSON.stringify(summaryData) + '\n\n' + generateSummaryMarkdown(summaryData),
   parent_id: chapterSlug,
   edges: [
     { to: `${chapterSlug}-plan-${planNumber}`, relation: 'completes' },
     { to: chapterSlug, relation: 'connects_to' }
-  ]
+  ],
+  created_by_task: `${chapterSlug}-plan-${planNumber}`
 });
 ```
 

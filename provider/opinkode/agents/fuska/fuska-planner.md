@@ -1337,6 +1337,168 @@ For each plan:
 **All plan concepts must be created before proceeding.**
 </step>
 
+<step name="detect_and_create_decisions">
+After creating plan concepts, perform decision detection: identify significant choices made during planning and create decision concepts.
+
+**When to create a decision concept:**
+- Multiple valid options were considered (check task action for 'vs', 'alternatives', 'options', 'either', 'or')
+- Technology choices (libraries, frameworks, patterns) with trade-offs documented
+- Architectural decisions affecting multiple files or components
+- Future developers might ask "why this?" about the choice
+
+**When NOT to log a decision:**
+- Only one reasonable option (no choice made)
+- Trivial implementation detail (no architectural impact)
+- Temporary workaround (will be replaced)
+
+**Detection logic:**
+
+```typescript
+const significantDecisions: DecisionData[] = [];
+
+for (const plan of plansCreated) {
+  for (const task of plan.tasks) {
+    // Check for choice indicators in task action
+    const action = task.action.toLowerCase();
+    const hasChoiceKeywords = /\b(vs|versus|alternatives?|options?|either|or|choice)\b/.test(action);
+    
+    // Check for technology decisions
+    const techPatterns = [
+      /use (jose|jsonwebtoken|passport|prisma|drizzle|typeorm)/i,
+      /choose (react|vue|svelte)/i,
+      /(postgresql|mysql|mongodb)/i,
+      /(typescript|javascript)/i
+    ];
+    const hasTechChoice = techPatterns.some(p => p.test(action));
+    
+    if (hasChoiceKeywords || hasTechChoice) {
+      // Extract decision data from task
+      const decisionId = generateDecisionId(task.name, plan.chapter);
+      
+      significantDecisions.push({
+        id: decisionId,
+        title: extractTitle(task),
+        context: extractContext(task.action, chapterGoal),
+        decision: extractDecision(task.action),
+        alternatives: extractAlternatives(task.action),
+        consequences: {
+          positive: [],
+          negative: [],
+          risks: []
+        },
+        status: 'proposed',
+        created_at: new Date().toISOString(),
+        decided_at: null,
+        superseded_by: null,
+        related_chapters: [chapterSlug]
+      });
+    }
+  }
+}
+```
+
+**Create decision concepts:**
+
+```typescript
+const createdDecisionIds: string[] = [];
+
+for (const decision of significantDecisions) {
+  await megamemory:create_concept({
+    name: `decision-${decision.id}`,
+    kind: 'decision',
+    summary: JSON.stringify(decision),
+    why: `Captures significant choice made during planning - alternatives considered and trade-offs accepted`,
+    edges: [
+      { to: chapterSlug, relation: 'addresses' }
+    ]
+  });
+  
+  createdDecisionIds.push(decision.id);
+}
+```
+
+**Store decision IDs for return:**
+```typescript
+const planningResult = {
+  ...planningResult,
+  decisions_created: createdDecisionIds
+};
+```
+
+**Helper functions:**
+
+```typescript
+function generateDecisionId(taskName: string, chapterSlug: string): string {
+  // Create kebab-case ID from task name
+  const base = taskName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+  return base;
+}
+
+function extractTitle(task: Task): string {
+  // Use task name as decision title
+  return task.name;
+}
+
+function extractContext(action: string, chapterGoal: string): string {
+  // Extract context from task action - look for "because", "since", "to address"
+  const contextMatch = action.match(/(?:because|since|to address|for)\s+([^.]+)/i);
+  if (contextMatch) {
+    return contextMatch[1].trim();
+  }
+  return `Decision made during planning for chapter goal: ${chapterGoal}`;
+}
+
+function extractDecision(action: string): string {
+  // Extract the decision - look for "use X", "choose X", "implement X"
+  const useMatch = action.match(/(?:use|choose|implement|adopt)\s+([a-z0-9-]+)/i);
+  if (useMatch) {
+    return `Use ${useMatch[1]}`;
+  }
+  return "See task action for details";
+}
+
+function extractAlternatives(action: string): DecisionAlternative[] {
+  // Extract alternatives - look for "vs X", "instead of X", "not X"
+  const alternatives: DecisionAlternative[] = [];
+  
+  const vsMatch = action.match(/vs\.?\s+([a-z0-9-]+)/gi);
+  if (vsMatch) {
+    for (const match of vsMatch) {
+      const option = match.replace(/vs\.?\s+/i, '');
+      alternatives.push({
+        option,
+        considered: true,
+        reason: 'Mentioned as alternative in task action'
+      });
+    }
+  }
+  
+  const notMatch = action.match(/not\s+([a-z0-9-]+)/gi);
+  if (notMatch) {
+    for (const match of notMatch) {
+      const option = match.replace(/not\s+/i, '');
+      if (!alternatives.some(a => a.option === option)) {
+        alternatives.push({
+          option,
+          considered: true,
+          reason: 'Explicitly rejected in task action'
+        });
+      }
+    }
+  }
+  
+  return alternatives;
+}
+```
+
+**Note:** Decisions are created with status 'proposed' - they become 'accepted' when the plan is executed successfully.
+
+</step>
+
 <step name="validate_plan_concepts">
 After creating plan concepts, validate each one to ensure required fields are present and consistent.
 
@@ -1445,6 +1607,14 @@ Return structured planning outcome to coordinator.
 | {chapter}-01 | [brief] | 2 | [files] |
 | {chapter}-02 | [brief] | 3 | [files] |
 
+### Decisions Created
+
+| Decision | Context | Status |
+|----------|---------|--------|
+| {decision-slug} | [brief context] | proposed |
+
+_N decisions logged during planning_
+
 ### Next Steps
 
 Execute: `/fuska-build {chapter}`
@@ -1540,6 +1710,9 @@ Chapter planning complete when:
 - [ ] Inter-plan dependency edges created via megamemory:link (relation: depends_on)
 - [ ] Each plan has implements → chapter edge
 - [ ] Each plan has valid data (objective, requirements, tasks, batch, depends_on)
+- [ ] Significant decisions detected and logged
+- [ ] Decision concepts created in MegaMemory
+- [ ] Decisions linked to related chapters
 - [ ] User knows batch structure and parallelization opportunities
 - [ ] User knows next step (/fuska-build)
 

@@ -470,8 +470,8 @@ for (const chapter of chapterList) {
     name: chapter.slug,
     kind: "feature",
     summary: generateSummary(chapterData) + '\n\n' + generateChapterMarkdown(chapterData),
-    parent_id: "roadmap",
-    edges: [{ to: "roadmap", relation: "part_of" }]
+    parent_id: `${initiativeSlug}/roadmap`,
+    edges: [{ to: `${initiativeSlug}/roadmap`, relation: "part_of" }]
   });
 }
 ```

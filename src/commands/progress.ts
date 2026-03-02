@@ -314,7 +314,12 @@ class ProgressRunner {
     const roadmapNode = this.nodes.find(n => 
       n.name === 'roadmap' && n.parent_id === this.currentInitiativeId
     );
-    return roadmapNode ? this.parseSummary<RoadmapData>(roadmapNode.summary) : null;
+    if (!roadmapNode) return null;
+    
+    const parsed = this.parseSummary<RoadmapData>(roadmapNode.summary);
+    if (parsed) return parsed;
+    
+    return { chapters: [], current_milestone: '' };
   }
 
   private findConfig(): ConfigData | null {

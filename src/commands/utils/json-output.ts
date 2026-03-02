@@ -12,6 +12,7 @@ interface StreamState {
   hasOutputStarted: boolean;
   hadError: boolean;
   lastEndedWithNewline: boolean;
+  eventCount: number;
 }
 
 function formatElapsed(ms: number): string {
@@ -60,14 +61,14 @@ export function runAIProviderJson(options: JsonRunOptions): Promise<number> {
     const provider = await getOrPromptProvider();
     const cmdArgs = buildProviderArgs(provider, options.command, options.args);
     const label = options.progressLabel || 'Working';
-    const state: StreamState = { hasOutputStarted: false, hadError: false, lastEndedWithNewline: true };
+    const state: StreamState = { hasOutputStarted: false, hadError: false, lastEndedWithNewline: true, eventCount: 0 };
 
     const startTime = Date.now();
     let lastProgressLen = 0;
 
     const updateProgress = () => {
       const elapsed = Date.now() - startTime;
-      const text = `${label}... ${formatElapsed(elapsed)}`;
+      const text = `${label}... #${state.eventCount} ${formatElapsed(elapsed)}`;
       const padding = lastProgressLen > text.length ? ' '.repeat(lastProgressLen - text.length) : '';
       process.stdout.write(`\r${text}${padding}`);
       lastProgressLen = text.length;
@@ -116,9 +117,18 @@ function streamTextEvents(chunk: string, state: StreamState, stopTimer: () => vo
     try {
       const event = JSON.parse(line);
 
-      // Handle both OpenCode and Claude JSON output formats
+      const isTextEvent = (e: any): boolean => {
+        if (provider === 'opencode') {
+          return e.type === 'text';
+        }
+        return e.type === 'content_block_delta' && e.delta?.type === 'text_delta';
+      };
+
+      if (!isTextEvent(event) && event.type) {
+        state.eventCount++;
+      }
+
       if (provider === 'opencode') {
-        // OpenCode format: { type: 'text', part: { text: '...' } }
         if (event.type === 'text' && event.part?.text) {
           if (!state.hasOutputStarted) {
             stopTimer();

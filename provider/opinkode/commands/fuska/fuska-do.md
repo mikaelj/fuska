@@ -16,6 +16,7 @@ tools:
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
+  - megamemory:remove_concept
   - megamemory:list_roots
 ---
 
@@ -83,6 +84,15 @@ Flags:
 ## 1. Load All Context (Single Pass)
 
 Query MegaMemory upfront. All subsequent steps use cached results — NO additional queries for data already loaded here.
+
+**Step 1.0:** Initialize coordinator context:
+
+```
+const allDecisions = {
+  planning: [],
+  execution: []
+}
+```
 
 **Step 1.1:** Query `config` (top_k=5). If empty: Display "No initiative found. Run `fuska init` first." → Stop. Extract `configData`, `modelProfile` (default: "balanced").
 
@@ -365,6 +375,88 @@ Use: megamemory_update_concept(id="${planConceptId}", changes={summary: JSON.str
 
 ---
 
+## 6.5. Decision Collection (Planning)
+
+Extract decisions created by planner agent.
+
+**Step 6.5.1:** Parse planner return for decisions created:
+
+```
+const plannerDecisions = []
+
+// Check if planner created decision concepts
+const decisionsQuery = await megamemory:understand({
+  query: `${planConceptId} decision`,
+  top_k: 10
+})
+
+for (const match of decisionsQuery.concepts) {
+  if (match.kind === 'decision' && match.name.startsWith('decision-')) {
+    const decisionData = JSON.parse(match.summary)
+    plannerDecisions.push({
+      id: match.name,
+      conceptId: match.id,
+      title: decisionData.title,
+      context: decisionData.context,
+      status: decisionData.status
+    })
+  }
+}
+```
+
+**Step 6.5.2:** Store in coordinator context: `allDecisions.planning = plannerDecisions`
+
+---
+
+## 6.6. Decision Confirmation (Planning)
+
+If `plannerDecisions.length > 0`, prompt user for confirmation.
+
+**Step 6.6.1:** Display planning decisions:
+
+```
+## Planning Decisions Created
+
+| Decision | Context | Status |
+|----------|---------|--------|
+${plannerDecisions.map(d => `| ${d.id} | ${d.context.slice(0, 50)}... | ${d.status} |`).join('\n')}
+
+_${plannerDecisions.length} decisions logged during planning_
+```
+
+**Step 6.6.2:** Use question tool:
+
+| Option | Description |
+|--------|-------------|
+| Accept all | Keep all proposed decisions |
+| Review individually | I'll review each decision |
+| Skip logging | Don't log any decisions |
+
+**Accept all** → Continue to Step 7
+
+**Skip logging** →
+1. Delete decision concepts:
+   ```
+   for (const decision of plannerDecisions) {
+     await megamemory:remove_concept({
+       id: decision.conceptId,
+       reason: "User chose to skip decision logging"
+     })
+   }
+   ```
+2. Clear: `allDecisions.planning = []`
+3. Continue to Step 7
+
+**Review individually** →
+1. For each decision in plannerDecisions:
+   - Display full decision details (title, context, decision, alternatives, consequences)
+   - Question: `Keep decision: ${decision.title}?`
+   - Options: Keep | Remove
+   - If Remove: delete concept via megamemory:remove_concept
+2. After all reviewed → Continue to Step 7
+
+---
+
 ## 7. Spawn Plan-Checker + Revision Loop (if modeConfig.planCheck)
 
 Only for checked, researched, verified modes. Display: `Validating plan...`
@@ -595,6 +687,100 @@ If buildIterationCount >= 3 and still issues:
 
 ---
 
+## 9.7.5. Decision Collection (Execution)
+
+Extract decisions created by executor agent.
+
+**Step 9.7.5.1:** Parse execution summary for decisions made:
+
+```
+const executorDecisions = []
+
+// Check summary concept for decisions
+const summaryQuery = await megamemory:understand({
+  query: `${planConceptId}-summary`,
+  top_k: 1
+})
+
+if (summaryQuery.concepts.length > 0) {
+  const summaryData = JSON.parse(summaryQuery.concepts[0].summary)
+  
+  if (summaryData.decisions_made && Object.keys(summaryData.decisions_made).length > 0) {
+    for (const [decisionId, decisionInfo] of Object.entries(summaryData.decisions_made)) {
+      // Query the full decision concept
+      const decisionQuery = await megamemory:understand({
+        query: decisionId,
+        top_k: 1
+      })
+      
+      if (decisionQuery.concepts.length > 0) {
+        const fullDecision = JSON.parse(decisionQuery.concepts[0].summary)
+        executorDecisions.push({
+          id: decisionId,
+          conceptId: decisionQuery.concepts[0].id,
+          title: fullDecision.title,
+          context: fullDecision.context,
+          status: fullDecision.status
+        })
+      }
+    }
+  }
+}
+```
+
+**Step 9.7.5.2:** Store in coordinator context: `allDecisions.execution = executorDecisions`
+
+---
+
+## 9.7.6. Decision Confirmation (Execution)
+
+If `executorDecisions.length > 0`, prompt user for confirmation.
+
+**Step 9.7.6.1:** Display execution decisions:
+
+```
+## Execution Decisions Created
+
+| Decision | Context | Status |
+|----------|---------|--------|
+${executorDecisions.map(d => `| ${d.id} | ${d.context.slice(0, 50)}... | ${d.status} |`).join('\n')}
+
+_${executorDecisions.length} decisions logged during execution_
+```
+
+**Step 9.7.6.2:** Use question tool:
+
+| Option | Description |
+|--------|-------------|
+| Accept all | Keep all proposed decisions |
+| Review individually | I'll review each decision |
+| Skip logging | Don't log any execution decisions |
+
+**Accept all** → Continue to Step 9.6
+
+**Skip logging** →
+1. Delete decision concepts:
+   ```
+   for (const decision of executorDecisions) {
+     await megamemory:remove_concept({
+       id: decision.conceptId,
+       reason: "User chose to skip decision logging"
+     })
+   }
+   ```
+2. Clear: `allDecisions.execution = []`
+3. Continue to Step 9.6
+
+**Review individually** →
+1. For each decision in executorDecisions:
+   - Display full decision details (title, context, decision, alternatives, consequences)
+   - Question: `Keep decision: ${decision.title}?`
+   - Options: Keep | Remove
+   - If Remove: delete concept via megamemory:remove_concept
+2. After all reviewed → Continue to Step 9.6
+
+---
+
 ## 9.6. Chapter-Todo Loop (for chapter tasks only)
 
 Skip this step if no `stateData.current_chapter` exists (standalone task).
@@ -783,7 +969,24 @@ This ensures the specific disambiguated task concept (e.g., `task-022-rename-com
  Commit: ${finalCommitHash || "(uncommitted)"}
  ${verification ? `Verification: ${verificationStatus}` : ''}
  ${!finalCommitHash ? '\n Note: Changes staged but not committed. Run: git commit' : ''}
+```
 
+**Step 12.1:** If `allDecisions.planning.length + allDecisions.execution.length > 0`, display decisions:
+
+```
+### Decisions Logged
+
+| Decision | When | Status |
+|----------|------|--------|
+${allDecisions.planning.map(d => `| ${d.id} | Planning | ${d.status} |`).join('\n')}
+${allDecisions.execution.map(d => `| ${d.id} | Execution | ${d.status} |`).join('\n')}
+
+_Total: ${allDecisions.planning.length + allDecisions.execution.length} decisions logged_
+```
+
+**Step 12.2:** Final message:
+
+```
 ───────────────────────────────────────────────────
  Ready for next task: /fuska-do
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -797,13 +1000,15 @@ This ensures the specific disambiguated task concept (e.g., `task-022-rename-com
 - [ ] Slug generated, task number calculated, plan concept created
 - [ ] Researcher spawned for research modes; research concept created
 - [ ] Planner spawns with mode-appropriate constraints
+- [ ] Planning decisions collected and confirmed (or skipped)
 - [ ] Plan-checker spawned for check modes; revision loop works (max 3)
 - [ ] Auto-execute for planned/verified; ask-before for checked/researched (overridable)
 - [ ] Plan displayed; review loop with modify/question/save options
 - [ ] Builder spawns, creates summary concept (no commit during build)
 - [ ] Code reviewer spawned for all modes (skippable with --no-code-review); build revision loop works (max 3)
+- [ ] Execution decisions collected and confirmed (or skipped)
 - [ ] Git-message agent generates commit; user confirms or auto-commits
 - [ ] Reviewer spawned for verified mode
-- [ ] State updated, completion banner displayed
+- [ ] State updated, completion banner displayed with decisions summary
 
 </success_criteria>
