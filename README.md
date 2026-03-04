@@ -12,9 +12,13 @@ Based on [gsd-opencode](https://github.com/rokicool/gsd-opencode) and [Get Shit 
 
 > *"Fuska is like having three navigators who raise the alarm if they independently spot the same hazard — and a co-driver who inspects every metre you actually drove."* — [Read the full pitch](docs/PITCH.md)
 >
-> **It works.** In a real session, the code reviewer caught a typo (`this.config.workflow.workflow.mode`) that would have silently broken the display — the builder fixed it, the second review passed, and the commit landed clean. [Full walkthrough →](docs/fuska-do-session-distilled.md)
+> **It works.** In a real session, the code reviewer caught a typo (`this.config.workflow.workflow.mode`) that would have silently broken the display — the builder fixed it, the second review passed, and the commit landed clean. See it in action ↓
 
 New here? Check the [FAQ](docs/faq.md).
+
+**See it in action** — Fuska has two workflows:
+- **Ad-hoc tasks** (`/fuska-do`): one command, full agent chain — [real session](docs/fuska-do-session-distilled.md) · [Quick Start](#see-it-in-action)
+- **Full projects** (chapter lifecycle): init through milestone — [tutorial](docs/tutorial.md) · [Getting Started](#work-through-chapters)
 
 **THE AUTHOR TAKES NO RESPONSIBILITY FOR DATA LOSS IN EXISTING PROJECTS. USE AT YOUR OWN PERIL.**
 
@@ -80,7 +84,7 @@ Just tell Fuska what you want. It researches, plans, verifies the plan, and exec
 
 Override plan review with `--review` or `--no-review`, or set it permanently via `fuska config` (`interactive_review`). Commit always prompts by default — override per-invocation with `--auto-commit` to skip the prompt. Skip code review with `--no-code-review`. For details, see [workflow.md](docs/workflow.md#workflow-modes).
 
-**Prefer hands-on control?** The chapter lifecycle gives you the full step-by-step sequence — design, plan, build, review — each as a separate command you run when you're ready. More deliberate, more visibility at each stage. See [workflow.md](docs/workflow.md#chapter-lifecycle).
+**Prefer hands-on control?** The chapter lifecycle gives you the full step-by-step sequence — design, plan, build, review — each as a separate command you run when you're ready. More deliberate, more visibility at each stage. See [workflow.md](docs/workflow.md#chapter-lifecycle) or follow the [tutorial](docs/tutorial.md).
 
 ---
 
@@ -114,6 +118,8 @@ For platform notes, troubleshooting, and migration from old installs, see [getti
 ## Getting Started
 
 ### Initialize Your Project
+
+> **Prefer a guided walkthrough?** The [tutorial](docs/tutorial.md) walks through building a complete todo app — from `fuska init` through all 5 chapters to milestone completion — with real session output at every step. For a quicker look at the ad-hoc workflow, see the [`/fuska-do` session](docs/fuska-do-session-distilled.md).
 
 ```bash
 fuska init [description]
@@ -305,8 +311,9 @@ Chapter TODOs are separate from global TODOs (created via `fuska todo add`) — 
 | I want to... | Read... |
 |--------------|---------|
 | Understand the mental model | [concepts.md](docs/concepts.md) — Initiatives, chapters, plans, MegaMemory, glossary |
+| Follow the tutorial (full project lifecycle) | [tutorial.md](docs/tutorial.md) — Build a todo app end-to-end: init, configure, design, plan, build, review |
 | See full workflows in action | [workflow.md](docs/workflow.md#scenarios) — 9 end-to-end scenarios |
-| See a real session end-to-end | [fuska-do-session-distilled.md](docs/fuska-do-session-distilled.md) — Annotated `/fuska-do checked` session: plan-checker validates, code-reviewer catches a bug |
+| See the ad-hoc workflow in action | [fuska-do-session-distilled.md](docs/fuska-do-session-distilled.md) — Annotated `/fuska-do checked` session: plan-checker validates, code-reviewer catches a bug |
 | Look up a command | [commands.md](docs/commands.md) — Every CLI and slash command |
 | Configure modes, models, git strategy | [configuration.md](docs/configuration.md) — All the knobs |
 | See why MegaMemory over .planning/ | [development.md](docs/development.md#performance-benchmarks) — Performance benchmarks |

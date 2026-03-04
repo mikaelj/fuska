@@ -526,3 +526,4 @@ recipevault/feature-dietary/          # Worktree for dietary presets
 - [commands.md](commands.md) — Full command reference
 - [concepts.md](concepts.md) — Mental model behind these workflows
 - [fuska-do-session-distilled.md](fuska-do-session-distilled.md) — Full annotated walkthrough of a `/fuska-do checked` session showing the plan-checker and code-reviewer in action
+- [tutorial.md](tutorial.md) — Hands-on tutorial covering the full chapter lifecycle with real session output

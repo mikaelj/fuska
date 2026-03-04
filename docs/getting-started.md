@@ -213,6 +213,7 @@ If installation fails mid-way, all changes are automatically rolled back. No par
 
 ## See Also
 
+- [tutorial.md](tutorial.md) — Hands-on walkthrough building a todo app
 - [concepts.md](concepts.md) — Understand Fuska's mental model
 - [workflow.md](workflow.md) — How to work with Fuska
 - [configuration.md](configuration.md) — Post-install configuration

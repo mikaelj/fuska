@@ -1,0 +1,231 @@
+# Non-Existent Fuska Command References
+# Generated: $(date -Iseconds)
+# Purpose: Find all references to /fuska-xxx commands that don't actually exist
+
+## Summary
+
+Total non-existent command references found: 25
+
+## Categories
+
+### 1. Agent Names Used as Commands (16)
+These are agent definitions, not user-facing commands. References may be for internal documentation.
+
+### 2. Wrong/Outdated Command Names (4)
+Commands that exist under different names or don't exist at all.
+
+### 3. Examples/Placeholders (3)
+Intentional example names or incomplete references.
+
+### 4. Unclear (2)
+Need investigation to determine intent.
+
+---
+
+## Detailed Findings
+
+### CATEGORY 1: Agent Names (Not Commands)
+These are spawned by coordinators, not invoked directly by users.
+
+1. **/fuska-planner** (19 references)
+   - Type: Agent spawned by /fuska-plan coordinator
+   - Locations: PITFALLS.md, templates/chapter-prompt.md
+   - Note: Should clarify these are agents in documentation
+
+2. **/fuska-roadmapper** (5 references)
+   - Type: Agent spawned by /fuska-configure
+   - Note: Internal agent documentation
+
+3. **/fuska-chapter-researcher** (5 references)
+   - Type: Agent spawned by /fuska-plan coordinator
+   - Note: Internal agent documentation
+
+4. **/fuska-code-reviewer** (5 references)
+   - Type: Agent spawned by /fuska-do
+   - Note: Internal agent documentation
+
+5. **/fuska-verifier** (4 references)
+   - Type: Agent spawned by /fuska-plan
+   - Note: Internal agent documentation
+
+6. **/fuska-plan-checker** (4 references)
+   - Type: Agent spawned by /fuska-plan coordinator
+   - Note: Internal agent documentation
+
+7. **/fuska-codebase-mapper** (3 references)
+   - Type: Agent spawned by map-codebase
+   - Note: Internal agent documentation
+
+8. **/fuska-debugger** (3 references)
+   - Type: Agent spawned by /fuska-debug coordinator
+   - Note: Internal agent documentation
+
+9. **/fuska-initiative-researcher** (3 references)
+   - Type: Agent spawned by /fuska-configure
+   - Note: Internal agent documentation
+
+10. **/fuska-research-synthesizer** (3 references)
+    - Type: Agent spawned by /fuska-configure
+    - Note: Internal agent documentation
+
+11. **/fuska-executor** (1 reference)
+    - Type: Agent spawned by /fuska-build coordinator
+    - Note: Internal agent documentation
+
+12. **/fuska-plan-checker-panel** (1 reference)
+    - Type: Agent spawned by /fuska-plan
+    - Note: Internal agent documentation
+
+13. **/fuska-doc-writer** (2 references)
+    - Type: Agent spawned by /fuska-doc coordinator
+    - Note: Internal agent documentation
+
+14. **/fuska-doc-reviewer** (2 references)
+    - Type: Agent spawned by /fuska-doc coordinator
+    - Note: Internal agent documentation
+
+15. **/fuska-doc-researcher** (2 references)
+    - Type: Agent spawned by /fuska-doc coordinator
+    - Note: Internal agent documentation
+
+16. **/fuska-doc-planner** (2 references)
+    - Type: Agent spawned by /fuska-doc coordinator
+    - Note: Internal agent documentation
+
+17. **/fuska-doc-checker** (2 references)
+    - Type: Agent spawned by /fuska-doc coordinator
+    - Note: Internal agent documentation
+
+---
+
+### CATEGORY 2: Wrong/Outdated Command Names (SHOULD BE FIXED)
+
+1. **/fuska-audit-milestone** (9 references) **[NEEDS FIX]**
+   - Correct command: /fuska-audit
+   - Locations:
+     * provider/opinkode/commands/fuska/fuska-review.md:563
+     * provider/opinkode/commands/fuska/fuska-plan-milestone-fixes.md:20
+     * provider/opinkode/commands/fuska/fuska-plan-milestone-fixes.md:67
+   - Action: Replace with /fuska-audit
+
+2. **/fuska-complete-milestone** (10 references) **[NEEDS FIX]**
+   - Correct command: /fuska-complete
+   - Locations:
+     * provider/opinkode/fuska/workflows/execute-plan.md:1770
+     * provider/opinkode/fuska/workflows/transition.md:650
+     * provider/opinkode/fuska/workflows/transition.md:667
+   - Action: Replace with /fuska-complete
+
+3. **/fuska-insert** (1 reference) **[NEEDS FIX]**
+   - Correct command: /fuska-insert-chapter
+   - Locations:
+     * provider/opinkode/agents/fuska/fuska-roadmapper.md:194
+     * provider/opinkode/commands/fuska/fuska-insert-chapter.md:80
+     * provider/opinkode/commands/fuska/fuska-insert-chapter.md:89
+   - Action: Replace with /fuska-insert-chapter
+
+4. **/fuska-verify-work** (5 references) **[DOESN'T EXIST]**
+   - Status: Command does not exist
+   - Locations:
+     * provider/opinkode/fuska/workflows/execute-plan.md:1676
+     * provider/opinkode/fuska/workflows/execute-plan.md:1739
+     * provider/opinkode/fuska/workflows/execute-plan.md:1777
+   - Action: Remove references or create command
+
+---
+
+### CATEGORY 3: Examples/Placeholders (INTENTIONAL)
+
+1. **/fuska-foo** (4 references)
+   - Type: Example/placeholder command name
+   - Locations:
+     * provider/opinkode/PITFALLS.md:10
+     * provider/opinkode/PITFALLS.md:14
+   - Action: None (intentional example)
+
+2. **/fuska-alternative-** (2 references)
+   - Type: Incomplete example in template
+   - Locations:
+     * provider/opinkode/fuska/references/ui-brand.md:312
+     * provider/opinkode/fuska/references/ui-brand.md:313
+   - Action: Complete the example or remove
+
+3. **/fuska-** (5 references)
+   - Type: Incomplete reference
+   - Action: Fix incomplete references
+
+---
+
+### CATEGORY 4: Unclear (NEEDS INVESTIGATION)
+
+1. **/fuska-milestone** (1 reference)
+   - Status: Unclear intent
+   - Location: provider/opinkode/commands/fuska/fuska-help.md:609
+   - Possible meaning: Could be /fuska-new-milestone or old deprecated command
+   - Action: Check context and replace with correct command
+
+2. **/fuska-opencode** (2 references)
+   - Status: Unclear intent
+   - Locations:
+     * provider/opinkode/fuska/workflows/plan-chapter.md:33
+     * provider/opinkode/fuska/workflows/plan-chapter.md:34
+   - Possible meaning: Internal reference or platform-specific command
+   - Action: Check context
+
+3. **/fuska-summary** (1 reference)
+   - Status: Unclear intent
+   - Location: provider/opinkode/fuska/templates/decision.md:582
+   - Possible meaning: Could refer to chapter summaries created by executors
+   - Action: Clarify if this should be a command or just a concept reference
+
+---
+
+## Actual Commands (29 total)
+
+From provider/opinkode/commands/fuska/:
+- add-chapter
+- add-chapter-todo
+- add-todo
+- ask
+- audit
+- build
+- check-todos
+- code-review
+- complete
+- configure
+- debug
+- design
+- do
+- doc
+- export-md
+- fuska (dispatcher)
+- git-message
+- help
+- import
+- insert-chapter
+- map-codebase
+- map-domains
+- new-milestone
+- plan
+- plan-milestone-fixes
+- refresh
+- remove-chapter
+- research-chapter
+- review
+
+## Recommended Actions
+
+### High Priority (Fix Incorrect Command Names)
+1. Replace /fuska-audit-milestone → /fuska-audit (3 locations)
+2. Replace /fuska-complete-milestone → /fuska-complete (3 locations)
+3. Replace /fuska-insert → /fuska-insert-chapter (3 locations)
+4. Remove or clarify /fuska-verify-work (3 locations) - command doesn't exist
+
+### Medium Priority (Clarify Documentation)
+1. Document that agents (planner, roadmapper, etc.) are not user commands
+2. Fix incomplete references (/fuska-, /fuska-alternative-)
+3. Clarify /fuska-milestone, /fuska-opencode, /fuska-summary
+
+### Low Priority (Examples/Placeholders)
+1. Keep /fuska-foo as intentional example
+2. Update template examples to use real commands

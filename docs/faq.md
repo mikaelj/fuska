@@ -51,6 +51,7 @@ Yes. `fuska init` works on existing repos. It creates the knowledge graph and op
 If you're migrating from a `.planning/` directory, `fuska migrate planning` imports that too.
 
 See [getting-started.md](getting-started.md) for the full setup guide.
+For a hands-on walkthrough, see [tutorial.md](tutorial.md).
 
 ---
 
