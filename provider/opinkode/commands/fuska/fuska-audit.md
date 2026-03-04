@@ -395,7 +395,7 @@ megamemory_create_concept(
   parent_id='project',
   edges=[],
   why=`Milestone ${milestoneVersion} audit completed`,
-  created_by_task="fuska-audit-milestone"
+  created_by_task="fuska-audit"
 )
 ```
 
@@ -427,7 +427,7 @@ All requirements covered. Cross-chapter integration verified. E2E flows complete
 
 **Complete milestone** — archive and tag
 
-/fuska-complete-milestone {version}
+/fuska-complete {version}
 
 */new first → fresh context window*
 
@@ -470,7 +470,7 @@ All requirements covered. Cross-chapter integration verified. E2E flows complete
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-complete-milestone {version} — proceed anyway (accept tech debt)
+- /fuska-complete {version} — proceed anyway (accept tech debt)
 
 ──────────────────────────────────────────────────────────────
 
@@ -499,7 +499,7 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 **A. Complete milestone** — accept debt, track in backlog
 
-/fuska-complete-milestone {version}
+/fuska-complete {version}
 
 **B. Plan cleanup chapter** — address debt before completing
 

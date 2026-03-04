@@ -596,7 +596,7 @@ Or just `/fuska` at any point to see where you are.
 **Adding urgent mid-milestone work:**
 
 ```
-/fuska-insert 5 "Critical security fix"
+/fuska-insert-chapter 5 "Critical security fix"
 /fuska-plan 5.1
 /fuska-build 5.1
 ```

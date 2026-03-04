@@ -12,7 +12,7 @@ This tutorial walks you through building a one-page web Todo app using **Fuska**
 - Designing chapters with `/fuska-design`
 - Working through chapters: plan → build → review
 - How the expert panel plan-checker and code reviewer catch problems before they ship
-- Completing a milestone with `/fuska-complete-milestone`
+- Completing a milestone with `/fuska-complete`
 
 **Prerequisites:**
 
@@ -598,7 +598,7 @@ Let's be explicit about what was different:
 With all 5 chapters done, complete the milestone:
 
 ```
-/fuska-complete-milestone
+/fuska-complete
 ```
 
 Fuska audits the milestone — checking all chapter verifications, aggregating requirements coverage, and surfacing tech debt:
@@ -741,7 +741,7 @@ fuska init --no-map        # Per-project: create initiative + register MCP
 /fuska-build               # Per-chapter: implement with code review
 /fuska                     # Anytime: see where you are and what's next
 
-/fuska-complete-milestone   # When all chapters done: audit + archive + tag
+/fuska-complete            # When all chapters done: audit + archive + tag
 
 fuska do <mode> "task"     # Ad-hoc: quick tasks outside the chapter lifecycle
 fuska initiative new       # Create a new initiative

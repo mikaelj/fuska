@@ -62,13 +62,13 @@ If response.matches.length === 0:
 
 ## Pre-flight Check
 
-[WARN] No milestone audit found. Run /fuska-audit-milestone first to verify
+[WARN] No milestone audit found. Run /fuska-audit first to verify
 requirements coverage, cross-chapter integration, and E2E flows.
 
 ────────────────────────────────────────────────────────────
 ```
 
-Suggest: "Run /fuska-audit-milestone first" → Stop
+Suggest: "Run /fuska-audit first" → Stop
 
 If audit exists and has gaps:
 ```
@@ -693,7 +693,7 @@ git push origin v${{version}}
 
 ## 11. Handle Edge Cases
 
-- Audit missing → recommend /fuska-audit-milestone
+- Audit missing → recommend /fuska-audit
 - Audit has gaps → recommend /fuska-plan-milestone-fixes or offer to proceed as tech debt
 - Incomplete chapters → list incomplete chapters, ask to complete first
 - Git tag already exists → ask to force update or use different tag

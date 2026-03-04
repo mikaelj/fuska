@@ -360,7 +360,8 @@ skipped: [N]
 
 <lifecycle>
 
-**Creation:** When /fuska-verify-work starts new session
+**Creation:** When /fuska-review starts new session (formerly /fuska-verify-work)
+TODO: Command /fuska-verify-work does not exist. Use /fuska-review instead.
 - Extract tests from SUMMARY.md files
 - Set status to "testing"
 - Current Test points to test 1

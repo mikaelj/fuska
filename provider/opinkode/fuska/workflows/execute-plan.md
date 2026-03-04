@@ -1673,7 +1673,6 @@ Summary concept: {chapter}-{plan}-Summary
 ---
 
 **Also available:**
-- `/fuska-verify-work {chapter}-{plan}` — manual acceptance testing before continuing
 - Review what was built before continuing
 
 ---
@@ -1736,7 +1735,6 @@ All {Y} plans finished.
 ---
 
 **Also available:**
-- `/fuska-verify-work {Z}` — manual acceptance testing before continuing
 - `/fuska-design {Z+1}` — gather context first
 - Review chapter accomplishments before continuing
 
@@ -1767,14 +1765,13 @@ All {Y} plans finished.
 
 **Complete Milestone** — archive and prepare for next
 
-`/fuska-complete-milestone`
+`/fuska-complete`
 
 *`/new` first → fresh context window*
 
 ---
 
 **Also available:**
-- `/fuska-verify-work` — manual acceptance testing before completing milestone
 - `/fuska-add-chapter <description>` — add another chapter before completing
 - Review accomplishments before archiving
 

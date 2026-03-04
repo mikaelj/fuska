@@ -450,16 +450,16 @@ Also: /fuska-plan {Z+1}, /fuska-review {Z}
 ```
 Fuska: Milestone complete — {N} chapters completed, all verified [OK]
 > Next Up: Audit milestone
-  /fuska-audit-milestone
+  /fuska-audit
   */new first → fresh context window*
-Also: /fuska-review, /fuska-complete-milestone
+Also: /fuska-review, /fuska-complete
 ```
 
 **Route C: All chapters complete**
 ```
 Fuska: All chapters complete — All {totalChapters} finished, verified [OK]
 > Next Up: Complete Milestone
-  /fuska-complete-milestone
+  /fuska-complete
   */new first → fresh context window*
 Also: /fuska-review
 ```

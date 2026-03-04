@@ -17,7 +17,7 @@ tools:
 ---
 
 <objective>
-Create all chapters necessary to close gaps identified by `/fuska-audit-milestone` using MegaMemory.
+Create all chapters necessary to close gaps identified by `/fuska-audit` using MegaMemory.
 
 Reads verification concept (from audit), groups gaps into logical chapters, creates chapter concepts in MegaMemory, and offers to plan each chapter.
 
@@ -64,7 +64,7 @@ megamemory_understand(query="verification", top_k=10)
 
 If response.matches.length === 0:
 → Display: "No verification concept found in MegaMemory"
-→ Suggest: "Run /fuska-audit-milestone first to create audit results"
+→ Suggest: "Run /fuska-audit first to create audit results"
 → Stop
 
 **Step 1.3: Extract verification data**
@@ -83,7 +83,7 @@ const gaps = verificationData.gaps || {
 
 If gaps.requirements.length === 0 AND gaps.integration.length === 0 AND gaps.flows.length === 0:
 → Display: "No gaps found in verification concept"
-→ Suggest: "Run /fuska-audit-milestone first"
+→ Suggest: "Run /fuska-audit first"
 → Stop
 
 ## 2. Load Prioritization Context
@@ -403,8 +403,8 @@ megamemory_update_concept(
 
 **After all gap chapters complete:**
 
-/fuska-audit-milestone — re-audit to verify gaps closed
-/fuska-complete-milestone {version} — archive when audit passes
+/fuska-audit — re-audit to verify gaps closed
+/fuska-complete {version} — archive when audit passes
 ```
 
 </process>

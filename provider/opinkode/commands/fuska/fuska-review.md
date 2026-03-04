@@ -560,14 +560,14 @@ Final chapter verified [OK]
 ## > Next Up
 
 **Audit milestone** — verify requirements, cross-chapter integration, E2E flows
-/fuska-audit-milestone
+/fuska-audit
 
 */new first → fresh context window*
 
 ──────────────────────────────────────────────────────────────
 
 **Also available:**
-- /fuska-complete-milestone — skip audit, archive directly
+- /fuska-complete — skip audit, archive directly
 ──────────────────────────────────────────────────────────────
 ```
 

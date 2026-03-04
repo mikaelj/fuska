@@ -647,7 +647,7 @@ Chapter {X} marked complete.
 [AUTO] Auto-continuing: Complete milestone and archive
 ```
 
-Exit skill and invoke Command("/fuska-complete-milestone {version}")
+Exit skill and invoke Command("/fuska-complete {version}")
 
 </if>
 
@@ -664,7 +664,7 @@ Exit skill and invoke Command("/fuska-complete-milestone {version}")
 
 **Complete Milestone {version}** — archive and prepare for next
 
-`/fuska-complete-milestone {version}`
+`/fuska-complete {version}`
 
 *`/new` first → fresh context window*
 

@@ -98,7 +98,10 @@ If no, continue to `create_verification_concept`.
 ```
 No active verification sessions.
 
-Provide a chapter number to start testing (e.g., /fuska-verify-work 4)
+Provide a chapter number to start testing (e.g., /fuska-review 4)
+
+TODO: Command /fuska-verify-work does not exist. This workflow may need to be updated or removed.
+Use /fuska-review instead for verification functionality.
 ```
 
 **If no active sessions AND `$ARGUMENTS` provided:**
