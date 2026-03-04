@@ -543,12 +543,21 @@ If iterationCount >= 3 and still issues: display remaining issues, offer Proceed
 
 **Step 8.3: Review loop**
 
+**Check plan size:**
+```typescript
+const planData = JSON.parse(planQuery.concepts[0].summary);
+const totalTasks = planData.tasks?.length || 0;
+const isLargePlan = totalTasks > 5;
+```
+
 Use question tool with these options:
 
 | Option | Description |
 |--------|-------------|
 | Execute now | Start building immediately |
 | Ask a question | Get clarification about the plan |
+{If isLargePlan:}
+| Chapterize this plan | Break into sub-chapters for better context management |
 | Modify the plan | Request changes to the plan |
 | Save and exit | Save plan for later execution |
 
@@ -558,6 +567,27 @@ Use question tool with these options:
 1. Question tool: "What would you like to know about the plan?"
 2. Answer from planData context
 3. Go to Step 8.1 (re-display plan + options)
+
+**Chapterize this plan** → (only available if isLargePlan = true)
+1. Display: `Breaking large plan (${totalTasks} tasks) into sub-chapters...`
+2. Spawn fuska-plan-chapterizer agent:
+   ```
+   Task(
+     description="Chapterize large plan",
+     subagent_type="fuska-plan-chapterizer",
+     prompt=`<chapterize_context>
+   **Mode:** explicit
+   **Plan Concept:** ${planConceptId}
+   **Total Tasks:** ${totalTasks}
+   
+   Transform this large plan into chapter structure with subplans.
+   </chapterize_context>`
+   )
+   ```
+3. Agent creates: parent chapter concept + child plan concepts in MegaMemory
+4. Display: `Plan transformed into chapter with ${childPlanCount} subplans`
+5. Display: `CHAPTERIZE SUGGESTED: /fuska-build {parent-chapter}`
+6. Stop (user should execute the new chapter structure)
 
 **Modify the plan** →
 1. Question tool: "What changes would you like to make?"

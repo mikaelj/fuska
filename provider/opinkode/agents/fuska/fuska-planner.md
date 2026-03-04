@@ -1313,6 +1313,25 @@ After grouping, verify each plan fits context budget.
 Check depth setting and calibrate accordingly.
 </step>
 
+<step name="detect_large_plan">
+After grouping tasks into plans, check if this is a large plan requiring chapterization.
+
+```typescript
+// Count total tasks across all plans
+const totalTasks = plans.reduce((sum, plan) => sum + plan.tasks.length, 0);
+const largePlan = totalTasks > 5;
+
+// Store flag for return to coordinator
+const planMetadata = {
+  large_plan: largePlan,
+  total_tasks: totalTasks,
+  total_plans: plans.length
+};
+```
+
+If `large_plan = true`, coordinator may suggest `/fuska-chapterize` to break into sub-chapters.
+</step>
+
 <step name="confirm_breakdown">
 Present breakdown with batch structure.
 
@@ -1616,6 +1635,7 @@ Return structured planning outcome to coordinator.
 
 **Chapter:** {chapter-name}
 **Plans:** {N} plan(s) in {M} batch(s)
+**Large Plan:** {yes/no} ({total_tasks} tasks)
 
 ### Batch Structure
 
@@ -1644,6 +1664,9 @@ _N decisions logged during planning_
 Execute: `/fuska-build {chapter}`
 
 *`/new` first - fresh context window*
+
+{If large_plan = yes:}
+**Note:** This plan has {total_tasks} tasks (>5). Consider `/fuska-chapterize` to break into sub-chapters for better context management.
 ```
 
 ## Checkpoint Reached
