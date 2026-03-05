@@ -690,6 +690,8 @@ Each mode adds layers of validation:
 | `researched` | **Research** → Plan → Plan Check → Build → Code Review | Need to investigate before planning |
 | `verified` | Research → Plan → Plan Check → Build → Code Review → **Verification** | High-stakes changes, need post-build verification |
 
+> **Tip:** If your `/fuska-do` discussion grows complex with 5+ tasks, run `/fuska-chapterize` with no arguments. Fuska extracts tasks from the conversation and creates a structured chapter — ready for the full planning workflow.
+
 ---
 
 ## Part 10 — Session Continuity: Just Pick Up Where You Left Off

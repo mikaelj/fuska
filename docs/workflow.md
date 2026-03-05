@@ -322,6 +322,161 @@ Command for step 1:
 ```
 | 2 | <nobr>`/fuska-check-todos`</nobr> | — | Shows 1 open todo: "Investigate Instacart API for shopping list export" (from earlier). No new todos from the fix. |
 
+### Transforming Large Plans
+
+When planning sessions grow beyond 5 tasks, chapterize them for better context management.
+
+#### Auto-Suggestion from /fuska-do
+
+```bash
+/fuska-do checked implement complex authentication system
+
+# Planner creates plan with 8 tasks
+# Review loop displays:
+#
+# ? Review plan:
+#   > Execute now
+#     Ask a question
+#     Chapterize this plan        ← Auto-appears for large plans
+#     Modify the plan
+#     Save and exit
+
+# Select "Chapterize this plan"
+# → fuska-do suggests: "Run /fuska-chapterize task-029-large-auth"
+
+/new
+/fuska-chapterize task-029-large-auth
+# Interactive prompts:
+# ? Chapter name: User Authentication System
+# ? Chapter goal: Secure user authentication with OAuth and JWT
+# ? Chapter number: 03
+# ? Research domain? [Yes/No]
+
+# Creates: chapter-03 with 3 subplans (3-3-2 task split)
+# Result: chapter-03-plan-01, chapter-03-plan-02, chapter-03-plan-03
+```
+
+#### Manual Trigger from Planning Discussion
+
+```bash
+# Long planning conversation with AI...
+# "We need to handle rate limiting, caching, retries, backoff, monitoring, alerts..."
+# (discussion continues with 7-8 tasks emerging)
+
+# User: "This is getting complex. Let's break this into a chapter."
+
+/fuska-chapterize
+# Context mode: extracts tasks from current conversation
+# Interactive prompts:
+# ? Chapter name: API Rate Limiting & Resilience
+# ? Chapter goal: Robust API with rate limiting, caching, and monitoring
+# ? Research domain? [Yes/No]
+
+# Creates chapter structure from current context
+# Each subplan gets 2-3 tasks (vertical slices)
+```
+
+#### Context Mode: From Conversation to Chapter
+
+Use context mode when a planning discussion has evolved into actionable work.
+
+**Trigger:**
+```bash
+/fuska-chapterize
+```
+
+**What happens:**
+1. Agent extracts objective, purpose, and tasks from conversation
+2. Prompts for chapter name and goal
+3. Asks whether to research domain
+4. Groups tasks into subplans (2-3 tasks each, vertical slices)
+5. Creates chapter concept in MegaMemory
+6. Creates subplan concepts with proper dependencies
+
+**Example workflow:**
+```bash
+# Long conversation about API rate limiting...
+# User: "This is getting complex. Let's break this into a chapter."
+/fuska-chapterize
+
+# ? Chapter name: API Rate Limiting & Resilience
+# ? Chapter goal: Robust API with rate limiting, caching, and monitoring
+# ? Research domain? No
+
+# Creates: chapter-03 with 3 subplans
+# Result: chapter-03-plan-01, chapter-03-plan-02, chapter-03-plan-03
+```
+
+**When to use context mode:**
+- Planning discussion grew beyond 5-6 tasks
+- You've been brainstorming and want to formalize
+- After saying "create a chapter of this"
+- When you want to preserve conversation context as structured work
+
+**Explicit mode vs Context mode:**
+
+| Aspect | Explicit mode | Context mode |
+|--------|---------------|--------------|
+| **Input** | Plan ID from MegaMemory | Current conversation |
+| **Best for** | Known large plan | Evolved discussions |
+| **Example** | `/fuska-chapterize task-015` | `/fuska-chapterize` |
+| **Extraction** | Loads existing plan | Extracts from chat |
+| **Research** | Optional (flag or prompt) | Optional (prompt) |
+
+**Troubleshooting:**
+- **No clear tasks?** Agent prompts for clarification if conversation lacks actionable items
+- **Cancel mid-prompts?** Safe to cancel — no partial state created in MegaMemory
+- **Next steps?** After chapterization, run `/fuska-plan 03` to plan first subplan
+
+#### Plain-Language Trigger
+
+In any planning conversation, you can trigger chapterization with natural language:
+
+```
+"Chapterize this plan"
+"Break this into chapters"
+"Transform this into a chapter structure"
+"Let's make this a chapter with subplans"
+```
+
+The AI recognizes these phrases and runs `/fuska-chapterize` in context mode.
+
+#### With Research Phase
+
+```bash
+/fuska-chapterize task-015-payment-system --research
+
+# Explicit mode with research enabled
+# Queries MegaMemory for payment processing patterns:
+# - Standard stack (Stripe, Braintree, PayPal)
+# - Architecture patterns (idempotency, webhooks, retries)
+# - Common pitfalls (race conditions, duplicate charges)
+
+# Creates research concept: chapter-05-research
+# Subplans informed by domain patterns
+# Each plan includes research-backed verification steps
+```
+
+#### After Chapterization
+
+The chapter is created but **not added to roadmap**. Next steps:
+
+```bash
+# Add chapter to roadmap
+/fuska-add-chapter "User Authentication System"
+
+# Or manually update roadmap concept with new chapter
+
+# Plan the first subplan
+/fuska-plan 03
+
+# Or plan all subplans sequentially
+/fuska-plan 03
+# After completion...
+/fuska-plan 03
+# (auto-detects next subplan)
+```
+
 ### Code Review Catching a Bug (Real-World Example)
 
 *You run `/fuska-do checked` to improve the config mode display — replacing misleading percentages with actual agent pipelines. The code reviewer catches a typo that would have broken the display. See [fuska-do-session-distilled.md](fuska-do-session-distilled.md) for the full annotated walkthrough.*

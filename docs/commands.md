@@ -134,6 +134,56 @@ Use `--json` for machine-readable output.
 | <nobr>`/fuska-insert-chapter`</nobr> | Insert chapter between existing chapters | `<N> <desc>` -- position and description |
 | <nobr>`/fuska-remove-chapter`</nobr> | Remove chapter from project | `<N>` -- chapter number |
 
+### Plan Management
+
+| Command | Description | Arguments |
+|---------|-------------|-----------|
+| <nobr>`/fuska-chapterize`</nobr> | Transform large plans or planning context into chapter structures with subplans | `[plan-id] [--research]` -- optional plan ID, optional research flag |
+
+**`/fuska-chapterize` modes:**
+
+**Two modes:**
+
+1. **Explicit mode** (`/fuska-chapterize task-015-large-feature`)
+   - Loads plan from MegaMemory by ID
+   - Use when: You have a known large plan that needs restructuring
+   - Requires: Plan concept ID
+
+2. **Context mode** (`/fuska-chapterize`)
+   - Extracts tasks from current conversation
+   - Use when: Planning discussion evolved into actionable work
+   - Requires: Current conversation with 5+ tasks discussed
+
+**Research flag** (`--research`): Enable research phase (skip interactive prompt)
+
+**Auto-detection:**
+- `/fuska-do` automatically suggests chapterization for plans with >5 tasks
+- Fuska-planner marks plans with `large_plan=true` flag when exceeding threshold
+- Select "Chapterize this plan" in review loop to trigger manually
+
+**Context mode example:**
+```bash
+# Planning conversation about API rate limiting...
+# "We need rate limiting, caching, retries, backoff, monitoring..."
+# (discussion continues with 7-8 tasks emerging)
+
+/fuska-chapterize
+# ? Chapter name: API Rate Limiting & Resilience
+# ? Chapter goal: Robust API with rate limiting, caching, and monitoring
+# ? Research domain? No
+
+# Creates: chapter-03 with 3 subplans (3-3-2 task split)
+# Result: chapter-03-plan-01, chapter-03-plan-02, chapter-03-plan-03
+```
+
+**Mode comparison:**
+| Mode | Use When | Example |
+|------|----------|---------|
+| Explicit | Known large plan | `/fuska-chapterize task-015` |
+| Context | Evolved discussion | `/fuska-chapterize` |
+
+**See also:** [workflow.md](workflow.md#transforming-large-plans) for detailed examples
+
 ### Milestones
 
 | Command | Description | Arguments |

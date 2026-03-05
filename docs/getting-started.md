@@ -130,6 +130,47 @@ Scans your project and discovers tech stack, architecture patterns, business dom
 
 At any point, run `/fuska` (bare) to see where you are and what to do next.
 
+### Handling Large Planning Sessions
+
+When planning grows complex with many tasks, break it into chapters:
+
+**Auto-detection:**
+- `/fuska-do` automatically suggests "Chapterize this plan" for large plans
+- Fuska-planner marks large plans with `large_plan=true` flag
+
+**Manual trigger:**
+```bash
+# Explicit mode — from plan ID
+/fuska-chapterize task-015-complex-feature
+
+# Context mode — from current conversation
+/fuska-chapterize
+# → Extracts objective, purpose, tasks from your planning discussion
+# → Prompts for chapter name and goal
+# → Creates chapter with subplans (2-3 tasks each)
+
+# With research phase
+/fuska-chapterize task-015-complex-feature --research
+```
+
+**When to use context mode:**
+- Your planning conversation evolved into 5+ actionable tasks
+- You want to formalize a brainstorming session
+- After saying "create a chapter of this" or "chapterize this plan"
+
+**What gets extracted:**
+- **Objective** — The high-level goal from your discussion
+- **Purpose** — Why this work matters
+- **Tasks** — Actionable items mentioned (each with name, action, files)
+
+**Plain-language trigger:**
+```
+"Chapterize this plan"
+"Break this into chapters"
+```
+
+Chapterization creates a chapter structure with subplans (2-3 tasks each) for better context management during execution. For detailed examples, see [workflow.md](workflow.md#transforming-large-plans).
+
 ---
 
 ## Platform Notes
