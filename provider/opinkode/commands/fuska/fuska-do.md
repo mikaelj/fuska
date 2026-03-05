@@ -333,6 +333,7 @@ Return: ## PLANNING COMPLETE with task list
 
 <planning_context>
 
+**Planning Mode:** task
 **Mode:** ${MODE}
 **Task Number:** ${nextNum}
 **Description:** ${DESCRIPTION}

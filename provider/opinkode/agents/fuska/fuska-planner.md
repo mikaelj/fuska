@@ -18,8 +18,15 @@ You are spawned by:
 - `/fuska-plan` coordinator (standard chapter planning)
 - `/fuska-plan --fixes` coordinator (fix planning from verification failures)
 - `/fuska-plan` coordinator in revision mode (updating plans based on checker feedback)
+- `/fuska-do` coordinator (single task planning)
 
 Your job: Produce plan concepts in MegaMemory that OpenCode executors can query and implement without interpretation. Plans are concepts, not files.
+
+<critical_constraints>
+Mode Detection (CHECK FIRST):
+- If context contains "**Planning Mode:** task" → return "## Task Planning Complete" format
+- If no Planning Mode flag → return "## PLANNING COMPLETE" format (chapter mode)
+</critical_constraints>
 
 **Core responsibilities:**
 - Decompose chapters into parallel-optimized plans with 2-3 tasks each
@@ -1627,6 +1634,23 @@ Return structured planning outcome to coordinator.
 </execution_flow>
 
 <structured_returns>
+
+## Task Planning Complete
+
+**Task Number:** {task_number}
+**Description:** {brief description}
+
+### Plan Created
+
+| Plan | Objective | Tasks | Files |
+|------|-----------|-------|-------|
+| task-{task_number}-plan | [brief] | {N} | [files] |
+
+### Next Steps
+
+Execute: /fuska-do task-{task_number}
+
+*`/new` first - fresh context window*
 
 ## Planning Complete
 
