@@ -82,51 +82,93 @@ If response.roots.length === 0:
 
 ---
 
-## 3. Load State and Roadmap
+## 3. Load State and Roadmap (Initiative-Scoped)
 
-**Step 3.1: Query state concept**
-
-```
-megamemory_understand(query="state", top_k=5)
-```
-
-**Step 3.2: Check state exists**
-
-If response.matches.length === 0:
-→ Display: "State concept not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
-
-**Step 3.3: Extract state data**
-
-If response.matches.length > 0:
-```
-const stateSummaryString = response.matches[0].summary
-const stateData = JSON.parse(stateSummaryString)
-const currentChapter = stateData.current_chapter
-const currentChapterNumber = parseInt(currentChapter.replace('chapter-', ''))
-```
-
-**Step 3.4: Query roadmap concept**
+**Step 3.1: Load ALL concepts and scope to current initiative**
 
 ```
-megamemory_understand(query="roadmap", top_k=5)
+megamemory_understand(query="config concepts roadmap state", top_k=10000)
 ```
 
-**Step 3.5: Check roadmap exists**
+**Step 3.2: Find config with current_initiative**
 
-If response.matches.length === 0:
-→ Display: "Roadmap concept not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
-
-**Step 3.6: Extract roadmap data**
-
-If response.matches.length > 0:
 ```
-const roadmapId = response.matches[0].id
-const roadmapSummaryString = response.matches[0].summary
-const roadmapData = JSON.parse(roadmapSummaryString)
+const configNode = response.matches?.find(node => {
+  if (node.name !== 'config' || node.kind !== 'config') return false;
+  try {
+    const data = JSON.parse(node.summary);
+    return 'current_initiative' in data;
+  } catch {
+    return false;
+  }
+});
+
+if (!configNode) {
+  ERROR: No config concept with current_initiative found
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const currentInitiative = JSON.parse(configNode.summary).current_initiative;
+```
+
+**Step 3.3: Find initiative root**
+
+```
+const initiativeRoot = response.matches?.find(node =>
+  node.name === currentInitiative &&
+  node.kind === 'feature' &&
+  !node.parent_id
+);
+
+if (!initiativeRoot) {
+  ERROR: Initiative '${currentInitiative}' not found
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const initiativeId = initiativeRoot.id;
+```
+
+**Step 3.4: Find state scoped to initiative**
+
+```
+const stateNode = response.matches?.find(node =>
+  node.name === 'state' &&
+  node.kind === 'config' &&
+  node.parent_id === initiativeId
+);
+
+if (!stateNode) {
+  ERROR: State concept not found for initiative '${currentInitiative}'
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const stateSummaryString = stateNode.summary;
+const stateData = JSON.parse(stateSummaryString);
+const currentChapter = stateData.current_chapter;
+const currentChapterNumber = parseInt(currentChapter.replace('chapter-', ''));
+```
+
+**Step 3.5: Find roadmap scoped to initiative**
+
+```
+const roadmapNode = response.matches?.find(node =>
+  node.name === 'roadmap' &&
+  node.kind === 'module' &&
+  node.parent_id === initiativeId
+);
+
+if (!roadmapNode) {
+  ERROR: Roadmap concept not found for initiative '${currentInitiative}'
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const roadmapId = roadmapNode.id;
+const roadmapSummaryString = roadmapNode.summary;
+const roadmapData = JSON.parse(roadmapSummaryString);
 ```
 
 ---
@@ -179,21 +221,24 @@ Exit.
 
 **Step 5.2: Check for completed work**
 
-Query plan concepts for this chapter:
+Filter plan concepts for this chapter from the allConcepts response:
 
 ```
-megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
-```
+const planConcepts = response.matches?.filter(node =>
+  node.name.startsWith(`${chapterSlug}-plan-`) &&
+  !node.name.endsWith('-summary') &&
+  node.kind === 'feature'
+) || [];
 
-If response.matches.length > 0:
+if (planConcepts.length > 0) {
 
-Query summary concepts for this chapter:
+  const summaryConcepts = response.matches?.filter(node =>
+    node.name.startsWith(`${chapterSlug}-plan-`) &&
+    node.name.endsWith('-summary') &&
+    node.kind === 'component'
+  ) || [];
 
-```
-megamemory_understand(query=`${chapterSlug}-summary`, top_k=20)
-```
-
-If summary concepts exist:
+  if (summaryConcepts.length > 0) {
 
 ```
 ERROR: Chapter {chapterNumber} has completed work
@@ -315,7 +360,7 @@ const updatedStateData = {
 **Step 9.2: Update state concept**
 
 ```
-const stateId = response.matches[0].id  // From step 3.3
+const stateId = stateNode.id  // From step 3.4
 
 megamemory_update_concept(
   id=stateId,

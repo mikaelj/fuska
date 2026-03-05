@@ -79,29 +79,73 @@ Stop.
 
 ---
 
-## 3. Load Roadmap from MegaMemory
+## 3. Load Roadmap from MegaMemory (Initiative-Scoped)
 
-**Step 3.1: Query roadmap concept**
+**Step 3.1: Load ALL concepts and scope to current initiative**
 
 Call:
 ```
-megamemory_understand(query="roadmap", top_k=5)
+megamemory_understand(query="config concepts roadmap state", top_k=10000)
 ```
 
-**Step 3.2: Check roadmap exists**
+**Step 3.2: Find config with current_initiative**
 
-If response.matches.length === 0:
-→ Display: "Roadmap concept not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
-
-**Step 3.3: Extract roadmap data**
-
-If response.matches.length > 0:
 ```
-const roadmapId = response.matches[0].id
-const roadmapSummaryString = response.matches[0].summary
-const roadmapData = JSON.parse(roadmapSummaryString)
+const configNode = response.matches?.find(node => {
+  if (node.name !== 'config' || node.kind !== 'config') return false;
+  try {
+    const data = JSON.parse(node.summary);
+    return 'current_initiative' in data;
+  } catch {
+    return false;
+  }
+});
+
+if (!configNode) {
+  ERROR: No config concept with current_initiative found
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const currentInitiative = JSON.parse(configNode.summary).current_initiative;
+```
+
+**Step 3.3: Find initiative root**
+
+```
+const initiativeRoot = response.matches?.find(node =>
+  node.name === currentInitiative &&
+  node.kind === 'feature' &&
+  !node.parent_id
+);
+
+if (!initiativeRoot) {
+  ERROR: Initiative '${currentInitiative}' not found
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const initiativeId = initiativeRoot.id;
+```
+
+**Step 3.4: Find roadmap scoped to initiative**
+
+```
+const roadmapNode = response.matches?.find(node =>
+  node.name === 'roadmap' &&
+  node.kind === 'module' &&
+  node.parent_id === initiativeId
+);
+
+if (!roadmapNode) {
+  ERROR: Roadmap concept not found for initiative '${currentInitiative}'
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const roadmapId = roadmapNode.id;
+const roadmapSummaryString = roadmapNode.summary;
+const roadmapData = JSON.parse(roadmapSummaryString);
 
 const chapters = roadmapData.chapters || []
 const currentMilestone = roadmapData.current_milestone
@@ -229,23 +273,28 @@ Display: "Roadmap updated"
 
 ## 9. Update State Concept
 
-**Step 9.1: Query state concept**
+**Step 9.1: Find state scoped to initiative**
 
-Call:
+From the allConcepts response in Step 3.1:
 ```
-megamemory_understand(query="state", top_k=5)
+const stateNode = response.matches?.find(node =>
+  node.name === 'state' &&
+  node.kind === 'config' &&
+  node.parent_id === initiativeId
+);
+
+if (!stateNode) {
+  WARN: No state concept found for initiative '${currentInitiative}'
+  → Continue without updating state
+  → Skip to Step 10
+}
+
+const stateId = stateNode.id;
+const stateSummaryString = stateNode.summary;
+const stateData = JSON.parse(stateSummaryString);
 ```
 
-**Step 9.2: Check state exists**
-
-If response.matches.length > 0:
-```
-const stateId = response.matches[0].id
-const stateSummaryString = response.matches[0].summary
-const stateData = JSON.parse(stateSummaryString)
-```
-
-**Step 9.3: Add roadmap evolution entry**
+**Step 9.2: Add roadmap evolution entry**
 
 ```
 const roadmapEvolution = stateData.roadmap_evolution || []
@@ -262,7 +311,7 @@ const updatedStateData = {
 }
 ```
 
-**Step 9.4: Update state concept**
+**Step 9.3: Update state concept**
 
 Call:
 ```

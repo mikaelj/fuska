@@ -53,23 +53,39 @@ megamemory_understand(query="state", top_k=5)
 
 Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
 
-## 1. Load Audit Results from MegaMemory
+## 1. Load Initiative Context and Audit Results
 
-**Step 1.1: Query verification concept**
+**Step 1.1: Load current initiative**
+
 ```
-megamemory_understand(query="verification", top_k=10)
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
-**Step 1.2: Check for verification concept**
+**Step 1.2: Query verification concept scoped by initiative**
+```
+const verificationNode = allConcepts.matches?.find(n =>
+  n.name.includes('-verification') && n.parent_id === initiativeId
+)
+```
 
-If response.matches.length === 0:
-→ Display: "No verification concept found in MegaMemory"
+**Step 1.3: Check for verification concept**
+
+If verificationNode does not exist:
+→ Display: "No verification concept found for current initiative"
 → Suggest: "Run /fuska-audit first to create audit results"
 → Stop
 
-**Step 1.3: Extract verification data**
+**Step 1.4: Extract verification data**
 ```
-const verificationSummaryString = response.matches[0].summary
+const verificationSummaryString = verificationNode.summary
 const verificationData = JSON.parse(verificationSummaryString)
 
 const gaps = verificationData.gaps || {
@@ -79,7 +95,7 @@ const gaps = verificationData.gaps || {
 }
 ```
 
-**Step 1.4: Check for gaps**
+**Step 1.5: Check for gaps**
 
 If gaps.requirements.length === 0 AND gaps.integration.length === 0 AND gaps.flows.length === 0:
 → Display: "No gaps found in verification concept"
@@ -88,14 +104,16 @@ If gaps.requirements.length === 0 AND gaps.integration.length === 0 AND gaps.flo
 
 ## 2. Load Prioritization Context
 
-**Step 2.1: Query requirements**
+**Step 2.1: Query requirements scoped by initiative**
 ```
-megamemory_understand(query="requirements", top_k=50)
+const requirementConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('req-') && n.kind === 'feature' && n.parent_id === initiativeId
+)
 ```
 
 **Step 2.2: Extract requirement data**
 ```
-const requirementConcepts = response.matches.map(match => {
+const requirements = requirementConcepts.map(match => {
   const summaryString = match.summary
   const reqData = JSON.parse(summaryString)
   return {
@@ -108,22 +126,24 @@ const requirementConcepts = response.matches.map(match => {
 
 Build priority lookup map:
 ```
-const priorityMap = requirementConcepts.reduce((map, req) => {
+const priorityMap = requirements.reduce((map, req) => {
   map[req.id] = req.priority
   return map
 }, {})
 ```
 
-**Step 2.3: Query roadmap**
+**Step 2.3: Query roadmap scoped by initiative**
 ```
-megamemory_understand(query="roadmap", top_k=5)
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' && n.kind === 'module' && n.parent_id === initiativeId
+)
 ```
 
 **Step 2.4: Extract roadmap data**
 ```
-const roadmapSummaryString = response.matches[0].summary
+const roadmapSummaryString = roadmapNode.summary
 const roadmapData = JSON.parse(roadmapSummaryString)
-const roadmapId = response.matches[0].id
+const roadmapId = roadmapNode.id
 ```
 
 ## 3. Prioritize Gaps
@@ -344,15 +364,17 @@ newChapters.forEach(chapter => {
 
 ## 9. Update State Concept
 
-**Step 9.1: Query state concept**
+**Step 9.1: Query state concept scoped by initiative**
 ```
-megamemory_understand(query="state", top_k=5)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
 ```
 
 **Step 9.2: Extract state data**
 ```
-const stateId = response.matches[0].id
-const stateSummaryString = response.matches[0].summary
+const stateId = stateNode.id
+const stateSummaryString = stateNode.summary
 const stateData = JSON.parse(stateSummaryString)
 ```
 

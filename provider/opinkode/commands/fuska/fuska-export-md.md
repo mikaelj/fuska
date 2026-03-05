@@ -86,23 +86,30 @@ Confirm: "Exporting to: $outputDir"
 
 ---
 
-## 2. Export Project Root
+## 2. Load Initiative Context and Export Project Root
 
-**Step 2.1: Query project-root concept**
+**Step 2.1: Load current initiative**
 
-Call:
 ```
-megamemory_understand(query="project-root", top_k=1)
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
-If response.matches.length === 0:
-→ Display: "Initiative root concept not found"
+If initiativeId is null:
+→ Display: "No current initiative set in config"
 → Stop
 
 **Step 2.2: Extract project data**
 
 ```
-const projectSummaryString = response.matches[0].summary
+const projectSummaryString = initiativeRoot.summary
 const projectData = JSON.parse(projectSummaryString)
 
 const initiativeName = projectData.name
@@ -152,20 +159,19 @@ Confirm: "[OK] PROJECT.md exported"
 
 ## 3. Export Requirements
 
-**Step 3.1: Query requirements module**
+**Step 3.1: Query requirements scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="requirements", top_k=5)
+const requirementConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('req-') && n.kind === 'feature' && n.parent_id === initiativeId
+)
 ```
 
 **Step 3.2: Extract requirements**
 
-If response.matches.length > 0:
+If requirementConcepts.length > 0:
 ```
-const requirementsConcepts = response.matches.filter(m => m.kind === 'feature' || m.name.startsWith('req-'))
-
-const allRequirements = requirementsConcepts.map(match => {
+const allRequirements = requirementConcepts.map(match => {
   const summaryString = match.summary
   const reqData = JSON.parse(summaryString)
   return {
@@ -204,18 +210,19 @@ Confirm: "[OK] REQUIREMENTS.md exported (${allRequirements.length} requirements)
 
 ## 4. Export Roadmap
 
-**Step 4.1: Query roadmap concept**
+**Step 4.1: Query roadmap concept scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="roadmap", top_k=1)
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' && n.kind === 'module' && n.parent_id === initiativeId
+)
 ```
 
 **Step 4.2: Extract roadmap data**
 
-If response.matches.length > 0:
+If roadmapNode exists:
 ```
-const roadmapSummaryString = response.matches[0].summary
+const roadmapSummaryString = roadmapNode.summary
 const roadmapData = JSON.parse(roadmapSummaryString)
 
 const currentMilestone = roadmapData.current_milestone
@@ -226,7 +233,7 @@ const chapters = roadmapData.chapters
 
 For each chapter in roadmapData.chapters:
 ```
-megamemory_understand(query=`${chapter.slug}`, top_k=1)
+const chapterNode = allConcepts.matches?.find(n => n.name === chapter.slug && n.parent_id === initiativeId)
 ```
 
 Extract chapter name, goal, status from each chapter concept.
@@ -273,18 +280,19 @@ Confirm: "[OK] ROADMAP.md exported (${chapters.length} chapters)"
 
 ## 5. Export State
 
-**Step 5.1: Query state concept**
+**Step 5.1: Query state concept scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="state", top_k=1)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
 ```
 
 **Step 5.2: Extract state data**
 
-If response.matches.length > 0:
+If stateNode exists:
 ```
-const stateSummaryString = response.matches[0].summary
+const stateSummaryString = stateNode.summary
 const stateData = JSON.parse(stateSummaryString)
 ```
 
@@ -332,19 +340,10 @@ Confirm: "[OK] STATE.md exported"
 
 ## 6. Export Config
 
-**Step 6.1: Query config concept**
+**Step 6.1: Query config concept scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="config", top_k=1)
-```
-
-**Step 6.2: Extract config data**
-
-If response.matches.length > 0:
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
+const configData = configNode ? JSON.parse(configNode.summary) : {}
 const aliases = configData.model_aliases || {}
 const gitMessageModel = aliases.explore_model || aliases.budget_model
 ```
@@ -363,18 +362,17 @@ Confirm: "[OK] config.json exported"
 
 ## 7. Export Milestones
 
-**Step 7.1: Query milestones module**
+**Step 7.1: Query milestone concepts scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="milestones", top_k=5)
+const milestoneConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('milestone-') && n.parent_id === initiativeId
+)
 ```
 
 **Step 7.2: Extract milestone concepts**
 
 ```
-const milestoneConcepts = response.matches.filter(m => m.name.startsWith('milestone-'))
-
 const milestones = milestoneConcepts.map(match => {
   const summaryString = match.summary
   const milestoneData = JSON.parse(summaryString)
@@ -416,19 +414,17 @@ Confirm: "[OK] MILESTONES.md exported (${milestones.length} milestones)"
 
 ## 8. Export Chapters
 
-**Step 8.1: Query all chapter concepts**
+**Step 8.1: Query all chapter concepts scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="chapter-", top_k=50)
+const chapterConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('chapter-') && n.parent_id === initiativeId
+)
 ```
 
 **Step 8.2: Group by chapter**
 
 ```
-const chapterConcepts = response.matches.filter(m => m.name.startsWith('chapter-'))
-
-// Group by chapter slug (e.g., chapter-01)
 const chapterGroups = {}
 chapterConcepts.forEach(match => {
   const chapterSlug = match.name.split('-')[0] + '-' + match.name.split('-')[1]
@@ -678,11 +674,12 @@ Confirm: "[OK] Chapter ${chapterSlug} exported (context: ${chapterGroup.context.
 
 ## 9. Export Todos
 
-**Step 9.1: Query todos module**
+**Step 9.1: Query todos scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="todos", top_k=50)
+const todoConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('todo-') && n.kind === 'feature' && n.parent_id === initiativeId
+)
 ```
 
 **Step 9.2: Create todo directories**
@@ -695,8 +692,6 @@ mkdir -p "$outputDir/todos/done"
 **Step 9.3: Extract todo concepts**
 
 ```
-const todoConcepts = response.matches.filter(m => m.name.startsWith('todo-'))
-
 const todos = todoConcepts.map(match => {
   const summaryString = match.summary
   const todoData = JSON.parse(summaryString)

@@ -106,23 +106,39 @@ If response.roots.length === 0:
 
 ---
 
-## 2. Load Milestone Context
+## 2. Load Initiative Context and Milestone Data
 
-**Step 2.1: Query roadmap concept**
+**Step 2.1: Load current initiative**
 
 ```
-megamemory_understand(query="roadmap", top_k=5)
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
-If response.matches.length === 0:
-→ Display: "Project roadmap not found in MegaMemory"
+**Step 2.2: Query roadmap concept scoped by initiative**
+
+```
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' && n.kind === 'module' && n.parent_id === initiativeId
+)
+```
+
+If roadmapNode does not exist:
+→ Display: "Project roadmap not found for current initiative"
 → Stop
 
-**Step 2.2: Extract roadmap data**
+**Step 2.3: Extract roadmap data**
 
 ```
-const roadmapId = response.matches[0].id
-const roadmapSummaryString = response.matches[0].summary
+const roadmapId = roadmapNode.id
+const roadmapSummaryString = roadmapNode.summary
 const roadmapData = JSON.parse(roadmapSummaryString)
 const currentMilestone = roadmapData.current_milestone
 const chapters = roadmapData.chapters
@@ -141,15 +157,17 @@ const milestoneChapters = chapters.filter(chapter => chapter.milestone === curre
 const milestoneChapterNumbers = milestoneChapters.map(p => parseInt(p.number || p.name.replace('chapter-', '')))
 ```
 
-**Step 2.5: Query requirements concept**
+**Step 2.5: Query requirements concept scoped by initiative**
 
 ```
-megamemory_understand(query="requirements", top_k=50)
+const requirementConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('req-') && n.kind === 'feature' && n.parent_id === initiativeId
+)
 ```
 
-If response.matches.length > 0:
+If requirementConcepts.length > 0:
 ```
-const requirements = response.matches.map(match => {
+const requirements = requirementConcepts.map(match => {
   const reqSummaryString = match.summary
   const reqData = JSON.parse(reqSummaryString)
   return {
@@ -171,25 +189,23 @@ For each chapter in milestoneChapters:
 ```
 const chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
 
-// Query chapter concept
-megamemory_understand(query=chapterSlug, top_k=1)
-if (response.matches.length > 0) {
-  const chapterSummaryString = response.matches[0].summary
+const chapterNode = allConcepts.matches?.find(n => n.name === chapterSlug && n.parent_id === initiativeId)
+
+if (chapterNode) {
+  const chapterSummaryString = chapterNode.summary
   const chapterData = JSON.parse(chapterSummaryString)
   const chapterStatus = chapterData.status
 }
 
-// Query all plan concepts for this chapter
-megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
-if (response.matches.length > 0) {
-  const totalPlans = response.matches.length
-}
+const planConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith(`${chapterSlug}-plan-`) && !n.name.endsWith('-summary') && n.parent_id === initiativeId
+)
+const totalPlans = planConcepts?.length || 0
 
-// Query all summary concepts for this chapter
-megamemory_understand(query=`${chapterSlug}-summary`, top_k=20)
-if (response.matches.length > 0) {
-  const completedSummaries = response.matches.length
-}
+const summaryConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith(`${chapterSlug}-plan-`) && n.name.endsWith('-summary') && n.parent_id === initiativeId
+)
+const completedSummaries = summaryConcepts?.length || 0
 ```
 
 **Step 3.2: Verify each chapter has completed plans**
@@ -236,11 +252,27 @@ const totalPlans = milestoneChapters.reduce((sum, chapter) => sum + chapter.plan
 const totalTasks = milestoneChapters.reduce((sum, chapter) => sum + chapter.taskCount, 0)
 ```
 
-**Step 4.2: Query all summary concepts for accomplishments**
+**Step 4.2: Query all summary concepts scoped by initiative**
 
 ```
-megamemory_understand(query="summary", top_k=50)
-const allSummaries = response.matches.map(match => {
+const nodeMap = new Map(allConcepts.matches?.map(n => [n.id, n]))
+
+const belongsToInitiative = (nodeId) => {
+  let current = nodeId
+  let depth = 0
+  while (current && depth < 20) {
+    const node = nodeMap.get(current)
+    if (!node) break
+    if (node.parent_id === initiativeId) return true
+    current = node.parent_id
+    depth++
+  }
+  return false
+}
+
+const allSummaries = allConcepts.matches?.filter(n =>
+  n.name.endsWith('-summary') && n.kind === 'component' && belongsToInitiative(n.id)
+).map(match => {
   const summaryString = match.summary
   const summaryData = JSON.parse(summaryString)
   return {
@@ -453,18 +485,20 @@ for (const req of requirements) {
 
 ## 7. Update State Concept
 
-**Step 7.1: Query state concept**
+**Step 7.1: Query state concept scoped by initiative**
 
 ```
-megamemory_understand(query="state", top_k=5)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
 ```
 
 **Step 7.2: Update state with milestone completion**
 
-If response.matches.length > 0:
+If stateNode exists:
 ```
-const stateId = response.matches[0].id
-const stateSummaryString = response.matches[0].summary
+const stateId = stateNode.id
+const stateSummaryString = stateNode.summary
 const stateData = JSON.parse(stateSummaryString)
 
 const updatedStateData = {
@@ -491,13 +525,7 @@ megamemory_update_concept(
 **Step 8.1: Query config for branching strategy**
 
 ```
-megamemory_understand(query="config", top_k=5)
-```
-
-If response.matches.length > 0:
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
+const configData = configNode ? JSON.parse(configNode.summary) : {}
 const branchingStrategy = configData.git?.branching_strategy
 const aliases = configData.model_aliases || {}
 const gitMessageModel = aliases.explore_model || aliases.budget_model

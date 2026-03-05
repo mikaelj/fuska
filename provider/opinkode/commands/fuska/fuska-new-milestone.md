@@ -68,18 +68,25 @@ If response.roots.length === 0:
 
 ## 2. Load Initiative Context
 
-**Step 2.1: Query project concept**
+**Step 2.1: Load current initiative**
 
-Call:
 ```
-megamemory_understand(query="project", top_k=5)
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
 **Step 2.2: Extract project data**
 
-If response.matches.length > 0:
+If initiativeRoot exists:
 ```
-const projectSummaryString = response.matches[0].summary
+const projectSummaryString = initiativeRoot.summary
 const projectData = JSON.parse(projectSummaryString)
 
 const currentMilestone = projectData.current_milestone
@@ -87,18 +94,19 @@ const milestones = projectData.milestones || []
 const validatedRequirements = projectData.validated_requirements || []
 ```
 
-**Step 2.3: Query state concept**
+**Step 2.3: Query state concept scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query="state", top_k=5)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
 ```
 
 **Step 2.4: Extract state data**
 
-If response.matches.length > 0:
+If stateNode exists:
 ```
-const stateSummaryString = response.matches[0].summary
+const stateSummaryString = stateNode.summary
 const stateData = JSON.parse(stateSummaryString)
 
 const pendingTodos = stateData.pending_todos || []
@@ -107,15 +115,8 @@ const blockers = stateData.blockers || []
 
 **Step 2.5: Load config and resolve models**
 
-Call:
 ```
-megamemory_understand(query="config", top_k=5)
-```
-
-If response.matches.length > 0:
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
+const configData = configNode ? JSON.parse(configNode.summary) : {}
 
 const modelProfile = configData.model_profile || "balanced"
 const aliases = configData.model_aliases || {
@@ -568,14 +569,19 @@ Display stage banner:
 
 **Determine starting chapter number:**
 
-Re-use roadmapData from step 2 or query:
+Query roadmap concept scoped by initiative:
 ```
-megamemory_understand(query="roadmap", top_k=5)
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' && n.kind === 'module' && n.parent_id === initiativeId
+)
 ```
 
 Find the last chapter number from previous milestone:
 ```
-const lastChapterNumber = chapters.length > 0 ? Math.max(...chapters.map(p => p.number)) : 0
+const roadmapData = roadmapNode ? JSON.parse(roadmapNode.summary) : { chapters: [] }
+const lastChapterNumber = roadmapData.chapters.length > 0 
+  ? Math.max(...roadmapData.chapters.map(p => p.number)) 
+  : 0
 const startChapterNumber = lastChapterNumber + 1
 ```
 

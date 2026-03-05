@@ -104,22 +104,133 @@ Display:
 
 ### 1.2 Load project state
 
-Store initiative info from roots (first root, or use config's `current_initiative` to pick the right one).
+**Layer 1: Initiative Scoping**
+
+Load current initiative from config using exact matching (not semantic search):
 
 ```
-megamemory:understand({ query: "config", top_k: 5 })
+megamemory:understand({ query: "config concepts", top_k: 10000 })
 ```
 
-Extract `current_initiative`, `projectName` from config/initiative root.
-
+Find the config concept with current_initiative field:
 ```
-megamemory:understand({ query: "state", top_k: 5 })
-megamemory:understand({ query: "roadmap", top_k: 5 })
+const configNode = allConcepts.matches?.find(node => {
+  if (node.name !== 'config' || node.kind !== 'config') return false;
+  try {
+    const data = JSON.parse(node.summary);
+    return 'current_initiative' in data;
+  } catch {
+    return false;
+  }
+});
 ```
 
-Store `stateData`, `roadmapData`.
+Extract `current_initiative` from config. If not found → state is `INIT_ONLY`.
 
-**If no config concept or no roadmap concept exists** → state is `INIT_ONLY`.
+Find initiative root by name AND parent_id===null:
+```
+const initiativeRoot = allConcepts.matches?.find(node =>
+  node.name === currentInitiative &&
+  node.kind === 'feature' &&
+  !node.parent_id  // Root initiative has no parent
+);
+```
+
+If not found → state is `INIT_ONLY`. Store `initiativeId` for scoping all queries.
+
+**Layer 2: Load state and roadmap scoped to initiative**
+
+Load state scoped to initiative:
+```
+const stateNode = allConcepts.matches?.find(node =>
+  node.name === 'state' &&
+  node.kind === 'config' &&
+  node.parent_id === initiativeId
+);
+const stateData = stateNode ? JSON.parse(stateNode.summary) : null;
+```
+
+Load roadmap with dual-path parsing (JSON + node discovery):
+```
+const roadmapNode = allConcepts.matches?.find(node =>
+  node.name === 'roadmap' &&
+  node.kind === 'module' &&
+  node.parent_id === initiativeId
+);
+
+let roadmapData = null;
+let warnings = [];
+
+if (roadmapNode) {
+  // Try JSON parse first
+  try {
+    const parsed = JSON.parse(roadmapNode.summary);
+    if (parsed.chapters && Array.isArray(parsed.chapters)) {
+      roadmapData = parsed;
+    }
+  } catch {
+    // JSON parse failed - will use node discovery below
+  }
+}
+
+// Verify chapter count against actual child nodes
+if (roadmapData) {
+  const actualChapters = allConcepts.matches?.filter(node =>
+    node.name.startsWith('chapter-') &&
+    node.kind === 'feature' &&
+    node.parent_id === initiativeId
+  ) || [];
+  
+  if (roadmapData.chapters.length !== actualChapters.length) {
+    warnings.push(`Roadmap shows ${roadmapData.chapters.length} chapters but found ${actualChapters.length} chapter nodes`);
+    
+    // Use node discovery for accurate data
+    roadmapData = {
+      chapters: actualChapters.map(node => {
+        const data = JSON.parse(node.summary);
+        return {
+          number: data.number,
+          slug: data.slug,
+          name: data.name,
+          status: data.status
+        };
+      }),
+      current_milestone: roadmapData.current_milestone || ''
+    };
+  }
+} else {
+  // No roadmap concept - discover chapters from nodes
+  const chapters = allConcepts.matches?.filter(node =>
+    node.name.startsWith('chapter-') &&
+    node.kind === 'feature' &&
+    node.parent_id === initiativeId
+  ) || [];
+  
+  if (chapters.length > 0) {
+    roadmapData = {
+      chapters: chapters.map(node => {
+        const data = JSON.parse(node.summary);
+        return {
+          number: data.number,
+          slug: data.slug,
+          name: data.name,
+          status: data.status
+        };
+      }),
+      current_milestone: ''
+    };
+  }
+}
+```
+
+**If no state or no roadmap** → state is `INIT_ONLY`.
+
+Display warnings if any:
+```
+if (warnings.length > 0) {
+  console.warn('Warnings:', warnings.join('; '));
+}
+```
 
 ### 1.3 Classify lifecycle position
 
@@ -320,10 +431,21 @@ Display to user:
 
 If the verb has "Auto-detect chapter: yes" AND effectiveArgs does not start with a number:
 
+Load state scoped to initiative (use initiativeId from Step 1.2):
 ```
-megamemory:understand({ query: "state", top_k: 5 })
-const stateData = JSON.parse(response.matches[0].summary)
-const chapterNumber = parseInt(stateData.current_chapter?.replace("chapter-", "")) || 1
+megamemory:understand({ query: "config concepts", top_k: 10000 })
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config');
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null;
+const initiativeRoot = allConcepts.matches?.find(n => n.name === currentInitiative && !n.parent_id);
+const initiativeId = initiativeRoot?.id;
+
+const stateNode = allConcepts.matches?.find(node =>
+  node.name === 'state' &&
+  node.kind === 'config' &&
+  node.parent_id === initiativeId
+);
+const stateData = stateNode ? JSON.parse(stateNode.summary) : null;
+const chapterNumber = parseInt(stateData?.current_chapter?.replace("chapter-", "")) || 1
 effectiveArgs = chapterNumber + (effectiveArgs ? " " + effectiveArgs : "")
 ```
 

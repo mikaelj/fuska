@@ -532,8 +532,22 @@ class ProgressRunner {
   }
 
   private findRecentSummaries(limit: number = 3): Array<{ name: string; data: SummaryData }> {
+    const belongsToInitiative = (nodeId: string): boolean => {
+      let currentId: string | null = nodeId;
+      let depth = 0;
+      while (currentId && depth < 20) {
+        const node = this.nodeMap.get(currentId);
+        if (!node) break;
+        if (node.parent_id === this.currentInitiativeId) return true;
+        if (node.id === this.currentInitiativeId) return true;
+        currentId = node.parent_id;
+        depth++;
+      }
+      return false;
+    };
+
     return this.nodes
-      .filter(n => n.name.includes('-summary'))
+      .filter(n => n.name.includes('-summary') && belongsToInitiative(n.id))
       .map(n => {
         const data = this.parseSummary<SummaryData>(n.summary);
         return data ? { name: n.name, data } : null;
@@ -548,8 +562,22 @@ class ProgressRunner {
   }
 
   private getPendingTodos(): Array<{ name: string; description: string }> {
+    const belongsToInitiative = (nodeId: string): boolean => {
+      let currentId: string | null = nodeId;
+      let depth = 0;
+      while (currentId && depth < 20) {
+        const node = this.nodeMap.get(currentId);
+        if (!node) break;
+        if (node.parent_id === this.currentInitiativeId) return true;
+        if (node.id === this.currentInitiativeId) return true;
+        currentId = node.parent_id;
+        depth++;
+      }
+      return false;
+    };
+
     return this.nodes
-      .filter(n => n.name.startsWith('todo-'))
+      .filter(n => n.name.startsWith('todo-') && belongsToInitiative(n.id))
       .map(n => {
         const data = this.parseSummary<{ status: string; description?: string }>(n.summary);
         return {
@@ -566,8 +594,22 @@ class ProgressRunner {
   }
 
   private getActiveDebugSessions(): Array<{ name: string }> {
+    const belongsToInitiative = (nodeId: string): boolean => {
+      let currentId: string | null = nodeId;
+      let depth = 0;
+      while (currentId && depth < 20) {
+        const node = this.nodeMap.get(currentId);
+        if (!node) break;
+        if (node.parent_id === this.currentInitiativeId) return true;
+        if (node.id === this.currentInitiativeId) return true;
+        currentId = node.parent_id;
+        depth++;
+      }
+      return false;
+    };
+
     return this.nodes
-      .filter(n => n.name.includes('debug-session'))
+      .filter(n => n.name.includes('debug-session') && belongsToInitiative(n.id))
       .filter(n => {
         const data = this.parseSummary<{ status: string }>(n.summary);
         return data?.status !== 'resolved' && data?.status !== 'closed';

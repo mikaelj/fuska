@@ -51,24 +51,68 @@ If response.roots.length === 0:
 → Suggest: "Run fuska init to initialize initiative"
 → Stop
 
-**Step 3: Query state concept**
+**Step 3: Load ALL concepts and scope to current initiative**
 ```
-megamemory_understand(query="state", top_k=5)
+megamemory_understand(query="config concepts roadmap state", top_k=10000)
 ```
 
-**Step 4: Check state exists**
+**Step 4: Find config with current_initiative**
 
-If response.matches.length === 0:
-→ Display: "Initiative state not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
-→ Stop
-
-**Step 5: Extract state data**
-
-If response.matches.length > 0:
 ```
-const stateSummaryString = response.matches[0].summary
-const stateData = JSON.parse(stateSummaryString)
+const configNode = response.matches?.find(node => {
+  if (node.name !== 'config' || node.kind !== 'config') return false;
+  try {
+    const data = JSON.parse(node.summary);
+    return 'current_initiative' in data;
+  } catch {
+    return false;
+  }
+});
+
+if (!configNode) {
+  ERROR: No config concept with current_initiative found
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const currentInitiative = JSON.parse(configNode.summary).current_initiative;
+```
+
+**Step 5: Find initiative root**
+
+```
+const initiativeRoot = response.matches?.find(node =>
+  node.name === currentInitiative &&
+  node.kind === 'feature' &&
+  !node.parent_id
+);
+
+if (!initiativeRoot) {
+  ERROR: Initiative '${currentInitiative}' not found
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const initiativeId = initiativeRoot.id;
+```
+
+**Step 6: Find state scoped to initiative**
+
+```
+const stateNode = response.matches?.find(node =>
+  node.name === 'state' &&
+  node.kind === 'config' &&
+  node.parent_id === initiativeId
+);
+
+if (!stateNode) {
+  ERROR: Initiative state not found in MegaMemory
+  → Suggest: "Run fuska init to initialize initiative"
+  → Stop
+}
+
+const stateSummaryString = stateNode.summary;
+const stateData = JSON.parse(stateSummaryString);
 ```
 </step>
 
@@ -110,27 +154,30 @@ fi
 <step name="verify_target_chapter">
 Verify that the target chapter exists in the roadmap:
 
-**Step 1: Query roadmap concept**
+**Step 1: Find roadmap scoped to initiative**
+
+From the allConcepts response in validate_megamemory step:
 ```
-megamemory_understand(query="roadmap", top_k=5)
+const roadmapNode = response.matches?.find(node =>
+  node.name === 'roadmap' &&
+  node.kind === 'module' &&
+  node.parent_id === initiativeId
+);
+
+if (!roadmapNode) {
+  ERROR: Roadmap not found for initiative '${currentInitiative}'
+  → Stop
+}
+
+const roadmapId = roadmapNode.id;
+const roadmapSummaryString = roadmapNode.summary;
+const roadmapData = JSON.parse(roadmapSummaryString);
 ```
 
-**Step 2: Check roadmap exists**
-
-If response.matches.length === 0:
-→ Display: "ERROR: Roadmap not found in MegaMemory"
-→ Stop
-
-**Step 3: Extract roadmap data**
-```
-const roadmapSummaryString = response.matches[0].summary
-const roadmapData = JSON.parse(roadmapSummaryString)
-```
-
-**Step 4: Search for target chapter**
+**Step 2: Search for target chapter**
 Find chapter with number equal to after_chapter in roadmapData.chapters array.
 
-**Step 5: If not found:**
+**Step 3: If not found:**
 ```
 ERROR: Chapter {after_chapter} not found in roadmap
 Available chapters: [list chapter numbers from roadmapData.chapters]
@@ -138,22 +185,26 @@ Available chapters: [list chapter numbers from roadmapData.chapters]
 
 Stop.
 
-**Step 6: Verify chapter is in current milestone (not completed/archived)**
+**Step 4: Verify chapter is in current milestone (not completed/archived)**
 Check chapter status is not "complete" or "skipped".
 </step>
 
 <step name="find_existing_decimals">
 Find existing decimal chapters after the target chapter:
 
-**Step 1: Query chapter concepts**
+**Step 1: Filter chapter concepts scoped to initiative**
+
+From the allConcepts response in validate_megamemory step:
 ```
-megamemory_understand(query=`chapter-${after_chapter.toString().padStart(2, '0')}`, top_k=20)
+const chapterPrefix = `chapter-${after_chapter.toString().padStart(2, '0')}`;
+const decimalChapters = response.matches?.filter(node =>
+  node.name.startsWith(chapterPrefix) &&
+  node.name.includes('.') &&
+  node.kind === 'feature'
+) || [];
 ```
 
-**Step 2: Extract decimal chapters**
-Filter matches where name matches pattern `{after_chapter}.{N}` and kind is "feature".
-
-**Step 3: Find highest decimal suffix**
+**Step 2: Find highest decimal suffix**
 Parse decimal numbers from matching concept names.
 
 Examples:
@@ -161,7 +212,7 @@ Examples:
 - Chapter 72 with 72.1 → next is 72.2
 - Chapter 72 with 72.1, 72.2 → next is 72.3
 
-**Step 4: Calculate next decimal**
+**Step 3: Calculate next decimal**
 Store as: `decimal_chapter="${after_chapter.toString().padStart(2, '0')}.${next_decimal}"`
 </step>
 
@@ -254,8 +305,10 @@ Preserve all other content exactly (formatting, other chapters).
 Update state concept to reflect the inserted chapter:
 
 **Step 1: Extract state ID**
+
+From the validate_megamemory step:
 ```
-const stateId = stateResponse.matches[0].id
+const stateId = stateNode.id
 ```
 
 **Step 2: Build updated state data**

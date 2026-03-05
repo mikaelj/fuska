@@ -63,17 +63,41 @@ If response.roots.length === 0:
 → Suggest: "Run fuska init to initialize initiative"
 → Stop
 
-**Step 0.3: Query config concept**
+**Step 0.3: Query all concepts and extract config**
 ```
-megamemory_understand(query="config", top_k=5)
-```
+const allConcepts = megamemory_understand(query="config state chapter", top_k=10000)
 
-**Step 0.4: Extract config data**
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
+const configNode = allConcepts.matches?.find(n => {
+  if (n.name !== 'config' || n.kind !== 'config') return false
+  try {
+    const data = JSON.parse(n.summary)
+    return 'current_initiative' in data
+  } catch {
+    return false
+  }
+})
 
+if (!configNode) {
+  console.error('No config concept with current_initiative found')
+  process.exit(1)
+}
+
+const configData = JSON.parse(configNode.summary)
+const currentInitiative = configData.current_initiative
 const modelProfile = configData.model_profile || "balanced"
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative &&
+  n.kind === 'feature' &&
+  !n.parent_id
+)
+
+if (!initiativeRoot) {
+  console.error(`Initiative ${currentInitiative} not found`)
+  process.exit(1)
+}
+
+const initiativeId = initiativeRoot.id
 ```
 
 **Model lookup table (uses aliases):**
@@ -117,27 +141,30 @@ else
 fi
 ```
 
-**Step 1.2: Query chapter concept**
+**Step 1.2: Query chapter concept scoped by initiative**
 ```
-megamemory_understand(query=`${CHAPTER}`, top_k=5)
+const chapterNode = allConcepts.matches?.find(n =>
+  n.name === CHAPTER &&
+  n.kind === 'feature' &&
+  n.parent_id === initiativeId
+)
 ```
 
 **Step 1.3: Check chapter exists**
 
-If response.matches.length === 0:
+If !chapterNode:
 → Display: `Chapter ${CHAPTER} not found in MegaMemory`
 → Suggest: "Query available chapters using megamemory:understand(query='roadmap', top_k=10)"
 → Stop
 
 **Step 1.4: Extract chapter data**
 ```
-const chapterSummaryString = response.matches[0].summary
-const chapterData = JSON.parse(chapterSummaryString)
+const chapterData = JSON.parse(chapterNode.summary)
 
 const chapterNumber = chapterData.number
 const chapterName = chapterData.name
 const chapterGoal = chapterData.goal
-const chapterId = response.matches[0].id
+const chapterId = chapterNode.id
 ```
 
 ## 2. Check Existing Research
@@ -179,16 +206,19 @@ If doesn't exist:
 
 ## 3. Gather Chapter Context
 
-**Step 3.1: Query requirements**
+**Step 3.1: Query requirements scoped by initiative**
 ```
-megamemory_understand(query="requirements", top_k=50)
+const requirementNodes = allConcepts.matches?.filter(n =>
+  n.kind === 'feature' &&
+  n.name.startsWith('req-') &&
+  n.parent_id === initiativeId
+) || []
 ```
 
 **Step 3.2: Extract requirement data**
 ```
-const requirements = response.matches.map(match => {
-  const summaryString = match.summary
-  const reqData = JSON.parse(summaryString)
+const requirements = requirementNodes.map(match => {
+  const reqData = JSON.parse(match.summary)
   return {
     id: match.id,
     description: reqData.description,
@@ -197,29 +227,34 @@ const requirements = response.matches.map(match => {
 })
 ```
 
-**Step 3.3: Query chapter context (if exists)**
+**Step 3.3: Query chapter context scoped by initiative (if exists)**
 ```
-megamemory_understand(query=`${CHAPTER}-context`, top_k=1)
+const contextNode = allConcepts.matches?.find(n =>
+  n.name === `${CHAPTER}-context` &&
+  n.parent_id === chapterId
+)
 ```
 
 **Step 3.4: Extract context data (if exists)**
 ```
 let contextData = null
-if (response.matches.length > 0) {
-  const contextSummaryString = response.matches[0].summary
-  contextData = JSON.parse(contextSummaryString)
+if (contextNode) {
+  contextData = JSON.parse(contextNode.summary)
 }
 ```
 
-**Step 3.5: Query state**
+**Step 3.5: Query state scoped by initiative**
 ```
-megamemory_understand(query="state", top_k=1)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' &&
+  n.kind === 'config' &&
+  n.parent_id === initiativeId
+)
 ```
 
 **Step 3.6: Extract state data**
 ```
-const stateSummaryString = response.matches[0].summary
-const stateData = JSON.parse(stateSummaryString)
+const stateData = stateNode ? JSON.parse(stateNode.summary) : null
 ```
 
 Present summary with chapter description, requirements, prior decisions.

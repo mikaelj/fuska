@@ -42,57 +42,72 @@ Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-in
 
 ---
 
-## 1. Load Project State from MegaMemory
+## 1. Load Initiative Context and Project State
 
 Query MegaMemory for project context to enrich the review.
 
-**Step 1.1:** Query state concept
+**Step 1.1:** Load current initiative
 
 ```
-megamemory_understand(query="state", top_k=5)
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
-If response.concepts.length > 0:
+**Step 1.2:** Query state concept scoped by initiative
+
 ```
-const stateData = JSON.parse(response.concepts[0].summary)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
+```
+
+If stateNode exists:
+```
+const stateData = JSON.parse(stateNode.summary)
 const currentChapter = stateData.current_chapter || null
 const currentPlan = stateData.current_plan || null
 ```
 
-**Step 1.2:** Query plan data if current_plan exists
+**Step 1.3:** Query plan data if current_plan exists
 
 If currentPlan is not null:
 ```
-megamemory_understand(query=currentPlan, top_k=1)
+const planNode = allConcepts.matches?.find(n => n.name === currentPlan)
 ```
 
-If response.concepts.length > 0:
+If planNode exists:
 ```
-const planData = JSON.parse(response.concepts[0].summary)
+const planData = JSON.parse(planNode.summary)
 ```
 
-**Step 1.3:** Query research data if plan has research
+**Step 1.4:** Query research data if plan has research
 
 If planData exists and planData includes research reference:
 ```
-megamemory_understand(query=`${currentPlan}-research`, top_k=1)
+const researchNode = allConcepts.matches?.find(n => n.name === `${currentPlan}-research`)
 ```
 
-If response.concepts.length > 0:
+If researchNode exists:
 ```
-const researchData = JSON.parse(response.concepts[0].summary)
+const researchData = JSON.parse(researchNode.summary)
 ```
 
 ---
 
-## 1.4. Resolve Model
+## 1.5. Resolve Model
 
 Query config to get model profile, then resolve the code-reviewer model.
 
 ```
-const configResult = await megamemory_understand(query="config", top_k=5)
-const configData = configResult.concepts.length > 0 
-  ? JSON.parse(configResult.concepts[0].summary) 
+const configData = configNode
+  ? JSON.parse(configNode.summary)
   : { model_aliases: { budget_model: "zai-coding-plan/glm-4.7" } }
 
 const modelProfile = configData.profiles?.active_profile || "balanced"

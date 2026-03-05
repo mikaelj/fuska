@@ -49,6 +49,13 @@ Chapter: `$ARGUMENTS`
 
 Load all MegaMemory concepts upfront. All subsequent steps use cached results — NO additional queries.
 
+**Step 0.1: Load all concepts**
+```
+const allConcepts = megamemory_understand(query="config state chapter plan", top_k=10000)
+const nodeMap = new Map(allConcepts.matches?.map(n => [n.id, n]) || [])
+```
+
+**Step 0.2: Layer 1 - Initiative Scoping**
 ```
 const chapterNumber = input.match(/\d+/)?.[0]
 const chapterSlug = `chapter-${chapterNumber.padStart(2, '0')}`
@@ -56,19 +63,63 @@ const modeOverride = input.match(/--mode\s+(\S+)/)?.[1] || null
 const hasNoCodeReviewFlag = input.includes("--no-code-review")
 const hasCodeReviewFlag = input.includes("--code-review") && !hasNoCodeReviewFlag
 
-// Load all context in sequence
-const configResponse = megamemory_understand(query="config", top_k=5)
-const stateResponse = megamemory_understand(query="state", top_k=5)
-const chapterResponse = megamemory_understand(query=`chapter ${chapterNumber}`, top_k=5)
-const plansResponse = megamemory_understand(query=`${chapterSlug}-plan`, top_k=20)
+const configNode = allConcepts.matches?.find(n => {
+  if (n.name !== 'config' || n.kind !== 'config') return false
+  try {
+    const data = JSON.parse(n.summary)
+    return 'current_initiative' in data
+  } catch {
+    return false
+  }
+})
 
-// Parse results
-const configData = JSON.parse(configResponse.matches[0]?.summary) || null
-const stateData = JSON.parse(stateResponse.matches[0]?.summary) || null
-const chapterData = JSON.parse(chapterResponse.matches[0]?.summary) || null
-const planConcepts = plansResponse.matches.map(m => ({ id: m.id, name: m.name, ...JSON.parse(m.summary) }))
+if (!configNode) {
+  console.error('No config concept with current_initiative found')
+  process.exit(1)
+}
 
-// Derive computed values
+const currentInitiative = JSON.parse(configNode.summary).current_initiative
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative &&
+  n.kind === 'feature' &&
+  !n.parent_id
+)
+
+if (!initiativeRoot) {
+  console.error(`Initiative ${currentInitiative} not found`)
+  process.exit(1)
+}
+
+const initiativeId = initiativeRoot.id
+```
+
+**Step 0.3: Layer 2 - Load scoped data**
+```
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' &&
+  n.kind === 'config' &&
+  n.parent_id === initiativeId
+)
+
+const chapterNode = allConcepts.matches?.find(n =>
+  n.name === chapterSlug &&
+  n.kind === 'feature' &&
+  n.parent_id === initiativeId
+)
+
+const planConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith(`${chapterSlug}-plan-`) &&
+  !n.name.endsWith('-summary') &&
+  n.kind === 'feature'
+).map(m => ({ id: m.id, name: m.name, ...JSON.parse(m.summary) })) || []
+```
+
+**Step 0.4: Parse results**
+```
+const configData = JSON.parse(configNode.summary)
+const stateData = stateNode ? JSON.parse(stateNode.summary) : null
+const chapterData = chapterNode ? JSON.parse(chapterNode.summary) : null
+
 const modelProfile = configData?.model_profile || "balanced"
 const parallelization = configData?.parallelization !== false
 const commitStrategy = configData?.git?.commit_strategy || 'per-chapter'

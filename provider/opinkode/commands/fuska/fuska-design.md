@@ -40,22 +40,98 @@ Extract implementation decisions that downstream agents need — researcher and 
 
 Chapter number: `$ARGUMENTS` (required)
 
-**Load project state from MegaMemory:**
+**Load all concepts upfront:**
+```
+const allConcepts = megamemory_understand(query="config state chapter roadmap", top_k=10000)
+const nodeMap = new Map(allConcepts.matches?.map(n => [n.id, n]) || [])
+```
 
-Search MegaMemory for the project state using `megamemory:understand` — query for "state".
-The state concept summary is JSON with fields: `current_chapter`, `current_plan`, `status`, `progress`, `last_activity`.
-Extract the current chapter and status to understand where the project stands.
+**Layer 1 - Initiative Scoping:**
+```
+const configNode = allConcepts.matches?.find(n => {
+  if (n.name !== 'config' || n.kind !== 'config') return false
+  try {
+    const data = JSON.parse(n.summary)
+    return 'current_initiative' in data
+  } catch {
+    return false
+  }
+})
 
-**Load chapter information from MegaMemory:**
+if (!configNode) {
+  console.error('No config concept with current_initiative found')
+  process.exit(1)
+}
 
-Search MegaMemory for this chapter using `megamemory:understand` — query for "chapter {CHAPTER}" with top_k=10.
-Chapter concepts are JSON with fields: `number`, `slug`, `name`, `goal`, `status`.
-Extract the chapter goal and status — these define the scope boundary for discussion.
+const currentInitiative = JSON.parse(configNode.summary).current_initiative
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative &&
+  n.kind === 'feature' &&
+  !n.parent_id
+)
 
-**Load relevant knowledge from MegaMemory:**
+if (!initiativeRoot) {
+  console.error(`Initiative ${currentInitiative} not found`)
+  process.exit(1)
+}
 
-Search MegaMemory for prior decisions using `megamemory:understand` — query for "decisions architecture" with top_k=20.
-Look for any previously captured decisions, architectural choices, or constraints that should inform this chapter's discussion.
+const initiativeId = initiativeRoot.id
+```
+
+**Load state scoped by initiative:**
+```
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' &&
+  n.kind === 'config' &&
+  n.parent_id === initiativeId
+)
+
+const stateData = stateNode ? JSON.parse(stateNode.summary) : null
+```
+
+**Load chapter information scoped by initiative:**
+```
+const chapterNode = allConcepts.matches?.find(n =>
+  n.name === chapterSlug &&
+  n.kind === 'feature' &&
+  n.parent_id === initiativeId
+)
+
+const chapterData = chapterNode ? JSON.parse(chapterNode.summary) : null
+```
+
+**Load roadmap with dual-path parsing:**
+```
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' &&
+  n.kind === 'module' &&
+  n.parent_id === initiativeId
+)
+
+let chapters = []
+
+if (roadmapNode) {
+  try {
+    const roadmapData = JSON.parse(roadmapNode.summary)
+    chapters = roadmapData.chapters || []
+  } catch {
+    const chapterConcepts = allConcepts.matches?.filter(n =>
+      n.kind === 'feature' &&
+      n.name.startsWith('chapter-') &&
+      n.parent_id === initiativeId
+    ) || []
+    chapters = chapterConcepts.map(m => {
+      const chapterData = JSON.parse(m.summary)
+      return {
+        number: chapterData.number,
+        slug: chapterData.slug,
+        name: chapterData.name,
+        goal: chapterData.goal
+      }
+    }).sort((a, b) => a.number - b.number)
+  }
+}
+```
 
 </context>
 
@@ -80,55 +156,24 @@ if (!chapterNumber) {
 }
 ```
 
-**Step 1.2: Query roadmap**
+**Step 1.2: Query roadmap with initiative scoping**
 
-Call:
-```
-megamemory_understand(query="roadmap", top_k=5)
-```
+The roadmap was already loaded in the context section above with dual-path parsing. Use the `chapters` array directly.
 
 **Step 1.3: Check roadmap exists**
 
-If response.matches.length === 0:
-→ Display: "Roadmap concept not found in MegaMemory"
-→ Suggest: "Run fuska init to initialize initiative"
+If chapters.length === 0:
+→ Display: "No chapters found in roadmap for current initiative"
+→ Suggest: "Run fuska init to initialize initiative or add chapters"
 → Stop
 
-**Step 1.4: Extract roadmap data**
-
-If response.matches.length > 0:
-```
-const roadmapSummaryString = response.matches[0].summary
-let chapters = []
-
-try {
-  const roadmapData = JSON.parse(roadmapSummaryString)
-  chapters = roadmapData.chapters || []
-} catch (e) {
-  const roadmapId = response.matches[0].id
-  const chapterConcepts = await megamemory:understand({ query: `parent:${roadmapId} chapter`, top_k: 20 })
-  chapters = chapterConcepts.matches
-    .filter(m => m.kind === 'feature' && m.name.startsWith('chapter-'))
-    .map(m => {
-      const chapterData = JSON.parse(m.summary)
-      return {
-        number: chapterData.number,
-        slug: chapterData.slug,
-        name: chapterData.name,
-        goal: chapterData.goal
-      }
-    })
-    .sort((a, b) => a.number - b.number)
-}
-```
-
-**Step 1.5: Find matching chapter**
+**Step 1.4: Find matching chapter**
 
 ```
 const matchingChapter = chapters.find(p => p.number === chapterNumber)
 ```
 
-**Step 1.6: Validate chapter exists**
+**Step 1.5: Validate chapter exists**
 
 If !matchingChapter:
 → Display: `Chapter ${chapterNumber} not found in roadmap`
@@ -142,19 +187,11 @@ for (const chapter of chapters) {
 
 ## 1.7. Present Chapter Design Overview
 
-**Step 1.7.1: Query chapter concept**
+**Step 1.7.1: Use chapter data from context**
 
-Call:
-```
-megamemory_understand(query=`chapter ${chapterNumber}`, top_k=5)
-```
+The chapter was already loaded in the context section above. Use the `chapterData` variable directly.
 
-**Step 1.7.2: Extract chapter data**
-
-If response.matches.length > 0:
 ```
-const chapterSummaryString = response.matches[0].summary
-const chapterData = JSON.parse(chapterSummaryString)
 const chapterName = chapterData.name
 const chapterGoal = chapterData.goal
 const chapterStatus = chapterData.status
@@ -186,17 +223,24 @@ You'll discuss implementation choices for this chapter.
 
 After presenting the chapter overview, surface OpenCode's assumptions before discussion begins. This enables course correction early when assumptions are wrong.
 
-**Step 1.8.1: Query related concepts**
+**Step 1.8.1: Query related concepts scoped by initiative**
 
 ```
-megamemory_understand(query=`${chapterSlug}-research`, top_k=1)
-megamemory_understand(query="requirements", top_k=50)
-megamemory_understand(query="state", top_k=5)
+const researchNode = allConcepts.matches?.find(n =>
+  n.name === `${chapterSlug}-research` &&
+  n.parent_id === chapterNode?.id
+)
+
+const requirementNodes = allConcepts.matches?.filter(n =>
+  n.kind === 'feature' &&
+  n.name.startsWith('req-') &&
+  n.parent_id === initiativeId
+) || []
 ```
 
 **Step 1.8.2: Extract related data**
 
-From requirements, filter those related to this chapter. From research, extract domain insights. From state, get completed chapters for dependency context.
+From requirementNodes, filter those related to this chapter. From researchNode, extract domain insights. From stateData (already loaded), get completed chapters for dependency context.
 
 **Step 1.8.3: Surface assumptions across five areas**
 

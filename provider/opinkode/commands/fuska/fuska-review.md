@@ -39,12 +39,87 @@ Chapter: `$ARGUMENTS` (optional)
 - If provided: Test specific chapter (e.g., "4")
 - If not provided: Check state concept for active chapter
 
-Search MegaMemory for the project state using `megamemory:understand` — query for "state".
-The state concept summary is JSON with fields: `current_chapter`, `current_plan`, `status`, `progress`, `last_activity`.
-Extract these to understand where the project stands.
+**Load all concepts upfront:**
+```
+const allConcepts = megamemory_understand(query="config state chapter summary", top_k=10000)
+const nodeMap = new Map(allConcepts.matches?.map(n => [n.id, n]) || [])
+```
 
-Search MegaMemory for the roadmap using `megamemory:understand` — query for "roadmap".
-The roadmap concept contains the project chapter structure. Extract the chapter list so you know the full sequence and what comes after the current chapter.
+**Layer 1 - Initiative Scoping:**
+```
+const configNode = allConcepts.matches?.find(n => {
+  if (n.name !== 'config' || n.kind !== 'config') return false
+  try {
+    const data = JSON.parse(n.summary)
+    return 'current_initiative' in data
+  } catch {
+    return false
+  }
+})
+
+if (!configNode) {
+  console.error('No config concept with current_initiative found')
+  process.exit(1)
+}
+
+const currentInitiative = JSON.parse(configNode.summary).current_initiative
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative &&
+  n.kind === 'feature' &&
+  !n.parent_id
+)
+
+if (!initiativeRoot) {
+  console.error(`Initiative ${currentInitiative} not found`)
+  process.exit(1)
+}
+
+const initiativeId = initiativeRoot.id
+```
+
+**Load state scoped by initiative:**
+```
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' &&
+  n.kind === 'config' &&
+  n.parent_id === initiativeId
+)
+
+const stateData = stateNode ? JSON.parse(stateNode.summary) : null
+```
+
+**Load roadmap scoped by initiative with dual-path parsing:**
+```
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' &&
+  n.kind === 'module' &&
+  n.parent_id === initiativeId
+)
+
+let chapters = []
+
+if (roadmapNode) {
+  try {
+    const roadmapData = JSON.parse(roadmapNode.summary)
+    chapters = roadmapData.chapters || []
+  } catch {
+    const chapterConcepts = allConcepts.matches?.filter(n =>
+      n.kind === 'feature' &&
+      n.name.startsWith('chapter-') &&
+      n.parent_id === initiativeId
+    ) || []
+    chapters = chapterConcepts.map(m => {
+      const chapterData = JSON.parse(m.summary)
+      return {
+        number: chapterData.number,
+        slug: chapterData.slug,
+        name: chapterData.name,
+        goal: chapterData.goal
+      }
+    }).sort((a, b) => a.number - b.number)
+  }
+}
+```
 
 </context>
 
@@ -74,31 +149,29 @@ const chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
 **Step 1.2: Query state for current chapter (optional)**
 
 If no chapter number provided:
+Use the stateData already loaded in context section above.
 ```
-megamemory_understand(query="state", top_k=5)
-```
-
-If response.matches.length > 0:
-```
-const stateData = JSON.parse(response.matches[0].summary)
-chapterNumber = parseInt(stateData.current_chapter?.replace('chapter-', '') || '1')
-chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
+if (!chapterNumber && stateData) {
+  chapterNumber = parseInt(stateData.current_chapter?.replace('chapter-', '') || '1')
+  chapterSlug = `chapter-${chapterNumber.toString().padStart(2, '0')}`
+}
 ```
 
-**Step 1.3: Query existing verification concept**
+**Step 1.3: Query existing verification concept scoped by initiative**
 
-Call:
 ```
-megamemory_understand(query=`${chapterSlug}-verification`, top_k=1)
+const verificationNode = allConcepts.matches?.find(n =>
+  n.name === `${chapterSlug}-verification` &&
+  n.kind === 'component'
+)
 ```
 
 **Step 1.4: Check if verification exists**
 
-If response.matches.length > 0:
+If verificationNode:
 ```
-const verificationSummaryString = response.matches[0].summary
-const verificationData = JSON.parse(verificationSummaryString)
-const verificationId = response.matches[0].id
+const verificationData = JSON.parse(verificationNode.summary)
+const verificationId = verificationNode.id
 const verificationExists = true
 ```
 
@@ -109,16 +182,11 @@ const verificationId = null
 const verificationData = null
 ```
 
-**Step 1.4a: Query config for model resolution**
+**Step 1.4a: Extract config for model resolution**
 
+Use the configNode already loaded in context section above.
 ```
-megamemory_understand(query="config", top_k=5)
-```
-
-If response.matches.length > 0:
-```
-const configSummaryString = response.matches[0].summary
-const configData = JSON.parse(configSummaryString)
+const configData = JSON.parse(configNode.summary)
 const aliases = configData.model_aliases || {}
 const gitMessageModel = aliases.explore_model || aliases.budget_model
 ```
@@ -149,26 +217,42 @@ If user chooses "Start fresh":
 
 ## 2. Find Summary Concepts for Chapter
 
-**Step 2.1: Query summary concepts**
+**Step 2.1: Query summary concepts with parent chain filtering**
 
-Call:
 ```
-megamemory_understand(query=`${chapterSlug}-summary`, top_k=20)
+const belongsToInitiative = (nodeId) => {
+  let current = nodeId
+  let depth = 0
+  while (current && depth < 20) {
+    const node = nodeMap.get(current)
+    if (!node) break
+    if (node.parent_id === initiativeId) return true
+    if (node.id === initiativeId) return true
+    current = node.parent_id
+    depth++
+  }
+  return false
+}
+
+const summaryNodes = allConcepts.matches?.filter(n =>
+  n.name.includes(`${chapterSlug}-`) &&
+  n.name.endsWith('-summary') &&
+  n.kind === 'component' &&
+  belongsToInitiative(n.id)
+) || []
 ```
 
 **Step 2.2: Check for summaries**
 
-If response.matches.length === 0:
+If summaryNodes.length === 0:
 → Display: "No summary concepts found for ${chapterSlug}"
 → Stop
 
 **Step 2.3: Extract summary data**
 
-If response.matches.length > 0:
 ```
-const summaryConcepts = response.matches.map(match => {
-  const summaryString = match.summary
-  const summaryData = JSON.parse(summaryString)
+const summaryConcepts = summaryNodes.map(match => {
+  const summaryData = JSON.parse(match.summary)
   return {
     id: match.id,
     name: match.name,

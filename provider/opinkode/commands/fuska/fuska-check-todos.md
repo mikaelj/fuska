@@ -57,23 +57,45 @@ If response.roots.length === 0:
 
 ---
 
-## 2. Check for Pending Todos
+## 2. Load Initiative Context and Check Todos
 
-**Step 2.1: Query todos module**
+**Step 2.1: Load current initiative**
 
 ```
-megamemory_understand(query="todos", top_k=50)
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
-**Step 2.2: Extract pending todos**
+If initiativeId is null:
+→ Display: "No current initiative set in config"
+→ Stop
 
-If response.matches.length === 0:
-→ Display: "No todos module found in MegaMemory"
+**Step 2.2: Query todos scoped by initiative**
+
+```
+const todoConcepts = allConcepts.matches?.filter(match =>
+  match.parent_id === initiativeId &&
+  match.name.startsWith('todo-') &&
+  match.kind === 'feature'
+)
+```
+
+**Step 2.3: Extract pending todos**
+
+If todoConcepts.length === 0:
+→ Display: "No todos found for current initiative"
 → Suggest: "Add todos during work sessions with /fuska-add-todo"
 → Stop
 
 ```
-const todoConcepts = response.matches.filter(match => {
+const pendingTodos = todoConcepts.filter(match => {
   const summaryString = match.summary
   const todoData = JSON.parse(summaryString)
   return todoData.status === "pending"
@@ -120,7 +142,7 @@ const areaFilter = input.trim() // e.g., "api" or ""
 **Step 4.1: Parse todo data and apply filter**
 
 ```
-const pendingTodos = todoConcepts.map(match => {
+const pendingTodos = pendingTodos.map(match => {
   const summaryString = match.summary
   const todoData = JSON.parse(summaryString)
   return {
@@ -228,17 +250,19 @@ For each file in selectedTodo.files:
 
 ## 7. Check Roadmap for Chapter Match
 
-**Step 7.1: Query roadmap concept**
+**Step 7.1: Query roadmap concept scoped by initiative**
 
 ```
-megamemory_understand(query="roadmap", top_k=5)
+const roadmapNode = allConcepts.matches?.find(n =>
+  n.name === 'roadmap' && n.kind === 'module' && n.parent_id === initiativeId
+)
 ```
 
 **Step 7.2: Extract chapter data**
 
-If response.matches.length > 0:
+If roadmapNode exists:
 ```
-const roadmapSummaryString = response.matches[0].summary
+const roadmapSummaryString = roadmapNode.summary
 const roadmapData = JSON.parse(roadmapSummaryString)
 const chapters = roadmapData.chapters
 ```
@@ -365,18 +389,20 @@ Return to step 4 (list_todos).
 
 ## 10. Update State Concept
 
-**Step 10.1: Query state concept**
+**Step 10.1: Query state concept scoped by initiative**
 
 ```
-megamemory_understand(query="state", top_k=5)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
 ```
 
 **Step 10.2: Update pending todo count**
 
-If response.matches.length > 0 AND action was "Work on it now":
+If stateNode exists AND action was "Work on it now":
 ```
-const stateId = response.matches[0].id
-const stateSummaryString = response.matches[0].summary
+const stateId = stateNode.id
+const stateSummaryString = stateNode.summary
 const stateData = JSON.parse(stateSummaryString)
 
 const updatedStateData = {

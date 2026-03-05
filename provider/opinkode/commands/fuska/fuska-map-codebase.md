@@ -83,38 +83,52 @@ If any response (even empty matches): MCP is working, continue.
 
 Display: "Validating MegaMemory state..."
 
-**2.1: Call list_roots**
+**2.1: Load current initiative**
+
 ```
-megamemory_list_roots()
+megamemory_understand(query="config concepts", top_k=10000)
+
+const configNode = allConcepts.matches?.find(n => n.name === 'config' && n.kind === 'config')
+const currentInitiative = configNode ? JSON.parse(configNode.summary).current_initiative : null
+
+const initiativeRoot = allConcepts.matches?.find(n =>
+  n.name === currentInitiative && n.kind === 'feature' && !n.parent_id
+)
+const initiativeId = initiativeRoot?.id
 ```
 
 **2.2: Check for project**
 
-If a root with `kind="feature"` exists:
+If initiativeId exists:
 → Set `HAS_PROJECT = true`
-→ Extract `PROJECT_ROOT_ID` from that root concept's ID
+→ Set `PROJECT_ROOT_ID = initiativeId`
 
-If no root with `kind="feature"` exists:
+If no initiativeId:
 → Set `HAS_PROJECT = false`
 → Display: "No project found — mapping codebase standalone"
 
-**2.3: Query state concept**
+**2.3: Query state concept scoped by initiative**
 
 If `HAS_PROJECT`:
 ```
-megamemory_understand(query="state", top_k=5)
+const stateNode = allConcepts.matches?.find(n =>
+  n.name === 'state' && n.kind === 'config' && n.parent_id === initiativeId
+)
 ```
 
 If not `HAS_PROJECT`: skip (state doesn't exist yet).
 
 **2.4: Check if codebase concepts exist**
+
 ```
-megamemory_understand(query="codebase", top_k=20)
+const codebaseConcepts = allConcepts.matches?.filter(n =>
+  n.name.startsWith('codebase-') && n.parent_id === initiativeId
+)
 ```
 
 **2.5: Handle existing codebase**
 
-If codebase concepts exist:
+If codebaseConcepts.length > 0:
 
 **Check for --force flag:**
 ```
@@ -454,11 +468,12 @@ Display: "Updating project state..."
 
 **7.1: Extract state ID**
 ```
-const stateId = stateResponse.matches[0].id
+const stateId = stateNode.id
 ```
 
 **7.2: Build updated state data**
 ```
+const stateData = stateNode ? JSON.parse(stateNode.summary) : {}
 const updatedStateData = {
   ...stateData,
   codebase_mapped: true,
@@ -501,10 +516,7 @@ Display: "Import graph built: ${filesScanned} files, ${symbolsIndexed} symbols"
 
 Query config for checker_panel settings:
 ```
-megamemory_understand(query="config", top_k=5)
-const configData = configResponse.matches.length > 0 
-  ? JSON.parse(configResponse.matches[0].summary) 
-  : {}
+const configData = configNode ? JSON.parse(configNode.summary) : {}
 const checkerPanel = configData.checker_panel || {}
 const classification = configData.project_classification || {}
 ```
