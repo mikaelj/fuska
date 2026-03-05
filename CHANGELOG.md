@@ -5,6 +5,28 @@ Organized by theme rather than individual commit.
 
 ---
 
+## Unreleased
+
+### New Features
+
+- **Initiative-Scoped MegaMemory Queries** — All commands now use exact matching with parent_id filtering to prevent cross-initiative pollution in multi-initiative environments. Commands load current_initiative from config, scope queries by initiative root, and validate parent chains. See `provider/opinkode/fuska/references/initiative-scoped-queries.md` for canonical patterns.
+
+- **Dual-Path Roadmap Parsing** — Roadmap loading uses JSON parse with fallback to markdown and node discovery. Automatically detects stale roadmap data and rebuilds from chapter nodes when count mismatches occur.
+
+- **Cross-Initiative Pollution Prevention** — Validation layer detects orphaned nodes, warns when data from multiple initiatives detected, and verifies parent chain integrity. All core commands now scoped to current initiative.
+
+- **Roadmap Migration Tool** — New `fuska migrate roadmap [dir]` command converts markdown roadmap format to JSON, fixes parent_id relationships, and validates data integrity. Supports `--dry-run` and `--verbose` flags.
+
+- **Reference Document** — Comprehensive `initiative-scoped-queries.md` reference with 3-layer approach (scoping + parsing + validation), code patterns, error handling templates, and 26-item testing checklist.
+
+### Improvements
+
+- **Core Commands Updated** — `fuska.md` and `progress.ts` now use initiative-scoped queries with dual-path roadmap parsing
+- **High Priority Commands Updated** — `fuska-build`, `fuska-design`, `fuska-research-chapter`, and `fuska-review` scoped to current initiative
+- **Medium Priority Commands Updated** — `fuska-add-chapter`, `fuska-insert-chapter`, and `fuska-remove-chapter` use initiative-scoped roadmap modifications
+
+---
+
 ## v0.5.0 - 2026-03-02
 
 **11 commits** | 15 files changed, 3070 insertions, 53 deletions

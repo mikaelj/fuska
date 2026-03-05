@@ -37,6 +37,8 @@ config concept:
   current_initiative: "slug-of-active-initiative"  <- THE POINTER
 ```
 
+All commands scope their MegaMemory queries to the current initiative to prevent cross-initiative pollution. Commands load the initiative slug from config, find the initiative root by exact name+kind+parent_id match, and filter all data queries by parent_id. See [Initiative Scoping](#initiative-scoping) below.
+
 **Initiative lifecycle:** `fuska init` -> active -> switch between initiatives as needed
 
 | Command | Description |
@@ -46,6 +48,28 @@ config concept:
 | <nobr>`fuska initiative switch [slug]`</nobr> | Switch to another initiative |
 
 Switch between initiatives without losing progress on any of them. Initiatives are sorted by last activity so the most relevant ones appear first.
+
+### Initiative Scoping
+
+Fuska commands use a 3-layer approach to prevent cross-initiative pollution:
+
+**Layer 1 - Initiative Scoping:**
+- Load `current_initiative` from config concept
+- Find initiative root by exact name + kind + parent_id===null
+- Filter ALL queries by initiative's parent_id
+- Use direct node lookup, never semantic search for exact names
+
+**Layer 2 - Dual-Path Roadmap Parsing:**
+- Try JSON parse first, fallback to markdown
+- Verify chapter count matches actual child nodes
+- Use node discovery when roadmap is missing or stale
+
+**Layer 3 - Cross-Initiative Validation:**
+- Detect orphaned nodes with no parent relationships
+- Warn when data from multiple initiatives detected
+- Validate parent chain integrity
+
+This ensures commands never accidentally query chapters from initiative A while working on initiative B. See `provider/opinkode/fuska/references/initiative-scoped-queries.md` for implementation patterns.
 
 ---
 

@@ -99,6 +99,7 @@ All `/fuska-*` commands below also work directly.
 ## Migration Utilities
 
 \* `fuska migrate planning [dir]` — Migrate `.planning/` directory to MegaMemory.
+\* `fuska migrate roadmap [dir]` — Migrate roadmap to JSON format with parent_id fixes. **Flags:** --dry-run, --verbose
 \* `fuska migrate terminology [dir]` — Rename phase→chapter and wave→batch in an existing MegaMemory database.
 
 ## Quick Tasks
@@ -135,6 +136,17 @@ Fuska agents use named thinking variants to control reasoning budget per step:
 \* `amend` — 16k thinking, balanced (git messages, follow-ups)
 
 Configure in your OpenCode model definition under `"variants"`. See `fuska config --view` or docs/configuration.md.
+
+## Initiative Scoping
+
+All commands scope their MegaMemory queries to the current initiative to prevent cross-initiative pollution in multi-initiative environments. Commands:
+
+- Load `current_initiative` from config concept
+- Find initiative root by exact name + kind + parent_id===null
+- Filter ALL queries by initiative's parent_id
+- Validate parent chains and detect orphaned nodes
+
+Reference: `provider/opinkode/fuska/references/initiative-scoped-queries.md`
 
 ## Getting Help
 
@@ -451,16 +463,28 @@ Usage: `fuska config --view` (non-interactive display)
 
 ### Migration Utilities
 
-**`fuska migrate planning [project-dir]`**
-Migrate `.planning/` directory format to MegaMemory knowledge graph.
+ **`fuska migrate planning [project-dir]`**
+ Migrate `.planning/` directory format to MegaMemory knowledge graph.
 
-- Copies `.planning/` to `.planning.backup`, then creates MegaMemory concepts from all markdown files
-- Use `--clean` to delete existing database before migrating
+ - Copies `.planning/` to `.planning.backup`, then creates MegaMemory concepts from all markdown files
+ - Use `--clean` to delete existing database before migrating
 
-Usage: `fuska migrate planning`
-Usage: `fuska migrate planning [project-dir] --clean`
+ Usage: `fuska migrate planning`
+ Usage: `fuska migrate planning [project-dir] --clean`
 
-**`fuska migrate terminology [project-dir]`**
+ **`fuska migrate roadmap [project-dir]`**
+ Migrate roadmap to JSON format and fix parent_id relationships.
+
+ - Converts markdown roadmap to JSON format
+ - Fixes parent_id relationships for chapters and subplans
+ - Validates data integrity after migration
+ - Use `--dry-run` to preview changes without committing
+ - Use `--verbose` to see detailed migration output
+
+ Usage: `fuska migrate roadmap`
+ Usage: `fuska migrate roadmap [project-dir] --dry-run --verbose`
+
+ **`fuska migrate terminology [project-dir]`**
 Rename `phase`→`chapter` and `wave`→`batch` in an existing MegaMemory database.
 
 - Updates concept IDs, names, summaries, and edge references in-place

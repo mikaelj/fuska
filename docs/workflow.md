@@ -593,6 +593,8 @@ Creates `chapter-03-todo-2` scoped to Chapter 3. Next `/fuska-build` will pick i
 
 *You're working on **Meal Planner** and **Recipe Import** in the same codebase, switching between them.*
 
+Fuska prevents cross-initiative pollution by scoping all MegaMemory queries to the current initiative. When you run `/fuska-plan`, it only sees chapters from the current initiative, never accidentally mixing data from Meal Planner with Recipe Import. Commands load the initiative slug from config, filter by parent_id, and validate parent chains.
+
 | # | Command | You Say | What Happens |
 |---|---------|---------|--------------|
 | 1 | <nobr>`fuska initiative list`</nobr> | — | Lists all initiatives with current marker: `> meal-planner` (active), `  recipe-import`, `  user-profiles`. Shows status and chapter progress for each. |

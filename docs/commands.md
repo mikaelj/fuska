@@ -15,6 +15,7 @@
 | <nobr>`fuska install`</nobr> | Install commands and agents via symlinks | `--opencode`, `--claude`, `--both`, `--force`, `--dry-run` |
 | <nobr>`fuska migrate planning [dir]`</nobr> | Migrate `.planning/` to MegaMemory | `--clean` to delete existing DB first |
 | <nobr>`fuska migrate multi-initiative`</nobr> | Migrate existing initiative to pointer model | -- |
+| <nobr>`fuska migrate roadmap [dir]`</nobr> | Migrate roadmap to JSON format with parent_id fixes | `--dry-run`, `--verbose` |
 | <nobr>`fuska migrate terminology [dir]`</nobr> | Rename phase→chapter and wave→batch in existing MegaMemory database | -- |
 | <nobr>`fuska config [dir]`</nobr> | Manage Fuska settings (profiles, workflow modes, git strategy, overrides) | `-v, --view` for non-interactive view; `--check [--json]` for integrity validation |
 | <nobr>`fuska export`</nobr> | Export knowledge graph to `.planning/` files | `--project-dir <path>`, `--output-dir <path>`, `--overwrite`, `--dry-run`, `--debug`, `--verbose` |
