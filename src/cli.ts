@@ -21,6 +21,7 @@ import { infoCommand } from './commands/info';
 import { migrateMultiInitiativeCommand } from './commands/migrate-multi-initiative';
 import { migrateTerminologyCommand } from './commands/migrate-terminology';
 import { migrateStatusesCommand } from './commands/migrate-statuses';
+import { migrateChapterNamesCommand } from './commands/migrate-chapter-names';
 import { initiativeSwitchCommand } from './commands/initiative-switch';
 import { initiativeNewCommand } from './commands/initiative-new';
 import { refreshCommand } from './commands/refresh';
@@ -144,5 +145,6 @@ migrateRoadmapCommand(migrateCmd);
 migrateMultiInitiativeCommand(migrateCmd);
 migrateTerminologyCommand(migrateCmd);
 migrateStatusesCommand(migrateCmd);
+migrateChapterNamesCommand(migrateCmd);
 
 program.parse(process.argv);
