@@ -70,6 +70,112 @@ Extract from prompt:
 Store mode for subsequent steps.
 </step>
 
+<step name="load_current_initiative">
+Query MegaMemory to find current initiative and verify roadmap exists:
+
+```
+const configResult = await megamemory:understand({
+  query: 'config',
+  top_k: 5
+})
+
+const configNode = configResult.concepts.find(c => 
+  c.name === 'config' && c.kind === 'config' && c.parent_id === null
+)
+
+if (!configNode) {
+  Return: Error "No config found. Run /fuska-init first."
+}
+
+const config = JSON.parse(configNode.summary)
+const currentInitiativeSlug = config.current_initiative
+
+if (!currentInitiativeSlug) {
+  Return: Error "No current initiative set in config."
+}
+
+const initiativeResult = await megamemory:understand({
+  query: currentInitiativeSlug,
+  top_k: 1
+})
+
+if (initiativeResult.concepts.length === 0) {
+  Return: Error "Current initiative not found: ${currentInitiativeSlug}"
+}
+
+const initiativeId = initiativeResult.concepts[0].id
+
+const roadmapResult = await megamemory:understand({
+  query: `${currentInitiativeSlug}/roadmap`,
+  top_k: 1
+})
+
+if (roadmapResult.concepts.length === 0) {
+  await megamemory:create_concept({
+    name: `${currentInitiativeSlug}/roadmap`,
+    kind: 'module',
+    summary: 'Initiative roadmap with chapters',
+    parent_id: currentInitiativeSlug,
+    edges: [{ to: currentInitiativeSlug, relation: 'part_of' }]
+  })
+}
+```
+
+**Detect existing chapters and compute next available number:**
+
+```
+const existingChaptersResult = await megamemory:understand({
+  query: `${currentInitiativeSlug}/roadmap`,
+  top_k: 100
+})
+
+const existingChapterNumbers = existingChaptersResult.concepts
+  .filter(c => /^chapter-\d+/.test(c.name.split('/').pop()))
+  .map(c => {
+    const match = c.name.match(/chapter-(\d+)/)
+    return match ? parseInt(match[1]) : 0
+  })
+
+const maxExistingNumber = existingChapterNumbers.length > 0
+  ? Math.max(...existingChapterNumbers)
+  : 0
+
+const nextChapterNumber = maxExistingNumber + 1
+```
+
+**Resolve final chapter number (UNIVERSAL for all input types):**
+
+```
+let finalChapterNumber
+
+if (SKIP_TASK_GROUPING && parsedChapterData) {
+  // Structured input: use parsed number or renumber if collision
+  const parsedNumber = parsedChapterData.number
+  if (existingChapterNumbers.includes(parsedNumber)) {
+    finalChapterNumber = nextChapterNumber
+    Log: `WARNING: Chapter ${parsedNumber} already exists, renumbering to ${nextChapterNumber}`
+  } else {
+    finalChapterNumber = parsedNumber
+  }
+} else if (chapterNumber) {
+  // Unstructured input with user-provided number: check collision
+  if (existingChapterNumbers.includes(parseInt(chapterNumber))) {
+    finalChapterNumber = nextChapterNumber
+    Log: `WARNING: Chapter ${chapterNumber} already exists, renumbering to ${nextChapterNumber}`
+  } else {
+    finalChapterNumber = parseInt(chapterNumber)
+  }
+} else {
+  // No number provided: use next available
+  finalChapterNumber = nextChapterNumber
+}
+
+Store finalChapterNumber for chapter creation. This variable is used by create_chapter_concept and create_subplan_concepts steps.
+```
+
+Store `currentInitiativeSlug` and `initiativeId` for chapter creation.
+</step>
+
 <step name="load_plan_data">
 **If explicit mode:**
 
@@ -109,6 +215,48 @@ Ensure each task has:
 - done (optional)
 </step>
 
+<step name="detect_existing_structure" priority="critical">
+Determine if input already contains structured chapter/plan/task format.
+
+**For explicit mode:**
+```
+const planText = planResult.concepts[0].summary
+```
+
+**For context mode:**
+```
+const planText = <context block from prompt>
+```
+
+**Detection patterns:**
+```
+const hasStructuredFormat = 
+  /Chapter \d+:/i.test(planText) &&
+  /## Goal/i.test(planText) &&
+  /Plan \d+:/i.test(planText) &&
+  /Tasks:/i.test(planText)
+```
+
+**If hasStructuredFormat === true:**
+1. Call `parseStructuredChapter(planText)` helper (from helper_functions section)
+2. If result.valid === true:
+   - Set `SKIP_TASK_GROUPING = true`
+   - Store `parsedChapterData = result.chapter`
+   - Log: "Detected structured chapter format, preserving structure"
+3. If result.valid === false:
+   - Log: `WARNING: Structured format detected but parsing failed: ${result.error}`
+   - Log: "Falling back to normal task grouping"
+   - Set `SKIP_TASK_GROUPING = false`
+
+**If hasStructuredFormat === false:**
+```
+SKIP_TASK_GROUPING = false
+parsedChapterData = null
+```
+
+Store both `SKIP_TASK_GROUPING` and `parsedChapterData` for subsequent steps.
+</step>
+
 <step name="optional_research">
 **Only if researchEnabled === true**
 
@@ -142,6 +290,14 @@ Store researchFindings for later use.
 </step>
 
 <step name="analyze_and_group_tasks">
+**IF SKIP_TASK_GROUPING === true:**
+```
+- LOG: "Skipping task grouping - preserving existing chapter structure from input"
+- SET subplans = parsedChapterData.plans
+- SKIP directly to create_chapter_concept step
+```
+
+**ELSE:**
 Apply task breakdown principles from fuska-planner:
 
 **1. Build dependency graph:**
@@ -199,19 +355,21 @@ for (const plan of subplans) {
 }
 ```
 
+**ENDIF**
+
 Store subplans array.
 </step>
 
 <step name="create_chapter_concept">
 Generate chapter slug:
 ```
-const chapterSlug = `chapter-${chapterNumber}-${chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+const chapterSlug = `chapter-${finalChapterNumber}-${chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
 ```
 
 Create chapter concept:
 ```
 const chapterData = {
-  number: parseInt(chapterNumber),
+  number: finalChapterNumber,
   slug: chapterSlug,
   name: chapterName,
   goal: chapterGoal,
@@ -223,8 +381,10 @@ await megamemory:create_concept({
   name: chapterSlug,
   kind: 'feature',
   summary: JSON.stringify(chapterData),
-  parent_id: null,  // Will be linked to roadmap later by user
-  edges: []
+  parent_id: `${currentInitiativeSlug}/roadmap`,
+  edges: [
+    { to: currentInitiativeSlug, relation: 'part_of' }
+  ]
 })
 
 // Store chapter ID for linking subplans
@@ -253,23 +413,49 @@ await megamemory:create_concept({
 </step>
 
 <step name="create_subplan_concepts">
-For each subplan in subplans array:
+FOR each plan in subplans:
 
-**1. Build plan data:**
+**IF SKIP_TASK_GROUPING === true:**
 ```
-const planNumber = (index + 1).toString().padStart(2, '0')
+# Structured mode - preserve original data
+const planNumber = (plan.number || index + 1).toString().padStart(2, '0')
+const chapter_slug = `chapter-${finalChapterNumber}`
+
 const planData = {
-  objective: `${subplan.tasks.map(t => t.name).join(', ')}`,
+  objective: plan.name || `Plan ${planNumber}`,
   purpose: `Part of ${chapterName} chapter`,
-  output: subplan.tasks.flatMap(t => Array.isArray(t.files) ? t.files : [t.files]).join(', '),
+  output: plan.tasks.flatMap(t => Array.isArray(t.files) ? t.files : [t.files]).join(', '),
   requirements: [],
-  tasks: subplan.tasks,
-  batch: subplan.batch,
-  depends_on: subplan.depends_on || [],
-  autonomous: !subplan.tasks.some(t => t.type?.startsWith('checkpoint')),
-  files_modified: subplan.tasks.flatMap(t => Array.isArray(t.files) ? t.files : [t.files])
+  tasks: plan.tasks,  // Preserve original task order
+  batch: plan.batch || parseInt(planNumber),
+  depends_on: plan.depends_on || [],
+  autonomous: !plan.tasks.some(t => t.type?.startsWith('checkpoint')),
+  files_modified: plan.tasks.flatMap(t => Array.isArray(t.files) ? t.files : [t.files]),
+  deliverables: plan.deliverables || [],
+  verification: plan.verification || []
 }
 ```
+
+**ELSE:**
+```
+# Unstructured mode - use grouped data
+const planNumber = (index + 1).toString().padStart(2, '0')
+const chapter_slug = `chapter-${finalChapterNumber}`
+
+const planData = {
+  objective: `${plan.tasks.map(t => t.name).join(', ')}`,
+  purpose: `Part of ${chapterName} chapter`,
+  output: plan.tasks.flatMap(t => Array.isArray(t.files) ? t.files : [t.files]).join(', '),
+  requirements: [],
+  tasks: plan.tasks,
+  batch: plan.batch,
+  depends_on: plan.depends_on || [],
+  autonomous: !plan.tasks.some(t => t.type?.startsWith('checkpoint')),
+  files_modified: plan.tasks.flatMap(t => Array.isArray(t.files) ? t.files : [t.files])
+}
+```
+
+**ENDIF**
 
 **2. Create plan concept:**
 ```
@@ -362,6 +548,115 @@ function estimateComplexity(tasks) {
 }
 ```
 
+## parseStructuredChapter(text: string): ParseResult
+
+Parses structured chapter format with validation. Returns `{ valid: false, error: "..." }` if required fields are missing, or `{ valid: true, chapter: {...} }` if successful.
+
+**Required fields:**
+- `Chapter N: Name` header
+- `## Goal` section
+- At least one `Plan N:` section with tasks
+
+**Optional fields:**
+- Requirements (`REQ-[A-Z]+-\d+:`)
+- Deliverables
+- Verification checklists
+
+```javascript
+function parseStructuredChapter(text) {
+  const result = { valid: false, error: null, chapter: null }
+  
+  // REQUIRED: Chapter header
+  const chapterMatch = text.match(/Chapter (\d+):\s*(.+?)(?:\n|$)/i)
+  if (!chapterMatch) {
+    result.error = "Missing 'Chapter N: Name' header"
+    return result
+  }
+  
+  // REQUIRED: Goal section
+  const goalMatch = text.match(/## Goal\s+(.+?)(?=##|---|Requirements:|$)/is)
+  if (!goalMatch) {
+    result.error = "Missing '## Goal' section"
+    return result
+  }
+  
+  const chapter = {
+    number: parseInt(chapterMatch[1]),
+    name: chapterMatch[2].trim(),
+    goal: goalMatch[1].trim(),
+    requirements: [],
+    plans: []
+  }
+  
+  // OPTIONAL: Requirements
+  const reqMatches = text.matchAll(/(REQ-[A-Z]+-\d+):\s*(.+?)(?:\n|$)/g)
+  chapter.requirements = Array.from(reqMatches, m => ({
+    id: m[1],
+    description: m[2].trim()
+  }))
+  
+  // REQUIRED: At least one plan
+  const planMatches = text.matchAll(/Plan (\d+):\s*(.+?)(?=Plan \d+:|---|Files to Create:|Dependencies:|Execution Order:|Success Criteria:|$)/gis)
+  chapter.plans = Array.from(planMatches, m => {
+    const planText = m[2]
+    
+    // Extract plan name (first line before Tasks:)
+    const nameMatch = planText.match(/^(.+?)(?=\nTasks:)/is)
+    const planName = nameMatch ? nameMatch[1].trim() : `Plan ${m[1]}`
+    
+    // Extract tasks from numbered list
+    const taskMatches = planText.matchAll(/^\d+\.\s+(.+?)(?=\n\d+\.|Deliverables:|Verification:|---|$)/gims)
+    const tasks = Array.from(taskMatches, tm => ({
+      name: tm[1].match(/^(?:Create|Update|Add|Fix|Refactor|Modify)\s+(.+?)(?:\n|$)/i)?.[1] || tm[1].split('\n')[0].trim(),
+      action: tm[1].trim(),
+      files: extractFilesFromText(tm[1]),
+      type: 'auto'
+    }))
+    
+    if (tasks.length === 0) {
+      result.error = `Plan ${m[1]} has no tasks`
+      return result
+    }
+    
+    return {
+      number: parseInt(m[1]),
+      name: planName,
+      tasks: tasks,
+      batch: parseInt(m[1]), // Default: batch = plan number
+      deliverables: extractDeliverables(planText),
+      verification: extractVerification(planText),
+      depends_on: [] // Parsed from Dependencies section if present
+    }
+  })
+  
+  if (chapter.plans.length === 0) {
+    result.error = "No 'Plan N:' sections found"
+    return result
+  }
+  
+  result.valid = true
+  result.chapter = chapter
+  return result
+}
+
+function extractFilesFromText(text) {
+  const fileMatches = text.matchAll(/(?:src\/|scripts\/|data\/|tests\/|provider\/)[a-zA-Z0-9_\-./]+/g)
+  return Array.from(fileMatches, m => m[0])
+}
+
+function extractDeliverables(text) {
+  const match = text.match(/Deliverables:\s*((?:[-*]\s*.+\n?)+)/i)
+  if (!match) return []
+  return match[1].match(/[-*]\s*(.+)/g).map(d => d.replace(/^[-*]\s*/, ''))
+}
+
+function extractVerification(text) {
+  const match = text.match(/Verification:\s*((?:[-*✓✗]\s*.+\n?)+)/i)
+  if (!match) return []
+  return match[1].match(/[-*✓✗]\s*(.+)/g).map(v => v.replace(/^[-*✓✗]\s*/, ''))
+}
+```
+
 </helper_functions>
 
 <success_criteria>
@@ -376,5 +671,35 @@ function estimateComplexity(tasks) {
 - [ ] Subplan concepts created with proper structure
 - [ ] Dependency edges created between subplans
 - [ ] Chapterization results returned to coordinator
+
+## Test Scenarios
+
+### 1. Explicit Mode + Structured Input + No Collision
+**Input:** Explicit chapter data with Chapter 5, existing max chapter is 3
+**Expected:** Preserves Chapter 5 structure, creates plans as specified, no renumbering
+
+### 2. Explicit Mode + Structured Input + Collision
+**Input:** Explicit chapter data with Chapter 2, existing Chapter 2 exists
+**Expected:** Auto-renumbers to Chapter 4 (next available), preserves plan structure
+
+### 3. Context Mode + Structured Input + No Collision
+**Input:** Context contains structured chapter content (Chapter 3), no existing Chapter 3
+**Expected:** Detects structure in context, preserves it, uses detected number
+
+### 4. Context Mode + Structured Input + Collision
+**Input:** Context contains Chapter 3, existing Chapter 3 exists
+**Expected:** Auto-renumbers to Chapter 4, preserves plan structure
+
+### 5. Explicit Mode + Raw Tasks + Collision
+**Input:** Explicit request for Chapter 2, raw task list (no structure), existing Chapter 2
+**Expected:** Auto-renumbers to Chapter 4, groups tasks into plans normally
+
+### 6. Malformed Structured Input
+**Input:** Chapter header present but tasks invalid/malformed
+**Expected:** Falls back to task grouping mode with warning logged, creates chapter successfully
+
+### 7. No Existing Chapters (First Chapter)
+**Input:** First chapter ever created, explicit request for Chapter 5
+**Expected:** Creates as Chapter 5 (no collision possible), preserves structure or groups based on input type
 
 </success_criteria>
