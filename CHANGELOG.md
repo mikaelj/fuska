@@ -5,7 +5,7 @@ Organized by theme rather than individual commit.
 
 ---
 
-## Unreleased
+## Unreleased (e4f563f)
 
 ### New Features
 
@@ -19,24 +19,15 @@ Organized by theme rather than individual commit.
 
 - **Reference Document** — Comprehensive `initiative-scoped-queries.md` reference with 3-layer approach (scoping + parsing + validation), code patterns, error handling templates, and 26-item testing checklist.
 
-### Improvements
-
-- **Core Commands Updated** — `fuska.md` and `progress.ts` now use initiative-scoped queries with dual-path roadmap parsing
-- **High Priority Commands Updated** — `fuska-build`, `fuska-design`, `fuska-research-chapter`, and `fuska-review` scoped to current initiative
-- **Medium Priority Commands Updated** — `fuska-add-chapter`, `fuska-insert-chapter`, and `fuska-remove-chapter` use initiative-scoped roadmap modifications
-
----
-
-## v0.5.0 - 2026-03-02
-
-**11 commits** | 15 files changed, 3070 insertions, 53 deletions
-
-### New Features
+- **Plan Chapterizer Enhancements** — Enhanced `fuska-plan-chapterizer` with dual mode support (explicit/context), structured input detection, and universal chapter number collision prevention. Detects large plans and suggests chapterization for better organization.
 
 - **Architecture Decision Records (ADR)** — Full ADR lifecycle system with CLI commands (`fuska decision query/export/list`), decision concept schema in MegaMemory, logging template, and automatic workflow integration in `fuska-do` when ADR opt-in is enabled
 
 ### Improvements
 
+- **Core Commands Updated** — `fuska.md` and `progress.ts` now use initiative-scoped queries with dual-path roadmap parsing
+- **High Priority Commands Updated** — `fuska-build`, `fuska-design`, `fuska-research-chapter`, and `fuska-review` scoped to current initiative
+- **Medium Priority Commands Updated** — `fuska-add-chapter`, `fuska-insert-chapter`, and `fuska-remove-chapter` use initiative-scoped roadmap modifications
 - **Init Command Refactor** — Streamlined command by removing unnecessary `description` argument and broken `--debug` flag, improved provider display in next steps
 
 ### Bug Fixes
@@ -45,6 +36,7 @@ Organized by theme rather than individual commit.
 - Added try-catch to ADR config JSON parsing for better error handling
 - Corrected ADR opt-in check syntax in fuska-do workflow
 - Fixed progress command to find global config and simplify initiative detection
+- Corrected command references across documentation
 
 ---
 
