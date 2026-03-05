@@ -395,6 +395,38 @@ If research content was provided:
 
 Research informs chapter identification but requirements drive coverage.
 
+## Step 3.5: Check Existing Chapters
+
+Query MegaMemory for existing chapters to determine starting number:
+
+```typescript
+const existingChaptersResult = await megamemory:understand({
+  query: `${initiativeSlug}/roadmap`,
+  top_k: 100
+})
+
+const existingChapterNumbers = existingChaptersResult.concepts
+  .filter(c => /^chapter-\d+/.test(c.name.split('/').pop()))
+  .map(c => {
+    const match = c.name.match(/chapter-(\d+)/)
+    return match ? parseInt(match[1]) : 0
+  })
+
+const maxExistingNumber = existingChapterNumbers.length > 0
+  ? Math.max(...existingChapterNumbers)
+  : 0
+
+const startingNumber = maxExistingNumber + 1
+```
+
+**Logic:**
+- Queries all concepts under roadmap
+- Filters for integer chapter pattern (`chapter-N`) - ignores decimals like 2.1, 2.2
+- Finds highest integer chapter number
+- Computes next available starting number
+
+Store `startingNumber` for use in chapter identification.
+
 ## Step 4: Identify Chapters
 
 Apply chapter identification methodology:
@@ -402,6 +434,17 @@ Apply chapter identification methodology:
 2. Identify dependencies between groups
 3. Create chapters that complete coherent capabilities
 4. Check depth setting for compression guidance
+5. **Offset chapter numbers by startingNumber:**
+
+```typescript
+// After deriving chapterList from requirements
+for (let i = 0; i < chapterList.length; i++) {
+  chapterList[i].number = startingNumber + i
+  chapterList[i].slug = `chapter-${chapterList[i].number.toString().padStart(2, '0')}-${slugify(chapterList[i].name)}`
+}
+```
+
+This ensures no collision with existing chapters.
 
 ## Step 5: Derive Success Criteria
 
@@ -650,6 +693,7 @@ Roadmap is complete when:
 - [ ] Project-root concept core value understood
 - [ ] All v1 requirements extracted with IDs
 - [ ] Research context loaded (if exists)
+- [ ] Collision detection applied (startingNumber computed from existing chapters)
 - [ ] Chapters derived from requirements (not imposed)
 - [ ] Depth calibration applied
 - [ ] Dependencies between chapters identified
@@ -672,5 +716,35 @@ Quality indicators:
 - **Full coverage:** Every requirement mapped, no orphans
 - **Natural structure:** Chapters feel inevitable, not arbitrary
 - **Honest gaps:** Coverage issues surfaced, not hidden
+
+## Test Scenarios
+
+### 1. Empty Roadmap (First Run)
+**Input:** No existing chapters, requirements derive 5 chapters
+**Expected:** Creates Chapter 1-5, startingNumber=1
+
+### 2. After fuska-chapterize
+**Input:** Chapter 3 exists from chapterize, requirements derive 5 chapters
+**Expected:** Creates Chapter 4-8, startingNumber=4
+
+### 3. After fuska-add-chapter
+**Input:** Chapters 1-7 exist, requirements derive 3 chapters
+**Expected:** Creates Chapter 8-10, startingNumber=8
+
+### 4. With Decimal Chapters Present
+**Input:** Chapters 1-3 exist, Chapter 2.1 and 2.2 exist (from insert), requirements derive 2 chapters
+**Expected:** Creates Chapter 4-5, startingNumber=4 (decimals ignored)
+
+### 5. Mixed Milestone
+**Input:** Chapters 1-5 complete, Chapter 6 in progress, requirements derive 3 chapters
+**Expected:** Creates Chapter 7-9, startingNumber=7 (preserves all existing)
+
+### 6. Re-run After Partial Creation
+**Input:** Chapters 1-3 exist from previous roadmapper run, requirements derive 5 chapters
+**Expected:** Creates Chapter 4-8, startingNumber=4 (no duplicates)
+
+### 7. Only Decimal Chapters
+**Input:** Only Chapter 2.1 and 2.2 exist (no integer chapters), requirements derive 3 chapters
+**Expected:** Creates Chapter 1-3, startingNumber=1 (decimals don't block integers)
 
 </success_criteria>

@@ -51,6 +51,7 @@ All `/fuska-*` commands below also work directly.
 \* `/fuska-design <number>` — Articulate your vision for a chapter before planning.
 \* `/fuska-research-chapter <number>` — Ecosystem research for niche/complex domains.
 \* `/fuska-plan <number>` — Create detailed execution plan.
+\* `/fuska-chapterize [plan-id] [--research]` — Transform large plans or planning context into chapter structures with subplans.
 
 ## Execution
 
@@ -239,6 +240,44 @@ Create detailed execution plan for a specific chapter.
 
 Usage: `/fuska-plan 1`
 Result: Creates plan concepts like `chapter-01-01-plan`, `chapter-01-02-plan`
+
+### Plan Management
+
+**`/fuska-chapterize [plan-id] [--research]`**
+Transform large plans or current planning context into chapter structures with subplans.
+
+**Modes:**
+- **Explicit mode** (`/fuska-chapterize task-015-large-feature`): Load plan from MegaMemory, break into chapter with subplans
+- **Context mode** (`/fuska-chapterize`): Use current conversation context to create chapter from planning discussion
+- **Research phase** (`--research`): Query MegaMemory for domain patterns before creating subplans
+
+**Auto-detection:**
+- `/fuska-do` automatically suggests "Chapterize this plan" when reviewing plans with >5 tasks
+- Fuska-planner creates plans with `large_plan=true` flag when task count exceeds threshold (5)
+- In `/fuska-do` review loop, selecting "Chapterize this plan" triggers the workflow
+
+**Features:**
+- Breaks plans with >5 tasks into 2-3 task subplans (vertical slices preferred)
+- Interactive prompts for chapter details (name, goal, number in explicit mode)
+- Optional research phase with domain pattern discovery
+- Creates chapter concept and subplan concepts in MegaMemory
+- Does NOT update roadmap (user decides separately via `/fuska-add-chapter`)
+
+**Usage:**
+```
+/fuska-chapterize task-015-large-feature     # Explicit mode (plan ID from MegaMemory)
+/fuska-chapterize                            # Context mode (current conversation)
+/fuska-chapterize task-015-large-feature --research  # Explicit + skip research prompt
+```
+
+**Flags:**
+- `--research` — Enable research phase (skip interactive prompt)
+
+**When to use:**
+- `/fuska-do` suggests "Chapterize this plan" for large plans (>5 tasks)
+- Fuska-planner creates plans with `large_plan=true` flag
+- Manual planning discussions that grew beyond 5 tasks
+- Converting ad-hoc planning sessions into structured chapters
 
 ### Execution
 

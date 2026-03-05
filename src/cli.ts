@@ -4,6 +4,7 @@ import { Command, Help } from 'commander';
 
 import { initCommand } from './commands/init';
 import { migrateCommand } from './commands/migrate';
+import { migrateRoadmapCommand } from './commands/migrate-roadmap';
 import { exportCommand } from './commands/export';
 import { installCommand } from './commands/install';
 import { gitMessageCommand } from './commands/git-message';
@@ -139,6 +140,7 @@ initiativeNewCommand(initiativeCmd);
 
 const migrateCmd = program.command('migrate').description('Migration utilities');
 migrateCommand(migrateCmd);
+migrateRoadmapCommand(migrateCmd);
 migrateMultiInitiativeCommand(migrateCmd);
 migrateTerminologyCommand(migrateCmd);
 migrateStatusesCommand(migrateCmd);

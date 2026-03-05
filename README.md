@@ -183,6 +183,7 @@ Outside the AI tool, `fuska` gives you project-level control. Run `fuska --help`
 **AI-Powered Commands** (spawn an AI agent):
 ```bash
 fuska do <mode> [description]         # Execute unplanned tasks with agent chain
+fuska chapterize [plan-id] [--research] # Transform large plans into chapter structures
 fuska map [area]                      # Map codebase structure and domains to MegaMemory
 fuska ask [question]                  # Ask questions about the codebase using import graph
 fuska refresh                         # Refresh import graph with file/symbol indexing
@@ -217,6 +218,11 @@ fuska migrate statuses [dir]          # Migrate old status values
 **Slash commands for chapter TODOs:**
 ```
 /fuska-add-chapter-todo <chapter> description  # Add chapter-scoped TODO
+```
+
+**Slash commands for plan management:**
+```
+/fuska-chapterize [plan-id] [--research]       # Transform large plan into chapter with subplans
 ```
 
 **Standalone code review:**

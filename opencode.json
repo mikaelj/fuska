@@ -7,46 +7,46 @@
   ],
   "agent": {
     "fuska-planner": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-roadmapper": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-initiative-researcher": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-research-synthesizer": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-plan-checker": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-chapter-researcher": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-codebase-mapper": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-executor": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-debugger": {
-      "model": "zai-coding-plan/glm-5"
+      "model": "bailian-coding-plan/glm-5"
     },
     "fuska-verifier": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "bailian-coding-plan/glm-4.7"
     },
     "fuska-integration-checker": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "bailian-coding-plan/glm-4.7"
     },
     "fuska-commit-checker": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "bailian-coding-plan/glm-4.7"
     },
     "fuska-code-reviewer": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "bailian-coding-plan/glm-4.7"
     },
     "explore": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "bailian-coding-plan/glm-4.7"
     }
   }
 }

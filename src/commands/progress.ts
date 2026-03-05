@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { markdownToAnsi } from './utils/markdown-to-ansi';
-import { getCurrentInitiativeSlug } from './utils/initiative-utils';
 
 interface TodoNode {
   id: string;
@@ -165,7 +164,7 @@ class ProgressRunner {
     await this.preflightCheck();
     await this.loadAllData();
 
-    const currentSlug = getCurrentInitiativeSlug(this.db);
+    const currentSlug = this.findCurrentInitiativeSlug();
 
     if (!currentSlug) {
       const adHocContext = this.buildAdHocContext();
@@ -181,6 +180,13 @@ class ProgressRunner {
     
     const root = this.nodes.find(n => n.name === currentSlug && n.parent_id === null);
     this.currentInitiativeId = root?.id || null;
+    
+    const healedChapters = this.healOrphanedChapters();
+    if (healedChapters.length > 0) {
+      this.nodes = this.db.getAllActiveNodes();
+      this.edges = this.db.getAllEdges ? this.db.getAllEdges() : [];
+      this.out(`\n✓ Healed orphaned chapters: ${healedChapters.join(', ')}\n`);
+    }
     
     const state = this.findState();
     const roadmap = this.findRoadmap();
@@ -242,11 +248,27 @@ class ProgressRunner {
 
   private parseSummaryRegex<T>(summary: string): T | null {
     const extractString = (field: string): string | undefined => {
-      const match = summary.match(new RegExp(`"${field}"\\s*:\\s*"([^"]*)"`, 'i'));
-      return match ? match[1] : undefined;
+      const jsonMatch = summary.match(new RegExp(`"${field}"\\s*:\\s*"([^"]*)"`, 'i'));
+      if (jsonMatch) return jsonMatch[1];
+      
+      const mdMatch = summary.match(new RegExp(`\\*\\*${field}:\\*\\*\\s*(.+?)(?:\\n|$)`, 'i'));
+      if (mdMatch) return mdMatch[1].trim();
+      
+      return undefined;
+    };
+
+    const extractNumber = (field: string): number | undefined => {
+      const mdMatch = summary.match(new RegExp(`\\*\\*${field}:\\*\\*\\s*(\\d+)`, 'i'));
+      if (mdMatch) return parseInt(mdMatch[1], 10);
+      
+      const jsonMatch = summary.match(new RegExp(`"${field.toLowerCase()}"\\s*:\\s*(\\d+)`, 'i'));
+      if (jsonMatch) return parseInt(jsonMatch[1], 10);
+      
+      return undefined;
     };
 
     const result: any = {};
+    
     const taskNumber = extractString('task_number');
     if (taskNumber) result.task_number = taskNumber;
     
@@ -267,7 +289,16 @@ class ProgressRunner {
     
     const commit = extractString('commit');
     if (commit) result.commit = commit;
-
+    
+    const number = extractNumber('Number');
+    if (number !== undefined) result.number = number;
+    
+    const name = extractString('name');
+    if (name) result.name = name;
+    
+    const goal = extractString('Goal');
+    if (goal) result.goal = goal;
+    
     return Object.keys(result).length > 0 ? result as T : null;
   }
 
@@ -312,14 +343,89 @@ class ProgressRunner {
 
   private findRoadmap(): RoadmapData | null {
     const roadmapNode = this.nodes.find(n => 
-      n.name === 'roadmap' && n.parent_id === this.currentInitiativeId
+      (n.name === 'roadmap' || n.name.toLowerCase().includes('roadmap')) && 
+      n.parent_id === this.currentInitiativeId
     );
-    if (!roadmapNode) return null;
     
-    const parsed = this.parseSummary<RoadmapData>(roadmapNode.summary);
-    if (parsed) return parsed;
+    if (roadmapNode) {
+      const parsed = this.parseSummary<RoadmapData>(roadmapNode.summary);
+      if (parsed?.chapters && parsed.chapters.length > 0) {
+        return parsed;
+      }
+    }
     
-    return { chapters: [], current_milestone: '' };
+    const chapters: ChapterData[] = [];
+    const discoveredIds = new Set<string>();
+    
+    for (const node of this.nodes) {
+      if (node.kind !== 'feature') continue;
+      
+      const belongsToInitiative = node.parent_id === this.currentInitiativeId ||
+        node.parent_id?.startsWith(this.currentInitiativeId + '/') ||
+        this.edges.some(e => e.from_id === node.id && e.to_id === this.currentInitiativeId && e.relation === 'part_of');
+      
+      if (!belongsToInitiative) continue;
+      
+      const isChapter = /^chapter-\d+(-|$|\/)/.test(node.name) && !node.name.includes('-plan-');
+      if (!isChapter) continue;
+      
+      if (discoveredIds.has(node.id)) continue;
+      discoveredIds.add(node.id);
+      
+      const chapterData = this.parseSummary<ChapterData>(node.summary);
+      if (chapterData) {
+        chapters.push(chapterData);
+      } else {
+        const numMatch = node.name.match(/chapter-(\d+)/);
+        if (numMatch) {
+          chapters.push({
+            number: parseInt(numMatch[1], 10),
+            slug: node.name,
+            name: node.name,
+            goal: '',
+            status: 'planned'
+          });
+        }
+      }
+    }
+    
+    chapters.sort((a, b) => a.number - b.number);
+    
+    if (chapters.length > 0) {
+      return { chapters, current_milestone: '' };
+    }
+    
+    return null;
+  }
+
+  private healOrphanedChapters(): string[] {
+    const healed: string[] = [];
+    
+    if (!this.currentInitiativeId) {
+      return healed;
+    }
+    
+    for (const node of this.nodes) {
+      if (node.kind !== 'feature') continue;
+      if (!/^chapter-\d+(-|$|\/)/.test(node.name)) continue;
+      if (node.name.includes('-plan-')) continue;
+      
+      const hasEdgeToInitiative = this.edges.some(e => 
+        e.from_id === node.id && e.to_id === this.currentInitiativeId && e.relation === 'part_of'
+      );
+      
+      if (!node.parent_id && !hasEdgeToInitiative) {
+        this.db.insertEdge({
+          from_id: node.id,
+          to_id: this.currentInitiativeId,
+          relation: 'part_of'
+        });
+        
+        healed.push(node.name);
+      }
+    }
+    
+    return healed;
   }
 
   private findConfig(): ConfigData | null {
@@ -327,6 +433,19 @@ class ProgressRunner {
       n.name === 'config' && n.kind === 'config' && !n.parent_id
     );
     return configNode ? this.parseSummary<ConfigData>(configNode.summary) : null;
+  }
+
+  private findCurrentInitiativeSlug(): string | null {
+    const configNode = this.nodes.find(
+      (n) => n.name === 'config' && n.kind === 'config' && !n.parent_id
+    );
+    if (!configNode) return null;
+    try {
+      const config = this.parseSummary<ConfigData>(configNode.summary);
+      return config?.current_initiative || null;
+    } catch {
+      return null;
+    }
   }
 
   private findRequirements(): RequirementData[] {
@@ -661,13 +780,16 @@ class ProgressRunner {
 
     this.out('Future:');
     if (ctx.roadmap?.chapters) {
-      const currentNum = ctx.currentChapter?.number || 0;
       const futureChapters = ctx.roadmap.chapters
-        .filter(c => c.number > currentNum)
+        .filter(c => {
+          const status = (c.status || '').toLowerCase();
+          return status !== 'complete' && status !== 'completed';
+        })
         .sort((a, b) => a.number - b.number);
 
       for (const chapter of futureChapters) {
-        this.out(`* Chapter ${chapter.number}: ${chapter.goal}`);
+        const display = chapter.goal || chapter.name || '(no description)';
+        this.out(`* Chapter ${chapter.number}: ${display}`);
       }
       if (futureChapters.length === 0) {
         this.out('* (no more chapters)');
@@ -676,13 +798,55 @@ class ProgressRunner {
     this.out('');
 
     this.out('Next:');
-    if (ctx.currentChapter) {
-      const nextPlanNum = ctx.chapterSummaries.length + 1;
-      const planLabel = ctx.chapterPlans.length > 0 ? `.${nextPlanNum}` : '';
-      this.out(`* Chapter ${ctx.currentChapter.number}${planLabel}: ${ctx.currentChapter.goal}`);
-      const hasContext = !!ctx.chapterContext;
-      const statusDesc = this.getStatusDescription(ctx.state?.status || '', hasContext, ctx.currentChapter.number);
+    let nextChapter = ctx.currentChapter;
+    let nextChapterSummaries = ctx.chapterSummaries;
+    let nextChapterPlans = ctx.chapterPlans;
+    let nextChapterContext = ctx.chapterContext;
+    let isFallback = false;
+    
+    if (!nextChapter && ctx.roadmap?.chapters) {
+      const incompleteChapters = ctx.roadmap.chapters
+        .filter(c => {
+          const status = (c.status || '').toLowerCase();
+          return status !== 'complete' && status !== 'completed';
+        })
+        .sort((a, b) => a.number - b.number);
+      
+      nextChapter = incompleteChapters[0];
+      isFallback = true;
+      
+      if (nextChapter) {
+        const fallbackSlug = nextChapter.slug || `chapter-${nextChapter.number}`;
+        nextChapterSummaries = this.findChapterSummaries(fallbackSlug);
+        nextChapterPlans = this.findChapterPlans(fallbackSlug);
+        nextChapterContext = this.findChapterContext(fallbackSlug);
+      }
+    }
+    
+    if (nextChapter) {
+      const planLabel = !isFallback && nextChapterPlans.length > 0 
+        ? `.${nextChapterSummaries.length + 1}` 
+        : '';
+      const display = nextChapter.goal || nextChapter.name || '(no description)';
+      this.out(`* Chapter ${nextChapter.number}${planLabel}: ${display}`);
+      
+      let effectiveStatus: string;
+      const hasContext = !!nextChapterContext;
+      
+      if (nextChapterSummaries.length > 0) {
+        effectiveStatus = 'in_progress';
+      } else if (nextChapterPlans.length > 0) {
+        effectiveStatus = 'planned';
+      } else if (hasContext) {
+        effectiveStatus = 'plan_complete';
+      } else {
+        effectiveStatus = 'pending';
+      }
+      
+      const statusDesc = this.getStatusDescription(effectiveStatus, hasContext, nextChapter.number);
       this.out(`  ${statusDesc}`);
+    } else {
+      this.out('* (all chapters complete)');
     }
     this.out('');
 
