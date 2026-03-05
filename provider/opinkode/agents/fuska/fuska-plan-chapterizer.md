@@ -125,12 +125,22 @@ if (roadmapResult.concepts.length === 0) {
 
 ```
 const existingChaptersResult = await megamemory:understand({
-  query: `${currentInitiativeSlug}/roadmap`,
+  query: 'chapter-',
   top_k: 100
 })
 
 const existingChapterNumbers = existingChaptersResult.concepts
-  .filter(c => /^chapter-\d+/.test(c.name.split('/').pop()))
+  .filter(c => {
+    const nameSegment = c.name.split('/').pop()
+    if (!/^chapter-\d+/.test(nameSegment)) return false
+    if (nameSegment.includes('-plan-')) return false
+    if (nameSegment.includes('-summary')) return false
+    if (nameSegment.includes('-context')) return false
+    if (nameSegment.includes('-research')) return false
+    if (nameSegment.includes('-verification')) return false
+    if (nameSegment.includes('-todo')) return false
+    return true
+  })
   .map(c => {
     const match = c.name.match(/chapter-(\d+)/)
     return match ? parseInt(match[1]) : 0
@@ -515,8 +525,8 @@ To add this chapter to your roadmap:
 
 Then plan and execute:
 ```
-/fuska-plan ${chapterNumber}
-/fuska-build ${chapterNumber}
+/fuska-plan ${chapterSlug}
+/fuska-build ${chapterSlug}
 ```
 ```
 

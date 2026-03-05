@@ -2,8 +2,7 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { KnowledgeDB } from 'megamemory/dist/db.js';
-import { understand, updateConcept, createConcept, removeConcept, link } from 'megamemory/dist/tools.js';
-import type { RelationType } from 'megamemory/dist/types.js';
+import { understand } from 'megamemory/dist/tools.js';
 
 interface MigrationReport {
   backup_path: string;
@@ -131,8 +130,6 @@ class ChapterNamesMigration {
 
     await this.renameChapters(chaptersToRename, renames);
     await this.updateSlugs(chaptersToRename);
-    await this.updateParentIds(allConcepts.matches || [], renames);
-    await this.updateEdges(allConcepts.matches || [], renames);
     await this.updateState(renames);
     await this.updateRoadmap(renames);
     await this.verify();
@@ -169,186 +166,111 @@ class ChapterNamesMigration {
   private async renameChapters(chapters: any[], renames: Map<string, string>): Promise<void> {
     console.log('Renaming chapter concepts...');
     
-    for (const chapter of chapters) {
-      const newName = renames.get(chapter.name);
-      if (!newName) continue;
-
-      if (this.dryRun) {
-        console.log(`[DRY RUN] Would rename: ${chapter.name} → ${newName}`);
-      } else {
-        await updateConcept(this.db, {
-          id: chapter.id,
-          changes: { name: newName }
-        });
-        console.log(`✓ Renamed: ${chapter.name} → ${newName}`);
+    if (this.dryRun) {
+      for (const chapter of chapters) {
+        const newName = renames.get(chapter.name);
+        if (!newName) continue;
+        console.log(`[DRY RUN] Would rename: ${chapter.name} → ${newName} (ID: ${chapter.id} → ${chapter.id.replace(chapter.name, newName)})`);
+        this.report.chapters_renamed++;
       }
-      this.report.chapters_renamed++;
+      console.log('');
+      return;
     }
+
+    // Use transaction for atomic updates - must disable FK checks to update primary keys
+    const transaction = this.db.db.transaction(() => {
+      // Disable foreign key checks temporarily
+      this.db.db.prepare('PRAGMA foreign_keys = OFF').run();
+      
+      try {
+        // Update ALL node IDs that contain old chapter names (includes child nodes)
+        for (const [oldName, newName] of renames) {
+          const updateNodeIds = this.db.db.prepare(`UPDATE nodes SET id = REPLACE(id, ?, ?), updated_at = datetime('now') WHERE id LIKE ?`);
+          const result = updateNodeIds.run(`/${oldName}`, `/${newName}`, `%/${oldName}%`);
+          if (result.changes > 0) {
+            console.log(`✓ Updated ${result.changes} node IDs: ${oldName} → ${newName}`);
+          }
+        }
+        
+        // Update ALL node names that match old chapter names
+        for (const [oldName, newName] of renames) {
+          const updateNames = this.db.db.prepare('UPDATE nodes SET name = ?, updated_at = datetime(\'now\') WHERE name = ?');
+          const result = updateNames.run(newName, oldName);
+          if (result.changes > 0) {
+            console.log(`✓ Renamed ${result.changes} nodes: ${oldName} → ${newName}`);
+            this.report.chapters_renamed += result.changes;
+          }
+        }
+        
+        // Update ALL parent_id references
+        for (const [oldName, newName] of renames) {
+          const updateParent = this.db.db.prepare(`UPDATE nodes SET parent_id = REPLACE(parent_id, ?, ?), updated_at = datetime('now') WHERE parent_id LIKE ?`);
+          const result = updateParent.run(`/${oldName}`, `/${newName}`, `%/${oldName}%`);
+          if (result.changes > 0) {
+            console.log(`✓ Updated ${result.changes} parent_id references: ${oldName} → ${newName}`);
+            this.report.parent_ids_updated += result.changes;
+          }
+        }
+        
+        // Update ALL edge from_id references
+        for (const [oldName, newName] of renames) {
+          const updateEdgeFrom = this.db.db.prepare(`UPDATE edges SET from_id = REPLACE(from_id, ?, ?), updated_at = datetime('now') WHERE from_id LIKE ?`);
+          const result = updateEdgeFrom.run(`/${oldName}`, `/${newName}`, `%/${oldName}%`);
+          if (result.changes > 0) {
+            console.log(`✓ Updated ${result.changes} edge from_id references: ${oldName} → ${newName}`);
+            this.report.edges_updated += result.changes;
+          }
+        }
+        
+        // Update ALL edge to_id references
+        for (const [oldName, newName] of renames) {
+          const updateEdgeTo = this.db.db.prepare(`UPDATE edges SET to_id = REPLACE(to_id, ?, ?), updated_at = datetime('now') WHERE to_id LIKE ?`);
+          const result = updateEdgeTo.run(`/${oldName}`, `/${newName}`, `%/${oldName}%`);
+          if (result.changes > 0) {
+            console.log(`✓ Updated ${result.changes} edge to_id references: ${oldName} → ${newName}`);
+            this.report.edges_updated += result.changes;
+          }
+        }
+        
+      } finally {
+        // Re-enable foreign key checks
+        this.db.db.prepare('PRAGMA foreign_keys = ON').run();
+      }
+    });
+    
+    transaction();
     console.log('');
   }
 
   private async updateSlugs(chapters: any[]): Promise<void> {
     console.log('Updating slug fields in summaries...');
     
-    for (const chapter of chapters) {
-      const updatedSummary = updateSlugInSummary(chapter.summary, new Map());
-      
-      if (updatedSummary) {
-        if (this.dryRun) {
-          console.log(`[DRY RUN] Would update summary for ${chapter.name}`);
-        } else {
-          await updateConcept(this.db, {
-            id: chapter.id,
-            changes: { summary: updatedSummary }
-          });
-          console.log(`✓ Updated summary for ${chapter.name}`);
-        }
-        this.report.slugs_updated++;
-      }
-    }
-    console.log('');
-  }
-
-  private async updateParentIds(matches: any[], renames: Map<string, string>): Promise<void> {
-    console.log('Updating parent_id references...');
-    
-    const childrenToUpdate = matches.filter(c => c.parent_id && renames.has(c.parent_id));
-    
-    if (childrenToUpdate.length === 0) {
-      console.log('No parent_id references to update\n');
-      return;
-    }
-    
-    for (const child of childrenToUpdate) {
-      const newParentId = renames.get(child.parent_id!);
-      
-      if (this.dryRun) {
-        console.log(`[DRY RUN] Would recreate ${child.name} with parent_id: ${child.parent_id} → ${newParentId}`);
-        this.report.parent_ids_updated++;
-        continue;
-      }
-      
-      try {
-        // Create new concept with updated parent_id
-        const newConcept = {
-          name: child.name,
-          kind: child.kind,
-          summary: child.summary,
-          parent_id: newParentId,
-          edges: child.edges || []
-        };
-        
-        await createConcept(this.db, newConcept);
-        
-        // Remove old concept
-        await removeConcept(this.db, { 
-          id: child.id, 
-          reason: `Recreated with updated parent_id: ${child.parent_id} → ${newParentId}` 
-        });
-        
-        console.log(`✓ Recreated ${child.name} with parent_id: ${child.parent_id} → ${newParentId}`);
-        this.report.parent_ids_updated++;
-      } catch (e: any) {
-        console.error(`✗ Failed to update parent_id for ${child.name}: ${e.message}`);
-        this.report.errors.push(`Failed to update parent_id for ${child.name}: ${e.message}`);
-      }
-    }
-    console.log('');
-  }
-
-  private async updateEdges(matches: any[], renames: Map<string, string>): Promise<void> {
-    console.log('Updating edge references...');
-    
-    // Build a map of all edges that need to be recreated
-    const edgesToRecreate: Array<{from: string; to: string; newTo: string; relation: string; description?: string}> = [];
-    
-    // Find all edges pointing to old chapter names
-    for (const concept of matches) {
-      if (!concept.edges || concept.edges.length === 0) continue;
-      
-      for (const edge of concept.edges) {
-        if (renames.has(edge.to)) {
-          edgesToRecreate.push({
-            from: concept.name,
-            to: edge.to,
-            newTo: renames.get(edge.to)!,
-            relation: edge.relation,
-            description: edge.description
-          });
-        }
-      }
-    }
-    
-    if (edgesToRecreate.length === 0) {
-      console.log('No edge references to update\n');
-      return;
-    }
-    
     if (this.dryRun) {
-      console.log(`[DRY RUN] Would update ${edgesToRecreate.length} edge references:`);
-      edgesToRecreate.forEach(e => {
-        console.log(`  ${e.from} -> ${e.to} → ${e.newTo}`);
-      });
-      this.report.edges_updated = edgesToRecreate.length;
+      for (const chapter of chapters) {
+        const updatedSummary = updateSlugInSummary(chapter.summary, new Map());
+        if (updatedSummary) {
+          console.log(`[DRY RUN] Would update summary for ${chapter.name}`);
+          this.report.slugs_updated++;
+        }
+      }
       console.log('');
       return;
     }
-    
-    // Group edges by source concept to avoid recreating concepts multiple times
-    const edgesByConcept = new Map<string, Array<{to: string; newTo: string; relation: string; description?: string}>>();
-    
-    for (const edgeRef of edgesToRecreate) {
-      if (!edgesByConcept.has(edgeRef.from)) {
-        edgesByConcept.set(edgeRef.from, []);
+
+    // Use transaction for atomic updates
+    const updateSummary = this.db.db.prepare('UPDATE nodes SET summary = ?, updated_at = datetime(\'now\') WHERE id = ?');
+    const transaction = this.db.db.transaction((chaptersToUpdate: any[]) => {
+      for (const chapter of chaptersToUpdate) {
+        const updatedSummary = updateSlugInSummary(chapter.summary, new Map());
+        if (updatedSummary) {
+          updateSummary.run(updatedSummary, chapter.id);
+          console.log(`✓ Updated summary for ${chapter.name}`);
+          this.report.slugs_updated++;
+        }
       }
-      edgesByConcept.get(edgeRef.from)!.push({
-        to: edgeRef.to,
-        newTo: edgeRef.newTo,
-        relation: edgeRef.relation,
-        description: edgeRef.description
-      });
-    }
+    });
     
-    // Recreate each concept once with ALL edges updated
-    for (const [conceptName, edgesToUpdate] of edgesByConcept) {
-      const concept = matches.find(c => c.name === conceptName);
-      if (!concept) {
-        console.error(`✗ Concept ${conceptName} not found`);
-        continue;
-      }
-      
-      try {
-        // Update ALL edges at once
-        const updatedEdges = concept.edges.map((e: any) => {
-          const update = edgesToUpdate.find(u => u.to === e.to);
-          if (update) {
-            return { ...e, to: update.newTo };
-          }
-          return e;
-        });
-        
-        // Single recreation per concept
-        const newConcept = {
-          name: concept.name,
-          kind: concept.kind,
-          summary: concept.summary,
-          parent_id: concept.parent_id,
-          edges: updatedEdges
-        };
-        
-        await createConcept(this.db, newConcept);
-        await removeConcept(this.db, {
-          id: concept.id,
-          reason: `Recreated with ${edgesToUpdate.length} updated edges`
-        });
-        
-        console.log(`✓ Updated ${edgesToUpdate.length} edges in ${conceptName}`);
-        this.report.edges_updated += edgesToUpdate.length;
-      } catch (e: any) {
-        console.error(`✗ Failed to update edges in ${conceptName}: ${e.message}`);
-        this.report.errors.push(`Failed to update edges in ${conceptName}: ${e.message}`);
-      }
-    }
+    transaction(chapters);
     console.log('');
   }
 
@@ -366,14 +288,14 @@ class ChapterNamesMigration {
       if (updatedSummary) {
         if (this.dryRun) {
           console.log(`[DRY RUN] Would update state summary`);
+          this.report.state_updated = true;
         } else {
-          await updateConcept(this.db, {
-            id: state.id,
-            changes: { summary: updatedSummary }
-          });
+          // Use direct SQL UPDATE instead of API
+          const updateStmt = this.db.db.prepare('UPDATE nodes SET summary = ?, updated_at = datetime(\'now\') WHERE id = ?');
+          updateStmt.run(updatedSummary, state.id);
           console.log(`✓ Updated state summary`);
+          this.report.state_updated = true;
         }
-        this.report.state_updated = true;
       } else {
         console.log('No state updates needed');
       }
@@ -397,14 +319,14 @@ class ChapterNamesMigration {
       if (updatedSummary) {
         if (this.dryRun) {
           console.log(`[DRY RUN] Would update roadmap summary`);
+          this.report.roadmap_updated = true;
         } else {
-          await updateConcept(this.db, {
-            id: roadmap.id,
-            changes: { summary: updatedSummary }
-          });
+          // Use direct SQL UPDATE instead of API
+          const updateStmt = this.db.db.prepare('UPDATE nodes SET summary = ?, updated_at = datetime(\'now\') WHERE id = ?');
+          updateStmt.run(updatedSummary, roadmap.id);
           console.log(`✓ Updated roadmap summary`);
+          this.report.roadmap_updated = true;
         }
-        this.report.roadmap_updated = true;
       } else {
         console.log('No roadmap updates needed');
       }
@@ -436,9 +358,11 @@ class ChapterNamesMigration {
       console.log('✓ No non-padded chapter names found');
     }
 
-    const danglingParents = verifyConcepts.matches?.filter((c: any) =>
-      c.parent_id && !allNames.has(c.parent_id)
-    ) || [];
+    const danglingParents = verifyConcepts.matches?.filter((c: any) => {
+      if (!c.parent_id) return false;
+      const parentLocalName = c.parent_id.split('/').pop();
+      return !allNames.has(parentLocalName);
+    }) || [];
 
     if (danglingParents.length > 0) {
       console.log(`❌ Found ${danglingParents.length} dangling parent_id references:`);
@@ -453,7 +377,8 @@ class ChapterNamesMigration {
     const danglingEdges: Array<{ from: string; to: string }> = [];
     for (const concept of verifyConcepts.matches || []) {
       for (const edge of concept.edges || []) {
-        if (!allNames.has(edge.to)) {
+        const toLocalName = edge.to.split('/').pop();
+        if (!allNames.has(toLocalName)) {
           danglingEdges.push({ from: concept.name, to: edge.to });
         }
       }
