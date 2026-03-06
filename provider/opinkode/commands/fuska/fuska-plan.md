@@ -22,7 +22,7 @@ Create executable chapter concepts (plan concepts) for a roadmap chapter with in
 
 **Default flow:** Research (if needed) → Plan → Verify → Done
 
-**Orchestrator role:** Parse arguments, validate chapter, research domain (unless skipped), spawn fuska-planner agent, verify plans with fuska-plan-checker, iterate until plans pass or max iterations, present results.
+**Orchestrator role:** Parse arguments, validate chapter, research domain (unless skipped), spawn fuska-planner agent, verify plans with fuska-plan-checker-jury, iterate until plans pass or max iterations, present results.
 
 **Why subagents:** Research and planning burn context fast. Verification uses fresh context. User sees flow between agents.
 
@@ -88,7 +88,7 @@ Model lookup table:
 |-------|---------|----------|--------|
 | fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-planner | quality_model | quality_model | balanced_model |
-| fuska-plan-checker | balanced_model | balanced_model | budget_model |
+| fuska-plan-checker-jury | balanced_model | balanced_model | budget_model |
 
 ```
 const aliases = configData.model_aliases || {
@@ -297,7 +297,7 @@ Also query requirements (top_k=50) for checker context.
 
 ---
 
-## 10. Spawn fuska-plan-checker-panel Agent
+## 10. Spawn fuska-plan-checker-jury Agent
 
 Display banner:
 ```
@@ -310,7 +310,7 @@ Build prompt using **plan-prompts.md Checker Panel Prompt Template**. Fill with 
 
 ```
 Task(
-  subagent_type="fuska-plan-checker-panel",
+  subagent_type="fuska-plan-checker-jury",
   model=models.checker,
   variant="validate",
   description="Verify Chapter ${chapterNumber} plans"
@@ -441,7 +441,7 @@ Verification: {Passed | Passed with override | Skipped}
 - [ ] Research completed (unless skipped/exists)
 - [ ] fuska-planner spawned with context
 - [ ] Plan concepts created
-- [ ] fuska-plan-checker spawned (unless --skip-verify)
+- [ ] fuska-plan-checker-jury spawned (unless --skip-verify)
 - [ ] Verification passed OR user override
 - [ ] Interactive review loop (unless --no-review)
 - [ ] State concept updated

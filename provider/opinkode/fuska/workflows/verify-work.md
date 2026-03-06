@@ -43,7 +43,7 @@ const aliases = configData.model_aliases || {
 | Agent | quality | balanced | budget |
 |-------|---------|----------|--------|
 | fuska-planner | quality_model | quality_model | balanced_model |
-| fuska-plan-checker | balanced_model | balanced_model | budget_model |
+| fuska-plan-checker-jury | balanced_model | balanced_model | budget_model |
 
 ```
 const modelLookup = {
@@ -482,7 +482,7 @@ Display:
 
 Initialize: `iteration_count = 1`
 
-Spawn fuska-plan-checker:
+Spawn fuska-plan-checker-jury:
 
 ```
 Task(
@@ -510,7 +510,7 @@ Return one of:
 - ## ISSUES FOUND — structured issue list
 </expected_output>
 """,
-  subagent_type="fuska-plan-checker",
+  subagent_type="fuska-plan-checker-jury",
   model="{checker_model}",
   description="Verify Chapter {chapter} fix plans"
 )
@@ -654,7 +654,7 @@ Default to **major** if unclear. User can correct if needed.
 - [ ] Committed on completion (if enabled)
 - [ ] If issues: parallel debug agents diagnose root causes
 - [ ] If issues: fuska-planner creates fix plans (fix_planning mode)
-- [ ] If issues: fuska-plan-checker verifies fix plans
+- [ ] If issues: fuska-plan-checker-jury verifies fix plans
 - [ ] If issues: revision loop until plans pass (max 3 iterations)
 - [ ] Ready for `/fuska-build --fixes-only` when complete
 </success_criteria>

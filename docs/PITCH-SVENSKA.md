@@ -70,7 +70,7 @@ Orkestratorn litade inte blint på granskningen. Den läste den faktiska filen, 
 | Fas | Agent | Tid | Resultat |
 |-----|-------|-----|----------|
 | Plan | fuska-planner | 114s | 1 uppgift, 1 fil |
-| Check | fuska-plan-checker | 66s | GODKÄND |
+| Check | fuska-plan-checker-jury | 66s | GODKÄND |
 | Bygg | fuska-executor | 170s | KLAR |
 | Granskning | fuska-code-reviewer | 103s | PROBLEM HITTADE (1 blockerare) |
 | Omgranskning | fuska-code-reviewer | 170s | GODKÄND |

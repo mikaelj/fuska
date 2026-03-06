@@ -231,6 +231,14 @@ const agentPrompt = `<critical_constraints>
 Return: ## CHAPTERIZE COMPLETE with chapter slug, subplan count, task distribution
 Create chapter concept and subplan concepts in MegaMemory
 Do NOT update roadmap concept (user will decide separately)
+
+EXECUTION GUARANTEES:
+- ALWAYS complete all steps - NEVER stop early to ask user questions
+- NEVER ask user "what should I do next?" or "Create and execute plan?"
+- If research exists: LOG warning and continue with chapter creation
+- MUST create chapter concept
+- MUST create subplan concepts
+- MUST return ## CHAPTERIZE COMPLETE
 </critical_constraints>
 
 <chapterize_context>
@@ -264,6 +272,14 @@ Return: ## CHAPTERIZE COMPLETE with chapter slug, subplan count, task distributi
 Create chapter concept and subplan concepts in MegaMemory
 Do NOT update roadmap concept (user will decide separately)
 Extract tasks from current conversation context
+
+EXECUTION GUARANTEES:
+- ALWAYS complete all steps - NEVER stop early to ask user questions
+- NEVER ask user "what should I do next?" or "Create and execute plan?"
+- If research exists: LOG warning and continue with chapter creation
+- MUST create chapter concept
+- MUST create subplan concepts
+- MUST return ## CHAPTERIZE COMPLETE
 </critical_constraints>
 
 <chapterize_context>

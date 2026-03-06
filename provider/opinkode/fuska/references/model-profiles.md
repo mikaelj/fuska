@@ -72,7 +72,7 @@ const STAGE_AGENTS: StageAgentMapping = {
     'fuska-research-synthesizer'
   ],
   plan: [
-    'fuska-plan-checker',
+    'fuska-plan-checker-jury',
     'fuska-chapter-researcher',
     'fuska-codebase-mapper'
   ],
@@ -424,7 +424,7 @@ Agents are grouped by stage. Each profile assigns a model to each stage:
 | Stage | Agents |
 |-------|--------|
 | Design | fuska-planner, fuska-roadmapper, fuska-initiative-researcher, fuska-research-synthesizer |
-| Plan | fuska-plan-checker, fuska-chapter-researcher, fuska-codebase-mapper |
+| Plan | fuska-plan-checker-jury, fuska-chapter-researcher, fuska-codebase-mapper |
 | Build | fuska-executor, fuska-debugger |
 | Review | fuska-verifier, fuska-integration-checker, fuska-commit-checker, fuska-code-reviewer |
 
@@ -447,7 +447,7 @@ Model aliases provide an indirection layer between lookup tables and actual mode
 |-------|---------|----------|--------|
 | fuska-planner | quality_model | quality_model | balanced_model |
 | fuska-executor | quality_model | balanced_model | balanced_model |
-| fuska-plan-checker | balanced_model | balanced_model | budget_model |
+| fuska-plan-checker-jury | balanced_model | balanced_model | budget_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
 | fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-git-message | explore_model | explore_model | explore_model |

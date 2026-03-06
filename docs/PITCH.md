@@ -71,7 +71,7 @@ The orchestrator didn't blindly trust the review. It read the actual file, ran `
 | Phase | Agent | Time | Result |
 |-------|-------|------|--------|
 | Plan | fuska-planner | 114s | 1 task, 1 file |
-| Check | fuska-plan-checker | 66s | PASSED |
+| Check | fuska-plan-checker-jury | 66s | PASSED |
 | Build | fuska-executor | 170s | COMPLETE |
 | Review | fuska-code-reviewer | 103s | ISSUES FOUND (1 blocker) |
 | Re-review | fuska-code-reviewer | 170s | PASSED |

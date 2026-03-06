@@ -19,6 +19,6 @@ fuska do planned "Update @CHANGELOG.md:
    - **Bug Fixes**: As before
    - **Documentation**: As before
    - **Package**: As before
-5. Keep format consistent with existing entries (theme-based, not commit-by-commit)." > /dev/null
+5. Keep format consistent with existing entries (theme-based, not commit-by-commit)." 
 
 

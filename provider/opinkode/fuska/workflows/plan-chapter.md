@@ -22,7 +22,7 @@ Create executable chapter concepts (plan concepts) for a roadmap chapter with in
 
 **Default flow:** Research (if needed) → Plan → Verify → Done
 
-**Orchestrator role:** Parse arguments, validate chapter, research domain (unless skipped or exists), spawn fuska-planner agent, verify plans with fuska-plan-checker, iterate until plans pass or max iterations reached, present results.
+**Orchestrator role:** Parse arguments, validate chapter, research domain (unless skipped or exists), spawn fuska-planner agent, verify plans with fuska-plan-checker-jury, iterate until plans pass or max iterations reached, present results.
 
 **Why subagents:** Research and planning burn context fast. Verification uses fresh context. User sees flow between agents in main context.
 
@@ -83,7 +83,7 @@ budget_model: "opencode/claude-haiku-4"
 |-------|---------|----------|--------|
 | fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-planner | quality_model | quality_model | balanced_model |
-| fuska-plan-checker | balanced_model | balanced_model | budget_model |
+| fuska-plan-checker-jury | balanced_model | balanced_model | budget_model |
 
 ```
 const modelLookup = {
@@ -389,7 +389,7 @@ PLANS_RESULTS=$(megamemory understand "${CHAPTER}-plan" top_k=20)
 REQUIREMENTS_RESULTS=$(megamemory understand "requirements" top_k=50)
 ```
 
-## 10. Spawn fuska-plan-checker Agent
+## 10. Spawn fuska-plan-checker-jury Agent
 
 Track: `iteration_count = 1`
 Track: `issues_history = []`
@@ -429,7 +429,7 @@ Return one of:
 ```
 Task(
   prompt=checker_prompt,
-  subagent_type="fuska-plan-checker",
+  subagent_type="fuska-plan-checker-jury",
   model="{checker_model}",
   description="Verify Chapter {chapter} plans"
 )
@@ -590,7 +590,7 @@ Verification: {Passed | Passed with override | Skipped}
 - [ ] Existing plan concepts checked
 - [ ] fuska-planner spawned with MegaMemory context
 - [ ] Plan concepts created (PLANNING COMPLETE or CHECKPOINT handled)
-- [ ] fuska-plan-checker spawned (unless --skip-verify)
+- [ ] fuska-plan-checker-jury spawned (unless --skip-verify)
 - [ ] Verification passed OR user override OR max iterations with user decision
 - [ ] User sees status between agent spawns
 - [ ] State concept updated with planning status

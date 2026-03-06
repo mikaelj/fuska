@@ -48,6 +48,44 @@ Arguments: `$ARGUMENTS`
 
 <process>
 
+## Guard Pattern for Conditional Steps
+
+Several steps in this command are conditional based on mode configuration. The guard pattern ensures mode-specific agent chains execute correctly:
+
+```
+**Step N.0: Skip if [feature] disabled**
+
+if (!modeConfig.[flag]) {
+  // [Feature] not configured for this mode - skip to next section
+  continue;
+}
+
+Display: `[Feature banner]...`
+```
+
+**Conditional Steps:**
+- Step 5: Researcher (modeConfig.research)
+- Step 7: Plan-Checker-Jury (modeConfig.planCheck)
+- Step 10: Reviewer (modeConfig.verifier)
+
+**Mode Configuration Reference:**
+```typescript
+modeConfig = {
+  planned:          { research: false, planCheck: false, genericOnly: false, codeReview: true, verifier: false, autoExecute: true },
+  'checked-generic':{ research: false, planCheck: true,  genericOnly: true,  codeReview: true, verifier: false, autoExecute: false },
+  checked:          { research: false, planCheck: true,  genericOnly: false, codeReview: true, verifier: false, autoExecute: false },
+  researched:       { research: true,  planCheck: true,  genericOnly: false, codeReview: true, verifier: false, autoExecute: false },
+  verified:         { research: true,  planCheck: true,  genericOnly: false, codeReview: true, verifier: true,  autoExecute: true }
+}
+```
+
+**Jury-Based Plan Checking:**
+- Uses `fuska-plan-checker-jury` agent (not single checker)
+- Spawns multiple specialized checkers: base + contextual + expert
+- `genericOnly` flag: true for checked-generic (lightweight), false for full jury validation
+
+## 0. Preflight Check
+
 ## 0. Preflight Check
 
 Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-initiative-exists.md.
@@ -66,10 +104,11 @@ Execute unplanned tasks with mode-aware agent chain.
 Usage: /fuska-do [mode] [description]
 
 Modes:
-  planned    Planner -> Builder -> Code Reviewer (auto-build)
-  checked    Planner -> Plan Checker -> Builder -> Code Reviewer (ask first)
-  researched Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer (ask first)
-  verified   Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer -> Reviewer (auto-build)
+  planned         Planner -> Builder -> Code Reviewer (auto-build)
+  checked-generic Planner -> Plan Checker (base only) -> Builder -> Code Reviewer (ask first)
+  checked         Planner -> Plan Checker (full jury) -> Builder -> Code Reviewer (ask first)
+  researched      Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer (ask first)
+  verified        Researcher -> Planner -> Plan Checker -> Builder -> Code Reviewer -> Reviewer (auto-build)
 
 Flags:
   --review          Force plan review before executing (any mode)
@@ -175,7 +214,7 @@ let resumeTaskId = null
 **Step 2.1: Parse arguments**
 
 ```
-const validModes = ["planned", "checked", "researched", "verified"]
+const validModes = ["planned", "checked-generic", "checked", "researched", "verified"]
 const words = input.trim().split(/\s+/)
 const hasReviewFlag = input.includes("--review") && !input.includes("--no-review")
 const hasNoReviewFlag = input.includes("--no-review")
@@ -197,7 +236,8 @@ if (validModes.includes(words[0]?.toLowerCase())) {
 | Option | Description |
 |--------|-------------|
 | Planned | Planner → Builder → Code Reviewer. Auto-build. You have a plan, just build it. |
-| Checked | Planner → Plan Checker → Builder → Code Reviewer. Ask first. Plan gets validated. |
+| Checked-generic | Planner → Plan Checker (base only) → Builder → Code Reviewer. Ask first. Lightweight validation. |
+| Checked | Planner → Plan Checker (full jury) → Builder → Code Reviewer. Ask first. Full plan validation. |
 | Researched | Researcher → Planner → Plan Checker → Builder → Code Reviewer. Ask first. Research adds context. |
 | Verified | Full pipeline with Code Reviewer + Reviewer. Auto-build. Critical systems, production code. |
 
@@ -207,10 +247,11 @@ if (validModes.includes(words[0]?.toLowerCase())) {
 
 ```
 modeConfig = {
-  planned:    { research: false, planCheck: false, codeReview: true, verifier: false, autoExecute: true },
-  checked:    { research: false, planCheck: true,  codeReview: true, verifier: false, autoExecute: false },
-  researched: { research: true,  planCheck: true,  codeReview: true, verifier: false, autoExecute: false },
-  verified:   { research: true,  planCheck: true,  codeReview: true, verifier: true,  autoExecute: true }
+  planned:          { research: false, planCheck: false, genericOnly: false, codeReview: true, verifier: false, autoExecute: true },
+  'checked-generic':{ research: false, planCheck: true,  genericOnly: true,  codeReview: true, verifier: false, autoExecute: false },
+  checked:          { research: false, planCheck: true,  genericOnly: false, codeReview: true, verifier: false, autoExecute: false },
+  researched:       { research: true,  planCheck: true,  genericOnly: false, codeReview: true, verifier: false, autoExecute: false },
+  verified:         { research: true,  planCheck: true,  genericOnly: false, codeReview: true, verifier: true,  autoExecute: true }
 }[MODE]
 
 if (hasReviewFlag) modeConfig.autoExecute = false
@@ -228,7 +269,7 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 |-------|---------|----------|--------|
 | fuska-chapter-researcher | quality_model | balanced_model | budget_model |
 | fuska-planner | quality_model | quality_model | balanced_model |
-| fuska-plan-checker | balanced_model | balanced_model | budget_model |
+| fuska-plan-checker-jury | balanced_model | balanced_model | budget_model |
 | fuska-executor | quality_model | balanced_model | balanced_model |
 | fuska-verifier | balanced_model | balanced_model | budget_model |
 | fuska-code-reviewer | budget_model | budget_model | budget_model |
@@ -271,6 +312,15 @@ Calculate next number from existing `task-NNN-*` concepts. If none: `nextNum = "
 ---
 
 ## 5. Spawn Researcher (if modeConfig.research)
+
+**Step 5.0: Skip if research disabled**
+
+```
+if (!modeConfig.research) {
+  // Research not configured for this mode - skip to next section
+  continue;
+}
+```
 
 Only for researched, verified modes. Display: `Researching...`
 
@@ -492,7 +542,16 @@ _${plannerDecisions.length} decisions logged during planning_
 
 ## 7. Spawn Plan-Checker + Revision Loop (if modeConfig.planCheck)
 
-Only for checked, researched, verified modes. Display: `Validating plan...`
+**Step 7.0: Skip if plan checking disabled**
+
+```
+if (!modeConfig.planCheck) {
+  // Plan checking not configured for this mode - skip to next section
+  continue;
+}
+```
+
+Only for checked-generic, checked, researched, verified modes. Display: `Validating plan...`
 
 **Step 7.1:** Query updated plan concept `${planConceptId}`.
 
@@ -508,6 +567,8 @@ Skip chapter-specific checks (requirement coverage, dependency graph, requiremen
 
 <verification_context>
 
+**standalone_task:** true
+**generic_only:** ${modeConfig.genericOnly}
 **Task:** ${DESCRIPTION}
 **Plan Data:** ${JSON.stringify(planData, null, 2)}
 
@@ -518,7 +579,7 @@ Verify this task plan. Focus on:
 </verification_context>`
 ```
 
-**Step 7.3:** Spawn Task(subagent_type="fuska-plan-checker", model=models.checker, variant="validate").
+**Step 7.3:** Spawn Task(subagent_type="fuska-plan-checker-jury", model=models.checker, variant="validate").
 
 **Step 7.4: Handle return + revision loop**
 
@@ -951,6 +1012,15 @@ Task(subagent_type="fuska-git-message", model=gitMessageModel, variant="amend", 
 ---
 
 ## 10. Spawn Reviewer (if modeConfig.verifier)
+
+**Step 10.0: Skip if verification disabled**
+
+```
+if (!modeConfig.verifier) {
+  // Verification not configured for this mode - skip to next section
+  continue;
+}
+```
 
 Only for verified mode. Display: `Reviewing...`
 

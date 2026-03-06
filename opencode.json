@@ -18,7 +18,7 @@
     "fuska-research-synthesizer": {
       "model": "zai-coding-plan/glm-5"
     },
-    "fuska-plan-checker": {
+    "fuska-plan-checker-jury": {
       "model": "zai-coding-plan/glm-5"
     },
     "fuska-chapter-researcher": {

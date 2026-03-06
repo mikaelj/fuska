@@ -1102,7 +1102,7 @@ class ConfigRunner {
       "fuska-roadmapper": { "model": effective.design },
       "fuska-initiative-researcher": { "model": effective.design },
       "fuska-research-synthesizer": { "model": effective.design },
-      "fuska-plan-checker": { "model": effective.plan },
+      "fuska-plan-checker-jury": { "model": effective.plan },
       "fuska-chapter-researcher": { "model": effective.plan },
       "fuska-codebase-mapper": { "model": effective.plan },
       "fuska-executor": { "model": effective.build },

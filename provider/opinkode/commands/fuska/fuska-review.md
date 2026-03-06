@@ -542,10 +542,10 @@ const fixPlanConcepts = response.matches.map(match => {
 })
 ```
 
-Spawn fuska-plan-checker:
+Spawn fuska-plan-checker-jury:
 ```
 Task(
-  subagent_type="fuska-plan-checker",
+  subagent_type="fuska-plan-checker-jury",
   variant="validate",
   description=`Verify gap closure plans for Chapter ${chapterNumber}`,
   model="{checker_model}",
@@ -740,7 +740,7 @@ Review the issues above and either:
 - [ ] Committed on completion
 - [ ] If issues: Parallel debug agents diagnose root causes
 - [ ] If issues: fuska-planner creates fix plans from diagnosed gaps
-- [ ] If issues: fuska-plan-checker verifies fix plans (max 3 iterations)
+- [ ] If issues: fuska-plan-checker-jury verifies fix plans (max 3 iterations)
 - [ ] Ready for `/fuska-build` when complete
 
 </success_criteria>

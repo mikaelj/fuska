@@ -99,7 +99,7 @@ The planner also updated the task concept in MegaMemory with the full plan data 
 
 > **This is where checked mode earns its keep.** The plan-checker is a separate agent that validates the planner's output before execution.
 
-**Agent:** `fuska-plan-checker` (model: glm-5, 65.7s)
+**Agent:** `fuska-plan-checker-jury` (model: glm-5, 65.7s)
 
 The orchestrator first queries MegaMemory for the updated plan concept, then spawns the checker with the plan data.
 
@@ -298,7 +298,7 @@ The orchestrator updates the task concept to `status: "complete"` with commit ha
 | Phase | Agent | Model | Time | Result |
 |-------|-------|-------|------|--------|
 | Plan | fuska-planner | glm-5 | 114s | 1 task, 1 file |
-| Check | fuska-plan-checker | glm-5 | 66s | PASSED |
+| Check | fuska-plan-checker-jury | glm-5 | 66s | PASSED |
 | Build | fuska-executor | glm-5 | 170s | COMPLETE |
 | Review #1 | fuska-code-reviewer | glm-4.7 | 103s | ISSUES FOUND (1 blocker) |
 | Review #2 | fuska-code-reviewer | glm-4.7 | 170s | PASSED |
