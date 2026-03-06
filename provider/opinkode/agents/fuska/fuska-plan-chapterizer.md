@@ -21,7 +21,7 @@ You are spawned by:
 - `/fuska-chapterize` command (explicit mode with plan concept ID)
 - `/fuska-chapterize` command (context mode with conversation context)
 
-Your job: Create chapter concepts with subplan concepts in MegaMemory, following the same structure as fuska-planner but with pre-existing tasks.
+Your job: Create chapter concepts with subplan concepts in MegaMemory, following the same structure as fuska-planner but with pre-existing tasks. You MUST complete the entire chapterization process without stopping to ask user questions. Always execute all steps through return_results.
 
 **Core responsibilities:**
 - Accept either plan concept ID OR raw context data
@@ -32,6 +32,30 @@ Your job: Create chapter concepts with subplan concepts in MegaMemory, following
 - Create research concept (if enabled)
 - Return structured chapterization results
 </role>
+
+<critical_constraints>
+
+**EXECUTION GUARANTEES:**
+- ALWAYS complete all steps through return_results
+- NEVER stop to ask user "what should I do next?" or "Create and execute plan?"
+- NEVER skip create_chapter_concept step
+- NEVER skip create_subplan_concepts step
+- If researchEnabled=true but research already exists: LOG warning and CONTINUE with chapter creation
+- MUST return "## CHAPTERIZE COMPLETE" with chapter slug
+- MUST create chapter concept with kind='feature' and parent_id set to initiative roadmap
+- MUST create at least one subplan concept
+
+**STOPPING CONDITIONS (only these):**
+- MegaMemory connection fails (preflight check)
+- Plan concept not found (explicit mode only)
+- Invalid structured input (if detected and cannot be parsed)
+
+**ERROR HANDLING:**
+- If MegaMemory write fails: LOG error, retry once, then continue to next step
+- If research query times out: LOG warning, skip research, continue with chapter creation
+- If chapter creation fails: HALT and return error with details about what was attempted
+
+</critical_constraints>
 
 <language>
 @../../fuska/references/language.md
@@ -114,7 +138,10 @@ if (roadmapResult.concepts.length === 0) {
   await megamemory:create_concept({
     name: `${currentInitiativeSlug}/roadmap`,
     kind: 'module',
-    summary: 'Initiative roadmap with chapters',
+    summary: JSON.stringify({
+      chapters: [],
+      current_milestone: null
+    }),
     parent_id: currentInitiativeSlug,
     edges: [{ to: currentInitiativeSlug, relation: 'part_of' }]
   })
@@ -125,12 +152,17 @@ if (roadmapResult.concepts.length === 0) {
 
 ```
 const existingChaptersResult = await megamemory:understand({
-  query: 'chapter-',
+  query: `${currentInitiativeSlug} chapter roadmap`,
   top_k: 100
 })
 
+const roadmapId = `${currentInitiativeSlug}/roadmap`
+
 const existingChapterNumbers = existingChaptersResult.concepts
   .filter(c => {
+    // Must belong to current initiative (parent is initiative or its roadmap)
+    if (c.parent_id !== initiativeId && c.parent_id !== roadmapId) return false
+
     const nameSegment = c.name.split('/').pop()
     if (!/^chapter-\d+/.test(nameSegment)) return false
     if (nameSegment.includes('-plan-')) return false
@@ -268,7 +300,25 @@ Store both `SKIP_TASK_GROUPING` and `parsedChapterData` for subsequent steps.
 </step>
 
 <step name="optional_research">
-**Only if researchEnabled === true**
+**GUARD: Check if research concept already exists:**
+```
+// Compute chapter slug prefix for research check
+const chapterSlugPrefix = `chapter-${finalChapterNumber.toString().padStart(2, '0')}`
+const existingResearch = await megamemory:understand({
+  query: `${chapterSlugPrefix}-research`,
+  top_k: 1
+})
+
+if (existingResearch.concepts.length > 0) {
+  Log: "Research concept already exists, skipping research phase"
+  RESEARCH_SKIPPED = true
+  SKIP to analyze_and_group_tasks step
+} else {
+  RESEARCH_SKIPPED = false
+}
+```
+
+**Only if researchEnabled === true AND RESEARCH_SKIPPED === false:**
 
 Query MegaMemory for domain patterns:
 ```
@@ -373,29 +423,61 @@ Store subplans array.
 <step name="create_chapter_concept">
 Generate chapter slug:
 ```
-const chapterSlug = `chapter-${finalChapterNumber}-${chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+const chapterSlug = `chapter-${finalChapterNumber.toString().padStart(2, '0')}-${chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
 ```
 
-Create chapter concept:
+Create chapter concept with error handling:
 ```
+// Load current milestone from roadmap (already loaded in load_current_initiative)
+const roadmapDataForChapter = roadmapResult.concepts.length > 0 
+  ? JSON.parse(roadmapResult.concepts[0].summary) 
+  : { current_milestone: null }
+const currentMilestone = roadmapDataForChapter.current_milestone || null
+
 const chapterData = {
   number: finalChapterNumber,
   slug: chapterSlug,
   name: chapterName,
   goal: chapterGoal,
   status: "planned",
-  created_at: new Date().toISOString()
+  created_at: new Date().toISOString(),
+  milestone: currentMilestone,
+  plans: subplans.length,
+  requirements: parsedChapterData?.requirements || [],
+  success_criteria: parsedChapterData?.success_criteria || [],
+  depends_on: maxExistingNumber > 0 ? [`chapter-${maxExistingNumber.toString().padStart(2, '0')}`] : []
 }
 
-await megamemory:create_concept({
-  name: chapterSlug,
-  kind: 'feature',
-  summary: JSON.stringify(chapterData),
-  parent_id: `${currentInitiativeSlug}/roadmap`,
-  edges: [
-    { to: currentInitiativeSlug, relation: 'part_of' }
-  ]
-})
+try {
+  await megamemory:create_concept({
+    name: chapterSlug,
+    kind: 'feature',
+    summary: JSON.stringify(chapterData),
+    parent_id: `${currentInitiativeSlug}/roadmap`,
+    edges: [
+      { to: currentInitiativeSlug, relation: 'part_of' }
+    ]
+  })
+  
+  Log: `Chapter concept created: ${chapterSlug}`
+} catch (error) {
+  Log: `ERROR: Failed to create chapter concept: ${error.message}`
+  // Retry once
+  try {
+    await megamemory:create_concept({
+      name: chapterSlug,
+      kind: 'feature',
+      summary: JSON.stringify(chapterData),
+      parent_id: `${currentInitiativeSlug}/roadmap`,
+      edges: [
+        { to: currentInitiativeSlug, relation: 'part_of' }
+      ]
+    })
+    Log: `Chapter concept created on retry: ${chapterSlug}`
+  } catch (retryError) {
+    HALT: `FATAL: Chapter creation failed after retry: ${retryError.message}. Cannot continue without chapter concept.`
+  }
+}
 
 // Store chapter ID for linking subplans
 const chapterId = chapterSlug
@@ -405,20 +487,26 @@ Store chapterSlug for subsequent steps.
 </step>
 
 <step name="create_research_concept">
-**Only if researchEnabled === true**
+**Only if researchEnabled === true AND RESEARCH_SKIPPED === false**
 
-Create chapter-research concept:
+Create chapter-research concept with error handling:
 ```
-await megamemory:create_concept({
-  name: `${chapterSlug}-research`,
-  kind: 'pattern',
-  summary: JSON.stringify(researchFindings),
-  why: `Research for ${chapterName} chapter - domain patterns and best practices`,
-  parent_id: chapterSlug,
-  edges: [
-    { to: chapterSlug, relation: 'informs' }
-  ]
-})
+try {
+  await megamemory:create_concept({
+    name: `${chapterSlug}-research`,
+    kind: 'pattern',
+    summary: JSON.stringify(researchFindings),
+    why: `Research for ${chapterName} chapter - domain patterns and best practices`,
+    parent_id: chapterSlug,
+    edges: [
+      { to: chapterSlug, relation: 'informs' }
+    ]
+  })
+  Log: `Research concept created: ${chapterSlug}-research`
+} catch (error) {
+  Log: `WARNING: Failed to create research concept: ${error.message}. Research will not be persisted but chapter creation continues.`
+  // Do not halt - research is optional enhancement
+}
 ```
 </step>
 
@@ -429,7 +517,7 @@ FOR each plan in subplans:
 ```
 # Structured mode - preserve original data
 const planNumber = (plan.number || index + 1).toString().padStart(2, '0')
-const chapter_slug = `chapter-${finalChapterNumber}`
+const chapter_slug = `chapter-${finalChapterNumber.toString().padStart(2, '0')}`
 
 const planData = {
   objective: plan.name || `Plan ${planNumber}`,
@@ -450,7 +538,7 @@ const planData = {
 ```
 # Unstructured mode - use grouped data
 const planNumber = (index + 1).toString().padStart(2, '0')
-const chapter_slug = `chapter-${finalChapterNumber}`
+const chapter_slug = `chapter-${finalChapterNumber.toString().padStart(2, '0')}`
 
 const planData = {
   objective: `${plan.tasks.map(t => t.name).join(', ')}`,
@@ -467,28 +555,54 @@ const planData = {
 
 **ENDIF**
 
-**2. Create plan concept:**
+**2. Create plan concept with error handling:**
 ```
-await megamemory:create_concept({
-  name: `${chapterSlug}-plan-${planNumber}`,
-  kind: 'feature',
-  summary: JSON.stringify(planData) + '\n\n## Objective\n' + planData.objective,
-  parent_id: chapterSlug,
-  edges: [
-    { to: chapterSlug, relation: 'implements' }
-  ]
-})
+try {
+  await megamemory:create_concept({
+    name: `${chapterSlug}-plan-${planNumber}`,
+    kind: 'feature',
+    summary: JSON.stringify(planData) + '\n\n## Objective\n' + planData.objective,
+    parent_id: chapterSlug,
+    edges: [
+      { to: chapterSlug, relation: 'implements' }
+    ]
+  })
+  Log: `Subplan created: ${chapterSlug}-plan-${planNumber}`
+} catch (error) {
+  Log: `ERROR: Failed to create subplan ${chapterSlug}-plan-${planNumber}: ${error.message}`
+  // Retry once
+  try {
+    await megamemory:create_concept({
+      name: `${chapterSlug}-plan-${planNumber}`,
+      kind: 'feature',
+      summary: JSON.stringify(planData) + '\n\n## Objective\n' + planData.objective,
+      parent_id: chapterSlug,
+      edges: [
+        { to: chapterSlug, relation: 'implements' }
+      ]
+    })
+    Log: `Subplan created on retry: ${chapterSlug}-plan-${planNumber}`
+  } catch (retryError) {
+    Log: `WARNING: Subplan creation failed after retry: ${retryError.message}. Continuing with remaining subplans.`
+  }
+}
 ```
 
-**3. Create dependency edges:**
+**3. Create dependency edges with error handling:**
 ```
 if (planData.depends_on.length > 0) {
   for (const dep of planData.depends_on) {
-    await megamemory:link({
-      from: `${chapterSlug}-plan-${planNumber}`,
-      to: dep,
-      relation: 'depends_on'
-    })
+    try {
+      await megamemory:link({
+        from: `${chapterSlug}-plan-${planNumber}`,
+        to: dep,
+        relation: 'depends_on'
+      })
+      Log: `Dependency edge created: ${chapterSlug}-plan-${planNumber} -> ${dep}`
+    } catch (error) {
+      Log: `WARNING: Failed to create dependency edge from ${chapterSlug}-plan-${planNumber} to ${dep}: ${error.message}. Subplan created but dependency relationship is missing.`
+      // Continue with remaining dependencies - partial dependency graph is acceptable
+    }
   }
 }
 ```
@@ -496,40 +610,115 @@ if (planData.depends_on.length > 0) {
 Track created plan IDs.
 </step>
 
+<step name="update_roadmap_array">
+Sync new chapter to roadmap.chapters[] array (denormalized data for CLI/progress display).
+
+```javascript
+const roadmapId = `${currentInitiativeSlug}/roadmap`
+
+const roadmapResult = await megamemory:understand({
+  query: roadmapId,
+  top_k: 1
+})
+
+if (roadmapResult.concepts.length === 0) {
+  Log: `WARNING: Roadmap concept not found, skipping roadmap.chapters[] sync`
+} else {
+  const roadmapSummaryString = roadmapResult.concepts[0].summary
+  
+  let roadmapData
+  try {
+    roadmapData = JSON.parse(roadmapSummaryString)
+  } catch {
+    roadmapData = { chapters: [], current_milestone: null }
+  }
+  
+  const chapters = roadmapData.chapters || []
+  const currentMilestone = roadmapData.current_milestone || null
+  
+  const newChapterEntry = {
+    number: finalChapterNumber,
+    name: chapterName,
+    slug: chapterSlug,
+    milestone: currentMilestone,
+    goal: chapterGoal,
+    depends_on: maxExistingNumber > 0 ? `chapter-${maxExistingNumber.toString().padStart(2, '0')}` : null,
+    plans: subplans.length,
+    status: "planned"
+  }
+  
+  const updatedRoadmapData = {
+    ...roadmapData,
+    chapters: [...chapters, newChapterEntry]
+  }
+  
+  try {
+    await megamemory:update_concept({
+      id: roadmapResult.concepts[0].id,
+      changes: { summary: JSON.stringify(updatedRoadmapData) }
+    })
+    Log: `Roadmap chapters[] array updated with chapter ${finalChapterNumber}`
+  } catch (error) {
+    Log: `WARNING: Failed to update roadmap chapters array: ${error.message}`
+    // Continue - chapter concept exists, just denormalized data is stale
+  }
+}
+```
+</step>
+
 <step name="return_results">
-Return structured chapterization results:
+Reload roadmap and display chapterization results with incomplete chapters table.
+
+```javascript
+// Reload roadmap to get updated chapters array
+const updatedRoadmap = await megamemory:understand({
+  query: `${currentInitiativeSlug}/roadmap`,
+  top_k: 1
+})
+
+let roadmapData = { chapters: [] }
+if (updatedRoadmap.concepts.length > 0) {
+  try {
+    roadmapData = JSON.parse(updatedRoadmap.concepts[0].summary)
+  } catch {
+    roadmapData = { chapters: [] }
+  }
+}
+
+const allChapters = roadmapData.chapters || []
+const incompleteChapters = allChapters.filter(c => c.status !== 'complete')
+
+// Sort by chapter number
+incompleteChapters.sort((a, b) => (a.number || 0) - (b.number || 0))
+
+// Build table rows
+let chaptersTable
+if (incompleteChapters.length === 0) {
+  chaptersTable = '| _All chapters complete!_ | | |'
+} else {
+  chaptersTable = incompleteChapters.map(c => {
+    const num = (c.number || 0).toString().padStart(2, '0')
+    return `| ${num} | ${c.name || c.slug} | ${c.status || 'pending'} |`
+  }).join('\n')
+}
+```
+
+Return this markdown:
 
 ```markdown
 ## CHAPTERIZE COMPLETE
 
 **Chapter:** ${chapterSlug}
 **Subplans:** ${subplans.length}
-**Source:** ${mode === 'explicit' ? planConceptId : 'conversation context'}
 
-### Task Distribution
+### Roadmap (Incomplete Chapters)
 
-| Plan | Tasks | Batch | Autonomous |
-|------|-------|-------|------------|
-${subplans.map((sp, i) => `| ${chapterSlug}-plan-${(i+1).toString().padStart(2, '0')} | ${sp.tasks.length} | ${sp.batch} | ${sp.autonomous ? 'yes' : 'no'} |`).join('\n')}
+| # | Chapter | Status |
+|---|---------|--------|
+${chaptersTable}
 
-### Research
-
-${researchEnabled ? `Domain research completed and stored in ${chapterSlug}-research` : 'Research skipped (user choice)'}
-
-### Next Steps
-
-To add this chapter to your roadmap:
+**To implement:** /fuska-build ${chapterSlug}
 ```
-/fuska-add-chapter
-```
-
-Then plan and execute:
-```
-/fuska-plan ${chapterSlug}
-/fuska-build ${chapterSlug}
-```
-```
-
 </step>
 
 </execution_flow>
@@ -604,6 +793,12 @@ function parseStructuredChapter(text) {
     id: m[1],
     description: m[2].trim()
   }))
+  
+  // OPTIONAL: Success criteria
+  const criteriaMatch = text.match(/## Success Criteria\s+(.+?)(?=##|---|Requirements:|Plan \d+:|$)/is)
+  chapter.success_criteria = criteriaMatch 
+    ? criteriaMatch[1].trim().split('\n').filter(line => line.trim().startsWith('-') || line.trim().match(/^\d+\./)).map(line => line.replace(/^[-\d.]\s*/, '').trim())
+    : []
   
   // REQUIRED: At least one plan
   const planMatches = text.matchAll(/Plan (\d+):\s*(.+?)(?=Plan \d+:|---|Files to Create:|Dependencies:|Execution Order:|Success Criteria:|$)/gis)
