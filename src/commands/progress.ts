@@ -2,6 +2,8 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { markdownToAnsi } from './utils/markdown-to-ansi';
+import { detectChapterCompletion, enrichChapterStatus, ChapterWithDetectedStatus } from '../scripts/helpers';
+import { ChapterData } from '../scripts/types';
 
 interface TodoNode {
   id: string;
@@ -30,15 +32,6 @@ interface ConfigData {
   autonomous_mode: boolean;
   model_profile?: string;
   current_initiative?: string | null;
-}
-
-interface ChapterData {
-  number: number;
-  slug: string;
-  name: string;
-  goal: string;
-  status: string;
-  milestone?: string;
 }
 
 interface RoadmapData {
@@ -105,12 +98,20 @@ interface StructuredContext {
   chapterPlans: Array<{ name: string; data: PlanData }>;
   chapterSummaries: Array<{ name: string; data: SummaryData }>;
   chapterVerification: VerificationData | null;
-  recentSummaries: Array<{ name: string; data: SummaryData }>;
+  recentSummaries: Array<ChapterWithSummaries>;
   pendingTodos: TodoItem[];
   activeDebugSessions: DebugSession[];
   pendingTaskConcepts: Array<{ name: string; data: TaskData }>;
   doneTaskConcepts: Array<{ name: string; data: TaskData }>;
   unknownTaskConcepts: Array<{ name: string; slug: string }>;
+  enrichedChapters: ChapterWithDetectedStatus[];
+}
+
+interface ChapterWithSummaries {
+  chapterData: ChapterData | null;
+  chapterSlug: string;
+  isComplete: boolean;
+  summaries: Array<{ name: string; data: SummaryData }>;
 }
 
 interface AdHocContext {
@@ -141,7 +142,17 @@ interface JsonOutput {
   currentChapter?: ChapterData | null;
   status?: string;
   nextAction?: NextAction;
-  recentWork?: Array<{ chapter: string; plan: string; accomplishment: string }>;
+  recentWork?: Array<{
+    chapter: string;
+    name?: string;
+    goal?: string;
+    isComplete: boolean;
+    plans?: Array<{
+      plan: string;
+      accomplishments: string[];
+      completed?: string;
+    }>;
+  }>;
   pendingTodos?: number;
   activeDebugSessions?: number;
   availableInitiatives?: string[];
@@ -155,12 +166,15 @@ class ProgressRunner {
   private nodeMap: Map<string, TodoNode> = new Map();
   private currentInitiative: string | null = null;
   private currentInitiativeId: string | null = null;
+  private roadmap: RoadmapData | null = null;
+  private verbose: boolean = false;
 
   constructor(options: { projectDir: string }) {
     this.projectDir = options.projectDir;
   }
 
-  async run(jsonOutput: boolean = false): Promise<void> {
+  async run(jsonOutput: boolean = false, fixMode: boolean = false, verbose: boolean = false): Promise<void> {
+    this.verbose = verbose;
     await this.preflightCheck();
     await this.loadAllData();
 
@@ -190,6 +204,7 @@ class ProgressRunner {
     
     const state = this.findState();
     const roadmap = this.findRoadmap();
+    this.roadmap = roadmap;
     
     if (!state || !roadmap) {
       const adHocContext = this.buildAdHocContext();
@@ -202,6 +217,18 @@ class ProgressRunner {
     }
     
     const context = this.buildStructuredContext(state, roadmap);
+    
+    if (fixMode) {
+      const syncedCount = this.syncChapterCompletions(context.enrichedChapters);
+      if (syncedCount > 0) {
+        this.updateStateProgress(state);
+        this.out(`\n✓ Synced ${syncedCount} chapter completion(s) to MegaMemory\n`);
+      } else {
+        this.out('\n✓ All chapters already synced\n');
+      }
+      return;
+    }
+    
     const nextAction = this.determineNextAction(context);
     
     if (jsonOutput) {
@@ -428,6 +455,50 @@ class ProgressRunner {
     return healed;
   }
 
+  private syncChapterCompletions(enrichedChapters: ChapterWithDetectedStatus[]): number {
+    let syncedCount = 0;
+    
+    for (const chapter of enrichedChapters) {
+      if (chapter.needsSync) {
+        const chapterNode = this.nodes.find(n => n.name === chapter.original.slug);
+        if (chapterNode) {
+          const chapterData = this.parseSummary<ChapterData>(chapterNode.summary);
+          if (chapterData) {
+            chapterData.status = 'complete';
+            this.db.updateNode(chapterNode.id, { summary: JSON.stringify(chapterData) });
+            syncedCount++;
+          }
+        }
+      }
+    }
+    
+    return syncedCount;
+  }
+
+  private updateStateProgress(state: StateData): void {
+    const roadmap = this.findRoadmap();
+    if (!roadmap) return;
+    
+    const enrichedChapters = enrichChapterStatus(roadmap.chapters, this.nodes);
+    const completedCount = enrichedChapters.filter(c => 
+      c.detectedComplete || c.original.status === 'complete'
+    ).length;
+    
+    const totalChapters = roadmap.chapters.length;
+    const newProgress = totalChapters > 0 
+      ? Math.round((completedCount / totalChapters) * 100) 
+      : 0;
+    
+    const stateNode = this.nodes.find(n => 
+      n.name === 'state' && n.parent_id === this.currentInitiativeId
+    );
+    
+    if (stateNode && state.progress !== newProgress) {
+      const updatedState = { ...state, progress: newProgress };
+      this.db.updateNode(stateNode.id, { summary: JSON.stringify(updatedState) });
+    }
+  }
+
   private findConfig(): ConfigData | null {
     const configNode = this.nodes.find(n => 
       n.name === 'config' && n.kind === 'config' && !n.parent_id
@@ -531,7 +602,7 @@ class ProgressRunner {
     return verificationNode ? this.parseSummary<VerificationData>(verificationNode.summary) : null;
   }
 
-  private findRecentSummaries(limit: number = 3): Array<{ name: string; data: SummaryData }> {
+  private findRecentSummaries(): Array<ChapterWithSummaries> {
     const belongsToInitiative = (nodeId: string): boolean => {
       let currentId: string | null = nodeId;
       let depth = 0;
@@ -546,19 +617,57 @@ class ProgressRunner {
       return false;
     };
 
-    return this.nodes
-      .filter(n => n.name.includes('-summary') && belongsToInitiative(n.id))
-      .map(n => {
-        const data = this.parseSummary<SummaryData>(n.summary);
-        return data ? { name: n.name, data } : null;
-      })
-      .filter((s): s is { name: string; data: SummaryData } => s !== null)
-      .sort((a, b) => {
+    const byChapter = new Map<string, Array<{ name: string; data: SummaryData }>>();
+
+    for (const node of this.nodes) {
+      if (!node.name.includes('-summary') || !node.name.includes('-plan-')) continue;
+      if (!belongsToInitiative(node.id)) continue;
+
+      const data = this.parseSummary<SummaryData>(node.summary);
+      if (!data || !data.chapter) continue;
+
+      if (!byChapter.has(data.chapter)) {
+        byChapter.set(data.chapter, []);
+      }
+      byChapter.get(data.chapter)!.push({ name: node.name, data });
+    }
+
+    const result: Array<ChapterWithSummaries> = [];
+
+    for (const [chapterSlug, summaries] of byChapter) {
+      summaries.sort((a, b) => {
         const dateA = new Date(a.data.completed || 0).getTime();
         const dateB = new Date(b.data.completed || 0).getTime();
         return dateB - dateA;
-      })
-      .slice(0, limit);
+      });
+
+      const chapterData = this.roadmap?.chapters.find(c => c.slug === chapterSlug) || null;
+      const status = (chapterData?.status || '').toLowerCase();
+      const isComplete = status === 'complete' || status === 'completed';
+
+      result.push({
+        chapterData,
+        chapterSlug,
+        isComplete,
+        summaries
+      });
+    }
+
+    result.sort((a, b) => {
+      if (a.isComplete !== b.isComplete) {
+        return a.isComplete ? 1 : -1;
+      }
+
+      if (a.isComplete) {
+        return (a.chapterData?.number || 0) - (b.chapterData?.number || 0);
+      } else {
+        const dateA = new Date(a.summaries[0]?.data.completed || 0).getTime();
+        const dateB = new Date(b.summaries[0]?.data.completed || 0).getTime();
+        return dateB - dateA;
+      }
+    });
+
+    return result;
   }
 
   private getPendingTodos(): Array<{ name: string; description: string }> {
@@ -617,6 +726,29 @@ class ProgressRunner {
       .map(n => ({ name: n.name }));
   }
 
+  private wordWrap(text: string, maxLen: number = 100, indent: string = '  '): string[] {
+    const words = text.split(/\s+/);
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      if (currentLine.length === 0) {
+        currentLine = word;
+      } else if (currentLine.length + 1 + word.length <= maxLen) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = indent + word;
+      }
+    }
+
+    if (currentLine.length > 0) {
+      lines.push(currentLine);
+    }
+
+    return lines;
+  }
+
   private getAllTaskConcepts(): { pending: Array<{ name: string; data: TaskData }>; done: Array<{ name: string; data: TaskData }>; unknown: Array<{ name: string; slug: string }> } {
     const tasks: Array<{ name: string; data: TaskData }> = [];
     const unknown: Array<{ name: string; slug: string }> = [];
@@ -663,6 +795,7 @@ class ProgressRunner {
     const currentChapterSlug = state.current_chapter;
     const currentChapter = currentChapterSlug ? this.findChapterData(currentChapterSlug) : null;
     const taskConcepts = this.getAllTaskConcepts();
+    const enrichedChapters = enrichChapterStatus(roadmap.chapters, this.nodes);
 
     return {
       projectName: this.findProjectName(),
@@ -675,12 +808,13 @@ class ProgressRunner {
       chapterPlans: currentChapterSlug ? this.findChapterPlans(currentChapterSlug) : [],
       chapterSummaries: currentChapterSlug ? this.findChapterSummaries(currentChapterSlug) : [],
       chapterVerification: currentChapterSlug ? this.findChapterVerification(currentChapterSlug) : null,
-      recentSummaries: this.findRecentSummaries(3),
+      recentSummaries: this.findRecentSummaries(),
       pendingTodos: this.getPendingTodos(),
       activeDebugSessions: this.getActiveDebugSessions(),
       pendingTaskConcepts: taskConcepts.pending,
       doneTaskConcepts: taskConcepts.done,
-      unknownTaskConcepts: taskConcepts.unknown
+      unknownTaskConcepts: taskConcepts.unknown,
+      enrichedChapters
     };
   }
 
@@ -802,22 +936,61 @@ class ProgressRunner {
     const projectName = ctx.projectName;
     const profile = ctx.config?.model_profile || ctx.config?.depth || 'balanced';
     const modeDesc = this.getModeDescription(profile);
+    const chaptersNeedingSync = ctx.enrichedChapters.filter(c => c.needsSync);
 
     this.out(`Initiative **${projectName}** using ${modeDesc} (${profile}) mode`);
     this.out('');
 
     this.out('Done:');
     if (ctx.recentSummaries.length > 0) {
-      for (const s of ctx.recentSummaries) {
-        const acc = s.data.accomplishments?.[0] || 'No summary';
-        const chapterNum = parseInt(s.data.chapter?.replace('chapter-', '') || '0') || '?';
-        const planMatch = s.data.plan?.match(/-plan-(\d+)/);
-        const planNum = planMatch ? planMatch[1] : '?';
-        this.out(`* Chapter ${chapterNum}.${parseInt(planNum)}: ${acc}`);
+      for (const chapter of ctx.recentSummaries) {
+        const chapterNum = chapter.chapterData?.number 
+          || parseInt(chapter.chapterSlug.replace('chapter-', '').split('-')[0]) 
+          || '?';
+
+        if (chapter.isComplete) {
+          const name = chapter.chapterData?.name || chapter.chapterSlug;
+          const goal = chapter.chapterData?.goal || '';
+
+          this.out(`* Chapter ${chapterNum}: ${name}`);
+
+          if (goal) {
+            const wrappedLines = this.wordWrap(goal);
+            for (const line of wrappedLines) {
+              this.out(line);
+            }
+          }
+
+          if (this.verbose && chapter.summaries.length > 0) {
+            for (const s of chapter.summaries) {
+              const planMatch = s.data.plan?.match(/-plan-(\d+)/);
+              const planNum = planMatch ? planMatch[1] : '?';
+              const acc = s.data.accomplishments?.[0] || 'No summary';
+              this.out(`  - ${chapterNum}.${parseInt(planNum)}: ${acc}`);
+            }
+          }
+        } else {
+          for (const s of chapter.summaries) {
+            const acc = s.data.accomplishments?.[0] || 'No summary';
+            const planMatch = s.data.plan?.match(/-plan-(\d+)/);
+            const planNum = planMatch ? planMatch[1] : '?';
+            this.out(`* Chapter ${chapterNum}.${parseInt(planNum)}: ${acc}`);
+          }
+        }
       }
     } else {
       this.out('* (none)');
     }
+    
+    if (chaptersNeedingSync.length > 0) {
+      this.out('');
+      this.out('Also complete (detected):');
+      for (const chapter of chaptersNeedingSync) {
+        const display = chapter.original.goal || chapter.original.name || '(no description)';
+        this.out(`* Chapter ${chapter.original.number}: ${display} **(sync required)**`);
+      }
+    }
+    
     this.out('');
 
     this.out('Future:');
@@ -938,6 +1111,11 @@ class ProgressRunner {
       this.out('');
     }
 
+    if (chaptersNeedingSync.length > 0) {
+      this.out(`Run **fuska progress --fix** to sync ${chaptersNeedingSync.length} chapter completion(s) to MegaMemory`);
+      this.out('');
+    }
+
     this.renderActions(nextAction, ctx);
   }
 
@@ -1041,10 +1219,18 @@ class ProgressRunner {
       currentChapter: ctx.currentChapter,
       status: ctx.state?.status || 'unknown',
       nextAction,
-      recentWork: ctx.recentSummaries.map(s => ({
-        chapter: s.data.chapter,
-        plan: s.data.plan,
-        accomplishment: s.data.accomplishments?.[0] || ''
+      recentWork: ctx.recentSummaries.map(chapter => ({
+        chapter: chapter.chapterSlug,
+        name: chapter.chapterData?.name,
+        goal: chapter.chapterData?.goal,
+        isComplete: chapter.isComplete,
+        plans: (this.verbose || !chapter.isComplete)
+          ? chapter.summaries.map(s => ({
+              plan: s.data.plan,
+              accomplishments: s.data.accomplishments,
+              completed: s.data.completed
+            }))
+          : undefined
       })),
       pendingTodos: ctx.pendingTodos.length,
       activeDebugSessions: ctx.activeDebugSessions.length
@@ -1059,8 +1245,14 @@ class ProgressRunner {
       availableInitiatives: ctx.availableInitiatives,
       recentWork: ctx.taskConcepts.map(t => ({
         chapter: '',
-        plan: t.name,
-        accomplishment: t.data.description || ''
+        name: t.data.slug || t.name.replace(/^task-\d+-/, ''),
+        goal: t.data.description || '',
+        isComplete: true,
+        plans: [{
+          plan: t.name,
+          accomplishments: [t.data.description || ''],
+          completed: t.data.completed_at
+        }]
       }))
     };
   }
@@ -1075,10 +1267,12 @@ export function progressCommand(program: Command) {
     .command('progress')
     .description('Check project progress and show next action')
     .option('--json', 'Output machine-readable JSON')
-    .action(async (options: { json?: boolean }) => {
+    .option('--fix', 'Sync detected chapter completions to MegaMemory')
+    .option('--verbose', 'Show all plan details for complete chapters')
+    .action(async (options: { json?: boolean; fix?: boolean; verbose?: boolean }) => {
       const runner = new ProgressRunner({
         projectDir: process.cwd()
       });
-      await runner.run(options.json || false);
+      await runner.run(options.json || false, options.fix || false, options.verbose || false);
     });
 }

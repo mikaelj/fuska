@@ -154,7 +154,7 @@ function parseMarkdownRoadmap(markdown: string): any {
     
     data.chapters.push({
       number,
-      slug: `chapter-${number}`,
+      slug: `chapter-${number.toString().padStart(2, '0')}`,
       name,
       goal,
       status,

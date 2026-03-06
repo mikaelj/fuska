@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { MegaMemoryClient, ConceptMatch } from './types';
+import type { ChapterData } from './types';
 
 export interface MegaMemoryStatus {
   ready: boolean;
@@ -321,4 +322,57 @@ export function calculateProgress(chapters: any[]): number {
 
   const completedChapters = chapters.filter((p: any) => p.status === 'complete').length;
   return Math.round((completedChapters / chapters.length) * 100);
+}
+
+export interface NodeForCompletion {
+  id: string;
+  name: string;
+  kind: string;
+}
+
+export function detectChapterCompletion(
+  chapterSlug: string,
+  allNodes: NodeForCompletion[]
+): boolean {
+  const chapterPlans = allNodes.filter(n => 
+    n.name.startsWith(chapterSlug) && 
+    n.name.includes('-plan-') && 
+    !n.name.includes('-summary') &&
+    n.kind === 'feature'
+  );
+  
+  if (chapterPlans.length === 0) {
+    return false;
+  }
+  
+  const completedPlans = chapterPlans.filter(plan => 
+    allNodes.some(n => 
+      n.name === `${plan.name}-summary` &&
+      n.kind === 'component'
+    )
+  );
+  
+  return completedPlans.length === chapterPlans.length;
+}
+
+export interface ChapterWithDetectedStatus {
+  original: ChapterData;
+  detectedComplete: boolean;
+  needsSync: boolean;
+}
+
+export function enrichChapterStatus(
+  chapters: ChapterData[],
+  allNodes: NodeForCompletion[]
+): ChapterWithDetectedStatus[] {
+  return chapters.map(chapter => {
+    const detectedComplete = detectChapterCompletion(chapter.slug, allNodes);
+    const storedComplete = chapter.status === 'complete';
+    
+    return {
+      original: chapter,
+      detectedComplete,
+      needsSync: detectedComplete && !storedComplete
+    };
+  });
 }

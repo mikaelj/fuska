@@ -173,8 +173,8 @@ const initiative = await megamemory.create_concept({
 
 // Create chapter with JSON summary
 const chapter = await megamemory.create_concept({
-  name: 'chapter-1', kind: 'feature',
-  summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Authentication', goal: 'Implement JWT auth', status: 'planned' }),
+  name: 'chapter-01', kind: 'feature',
+  summary: JSON.stringify({ number: 1, slug: 'chapter-01-authentication', name: 'Authentication', goal: 'Implement JWT auth', status: 'planned' }),
   parent_id: 'my-initiative/roadmap',
   edges: [{ to: 'roadmap', relation: 'part_of' }]
 });
@@ -186,8 +186,11 @@ const plan = await megamemory.create_concept({
 
 ## Objective
 Implement JWT login`,
-  parent_id: 'chapter-1',
-  edges: [{ to: 'chapter-1', relation: 'implements' }, { to: 'chapter-01-research', relation: 'uses_pattern' }]
+  parent_id: 'chapter-01',  // Now matches parent
+  edges: [
+    { to: 'chapter-01', relation: 'implements' },
+    { to: 'chapter-01-research', relation: 'uses_pattern' }
+  ]
 });
 ```
 

@@ -126,6 +126,22 @@ export interface Chapter {
   goal: string;
 }
 
+export interface ChapterData {
+  number: number;
+  slug: string;
+  name: string;
+  goal: string;
+  status: string;
+  milestone?: string;
+  completed_at?: string;
+  completed_date?: string;
+  created_at?: string;
+  requirements?: string[];
+  success_criteria?: string[];
+  task_count?: number;
+  plan_count?: number;
+}
+
 export interface ChapterContextData {
   gathered: string;
   status: string;

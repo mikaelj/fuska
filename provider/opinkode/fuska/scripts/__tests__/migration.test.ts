@@ -179,7 +179,7 @@ describe('Migration Tests', () => {
 
       // Simulate chapter concept
       const chapter1 = {
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
@@ -201,8 +201,8 @@ describe('Migration Tests', () => {
           chapter_boundary: 'Implement core',
           decisions: { tech_stack: 'TypeScript' }
         }),
-        parent_id: 'chapter-1',
-        edges: [{ to: 'chapter-1', relation: 'configured_by' }]
+        parent_id: 'chapter-01',
+        edges: [{ to: 'chapter-01', relation: 'configured_by' }]
       };
 
       expect(chapter1.kind).toBe('feature');
@@ -401,7 +401,7 @@ describe('Migration Tests', () => {
         { name: 'requirements', kind: 'module', summary: 'Requirements list' },
         { name: 'req-TEST-001', kind: 'feature', summary: 'Test requirement' },
         { name: 'roadmap', kind: 'module', summary: 'Project roadmap' },
-        { name: 'chapter-1', kind: 'feature', summary: 'Chapter 1' },
+        { name: 'chapter-01', kind: 'feature', summary: 'Chapter 1' },
         { name: 'chapter-01-context', kind: 'config', summary: 'Context' },
         { name: 'state', kind: 'config', summary: 'State' },
         { name: 'config', kind: 'config', summary: 'Config' }

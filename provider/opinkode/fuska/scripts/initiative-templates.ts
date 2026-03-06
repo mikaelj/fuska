@@ -1,6 +1,10 @@
 import { FuskaConcept, InitiativeData, StateData, ConfigData, MilestoneData, RequirementStatus } from './types';
 import { generateSummary } from './helpers';
 
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
 export class InitiativeConceptTemplates {
   static createInitiativeRoot(initiative: InitiativeData): FuskaConcept {
     return {
@@ -51,12 +55,13 @@ export class InitiativeConceptTemplates {
   }
 
   static createChapter(initiativeSlug: string, number: number, slug: string, name: string, goal: string): FuskaConcept {
+    const zeroPaddedNumber = number.toString().padStart(2, '0');
     return {
-      name: `chapter-${number}`,
+      name: `chapter-${zeroPaddedNumber}`,
       kind: 'feature',
       summary: generateSummary({
         number,
-        slug,
+        slug: `chapter-${zeroPaddedNumber}-${slug || slugify(name)}`,
         name,
         goal,
         status: 'planned'

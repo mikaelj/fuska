@@ -126,7 +126,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
       });
 
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
@@ -155,7 +155,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({
           number: 1,
@@ -187,8 +187,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-context',
         kind: 'config',
         summary: JSON.stringify(contextData),
-        parent_id: 'chapter-1',
-        edges: [{ to: 'chapter-1', relation: 'configured_by' }]
+        parent_id: 'chapter-01',
+        edges: [{ to: 'chapter-01', relation: 'configured_by' }]
       });
 
       const context = await mockMegaMemory.understand({ query: 'chapter-01-context' });
@@ -206,7 +206,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
           gathered: '2025-01-20',
           decisions: { initial: 'decision' }
         }),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: []
       });
 
@@ -243,7 +243,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Auth', goal: 'Implement auth' }),
         parent_id: 'test-project/roadmap',
@@ -256,7 +256,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
           gathered: '2025-01-20',
           decisions: { auth_type: 'JWT' }
         }),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: []
       });
     });
@@ -281,9 +281,9 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify(planData),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: [
-          { to: 'chapter-1', relation: 'implements' },
+          { to: 'chapter-01', relation: 'implements' },
           { to: 'context-concept', relation: 'depends_on' }
         ]
       });
@@ -309,8 +309,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-research',
         kind: 'pattern',
         summary: JSON.stringify(researchData),
-        parent_id: 'chapter-1',
-        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
+        parent_id: 'chapter-01',
+        edges: [{ to: 'chapter-01', relation: 'connects_to' }]
       });
 
       const research = await mockMegaMemory.understand({ query: 'research' });
@@ -332,7 +332,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Auth', goal: 'Implement auth' }),
         parent_id: 'test-project/roadmap',
@@ -342,7 +342,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({ objective: 'Implement login', batch: 1 }),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: []
       });
     });
@@ -377,10 +377,10 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify(summaryData),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: [
           { to: 'chapter-01-plan-1', relation: 'connects_to' },
-          { to: 'chapter-1', relation: 'connects_to' }
+          { to: 'chapter-01', relation: 'connects_to' }
         ],
         created_by_task: 'chapter-01-plan-1'
       });
@@ -435,7 +435,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({ number: 1, slug: 'chapter-01', name: 'Auth', goal: 'Implement auth' }),
         parent_id: 'test-project/roadmap',
@@ -447,7 +447,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         summary: JSON.stringify({
           accomplishments: ['Login works', 'Logout works']
         }),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: []
       });
     });
@@ -464,9 +464,9 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-verification',
         kind: 'component',
         summary: JSON.stringify(verificationData),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: [
-          { to: 'chapter-1', relation: 'connects_to' },
+          { to: 'chapter-01', relation: 'connects_to' },
           { to: 'chapter-01-plan-1-summary', relation: 'connects_to' }
         ]
       });
@@ -490,8 +490,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-verification',
         kind: 'component',
         summary: JSON.stringify(verificationData),
-        parent_id: 'chapter-1',
-        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
+        parent_id: 'chapter-01',
+        edges: [{ to: 'chapter-01', relation: 'connects_to' }]
       });
 
       const verification = await mockMegaMemory.understand({ query: 'verification' });
@@ -524,7 +524,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({ number: 1, slug: 'chapter-01' }),
         parent_id: 'test-project/roadmap',
@@ -534,7 +534,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-plan-1',
         kind: 'feature',
         summary: JSON.stringify({ objective: 'Implement login' }),
-        parent_id: 'chapter-1',
+        parent_id: 'chapter-01',
         edges: []
       });
     });
@@ -575,7 +575,7 @@ describe('MegaMemory Workflow Integration Tests', () => {
         edges: []
       });
       await mockMegaMemory.create_concept({
-        name: 'chapter-1',
+        name: 'chapter-01',
         kind: 'feature',
         summary: JSON.stringify({ number: 1 }),
         parent_id: 'roadmap',
@@ -592,8 +592,8 @@ describe('MegaMemory Workflow Integration Tests', () => {
         name: 'chapter-01-plan-1-summary',
         kind: 'component',
         summary: JSON.stringify({ accomplishments: ['Task done'] }),
-        parent_id: 'chapter-1',
-        edges: [{ to: 'chapter-1', relation: 'connects_to' }]
+        parent_id: 'chapter-01',
+        edges: [{ to: 'chapter-01', relation: 'connects_to' }]
       });
     });
 

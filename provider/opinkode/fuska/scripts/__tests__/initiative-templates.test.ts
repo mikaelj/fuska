@@ -98,10 +98,10 @@ describe('ProjectConceptTemplates', () => {
         'Implement JWT-based authentication'
       );
 
-      expect(concept.name).toBe('chapter-1');
+      expect(concept.name).toBe('chapter-01');
       expect(concept.kind).toBe('feature');
       expect(concept.summary).toContain('"number":1');
-      expect(concept.summary).toContain('"slug":"chapter-01"');
+      expect(concept.summary).toContain('"slug":"chapter-01-authentication"');
       expect(concept.summary).toContain('"name":"Authentication"');
       expect(concept.summary).toContain('"goal":"Implement JWT-based authentication"');
       expect(concept.summary).toContain('"status":"planned"');
