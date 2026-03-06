@@ -5,11 +5,19 @@ Organized by theme rather than individual commit.
 
 ---
 
-## Unreleased (e4f563f)
+## Unreleased (c82d8a6)
+
+### Highlights
+
+- **Architecture Decision Records (ADR)** — Full ADR lifecycle system with CLI commands (`fuska decision new/query/export/list`), decision concept schema in MegaMemory, automatic workflow integration in `fuska-do`, and opt-in flag to control decision logging. Helps teams track and revisit significant architectural choices over time.
+
+- **Initiative-Scoped MegaMemory Queries** — All commands now use exact matching with parent_id filtering to prevent cross-initiative pollution in multi-initiative environments. Commands load current_initiative from config, scope queries by initiative root, and validate parent chains. Critical for users working across multiple Fuska projects simultaneously.
+
+- **Progress Completion Detection** — `fuska progress` automatically detects chapters where all plans have completed summaries but status field is not 'complete', with `--fix` flag to sync detected completions to MegaMemory and update progress percentage. Eliminates manual status tracking.
+
+- **Large Plan Detection & Chapterization** — Planner now detects large plans (5+ tasks) and suggests chapterization for better context management. Returns metadata flag to coordinator for decision-making. Helps users organize complex work into digestible chapters.
 
 ### New Features
-
-- **Initiative-Scoped MegaMemory Queries** — All commands now use exact matching with parent_id filtering to prevent cross-initiative pollution in multi-initiative environments. Commands load current_initiative from config, scope queries by initiative root, and validate parent chains. See `provider/opinkode/fuska/references/initiative-scoped-queries.md` for canonical patterns.
 
 - **Dual-Path Roadmap Parsing** — Roadmap loading uses JSON parse with fallback to markdown and node discovery. Automatically detects stale roadmap data and rebuilds from chapter nodes when count mismatches occur.
 
@@ -17,26 +25,36 @@ Organized by theme rather than individual commit.
 
 - **Roadmap Migration Tool** — New `fuska migrate roadmap [dir]` command converts markdown roadmap format to JSON, fixes parent_id relationships, and validates data integrity. Supports `--dry-run` and `--verbose` flags.
 
-- **Reference Document** — Comprehensive `initiative-scoped-queries.md` reference with 3-layer approach (scoping + parsing + validation), code patterns, error handling templates, and 26-item testing checklist.
+- **Chapter Names Migration** — New `fuska migrate chapter-names` command standardizes chapter naming conventions across existing MegaMemory databases with direct SQL for performance.
 
-- **Plan Chapterizer Enhancements** — Enhanced `fuska-plan-chapterizer` with dual mode support (explicit/context), structured input detection, and universal chapter number collision prevention. Detects large plans and suggests chapterization for better organization.
+- **Plan Chapterizer Enhancements** — Enhanced `fuska-plan-chapterizer` with dual mode support (explicit/context), structured input detection, and universal chapter number collision prevention.
 
-- **Architecture Decision Records (ADR)** — Full ADR lifecycle system with CLI commands (`fuska decision query/export/list`), decision concept schema in MegaMemory, logging template, and automatic workflow integration in `fuska-do` when ADR opt-in is enabled
+- **Decision CLI Commands** — `fuska decision new/show/list/accept/reject/deprecate` commands for ADR lifecycle management with fuzzy matching and status validation.
 
 ### Improvements
 
-- **Core Commands Updated** — `fuska.md` and `progress.ts` now use initiative-scoped queries with dual-path roadmap parsing
-- **High Priority Commands Updated** — `fuska-build`, `fuska-design`, `fuska-research-chapter`, and `fuska-review` scoped to current initiative
-- **Medium Priority Commands Updated** — `fuska-add-chapter`, `fuska-insert-chapter`, and `fuska-remove-chapter` use initiative-scoped roadmap modifications
-- **Init Command Refactor** — Streamlined command by removing unnecessary `description` argument and broken `--debug` flag, improved provider display in next steps
+- **Standardized Chapter Naming** — Progress command now uses zero-padded format (chapter-01, chapter-02) for consistency
+- **Model Provider Update** — Updated from bailian-coding-plan to zai-coding-plan
+- **Init Command Refactor** — Removed unnecessary `description` argument and broken `--debug` flag, improved provider display in next steps
+- **Migration Performance** — Rewrote chapterizer migration with direct SQL for better performance
+- **Enhanced Changelog Prompt** — Added user impact categorization (Highlights section) following VS Code, Vue, React patterns
 
 ### Bug Fixes
 
 - Fixed tutorial documentation
-- Added try-catch to ADR config JSON parsing for better error handling
+- Added try-catch to ADR config JSON parsing for graceful error handling
 - Corrected ADR opt-in check syntax in fuska-do workflow
 - Fixed progress command to find global config and simplify initiative detection
-- Corrected command references across documentation
+- Corrected command references across documentation (audit-milestone → add-phase, insert → insert-chapter)
+- Fixed planner command to suggest correct command for task vs chapter planning
+- Fixed init command to show correct provider (opencode/claude) in next steps
+
+### Documentation
+
+- Added comprehensive `initiative-scoped-queries.md` reference with 3-layer approach (scoping + parsing + validation), code patterns, error handling templates, and 26-item testing checklist
+- Added chapterizer context mode documentation across all user-facing docs (commands, workflow, getting-started, tutorial)
+- Updated CHANGELOG.md structure with Unreleased section
+- Enhanced multi-initiative workflow documentation
 
 ---
 
