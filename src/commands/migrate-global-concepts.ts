@@ -125,25 +125,35 @@ async function performMigration(db: KnowledgeDB, options: any) {
     
     db.hardDeleteNode(node.id);
     
-    db.insertNodeRaw({
-      id: fullNode.id,
-      name: fullNode.name,
-      kind: fullNode.kind,
-      summary: fullNode.summary,
-      why: fullNode.why,
-      file_refs: fullNode.file_refs,
-      parent_id: null,
-      created_by_task: fullNode.created_by_task,
-      created_at: fullNode.created_at,
-      updated_at: fullNode.updated_at,
-      removed_at: fullNode.removed_at,
-      removed_reason: fullNode.removed_reason,
-      embedding: fullNode.embedding as Buffer | null | undefined,
-      merge_group: fullNode.merge_group,
-      needs_merge: fullNode.needs_merge,
-      source_branch: fullNode.source_branch,
-      merge_timestamp: fullNode.merge_timestamp
-    });
+    try {
+      validateNoUndefined(fullNode, 'performMigration');
+      const embedding = fullNode.embedding && Buffer.isBuffer(fullNode.embedding) ? fullNode.embedding : null;
+      db.insertNodeRaw({
+        id: fullNode.id,
+        name: fullNode.name,
+        kind: fullNode.kind,
+        summary: fullNode.summary,
+        why: fullNode.why ?? null,
+        file_refs: fullNode.file_refs ?? null,
+        parent_id: null,
+        created_by_task: fullNode.created_by_task ?? null,
+        created_at: fullNode.created_at,
+        updated_at: fullNode.updated_at,
+        removed_at: fullNode.removed_at ?? null,
+        removed_reason: fullNode.removed_reason ?? null,
+        embedding: embedding as Buffer | null,
+        merge_group: fullNode.merge_group ?? null,
+        needs_merge: fullNode.needs_merge ?? null,
+        source_branch: fullNode.source_branch ?? null,
+        merge_timestamp: fullNode.merge_timestamp ?? null
+      });
+    } catch (error) {
+      console.error('Failed to migrate node:');
+      console.error(`  Node: ${fullNode.name} (id: ${fullNode.id})`);
+      console.error(`  Error: ${error}`);
+      console.error('\nMigration failed. You may need to restore from backup.');
+      throw error;
+    }
     
     migrated++;
     
@@ -161,6 +171,31 @@ async function performMigration(db: KnowledgeDB, options: any) {
   }
 }
 
+function validateNoUndefined(node: any, context: string): void {
+  const optionalFields = [
+    'why', 'file_refs', 'parent_id', 'created_by_task',
+    'removed_at', 'removed_reason', 'embedding',
+    'merge_group', 'needs_merge', 'source_branch', 'merge_timestamp'
+  ];
+  
+  const undefinedFields = optionalFields.filter(field => node[field] === undefined);
+  
+  if (undefinedFields.length > 0) {
+    console.error(`Validation failed in ${context}:`);
+    console.error(`  Concept: ${node.name} (id: ${node.id})`);
+    console.error(`  Undefined fields: ${undefinedFields.join(', ')}`);
+    console.error('  This should not happen - all optional fields should use ?? null');
+    throw new Error(`Undefined fields detected in ${context}: ${undefinedFields.join(', ')}`);
+  }
+  
+  // Check embedding is null or Buffer, not an object
+  if (node.embedding !== null && !Buffer.isBuffer(node.embedding)) {
+    console.error(`Validation warning in ${context}:`);
+    console.error(`  Concept: ${node.name} (id: ${node.id})`);
+    console.error(`  embedding field is not null or Buffer, will be converted to null`);
+  }
+}
+
 async function createBackupFile(db: KnowledgeDB): Promise<string> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const backupDir = path.join(process.cwd(), '.megamemory', 'backups');
@@ -174,25 +209,35 @@ async function createBackupFile(db: KnowledgeDB): Promise<string> {
   const backupDb = new KnowledgeDB(backupPath);
   
   for (const node of allNodes) {
-    backupDb.insertNodeRaw({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      summary: node.summary,
-      why: node.why,
-      file_refs: node.file_refs,
-      parent_id: node.parent_id,
-      created_by_task: node.created_by_task,
-      created_at: node.created_at,
-      updated_at: node.updated_at,
-      removed_at: node.removed_at,
-      removed_reason: node.removed_reason,
-      embedding: node.embedding as Buffer | null | undefined,
-      merge_group: node.merge_group,
-      needs_merge: node.needs_merge,
-      source_branch: node.source_branch,
-      merge_timestamp: node.merge_timestamp
-    });
+    try {
+      validateNoUndefined(node, 'createBackupFile');
+      const embedding = node.embedding && Buffer.isBuffer(node.embedding) ? node.embedding : null;
+      backupDb.insertNodeRaw({
+        id: node.id,
+        name: node.name,
+        kind: node.kind,
+        summary: node.summary,
+        why: node.why ?? null,
+        file_refs: node.file_refs ?? null,
+        parent_id: node.parent_id ?? null,
+        created_by_task: node.created_by_task ?? null,
+        created_at: node.created_at,
+        updated_at: node.updated_at,
+        removed_at: node.removed_at ?? null,
+        removed_reason: node.removed_reason ?? null,
+        embedding: embedding as Buffer | null,
+        merge_group: node.merge_group ?? null,
+        needs_merge: node.needs_merge ?? null,
+        source_branch: node.source_branch ?? null,
+        merge_timestamp: node.merge_timestamp ?? null
+      });
+    } catch (error) {
+      console.error('Failed to insert node into backup database:');
+      console.error(`  Node: ${node.name} (id: ${node.id})`);
+      console.error(`  Error: ${error}`);
+      backupDb.close();
+      throw error;
+    }
   }
   
   for (const edge of allEdges) {
@@ -200,12 +245,12 @@ async function createBackupFile(db: KnowledgeDB): Promise<string> {
       from_id: edge.from_id,
       to_id: edge.to_id,
       relation: edge.relation,
-      description: edge.description,
+      description: edge.description ?? null,
       created_at: edge.created_at,
-      merge_group: edge.merge_group,
-      needs_merge: edge.needs_merge,
-      source_branch: edge.source_branch,
-      merge_timestamp: edge.merge_timestamp
+      merge_group: edge.merge_group ?? null,
+      needs_merge: edge.needs_merge ?? null,
+      source_branch: edge.source_branch ?? null,
+      merge_timestamp: edge.merge_timestamp ?? null
     });
   }
   
