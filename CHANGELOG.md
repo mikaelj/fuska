@@ -5,9 +5,9 @@ Organized by theme rather than individual commit.
 
 ---
 
-## Unreleased (2f03009)
+## Unreleased (55b35fa)
 
-**30 commits** | 85 files changed, 55,433 insertions, 647 deletions
+**36 commits** | 85 files changed, 55,433 insertions, 647 deletions
 
 ### Highlights
 
@@ -20,6 +20,8 @@ Organized by theme rather than individual commit.
 - **Large Plan Detection & Chapterization** — Planner now detects large plans (5+ tasks) and suggests chapterization for better context management. Returns metadata flag to coordinator for decision-making. Helps users organize complex work into digestible chapters.
 
 ### New Features
+
+- **Global Codebase & Research Concepts** — Codebase analysis concepts (tech stack, architecture, quality, concerns) and research concepts are now stored as global concepts (parent_id: null) instead of initiative-scoped, enabling reuse across multiple initiatives and proper knowledge sharing between projects.
 
 - **Dual-Path Roadmap Parsing** — Roadmap loading uses JSON parse with fallback to markdown and node discovery. Automatically detects stale roadmap data and rebuilds from chapter nodes when count mismatches occur.
 
@@ -35,6 +37,8 @@ Organized by theme rather than individual commit.
 
 ### Improvements
 
+- **Enhanced Import Graph Implementation** — Import graph creation in `fuska map --force` now creates file concepts (file:*), symbol concepts (symbol:*), and dead code concepts (dead-code:*) with proper edge relations (imports, uses, defined_in, exports), enabling accurate code dependency analysis and unused code detection
+
 - **Standardized Chapter Naming** — Progress command now uses zero-padded format (chapter-01, chapter-02) for consistency
 - **Model Provider Update** — Updated from bailian-coding-plan to zai-coding-plan
 - **Init Command Refactor** — Removed unnecessary `description` argument and broken `--debug` flag, improved provider display in next steps
@@ -43,6 +47,9 @@ Organized by theme rather than individual commit.
 
 ### Bug Fixes
 
+- Fixed import graph edge relations in `fuska map --force` to use valid MegaMemory relations (imports, uses, defined_in, exports) instead of unsupported relations
+- Fixed research concept creation to use parent_id: null (global scope) instead of initiative-scoped parent_id for proper knowledge reuse
+- Fixed codebase concept creation to set parent_id: null for global concepts (tech stack, architecture, quality, concerns) instead of initiative-scoped
 - Fixed slash command invocation with -- separator to prevent yargs from interpreting command args as CLI options
 - Fixed chapterizer to use zero-padded chapter numbers for consistent sorting
 - Fixed tutorial documentation
