@@ -27,16 +27,23 @@ function formatElapsed(ms: number): string {
 /**
  * Build command-line arguments for the specified provider.
  *
- * OpenCode: `opencode run --format json <command>`
- * Claude: `claude --print --output-format stream-json <prompt>`
+ * OpenCode: `opencode run --format json --command <cmd> [args...]` (for slash commands)
+ *           `opencode run --format json <message>` (for non-slash commands)
+ * Claude: `claude --print --output-format stream-json --verbose <prompt>`
  */
 function buildProviderArgs(provider: ProviderType, command: string, args?: string[]): string[] {
   if (provider === 'opencode') {
-    const message = args && args.length > 0 ? `${command} ${args.join(' ')}` : command;
-    return ['run', '--format', 'json', message];
+    const isSlashCommand = command.startsWith('/');
+    const cmdName = isSlashCommand ? command.substring(1) : command;
+    const baseArgs = ['run', '--format', 'json'];
+    
+    if (isSlashCommand) {
+      return [...baseArgs, '--command', cmdName, '--', ...(args || [])];
+    } else {
+      const message = args && args.length > 0 ? `${cmdName} ${args.join(' ')}` : cmdName;
+      return [...baseArgs, message];
+    }
   } else {
-    // Claude CLI uses --print for non-interactive mode and --output-format stream-json for streaming
-    // The command is passed as the prompt argument
     const prompt = args && args.length > 0 ? `${command} ${args.join(' ')}` : command;
     return ['--print', '--output-format', 'stream-json', '--verbose', prompt];
   }
