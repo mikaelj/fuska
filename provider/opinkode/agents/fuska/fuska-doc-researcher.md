@@ -254,11 +254,11 @@ const researchData = {
   ]
 }
 
-megamemory_create_concept({
+ megamemory_create_concept({
   name: `${docPlanName}-research`,
   kind: "pattern",
   summary: JSON.stringify(researchData),
-  parent_id: docPlanName,
+  parent_id: null,
   edges: [{ to: docPlanName, relation: "informs" }]
 })
 ```

@@ -65,6 +65,85 @@ interface FuskaConcept {
 
 Created by `/fuska-refresh`, queried by `/fuska-ask`. Naming prefixes: `file:path/to/file.ext`, `symbol:SymbolName`, `dead-code:SymbolName`.
 
+## Global vs Initiative-Scoped Concepts
+
+Concepts in MegaMemory can be either **global** (shared across all initiatives) or **initiative-scoped** (specific to one initiative).
+
+### Global Concepts (parent_id: null)
+
+Global concepts are top-level nodes that can be referenced from any initiative:
+
+| Concept Type | Examples | Why Global |
+|-------------|----------|------------|
+| **Codebase Analysis** | `codebase-tech`, `codebase-arch`, `codebase-quality`, `codebase-concerns` | Codebase structure is project-wide, not initiative-specific |
+| **Domain Knowledge** | `domain-*`, `domain-planning`, `domain-execution` | Domain knowledge applies across all initiatives in the project |
+| **Import Graph** | `file:*`, `symbol:*`, `dead-code:*` | File/symbol structure is project-wide |
+| **Research** | `*-research` (chapter research) | Research findings are reusable across initiatives |
+
+**Creation Pattern:**
+```typescript
+await megamemory.create_concept({
+  name: 'codebase-tech',
+  kind: 'component',
+  summary: JSON.stringify({ /* tech stack data */ }),
+  parent_id: null,  // Global concept
+  edges: [
+    { to: 'initiative-slug', relation: 'connects_to' }
+  ]
+});
+```
+
+### Initiative-Scoped Concepts (parent_id: initiativeId)
+
+Initiative-scoped concepts belong to a specific initiative:
+
+| Concept Type | Examples | Why Scoped |
+|-------------|----------|------------|
+| **Chapters** | `chapter-01`, `chapter-02` | Each initiative has its own chapter sequence |
+| **Plans** | `chapter-01-plan-1` | Plans are specific to initiative chapters |
+| **Summaries** | `chapter-01-plan-1-summary` | Summaries document plan execution for specific initiative |
+| **Requirements** | `req-AUTH-01` | Requirements are initiative-specific |
+| **State** | `state` | Each initiative has its own execution state |
+| **Config** | `config` | Each initiative has its own configuration |
+| **Todos** | `todo-001` | Todos are initiative-specific |
+
+**Creation Pattern:**
+```typescript
+await megamemory.create_concept({
+  name: 'chapter-01-plan-1',
+  kind: 'component',
+  summary: JSON.stringify({ /* plan data */ }),
+  parent_id: initiativeId,  // Scoped to initiative
+  edges: [
+    { to: 'chapter-01', relation: 'implements' }
+  ]
+});
+```
+
+### Query Patterns
+
+**Query global concepts (no parent_id filtering):**
+```typescript
+const codebaseResult = await megamemory.understand({ 
+  query: 'codebase tech stack', 
+  top_k: 10 
+});
+// Returns global codebase-* concepts from any initiative
+```
+
+**Query initiative-scoped concepts (filter by parent or edges):**
+```typescript
+const chapterResult = await megamemory.understand({ 
+  query: 'chapter-01', 
+  top_k: 10 
+});
+// Filter results by parent_id === initiativeId or check edges
+```
+
+### Migration
+
+Existing concepts with `parent_id: initiativeId` should be migrated to `parent_id: null` if they are global by nature. Use the `fuska-migrate-global-concepts` command to automate this migration.
+
 ## Import Graph Usage by Commands/Agents
 
 | Component | Uses Import Graph? | How |

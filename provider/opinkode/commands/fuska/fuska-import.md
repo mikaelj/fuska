@@ -531,7 +531,7 @@ megamemory_create_concept({
   name: researchName,
   kind: "component",
   summary: JSON.stringify(researchData),
-  parent_id: initiativeId,
+  parent_id: null,
   edges: [{ to: initiativeId, relation: "connects_to" }]
 })
 ```
@@ -567,6 +567,7 @@ megamemory_create_concept({
   name: codebaseName,
   kind: "component",
   summary: JSON.stringify(codebaseData),
+  parent_id: null,
   edges: [{ to: initiativeId, relation: "connects_to" }]
 })
 ```

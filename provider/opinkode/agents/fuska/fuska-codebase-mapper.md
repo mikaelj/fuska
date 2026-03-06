@@ -393,11 +393,11 @@ Create codebase concept(s) in MegaMemory using ChapterConceptTemplates.createCod
 
 **For tech focus, include project classification:**
 ```typescript
-await megamemory:create_concept({
+ await megamemory:create_concept({
   name: 'codebase-tech',
   kind: 'pattern',
   summary: generateSummary(analysisData) + '\n\n' + markdownContent,
-  parent_id: 'project-root',
+  parent_id: null,
   edges: [
     { to: 'project-root', relation: 'informs' },
     ...informs_chapters_edge

@@ -778,11 +778,11 @@ const researchData: ResearchData = {
 // - parent_id: initiativeSlug
 // - edges: [{ to: initiativeSlug, relation: 'informs' }]
 
-await megamemory:create_concept({
+ await megamemory:create_concept({
   name: `${initiativeSlug}-research`,
   kind: 'pattern',
   summary: generateSummary(researchData) + '\n\n' + generateResearchMarkdown(researchData),
-  parent_id: initiativeSlug,
+  parent_id: null,
   edges: [{ to: initiativeSlug, relation: 'informs' }]
 });
 ```

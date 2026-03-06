@@ -445,7 +445,7 @@ megamemory_create_concept({
   name: "codebase",
   kind: "module",
   summary: "Codebase analysis: tech stack, architecture, quality conventions, and concerns.",
-  parent_id: HAS_PROJECT ? PROJECT_ROOT_ID : null,
+  parent_id: null,
   edges: [
     { to: "codebase-tech", relation: "connects_to" },
     { to: "codebase-arch", relation: "connects_to" },

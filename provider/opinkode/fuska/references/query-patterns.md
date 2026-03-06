@@ -34,6 +34,51 @@ interface ConceptMatch {
 }
 ```
 
+## Global vs Initiative-Scoped Queries
+
+### Global Concepts (parent_id: null)
+
+Global concepts are NOT scoped to an initiative — they exist at the top level and can be queried without parent_id filtering.
+
+**Global concept types:**
+- Codebase analysis: `codebase-tech`, `codebase-arch`, `codebase-quality`, `codebase-concerns`
+- Domain knowledge: `domain-*` concepts
+- Import graph: `file:*`, `symbol:*`, `dead-code:*`
+- Research: Chapter research concepts (`*-research`)
+
+**Query pattern (no filtering):**
+```typescript
+// Returns global concepts from any initiative
+const codebaseResult = await megamemory_understand({ 
+  query: 'codebase tech stack', 
+  top_k: 10 
+});
+```
+
+### Initiative-Scoped Concepts
+
+Initiative-scoped concepts belong to a specific initiative and have `parent_id: initiativeId`.
+
+**Scoped concept types:**
+- Chapters: `chapter-01`, `chapter-02`, etc.
+- Plans: `chapter-01-plan-1`, etc.
+- Summaries: `chapter-01-plan-1-summary`, etc.
+- Requirements: `req-AUTH-01`, etc.
+- State: `state` (one per initiative)
+- Config: `config` (one per initiative)
+- Todos: `todo-001`, etc.
+
+**Query pattern (may need to filter by parent_id or edges):**
+```typescript
+const chapterResult = await megamemory_understand({ 
+  query: 'chapter-01', 
+  top_k: 10 
+});
+// If multiple initiatives exist, filter by:
+// parent_id === currentInitiativeId
+// OR check edges for relation to current initiative
+```
+
 ## Common Queries
 
 ### Initiative Root
@@ -111,6 +156,8 @@ const contexts = matches.filter(m => m.name.includes('-context'))        // cont
 
 ### Research
 
+**Note:** Research concepts are GLOBAL (parent_id: null) — they are not scoped to a specific initiative.
+
 ```typescript
 // Get all research concepts
 megamemory_understand({ query: "research stack features architecture pitfalls", top_k: 20 })
@@ -126,6 +173,8 @@ const research = matches.filter(m => m.name.startsWith('research-'))
 **Parse:** `JSON.parse(match.summary)` → varies by research type
 
 ### Codebase
+
+**Note:** Codebase concepts are GLOBAL (parent_id: null) — they represent project-wide analysis, not initiative-specific data.
 
 ```typescript
 // Get all codebase analysis concepts
