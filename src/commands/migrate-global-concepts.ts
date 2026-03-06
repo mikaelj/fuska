@@ -121,19 +121,28 @@ async function performMigration(db: KnowledgeDB, dbPath: string, options: any) {
   console.log('Applying migration...\n');
 
   const sqlite = new Database(dbPath);
-  const updateStmt = sqlite.prepare("UPDATE nodes SET parent_id = NULL, updated_at = datetime('now') WHERE id = ?");
-  
   let migrated = 0;
-  for (const node of nodesToMigrate) {
-    updateStmt.run(node.id);
-    migrated++;
-    
-    if (migrated % 10 === 0) {
-      console.log(`  Migrated ${migrated}/${nodesToMigrate.length}...`);
-    }
-  }
   
-  sqlite.close();
+  try {
+    const updateStmt = sqlite.prepare("UPDATE nodes SET parent_id = NULL, updated_at = datetime('now') WHERE id = ?");
+    
+    const migrateTransaction = sqlite.transaction((nodes: any[]) => {
+      let count = 0;
+      for (const node of nodes) {
+        updateStmt.run(node.id);
+        count++;
+        
+        if (count % 10 === 0) {
+          console.log(`  Migrated ${count}/${nodes.length}...`);
+        }
+      }
+      return count;
+    });
+    
+    migrated = migrateTransaction(nodesToMigrate);
+  } finally {
+    sqlite.close();
+  }
 
   console.log(`\n✓ Migration complete`);
   console.log(`  Migrated: ${migrated} | Already top-level: ${skippedCount} | Total scanned: ${allNodes.length}`);
