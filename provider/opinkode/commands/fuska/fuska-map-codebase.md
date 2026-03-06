@@ -497,20 +497,138 @@ After mapping the codebase at a high level, build the granular import graph so f
 
 Display: "Building import graph..."
 
-Execute the full `/fuska-refresh --full` process inline:
+Get current Git SHA and list source files:
+```javascript
+const { stdout: sha } = await exec('git rev-parse HEAD')
+const { stdout: files } = await exec('git ls-files')
+const sourceFiles = files.split('\n').filter(f => f.endsWith('.ts') || f.endsWith('.js'))
+```
 
-1. Get current Git SHA
-2. List all source files via `git ls-files`
-3. For each file: extract imports, exports, symbols using the language patterns from fuska-refresh
-4. Create `file:` concepts with import/export metadata
-5. Create `symbol:` concepts with `defined_in` edges
-6. Create `imports`, `exports`, and `uses` edges
-7. Detect dead code candidates (exported symbols with no incoming `uses` edges)
-8. Update config concept with refresh metadata (`refresh.last_sha`, `refresh.last_refresh`, etc.)
+For each source file, extract imports, exports, and symbols using language-specific patterns, then create MegaMemory concepts and edges:
+
+**1. Create file concept:**
+```javascript
+const fileConceptName = `file:${filePath}`
+
+const fileSummary = {
+  path: filePath,
+  language: 'TypeScript',
+  imports: importsList,
+  exports: exportsList,
+  symbol_count: symbols.length,
+  last_indexed: new Date().toISOString()
+}
+
+const fileConcept = await megamemory_create_concept(
+  name=fileConceptName,
+  kind='component',
+  summary=JSON.stringify(fileSummary),
+  parent_id=null
+)
+```
+
+**2. Create symbol concepts with edges:**
+```javascript
+for (const symbol of symbols) {
+  const symbolSummary = {
+    type: symbol.type,
+    name: symbol.name,
+    file: filePath,
+    signature: symbol.signature,
+    exported: symbol.exported,
+    methods: symbol.methods || []
+  }
+
+  const symbolConcept = await megamemory_create_concept(
+    name=`symbol:${symbol.name}`,
+    kind='component',
+    summary=JSON.stringify(symbolSummary)
+  )
+
+  // Link symbol to file (defined_in) - ALWAYS
+  await megamemory_link(
+    from=`symbol:${symbol.name}`,
+    to=fileConceptName,
+    relation='defined_in'
+  )
+
+  // Link file to symbol (exports) - ONLY if exported
+  if (symbol.exported) {
+    await megamemory_link(
+      from=fileConceptName,
+      to=`symbol:${symbol.name}`,
+      relation='exports'
+    )
+  }
+}
+```
+
+**3. Create import edges:**
+```javascript
+for (const importedPath of importsList) {
+  const importedFileConceptName = `file:${importedPath}`
+  await megamemory_link(
+    from=fileConceptName,
+    to=importedFileConceptName,
+    relation='imports'
+  )
+}
+```
+
+**4. Detect dead code (after all edges created):**
+```javascript
+const exportedSymbols = allSymbols.filter(s => s.exported)
+for (const symbol of exportedSymbols) {
+  const query = await megamemory_understand({
+    query: `symbol:${symbol.name}`,
+    top_k: 1
+  })
+  
+  const hasIncomingUses = query.matches[0]?.incoming_edges?.some(
+    e => e.relation === 'uses'
+  )
+  
+  if (!hasIncomingUses) {
+    await megamemory_create_concept(
+      name=`dead-code:${symbol.name}`,
+      kind='component',
+      summary=JSON.stringify({
+        type: symbol.type,
+        name: symbol.name,
+        file: symbol.file,
+        reason: 'no_incoming_edges',
+        related_dead: []
+      })
+    )
+  }
+}
+```
+
+**5. Update config concept:**
+```javascript
+const configResult = await megamemory_understand({ query: 'config', top_k: 1 })
+if (configResult.matches.length > 0) {
+  const configData = JSON.parse(configResult.matches[0].summary)
+  configData.refresh = {
+    mode: 'full',
+    last_sha: sha.trim(),
+    last_refresh: new Date().toISOString(),
+    files_scanned: sourceFiles.length,
+    symbols_indexed: allSymbols.length,
+    dead_code_count: deadCodeCount
+  }
+  await megamemory_update_concept(
+    id=configResult.matches[0].id,
+    changes={ summary: JSON.stringify(configData) }
+  )
+}
+```
+
+**CRITICAL**: Use exact relation strings 'imports', 'exports', 'defined_in', 'uses' - NOT standard relations like 'connects_to' or 'depends_on'.
 
 This ensures that after `fuska init` or `/fuska-map-codebase`, commands like `/fuska-ask` and the planner/executor/debugger integrations have import graph data available without requiring a separate `/fuska-refresh` call.
 
-Display: "Import graph built: ${filesScanned} files, ${symbolsIndexed} symbols"
+Display: "Import graph built: ${filesScanned} files, ${symbolsIndexed} symbols, ${deadCodeCount} dead code candidates"
 
 ### 8. Present Summary
 
