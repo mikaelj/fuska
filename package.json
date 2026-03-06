@@ -41,6 +41,7 @@
     "provider/klod/"
   ],
   "dependencies": {
+    "better-sqlite3": "^12.6.2",
     "commander": "^12.0.0",
     "fast-fuzzy": "^1.12.0",
     "fs-extra": "^11.2.0",
@@ -53,6 +54,7 @@
     "string-width": "^8.1.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
     "@types/inquirer": "^9.0.0",

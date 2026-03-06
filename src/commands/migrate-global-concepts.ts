@@ -3,6 +3,8 @@ import { KnowledgeDB } from 'megamemory/dist/db.js';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
+const Database = require('better-sqlite3');
+
 export function migrateGlobalConceptsCommand(program: Command) {
   program
     .command('global-concepts')
@@ -28,14 +30,14 @@ export function migrateGlobalConceptsCommand(program: Command) {
       const db = new KnowledgeDB(dbPath);
       
       try {
-        await performMigration(db, options);
+        await performMigration(db, dbPath, options);
       } finally {
         db.close();
       }
     });
 }
 
-async function performMigration(db: KnowledgeDB, options: any) {
+async function performMigration(db: KnowledgeDB, dbPath: string, options: any) {
   console.log('Migrating global concepts to top-level...\n');
 
   const dryRun = options.dryRun;
@@ -56,11 +58,13 @@ async function performMigration(db: KnowledgeDB, options: any) {
 
   const allNodes = db.getAllNodesRaw();
   const nodesToMigrate: any[] = [];
+  let skippedCount = 0;
 
   console.log(`Scanning ${allNodes.length} concepts...\n`);
 
   for (const node of allNodes) {
     if (node.parent_id === null) {
+      skippedCount++;
       continue;
     }
 
@@ -78,6 +82,7 @@ async function performMigration(db: KnowledgeDB, options: any) {
 
   if (nodesToMigrate.length === 0) {
     console.log('✓ No concepts need migration - all global concepts already at top level.');
+    console.log(`  Scanned: ${allNodes.length} | Already top-level: ${skippedCount}`);
     return;
   }
 
@@ -115,54 +120,23 @@ async function performMigration(db: KnowledgeDB, options: any) {
 
   console.log('Applying migration...\n');
 
+  const sqlite = new Database(dbPath);
+  const updateStmt = sqlite.prepare("UPDATE nodes SET parent_id = NULL, updated_at = datetime('now') WHERE id = ?");
+  
   let migrated = 0;
   for (const node of nodesToMigrate) {
-    const fullNode = allNodes.find(n => n.id === node.id);
-    if (!fullNode) {
-      console.error(`  Warning: Could not find node ${node.id} (${node.name})`);
-      continue;
-    }
-    
-    db.hardDeleteNode(node.id);
-    
-    try {
-      validateNoUndefined(fullNode, 'performMigration');
-      const embedding = fullNode.embedding && Buffer.isBuffer(fullNode.embedding) ? fullNode.embedding : null;
-      db.insertNodeRaw({
-        id: fullNode.id,
-        name: fullNode.name,
-        kind: fullNode.kind,
-        summary: fullNode.summary,
-        why: fullNode.why ?? null,
-        file_refs: fullNode.file_refs ?? null,
-        parent_id: null,
-        created_by_task: fullNode.created_by_task ?? null,
-        created_at: fullNode.created_at,
-        updated_at: fullNode.updated_at,
-        removed_at: fullNode.removed_at ?? null,
-        removed_reason: fullNode.removed_reason ?? null,
-        embedding: embedding as Buffer | null,
-        merge_group: fullNode.merge_group ?? null,
-        needs_merge: fullNode.needs_merge ?? null,
-        source_branch: fullNode.source_branch ?? null,
-        merge_timestamp: fullNode.merge_timestamp ?? null
-      });
-    } catch (error) {
-      console.error('Failed to migrate node:');
-      console.error(`  Node: ${fullNode.name} (id: ${fullNode.id})`);
-      console.error(`  Error: ${error}`);
-      console.error('\nMigration failed. You may need to restore from backup.');
-      throw error;
-    }
-    
+    updateStmt.run(node.id);
     migrated++;
     
     if (migrated % 10 === 0) {
       console.log(`  Migrated ${migrated}/${nodesToMigrate.length}...`);
     }
   }
+  
+  sqlite.close();
 
-  console.log(`\n✓ Migration complete: ${migrated} concepts moved to top level`);
+  console.log(`\n✓ Migration complete`);
+  console.log(`  Migrated: ${migrated} | Already top-level: ${skippedCount} | Total scanned: ${allNodes.length}`);
   
   if (createBackup) {
     console.log('\nTo undo this migration, run:');
@@ -186,13 +160,6 @@ function validateNoUndefined(node: any, context: string): void {
     console.error(`  Undefined fields: ${undefinedFields.join(', ')}`);
     console.error('  This should not happen - all optional fields should use ?? null');
     throw new Error(`Undefined fields detected in ${context}: ${undefinedFields.join(', ')}`);
-  }
-  
-  // Check embedding is null or Buffer, not an object
-  if (node.embedding !== null && !Buffer.isBuffer(node.embedding)) {
-    console.error(`Validation warning in ${context}:`);
-    console.error(`  Concept: ${node.name} (id: ${node.id})`);
-    console.error(`  embedding field is not null or Buffer, will be converted to null`);
   }
 }
 
