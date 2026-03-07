@@ -141,6 +141,87 @@ const allDecisions = {
 
 **Step 1.3:** Query `task` (top_k=50). Extract existing task numbers for incrementing.
 
+**Algorithm (6 steps):**
+
+1. Query all task concepts: `const taskResult = await megamemory:understand({ query: "task-", top_k: 50 })`
+2. Check initiative scope: `const hasInitiative = stateData.current_initiative !== null && stateData.current_initiative !== undefined`
+3. Filter by scope:
+   - IF hasInitiative: `const taskConcepts = taskResult.concepts.filter(c => c.parent_id === stateData.current_initiative)`
+   - ELSE: `const taskConcepts = taskResult.concepts` (use all task concepts, global scope)
+4. Extract numbers with regex: `const numbers = taskConcepts.map(c => { const match = c.name.match(/^task-(\d{3})/); return match ? parseInt(match[1], 10) : null; }).filter(n => n !== null)`
+5. Find maximum: `const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0`
+6. Generate next: `nextNum = String(maxNum + 1).padStart(3, '0')`
+
+**Pseudo-code example:**
+
+```typescript
+// Example 1: Initiative-scoped tasks
+const stateData = { current_initiative: "my-project" }
+const taskConcepts = [
+  { name: "task-023-feature-a", parent_id: "my-project" },
+  { name: "task-016-feature-b", parent_id: "my-project" },
+  { name: "task-028-feature-c", parent_id: "my-project" },
+  { name: "task-015-other-init", parent_id: "other-initiative" }  // Different initiative
+]
+// Filtered to initiative: [task-023, task-016, task-028]
+// Numbers: [23, 16, 28]
+// Max: 28
+// Next: "029"
+
+// Example 2: Global tasks (no initiative)
+const stateData = { current_initiative: null }
+const taskConcepts = [
+  { name: "task-005-standalone", parent_id: null },
+  { name: "task-012-standalone", parent_id: null }
+]
+// All concepts used: [task-005, task-012]
+// Numbers: [5, 12]
+// Max: 12
+// Next: "013"
+
+// Example 3: Empty array (no existing tasks)
+const taskConcepts = []
+// Numbers: []
+// Max: 0
+// Next: "001"
+```
+
+**Edge Cases:**
+
+| Case | Scenario | Behavior |
+|------|----------|----------|
+| No existing tasks | `taskConcepts` is empty array | `maxNum = 0`, `nextNum = "001"` |
+| Gaps in numbering | Tasks: task-023, task-016, task-028 | Use `Math.max()` → finds 28, ignores gaps → `nextNum = "029"` |
+| Deleted tasks | MegaMemory soft-deletion preserves task-027 | `task-027` included in max calculation → prevents reuse → `nextNum = "028"` |
+| Multiple matches | Regex finds task-005, task-012, task-023 | All numbers [5, 12, 23] considered → `maxNum = 23` |
+| Non-standard formats | Task named "task-urgent-fix" (no 3-digit number) | Regex `/^task-(\d{3})/` fails to match → filtered out → ignored |
+
+**Verification Example:**
+
+```
+Input concepts: [
+  task-023-foo,
+  task-016-bar,
+  task-028-baz,
+  task-027-qux,
+  task-021-quux,
+  task-029-corge,
+  task-019-grault,
+  task-024-garply,
+  task-025-waldo
+]
+
+Extraction:
+  Regex matches: ["023", "016", "028", "027", "021", "029", "019", "024", "025"]
+  Parsed numbers: [23, 16, 28, 27, 21, 29, 19, 24, 25]
+
+Maximum:
+  Math.max(23, 16, 28, 27, 21, 29, 19, 24, 25) = 29
+
+Next number:
+  String(29 + 1).padStart(3, '0') = "030"
+```
+
 ---
 
 ## 2. Parse Arguments and Resolve Mode
