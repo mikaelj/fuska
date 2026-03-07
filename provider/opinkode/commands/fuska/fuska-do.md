@@ -226,17 +226,87 @@ Next number:
 
 ## 2. Parse Arguments and Resolve Mode
 
-**Step 2.0: Check for task resume**
+**Step 2.0a: Check for exact task name match**
+
+Check if input starts with "task-" and looks like a complete task concept name.
+
+```
+const exactNameMatch = input.match(/^(task-[a-z0-9-]+)(?:\s|$)/)
+let resumeTask = null
+let resumeTaskId = null
+
+if (exactNameMatch) {
+  const exactName = exactNameMatch[1]
+  
+  try {
+    // Try exact name lookup first
+    const exactQuery = await megamemory_understand({
+      query: exactName,
+      top_k: 10
+    })
+    
+    // Look for exact name matches (may be multiple across initiatives)
+    const exactMatches = exactQuery.concepts.filter(c => c.name === exactName)
+    
+    if (exactMatches.length === 1) {
+      // Single match - use it
+      resumeTask = exactMatches[0]
+      resumeTaskId = exactMatches[0].id
+      input = input.replace(exactNameMatch[0], '').trim()
+    } else if (exactMatches.length > 1) {
+      // Multiple matches - disambiguate by parent initiative
+      // Use question tool - same pattern as Step 2.0 lines 253-259
+      const options = exactMatches.map(m => ({
+        label: `${m.name} (parent: ${m.parent?.name || 'none'})`,
+        value: m.id
+      }))
+      
+      const selected = await question({
+        questions: [{
+          question: `Found multiple tasks named '${exactName}'. Which one?`,
+          header: "Select task",
+          options: options
+        }]
+      })
+      
+      const selectedLabel = selected[0]
+      resumeTask = exactMatches.find(m => `${m.name} (parent: ${m.parent?.name || 'none'})` === selectedLabel)
+      if (!resumeTask) {
+        throw new Error(`Failed to find task matching selected label: ${selectedLabel}`)
+      }
+      resumeTaskId = resumeTask.id
+      input = input.replace(exactNameMatch[0], '').trim()
+    }
+    // If exactMatches.length === 0, continue to Step 2.0
+  } catch (error) {
+    // Query failed - log and continue to pattern matching
+    console.warn(`Exact name query failed: ${error.message}`)
+  }
+}
+```
+
+**If exact match found:**
+- Set resumeTask and resumeTaskId
+- Strip exact name from input
+- Skip to "If resumeTask (from either path)" section (line 282)
+
+**If no exact match or error:**
+- Continue to Step 2.0 (numeric/slug pattern matching)
+
+---
+
+**Step 2.0: Check for task resume (numeric/slug patterns)**
+
+Only run this step if Step 2.0a did not find an exact match (`resumeTask` is null).
 
 Check if first argument is a task reference. Supports two formats:
 1. Numeric reference: "22" or "task-22"
 2. Slug reference: "ignore-gitignore-patterns" (lowercase with dashes)
 
 ```
-const taskRefMatch = input.match(/^(?:task-)?(\d+)(?:\s|$)/)
-const slugRefMatch = !taskRefMatch && input.match(/^([a-z]+-[a-z0-9-]*[a-z0-9])(?:\s|$)/)
-let resumeTask = null
-let resumeTaskId = null
+if (!resumeTask) {
+  const taskRefMatch = input.match(/^(?:task-)?(\d+)(?:\s|$)/)
+  const slugRefMatch = !taskRefMatch && input.match(/^([a-z]+-[a-z0-9-]*[a-z0-9])(?:\s|$)/)
 ```
 
 **If taskRefMatch (numeric):**
@@ -278,6 +348,7 @@ let resumeTaskId = null
    After selection: Set resumeTask and resumeTaskId, strip slug ref from input
    ```
 6. **If no matches:** Display "No task matching '${slugRef}' found. Creating new task." → continue to Step 2.1
+}
 
 **If resumeTask (from either path):**
 - Load task data: `taskData = JSON.parse(resumeTask.summary)`
