@@ -230,7 +230,7 @@ For **explicit mode**:
 const agentPrompt = `<critical_constraints>
 Return: ## CHAPTERIZE COMPLETE with chapter slug, subplan count, task distribution
 Create chapter concept and subplan concepts in MegaMemory
-Do NOT update roadmap concept (user will decide separately)
+MUST update roadmap concept via update_roadmap_array step
 
 EXECUTION GUARANTEES:
 - ALWAYS complete all steps - NEVER stop early to ask user questions
@@ -270,7 +270,7 @@ For **context mode**:
 const agentPrompt = `<critical_constraints>
 Return: ## CHAPTERIZE COMPLETE with chapter slug, subplan count, task distribution
 Create chapter concept and subplan concepts in MegaMemory
-Do NOT update roadmap concept (user will decide separately)
+MUST update roadmap concept via update_roadmap_array step
 Extract tasks from current conversation context
 
 EXECUTION GUARANTEES:
@@ -322,7 +322,7 @@ Task(
 
 If `## CHAPTERIZE COMPLETE`:
 - Display chapterization results
-- Display: "Chapter created with N subplans. To add to roadmap, run `/fuska-add-chapter`"
+- Display: "Chapter added to roadmap"
 - Stop
 
 If error:
@@ -365,6 +365,6 @@ Flags:
 - [ ] Interactive research prompt (if no --research flag)
 - [ ] fuska-plan-chapterizer agent spawned with correct context
 - [ ] Chapterization results displayed
-- [ ] User knows next step (/fuska-add-chapter to add to roadmap)
+- [ ] User knows chapter is ready for implementation
 
 </success_criteria>
