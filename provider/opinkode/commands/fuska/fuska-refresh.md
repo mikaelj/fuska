@@ -32,15 +32,24 @@ Refresh the import graph stored in MegaMemory with file and symbol-level indexin
 </execution_context>
 
 <context>
-Refresh the import graph. Default: incremental (only changed files since last SHA).
+Refresh the import graph. Default: FULL scan (all tracked files in repository).
 
 **Flags:**
-- `--full` -- Force full re-scan of all files
+- `--incremental` -- Only scan changed files since last SHA (use sparingly)
 - `--dead-code` -- Only show dead code report, skip refresh
 - `--json` -- Output as JSON for scripts
 - `--prune` -- Remove dead code concepts that are no longer dead
 
 Variable: `$ARGUMENTS` contains flags and arguments.
+
+**CRITICAL CONSTRAINTS:**
+1. **NO DEMONSTRATION MODE** - You must scan ALL files identified by git ls-files (full) or git diff (incremental)
+2. **NO ARBITRARY FILE SELECTION** - Do not choose "representative samples", "key files only", or any subset
+3. **FOLLOW THE SPECIFICATION EXACTLY** - Use the full/incremental logic defined in Step 4
+4. **100% COMPLETION REQUIRED** - files_scanned MUST equal the number of files returned by git exactly (after gitignore filtering)
+5. **DO NOT OPTIMIZE BY DEMOING** - This is an indexing operation requiring complete data
+6. **NO PARTIAL SCANS** - If you cannot complete the scan, report failure rather than completing partially
+7. **NEVER SCAN GITIGNORED FILES** - Files matching .gitignore patterns must be excluded (git ls-files handles this by default)
 </context>
 
 <process>
@@ -53,7 +62,7 @@ Follow the MegaMemory Initiative Exists Preflight Check from @preflight-check-in
 
 ```
 const input = "$ARGUMENTS" || ""
-const hasFullFlag = input.includes("--full")
+const hasIncrementalFlag = input.includes("--incremental")
 const hasDeadCodeFlag = input.includes("--dead-code")
 const hasJsonFlag = input.includes("--json")
 const hasPruneFlag = input.includes("--prune")
@@ -88,49 +97,88 @@ Else, use defaults:
 const refreshConfig = { mode: 'hybrid', age_hours: 24 }
 ```
 
-## 3. Check Staleness
+## 3. Check Staleness (for incremental mode only)
 
 ```
 const lastSha = refreshConfig.last_sha
 const lastRefresh = refreshConfig.last_refresh ? new Date(refreshConfig.last_refresh) : null
-const ageHours = lastRefresh ? (Date.now() - lastRefresh.getTime()) / (1000 * 60 * 60) : Infinity
 
 const shaChanged = lastSha !== currentSha
-const ageStale = ageHours > (refreshConfig.age_hours || 24)
-
-const needsRefresh = !lastSha || shaChanged || ageStale || hasFullFlag
 ```
 
-**If NOT needsRefresh AND NOT hasDeadCodeFlag AND NOT hasFullFlag:**
+**If NOT hasIncrementalFlag:**
+```
+// Default behavior: always do full scan
+Display: "Performing full import graph refresh..."
+```
+
+**If hasIncrementalFlag AND lastSha AND NOT shaChanged:**
 ```
 Display: "Import graph up to date (SHA: ${lastSha.slice(0,7)})"
 Query dead code concepts and display -> Skip to Step 9 (Output)
 ```
 
+**If hasIncrementalFlag AND (NOT lastSha OR shaChanged):**
+```
+Display: "Performing incremental refresh (changed files since ${lastSha.slice(0,7)})..."
+```
+
 ## 4. Determine Files to Scan
 
-**Step 4.1: Full refresh**
+**Step 4.1: Full refresh (default)**
 
-If `hasFullFlag` OR `!lastSha`:
+If `!hasIncrementalFlag`:
 ```bash
 git ls-files
 ```
 
-**Step 4.2: Incremental refresh**
+**Step 4.2: Incremental refresh (only with --incremental flag)**
 
 Else:
 ```bash
 git diff --name-only ${lastSha} HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.dart' '*.py' '*.go'
 ```
 
-Filter results to supported languages only.
+**Step 4.3: Filter out gitignored files**
 
-**Step 4.3: Store file list**
+**CRITICAL:** Never scan files that match patterns in .gitignore
+```bash
+# Get list of files to scan
+git ls-files --exclude-from=.gitignore --cached
+
+# Or for incremental:
+git diff --name-only ${lastSha} HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.dart' '*.py' '*.go' | git check-ignore --stdin --no-index --non-matching || true
+```
+
+Alternative approach (more reliable):
+```bash
+# Full refresh - excludes gitignored files by default
+git ls-files
+
+# For additional safety, filter results:
+git ls-files | while read file; do
+  if ! git check-ignore -q "$file" 2>/dev/null; then
+    echo "$file"
+  fi
+done
+```
+
+**Step 4.4: Store file list**
 
 ```
 const filesToScan = [list from git output]
-const isFullRefresh = hasFullFlag || !lastSha
+const isFullRefresh = !hasIncrementalFlag
 ```
+
+**CRITICAL: Do NOT modify filesToScan (except for gitignore filtering)**
+- `git ls-files` automatically excludes gitignored files, so the list is already filtered
+- If git ls-files returns 129 files, scan ALL 129 files
+- Do NOT decide to "demonstrate with 10 files"
+- Do NOT filter to "representative samples"
+- Do NOT manually filter out files unless they are in .gitignore
+- The only acceptable filtering is what git ls-files provides by default (respects .gitignore)
+- The entire purpose of this command is to build a complete import graph of tracked files
+
 
 ## 5. Scan Files for Imports/Exports/Symbols
 
@@ -399,6 +447,12 @@ await megamemory_update_concept(
 
 ## 9. Output Summary
 
+**IMPORTANT: Report actual execution mode**
+- Mode must be either "incremental" or "full" - NEVER "demonstration"
+- Incremental: Changed files since last SHA
+- Full: All tracked files in repository
+- Report actual counts, not subsets
+
 **If hasJsonFlag:**
 
 Output raw JSON:
@@ -453,6 +507,7 @@ Add pruned count to output.
 - [ ] Config concept queried for refresh settings
 - [ ] Git SHA compared for staleness detection
 - [ ] Changed files identified (incremental or full)
+- [ ] **ALL identified files scanned (not subset/demonstration)**
 - [ ] Each file scanned for imports/exports/symbols
 - [ ] File concepts created/updated in MegaMemory with `file:` prefix
 - [ ] Symbol concepts created with `symbol:` prefix and `defined_in` edges
@@ -462,4 +517,6 @@ Add pruned count to output.
 - [ ] Pruning performed if --prune flag
 - [ ] Config concept updated with refresh metadata
 - [ ] Summary displayed to user (JSON or TTY format)
+- [ ] **Output mode is "incremental" or "full" (not "demonstration")**
+- [ ] **files_scanned matches actual count from git (not 10 if git found 129)**
 </success_criteria>

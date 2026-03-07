@@ -1,6 +1,6 @@
 ---
 name: fuska-configure
-description: Configure an existing initiative through questioning and preferences
+description: Configure an initiative for chapter-based roadmap planning, or set up for ad-hoc tasks
 tools:
   - read
   - bash
@@ -35,19 +35,21 @@ tools:
 
 <objective>
 
-Configure an existing initiative through unified flow using MegaMemory knowledge graph: questioning → research (optional) → requirements → roadmap.
+Configure an initiative through unified flow using MegaMemory knowledge graph: questioning → workflow selection → research (optional) → requirements → roadmap.
 
-This command is run after `fuska init` to complete initiative setup. If a description was provided during init, questioning is streamlined.
+This command optionally creates a chapter-based roadmap for structured project execution. For quick tasks without planning, use `/fuska-do` directly instead.
 
 **Creates MegaMemory concepts:**
 - Updates `initiative-root` — with what_this_is and core_value
-- `config` — workflow preferences (root-level)
-- `research/*` — domain research (optional)
-- `requirements/*` — scoped requirements
-- `roadmap` and `chapter-N` — chapter structure
+- `config` — workflow preferences including workflow_type (root-level)
+- `research/*` — domain research (optional, only for roadmap workflow)
+- `requirements/*` — scoped requirements (only for roadmap workflow)
+- `roadmap` and `chapter-N` — chapter structure (only for roadmap workflow)
 - Updates `state` — initiative memory
 
-**After this command:** Run `/fuska-design 1` to start execution.
+**Outputs:**
+- **Roadmap workflow:** Full chapter-based roadmap with requirements → Run `/fuska-design 1` to start execution
+- **Ad-hoc workflow:** Config only, no roadmap → Run `/fuska-do <task>` for one-off tasks
 
 </objective>
 
@@ -206,7 +208,61 @@ megamemory:update_concept({
 })
 ```
 
+**Workflow Type Selection:**
+
+Ask about workflow preference:
+
+```
+question: {
+  header: "Workflow",
+  question: "How do you want to organize your work?",
+  options: [
+    { label: "Roadmap with chapters (Recommended)", description: "Break project into chapters, define requirements, create structured roadmap. Best for: new projects, features requiring multiple steps, work with dependencies between phases." },
+    { label: "Ad-hoc tasks", description: "Skip roadmap, just run individual tasks via /fuska-do as needed. Best for: quick fixes, single features, experiments, or when you prefer unstructured execution." }
+  ]
+}
+```
+
+**Purpose explanation:**
+
+- **Roadmap workflow:** Use when you want structured planning. `/fuska-configure` will research the domain, gather requirements, create chapters, and prepare everything for systematic execution via `/fuska-design` → `/fuska-build`.
+- **Ad-hoc workflow:** Use when you want minimal setup. `/fuska-configure` will just create the config concept, then you run `/fuska-do <task>` directly for any work you need done.
+
+Store the choice:
+- If "Roadmap with chapters": `WORKFLOW_TYPE="roadmap"` → Continue to Chapter 2
+- If "Ad-hoc tasks": `WORKFLOW_TYPE="ad-hoc"` → Create config with workflow_type, then jump directly to Chapter 6
+
+**If ad-hoc selected:**
+
+Skip to Chapter 2 to collect basic workflow preferences (mode, depth, etc.), but skip research/requirements/roadmap chapters. The config will be created with `workflow_type: "ad-hoc"` and execution will jump to Chapter 6 for completion message.
+
+**If roadmap selected:**
+
+Continue to Chapter 2 normally.
+
 ## Chapter 2: Workflow Preferences
+
+**If WORKFLOW_TYPE is "ad-hoc":**
+
+Collect minimal preferences and create config, then skip to Chapter 6:
+
+```typescript
+// Create config with ad-hoc workflow
+megamemory:create_concept({
+  name: "config",
+  kind: "config",
+  summary: JSON.stringify({
+    current_initiative: initiativeSlug,
+    workflow_type: "ad-hoc",
+    mode: PARSED_ARGS.mode || "yolo",
+    depth: PARSED_ARGS.depth || "standard"
+  }),
+  parent_id: undefined,
+  edges: []
+})
+```
+
+Then jump to Chapter 6 (Done).
 
 **If SKIP_WORKFLOW_QUESTIONS is set:**
 
@@ -308,6 +364,7 @@ megamemory:update_concept({
   changes: {
     summary: JSON.stringify({
       current_initiative: initiativeSlug,
+      workflow_type: "roadmap",  // Always "roadmap" when reaching this point
       mode: "yolo|interactive",
       depth: "quick|standard|comprehensive",
       parallelization: true|false,
@@ -328,7 +385,15 @@ megamemory:update_concept({
 megamemory:create_concept({
   name: "config",
   kind: "config",
-  summary: JSON.stringify({ ... }),
+  summary: JSON.stringify({ 
+    current_initiative: initiativeSlug,
+    workflow_type: "roadmap",
+    mode: "...",
+    depth: "...",
+    parallelization: ...,
+    workflow: { ... },
+    git: { ... }
+  }),
   parent_id: undefined,
   edges: []
 })
@@ -571,7 +636,39 @@ Use question tool as before.
 
 ## Chapter 6: Done
 
-Present completion with next steps:
+**If WORKFLOW_TYPE is "ad-hoc":**
+
+Present completion for ad-hoc mode:
+
+```
+-----------------------------------------------------
+  Fuska: Initiative configured (Ad-hoc mode)
+-----------------------------------------------------
+
+**[Project Name]**
+
+Workflow: Ad-hoc tasks
+Config: Created ✓
+
+─────────────────────────────────────────────────────
+
+## > Next Up
+
+Ready to execute individual tasks as needed.
+
+/fuska-do <task-description> — execute a standalone task
+
+Example:
+  /fuska-do "Add user authentication with JWT"
+  /fuska-do "Create API endpoint for user profile"
+  /fuska-do "Fix the login bug in production"
+
+─────────────────────────────────────────────────────
+```
+
+**If WORKFLOW_TYPE is "roadmap":**
+
+Present completion with roadmap details:
 
 ```
 -----------------------------------------------------
@@ -588,7 +685,7 @@ Present completion with next steps:
 
 All v1 requirements mapped to chapters [OK]
 
-───────────────────────────────────────────────────────
+─────────────────────────────────────────────────────
 
 ## > Next Up
 
@@ -598,7 +695,7 @@ All v1 requirements mapped to chapters [OK]
 
 */new first → fresh context window*
 
-───────────────────────────────────────────────────────
+─────────────────────────────────────────────────────
 ```
 
 </process>
