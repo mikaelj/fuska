@@ -120,18 +120,14 @@ const chapterDetails = await question({
     options: []
   }, {
     question: "Chapter goal (outcome, not task)",
-    header: "Chapter Goal", 
-    options: []
-  }, {
-    question: "Chapter number (e.g., '01')",
-    header: "Chapter Number",
+    header: "Chapter Goal",
     options: []
   }]
 })
 
 const chapterName = chapterDetails[0]
 const chapterGoal = chapterDetails[1]
-const chapterNumber = chapterDetails[2]
+// chapterNumber removed - agent auto-detects from existing chapters
 ```
 
 **Step 3.3: Interactive research prompt (if no --research flag)**
@@ -247,7 +243,6 @@ EXECUTION GUARANTEES:
 **Research Enabled:** ${RESEARCH_ENABLED}
 **Chapter Name:** ${chapterName}
 **Chapter Goal:** ${chapterGoal}
-**Chapter Number:** ${chapterNumber}
 
 **Plan Data:**
 ${JSON.stringify(planData, null, 2)}
@@ -361,7 +356,7 @@ Flags:
 - [ ] Preflight passes, MegaMemory connection verified
 - [ ] Mode correctly detected (explicit vs context)
 - [ ] Explicit mode: Plan concept loaded and validated (>3 tasks)
-- [ ] Interactive prompts for chapter details (name, goal, number)
+- [ ] Interactive prompts for chapter details (name, goal)
 - [ ] Interactive research prompt (if no --research flag)
 - [ ] fuska-plan-chapterizer agent spawned with correct context
 - [ ] Chapterization results displayed
