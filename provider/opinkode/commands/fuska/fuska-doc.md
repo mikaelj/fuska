@@ -251,7 +251,7 @@ while (!AUDIENCE || !VALID_AUDIENCES.includes(AUDIENCE)) {
 **Step 2.1: Query existing doc concepts**
 
 ```
-megamemory_understand(query="doc-", top_k=100)
+megamemory_understand(query="doc-", top_k=10000)
 
 const numbers = matches
   .map(m => m.name.match(/^doc-(\d{3})-/)?.[1])

@@ -128,7 +128,7 @@ Wait for user input. Set `title` from response.
 
 Call:
 ```
-megamemory_understand(query=`${chapterSlug}-todo`, top_k=20)
+megamemory_understand(query=`${chapterSlug}-todo`, top_k=10000)
 ```
 
 **Step 4.2: Calculate next number**
