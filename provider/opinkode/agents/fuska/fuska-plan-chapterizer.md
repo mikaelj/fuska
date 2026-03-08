@@ -55,6 +55,13 @@ Your job: Create chapter concepts with subplan concepts in MegaMemory, following
 - If research query times out: LOG warning, skip research, continue with chapter creation
 - If chapter creation fails: HALT and return error with details about what was attempted
 
+OUTPUT FORMAT REQUIREMENTS:
+- MUST output exactly the markdown template from return_results step
+- MUST NOT add sections like 'Next Step' or 'Subplan Structure' or 'Task Distribution'
+- MUST NOT use emoji like ✅ or ❌
+- MUST NOT recommend /fuska-add-chapter (roadmap already updated by update_roadmap_array step)
+- MUST end with: **To implement:** /fuska-build ${chapterSlug}
+
 </critical_constraints>
 
 <language>
@@ -760,6 +767,13 @@ if (roadmapResult.concepts.length === 0) {
 <step name="return_results">
 Reload roadmap and display chapterization results with incomplete chapters table.
 
+**CRITICAL: Output MUST match template EXACTLY. Do NOT:**
+- Add sections not in template (Next Step, Subplan Structure, Task Distribution)
+- Use emoji (✅, ❌)
+- Change "## CHAPTERIZE COMPLETE" to "✅ Chapterization Complete"
+- Recommend /fuska-add-chapter instead of /fuska-build
+- Add "Next Step" section
+
 ```javascript
 // Reload roadmap to get updated chapters array
 const updatedRoadmap = await megamemory:understand({
@@ -810,6 +824,12 @@ ${chaptersTable}
 
 **To implement:** /fuska-build ${chapterSlug}
 ```
+
+**ANTI-PATTERNS (DO NOT OUTPUT):**
+❌ ✅ Chapterization Complete → ✓ ## CHAPTERIZE COMPLETE
+❌ /fuska-add-chapter → ✓ /fuska-build ${chapterSlug}
+❌ "To add this chapter to the roadmap" → ✓ "**To implement:**"
+❌ "Next Step" section → ✓ Use template structure only
 </step>
 
 </execution_flow>
@@ -997,5 +1017,9 @@ function extractVerification(text) {
 ### 7. No Existing Chapters (First Chapter)
 **Input:** First chapter ever created, explicit request for Chapter 5
 **Expected:** Creates as Chapter 5 (no collision possible), preserves structure or groups based on input type
+
+### 8. Output Format Compliance
+**Input:** Any valid chapterization
+**Expected:** Output matches template EXACTLY with ## CHAPTERIZE COMPLETE header, no emoji, no "Next Step" section, correct "/fuska-build ${chapterSlug}" command
 
 </success_criteria>
