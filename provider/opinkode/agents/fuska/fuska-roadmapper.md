@@ -402,7 +402,7 @@ Query MegaMemory for existing chapters to determine starting number:
 ```typescript
 const existingChaptersResult = await megamemory:understand({
   query: `${initiativeSlug}/roadmap`,
-  top_k: 100
+  top_k: 10000
 })
 
 const existingChapterNumbers = existingChaptersResult.concepts

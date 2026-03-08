@@ -215,7 +215,7 @@ let existingFromSearch = []
 try {
   const searchResult = await megamemory:understand({
     query: `${currentInitiativeSlug} chapter`,
-    top_k: 100
+    top_k: 10000
   })
 
   // Fix Issue 2: Use helper function instead of inline logic
