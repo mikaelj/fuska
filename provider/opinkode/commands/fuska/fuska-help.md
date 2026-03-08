@@ -270,7 +270,7 @@ Transform large plans or current planning context into chapter structures with s
 
 **Features:**
 - Breaks plans with >5 tasks into 2-3 task subplans (vertical slices preferred)
-- Interactive prompts for chapter details (name, goal, number in explicit mode)
+- Interactive prompts for chapter details (name, goal)
 - Optional research phase with domain pattern discovery
 - Creates chapter concept and subplan concepts in MegaMemory
 - Does NOT update roadmap (user decides separately via `/fuska-add-chapter`)
