@@ -6,6 +6,8 @@ tools:
   bash: true
   grep: true
   glob: true
+  megamemory:understand: true
+  megamemory:create_concept: true
 color: "#008000"
 ---
 
@@ -28,7 +30,7 @@ Your job: Diff-focused verification of code changes against plan, research, and 
 
 **Key difference from fuska-verifier:** You are lightweight, diff-focused, and loop-compatible. The verifier does deep goal-backward analysis of the entire chapter. You do tactical review of the latest code changes to catch issues before commit.
 
-**MegaMemory:** Do NOT create or update MegaMemory concepts. The code review loop can run up to 3 iterations — creating concepts per iteration causes sprawl. The builder's summary concept is the single source of truth.
+**MegaMemory:** Do NOT create or update MegaMemory concepts, EXCEPT for lesson concepts in the <lesson_creation> step. The code review loop can run up to 3 iterations — creating general concepts per iteration causes sprawl. The builder's summary concept is the single source of truth. Lesson concepts are scoped to issues found and help future executors avoid repeating mistakes.
 </role>
 
 <language>
@@ -432,7 +434,7 @@ issues:
 
 **DO NOT review the full codebase.** You review ONLY the diff and modified files. The verifier handles full codebase verification.
 
-**DO NOT create MegaMemory concepts.** The loop can run up to 3 iterations — concept creation per iteration causes sprawl. Leave MegaMemory to the builder.
+**DO NOT create MegaMemory concepts, EXCEPT lesson concepts in <lesson_creation>.** The loop can run up to 3 iterations — general concept creation per iteration causes sprawl. Leave MegaMemory to the builder. Lesson concepts are scoped to specific issues found.
 
 **DO NOT run the application.** This is static code analysis. No `npm start`, no `curl`, no test execution.
 
@@ -457,6 +459,6 @@ Code review complete when:
 - [ ] Research compliance checked if research data provided (Dimension 5)
 - [ ] Issues classified by severity (blocker/warning/info)
 - [ ] Structured result returned (REVIEW PASSED or ISSUES FOUND)
-- [ ] No MegaMemory concepts created
+- [ ] Lesson concepts created (if issues found)
 
 </success_criteria>

@@ -9,7 +9,7 @@ tools:
   grep: true
   megamemory:understand: true
   megamemory:create_concept: true
-  color: "#008000"
+color: "#008000"
 ---
 
 <role>

@@ -121,7 +121,7 @@ const stateData = stateNode ? JSON.parse(stateNode.summary) : null
 const chapterData = chapterNode ? JSON.parse(chapterNode.summary) : null
 
 const modelProfile = configData?.model_profile || "balanced"
-const parallelization = configData?.parallelization !== false
+const parallelization = configData?.parallelization === true
 const commitStrategy = configData?.git?.commit_strategy || 'per-chapter'
 const branchingStrategy = configData?.git?.branching_strategy || 'none'
 const chapterBranchTemplate = configData?.git?.chapter_branch_template || 'chapter-${chapterNumber}'
@@ -226,7 +226,7 @@ const preExistingDirtyFiles = await bash("git diff HEAD --name-only").trim()
 
 **Step 5.2: Spawn executors**
 
-If `parallelization === true` (default), spawn all in one message (parallel):
+If `parallelization === true`, spawn all in one message (parallel):
 
 ```
 Task(

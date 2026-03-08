@@ -229,8 +229,8 @@ const existingFile = await megamemory_understand(query=fileConceptName, top_k=1)
 // If exists, remove old symbol concepts first
 if (existingFile.matches.length > 0) {
   const fileData = JSON.parse(existingFile.matches[0].summary)
-  for (const exportedSymbol of (fileData.exports || [])) {
-    const symbolConcept = await megamemory_understand(query=`symbol:${exportedSymbol}`, top_k=1)
+  for (const symbolName of (fileData.all_symbols || [])) {
+    const symbolConcept = await megamemory_understand(query=`symbol:${filePath}:${symbolName}`, top_k=1)
     if (symbolConcept.matches.length > 0) {
       await megamemory_remove_concept(id=symbolConcept.matches[0].id, reason="Re-indexing file")
     }
@@ -243,6 +243,7 @@ const fileSummary = {
   language: language,
   imports: importsList,
   exports: exportsList,
+  all_symbols: symbols.map(s => s.name),
   symbol_count: symbols.length,
   last_indexed: new Date().toISOString()
 }
@@ -266,14 +267,14 @@ for (const symbol of symbols) {
   }
 
   const symbolConcept = await megamemory_create_concept(
-    name=`symbol:${symbol.name}`,
+    name=`symbol:${filePath}:${symbol.name}`,
     kind='component',
     summary=JSON.stringify(symbolSummary)
   )
 
   // Link symbol to file (defined_in)
   await megamemory_link(
-    from=`symbol:${symbol.name}`,
+    from=`symbol:${filePath}:${symbol.name}`,
     to=fileConceptName,
     relation='defined_in'
   )
@@ -282,7 +283,7 @@ for (const symbol of symbols) {
   if (symbol.exported) {
     await megamemory_link(
       from=fileConceptName,
-      to=`symbol:${symbol.name}`,
+      to=`symbol:${filePath}:${symbol.name}`,
       relation='exports'
     )
   }
@@ -311,8 +312,8 @@ const fileConcept = await megamemory_understand(query=fileConceptName, top_k=1)
 if (fileConcept.matches.length > 0) {
   // Remove associated symbol concepts first
   const fileData = JSON.parse(fileConcept.matches[0].summary)
-  for (const exportedSymbol of (fileData.exports || [])) {
-    const symbolConcept = await megamemory_understand(query=`symbol:${exportedSymbol}`, top_k=1)
+  for (const symbolName of (fileData.all_symbols || [])) {
+    const symbolConcept = await megamemory_understand(query=`symbol:${deletedPath}:${symbolName}`, top_k=1)
     if (symbolConcept.matches.length > 0) {
       await megamemory_remove_concept(id=symbolConcept.matches[0].id, reason="File deleted")
     }

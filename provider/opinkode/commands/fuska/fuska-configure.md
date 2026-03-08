@@ -304,8 +304,8 @@ questions: [
     header: "Execution",
     question: "Run plans in parallel?",
     options: [
-      { label: "Parallel (Recommended)", description: "Independent plans run simultaneously" },
-      { label: "Sequential", description: "One plan at a time" }
+      { label: "Sequential (Recommended)", description: "One plan at a time - safe for database integrity" },
+      { label: "Parallel", description: "Independent plans run simultaneously. ⚠ WARNING: May cause database corruption under high load" }
     ]
   },
   {
