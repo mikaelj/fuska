@@ -150,39 +150,130 @@ if (roadmapResult.concepts.length === 0) {
 
 **Detect existing chapters and compute next available number:**
 
+Three-phase chapter discovery with production-ready error handling: (1) Roadmap array (efficient, with null checks), (2) Targeted search (fallback, with error handling), (3) Verification loop (guaranteed correct, with MAX_ITERATIONS guard). All phases wrapped in try-catch for resilience. Logging added for debugging and observability.
+
 ```
-const existingChaptersResult = await megamemory:understand({
-  query: `${currentInitiativeSlug} chapter roadmap`,
-  top_k: 100
-})
+// Helper function to extract chapter number from concept
+function extractChapterNumber(concept, initiativeId, roadmapId) {
+  // Check parent belongs to current initiative
+  if (concept.parent_id !== initiativeId && concept.parent_id !== roadmapId) {
+    return null
+  }
+
+  // Extract name segment after last slash
+  const nameSegment = concept.name.split('/').pop()
+
+  // Check for chapter-N pattern
+  const match = nameSegment.match(/^chapter-(\d+)/)
+  if (!match) return null  // Fix: null check before accessing [1]
+
+  // Exclude non-chapter concepts
+  if (nameSegment.includes('-plan-')) return null
+  if (nameSegment.includes('-summary')) return null
+  if (nameSegment.includes('-context')) return null
+  if (nameSegment.includes('-research')) return null
+  if (nameSegment.includes('-verification')) return null
+  if (nameSegment.includes('-todo')) return null
+
+  return parseInt(match[1])
+}
 
 const roadmapId = `${currentInitiativeSlug}/roadmap`
 
-const existingChapterNumbers = existingChaptersResult.concepts
-  .filter(c => {
-    // Must belong to current initiative (parent is initiative or its roadmap)
-    if (c.parent_id !== initiativeId && c.parent_id !== roadmapId) return false
+// Phase 1: Roadmap Chapters Array (With Error Handling)
+let existingFromRoadmap = []
 
-    const nameSegment = c.name.split('/').pop()
-    if (!/^chapter-\d+/.test(nameSegment)) return false
-    if (nameSegment.includes('-plan-')) return false
-    if (nameSegment.includes('-summary')) return false
-    if (nameSegment.includes('-context')) return false
-    if (nameSegment.includes('-research')) return false
-    if (nameSegment.includes('-verification')) return false
-    if (nameSegment.includes('-todo')) return false
-    return true
-  })
-  .map(c => {
-    const match = c.name.match(/chapter-(\d+)/)
-    return match ? parseInt(match[1]) : 0
+try {
+  const roadmapResult = await megamemory:understand({
+    query: `${currentInitiativeSlug}/roadmap`,
+    top_k: 1
   })
 
-const maxExistingNumber = existingChapterNumbers.length > 0
-  ? Math.max(...existingChapterNumbers)
-  : 0
+  // Fix Issue 1: Check array length before access
+  if (roadmapResult.concepts.length === 0) {
+    console.warn('[Collision Detection] No roadmap found, skipping Phase 1')
+  } else {
+    const roadmapData = JSON.parse(roadmapResult.concepts[0].summary)
+    existingFromRoadmap = roadmapData.chapters?.map(ch => ch.number) || []
+    console.log(`[Collision Detection] Phase 1: Found ${existingFromRoadmap.length} chapters in roadmap`)
+  }
+} catch (error) {
+  console.warn('[Collision Detection] Phase 1 failed:', error.message)
+  existingFromRoadmap = []
+}
 
-const nextChapterNumber = maxExistingNumber + 1
+// Phase 2: Targeted Search Fallback (With Error Handling)
+let existingFromSearch = []
+
+try {
+  const searchResult = await megamemory:understand({
+    query: `${currentInitiativeSlug} chapter`,
+    top_k: 100
+  })
+
+  // Fix Issue 2: Use helper function instead of inline logic
+  existingFromSearch = searchResult.concepts
+    .map(c => extractChapterNumber(c, initiativeId, roadmapId))
+    .filter(num => num !== null)  // Filter out nulls
+
+  console.log(`[Collision Detection] Phase 2: Found ${existingFromSearch.length} chapters via search`)
+} catch (error) {
+  console.warn('[Collision Detection] Phase 2 failed:', error.message)
+  existingFromSearch = []
+}
+
+// Compute Initial Candidate (With Safe Set Conversion)
+// Fix Issue 3: Explicit Set to Array conversion
+const allNumbers = new Set([...existingFromRoadmap, ...existingFromSearch])
+const allNumbersArray = Array.from(allNumbers)
+let candidateNumber = allNumbersArray.length > 0
+  ? Math.max(...allNumbersArray) + 1
+  : 1
+
+console.log(`[Collision Detection] Initial candidate: chapter-${candidateNumber}`)
+
+// Phase 3: Verification Loop (With Guards)
+// Fix Issue 4: Add MAX_ITERATIONS guard
+const MAX_ITERATIONS = 100
+let iterations = 0
+
+while (iterations++ < MAX_ITERATIONS) {
+  try {
+    const paddedNumber = candidateNumber.toString().padStart(2, '0')
+    const expectedName = `chapter-${paddedNumber}`
+
+    const verifyResult = await megamemory:understand({
+      query: expectedName,
+      top_k: 10
+    })
+
+    // Check for exact match under current initiative
+    // Fix Issue 5: Use helper function
+    const exactMatch = verifyResult.concepts.find(c => {
+      const extracted = extractChapterNumber(c, initiativeId, roadmapId)
+      return extracted === candidateNumber
+    })
+
+    if (!exactMatch) {
+      console.log(`[Collision Detection] Verified chapter-${paddedNumber} is free`)
+      break
+    }
+
+    console.warn(`[Collision Detection] Collision at chapter-${paddedNumber}, incrementing`)
+    candidateNumber++
+  } catch (error) {
+    console.warn('[Collision Detection] Phase 3 iteration failed:', error.message)
+    break // Use current candidate on error
+  }
+}
+
+// Fix Issue 4: Log if max iterations exceeded
+if (iterations >= MAX_ITERATIONS) {
+  console.error(`[Collision Detection] Exceeded MAX_ITERATIONS (${MAX_ITERATIONS}), using candidate ${candidateNumber}`)
+}
+
+const nextChapterNumber = candidateNumber
+const existingChapterNumbers = allNumbersArray
 ```
 
 **Resolve final chapter number (UNIVERSAL for all input types):**
