@@ -139,11 +139,11 @@ const allDecisions = {
 
 **Step 1.2:** Query `state` (top_k=5). If empty: Display "State concept not found." → Stop. Extract `stateId`, `stateData`.
 
-**Step 1.3:** Query `task` (top_k=50). Extract existing task numbers for incrementing.
+**Step 1.3:** Query `task` (top_k=10000). Extract existing task numbers for incrementing.
 
 **Algorithm (6 steps):**
 
-1. Query all task concepts: `const taskResult = await megamemory:understand({ query: "task-", top_k: 50 })`
+1. Query all task concepts: `const taskResult = await megamemory:understand({ query: "task-", top_k: 10000 })`
 2. Check initiative scope: `const hasInitiative = stateData.current_initiative !== null && stateData.current_initiative !== undefined`
 3. Filter by scope:
    - IF hasInitiative: `const taskConcepts = taskResult.concepts.filter(c => c.parent_id === stateData.current_initiative)`
@@ -313,8 +313,8 @@ if (!resumeTask) {
 1. Extract task number: `taskNum = taskRefMatch[1]`
 2. Query MegaMemory with exhaustive search:
    ```
-   const query1 = await megamemory_understand(query="task-${taskNum}", top_k=50)
-   const query2 = await megamemory_understand(query="task-${taskNum}-", top_k=50)
+   const query1 = await megamemory_understand(query="task-${taskNum}", top_k=10000)
+   const query2 = await megamemory_understand(query="task-${taskNum}-", top_k=10000)
    const allResults = [...query1.concepts, ...query2.concepts]
    const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
    ```
@@ -333,8 +333,8 @@ if (!resumeTask) {
 1. Extract slug: `slugRef = slugRefMatch[1]`
 2. Query MegaMemory:
    ```
-   const query1 = await megamemory_understand(query="task-", top_k=50)
-   const query2 = await megamemory_understand(query=slugRef, top_k=50)
+   const query1 = await megamemory_understand(query="task-", top_k=10000)
+   const query2 = await megamemory_understand(query=slugRef, top_k=10000)
    const allResults = [...query1.concepts, ...query2.concepts]
    const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
    ```
