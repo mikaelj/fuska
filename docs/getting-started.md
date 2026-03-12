@@ -113,7 +113,7 @@ Launch OpenCode (or Claude Code), then run:
 
 Walks through initiative configuration:
 - Deep questioning (or uses stored description if provided)
-- Workflow preferences (mode, depth, parallelization, commits)
+- Workflow preferences (mode, depth, execution, commits) — sequential execution is default
 - Research domain ecosystem (optional)
 - Define requirements
 - Create roadmap with chapters

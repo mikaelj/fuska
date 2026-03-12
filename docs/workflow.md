@@ -100,13 +100,17 @@ Optional. Use when requirements have gray areas (UI, UX, behavior). Asks targete
 /fuska-plan
 ```
 
-Always run. Creates a detailed task list with dependencies, grouped into batches for parallel execution. Plan checker validates the plan (unless skipped).
+Always run. Creates a detailed task list with dependencies, grouped into batches for sequential execution. Plan checker validates the plan (unless skipped).
 
 ### Build
 
 ```
 /fuska-build
 ```
+
+> **Warning:** Parallel execution mode can cause database corruption under high load.
+> Use sequential mode (now default) for production work. Parallel is only safe for
+> small batches (≤3 tasks) in low-load scenarios.
 
 Always run. Implements plan tasks with atomic commits. Handles deviations automatically. Updates state after every task commit. TDD plans follow a RED-GREEN-REFACTOR cycle instead of linear execution, producing 2-3 commits per plan. See [concepts.md](concepts.md#plan-types) for plan type details.
 
@@ -349,11 +353,11 @@ When planning sessions grow beyond 5 tasks, chapterize them for better context m
 # Interactive prompts:
 # ? Chapter name: User Authentication System
 # ? Chapter goal: Secure user authentication with OAuth and JWT
-# ? Chapter number: 03
 # ? Research domain? [Yes/No]
 
 # Creates: chapter-03 with 3 subplans (3-3-2 task split)
 # Result: chapter-03-plan-01, chapter-03-plan-02, chapter-03-plan-03
+# → Automatically added to roadmap
 ```
 
 #### Manual Trigger from Planning Discussion
@@ -374,6 +378,7 @@ When planning sessions grow beyond 5 tasks, chapterize them for better context m
 
 # Creates chapter structure from current context
 # Each subplan gets 2-3 tasks (vertical slices)
+# → Automatically added to roadmap
 ```
 
 #### Context Mode: From Conversation to Chapter
@@ -405,6 +410,7 @@ Use context mode when a planning discussion has evolved into actionable work.
 
 # Creates: chapter-03 with 3 subplans
 # Result: chapter-03-plan-01, chapter-03-plan-02, chapter-03-plan-03
+# → Automatically added to roadmap
 ```
 
 **When to use context mode:**
@@ -459,14 +465,9 @@ The AI recognizes these phrases and runs `/fuska-chapterize` in context mode.
 
 #### After Chapterization
 
-The chapter is created but **not added to roadmap**. Next steps:
+The chapter is automatically added to the roadmap. Next steps:
 
 ```bash
-# Add chapter to roadmap
-/fuska-add-chapter "User Authentication System"
-
-# Or manually update roadmap concept with new chapter
-
 # Plan the first subplan
 /fuska-plan 03
 

@@ -14,7 +14,7 @@ fuska config [project-dir]
 ```
 
 From this menu you can configure:
-- **Quick settings** — switch model profile (quality/balanced/budget) and workflow mode
+- **Quick settings** — switch model profile (quality/balanced/budget), workflow mode, and execution mode
 - **Model aliases** — configure which models map to quality/balanced/budget/explore
 - **Git commit strategy** — switch between per-chapter / per-plan / per-task
 - **Import graph settings** — auto-refresh mode and staleness threshold
@@ -56,6 +56,29 @@ fuska config --check --json     # JSON output for scripts
 ### Repair
 
 Run `fuska config` and select "Fix initiative configuration" to choose which initiative should be current.
+
+---
+
+## Execution Mode
+
+Controls how Fuska executes tasks within a batch.
+
+> **Warning:** Parallel execution can cause database corruption under high load.
+> Sequential execution is now the default for data integrity.
+
+| Mode | Behavior | Risk Level |
+|------|----------|------------|
+| **sequential** (default) | Tasks execute one at a time | Low — safe for all workloads |
+| **parallel** | Tasks execute concurrently | High — may cause database corruption |
+
+**When to use parallel:** Only in low-load scenarios with small batch sizes (≤3 tasks) where execution speed is critical and data loss risk is acceptable.
+
+Configure mode:
+
+```bash
+fuska config
+# Select "Quick settings" -> execution mode
+```
 
 ---
 

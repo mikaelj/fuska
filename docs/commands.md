@@ -139,7 +139,7 @@ Use `--json` for machine-readable output.
 
 | Command | Description | Arguments |
 |---------|-------------|-----------|
-| <nobr>`/fuska-chapterize`</nobr> | Transform large plans or planning context into chapter structures with subplans | `[plan-id] [--research]` -- optional plan ID, optional research flag |
+| <nobr>`/fuska-chapterize`</nobr> | Transform large plans or planning context into chapter structures with subplans, automatically adds to roadmap | `[plan-id] [--research]` -- optional plan ID, optional research flag |
 
 **`/fuska-chapterize` modes:**
 
@@ -161,6 +161,8 @@ Use `--json` for machine-readable output.
 - `/fuska-do` automatically suggests chapterization for plans with >5 tasks
 - Fuska-planner marks plans with `large_plan=true` flag when exceeding threshold
 - Select "Chapterize this plan" in review loop to trigger manually
+
+**Automatic roadmap update:** Chapter is automatically added to the roadmap. No separate `/fuska-add-chapter` call is required.
 
 **Context mode example:**
 ```bash
