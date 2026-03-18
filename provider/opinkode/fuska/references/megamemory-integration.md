@@ -327,6 +327,37 @@ if (plan.concepts.length > 0) {
 }
 ```
 
+### megamemory:get_concept
+
+Look up a concept by exact ID. Returns full context (children, edges, incoming_edges, parent) or null if not found.
+
+```typescript
+interface GetConceptParams {
+  id: string;        // Exact concept ID (e.g., 'chapter-01', 'adhoc-plan-039')
+}
+
+// Returns NodeWithContext (same shape as understand result) or null
+```
+
+**When to use:**
+- Concept name is known exactly (user-provided slug, programmatic construct)
+- You need deterministic results — either the concept exists or it doesn't
+
+**When NOT to use:**
+- Searching by semantics (e.g., "authentication patterns")
+- Bulk listing or prefix matching (use `understand` with `top_k`)
+
+**Usage:**
+```typescript
+const concept = await megamemory.get_concept({ id: 'adhoc-plan-039' });
+if (concept) {
+  const data = JSON.parse(concept.summary);
+}
+
+const missing = await megamemory.get_concept({ id: 'nonexistent' });
+// Returns null/empty — concept does not exist
+```
+
 ### megamemory:list_roots
 
 List all top-level concepts (no parent_id). Use for discovering initiatives or loading initial state.
@@ -349,10 +380,13 @@ const initiativeExists = roots.roots.some(r => r.name === initiativeSlug);
 | `{chapterSlug}-research` | `chapter-01-research` | Chapter research |
 | `{chapterSlug}-context` | `chapter-01-context` | Chapter context |
 | `{chapterSlug}-verification` | `chapter-01-verification` | Chapter verification |
+| `adhoc-plan-{topic}-{NNN}` | `adhoc-plan-auth-refactor-042` | Standalone unplanned tasks |
 | `req-{ID}` | `req-AUTH-01` | Requirements |
 | `decision-{topic}` | `decision-use-typescript` | Architectural decisions |
 | `milestone-{slug}` | `milestone-v1` | Milestones |
 | `todo-{id}` | `todo-001` | Todos |
+
+**Note:** The `adhoc-plan-` naming convention replaced the previous `task-` convention. Use `fuska migrate rename-tasks-to-adhoc-plans` to migrate existing databases.
 
 ### Summary Structure
 
@@ -383,6 +417,23 @@ Details here...`;
 | Verification | Summary | `reviewed` |
 
 **Rules:** Direction matters (Summary → Plan = "summary completes plan"). Use specific relations (`implements` not `connects_to`). Create bidirectional when needed (Config → Feature `configures`, Feature → Config `configured_by`).
+
+### Slug Resolution Pattern
+
+When resolving a user-provided slug (e.g., `adhoc-plan-039`, `chapter-03`), try `get_concept` first for deterministic O(1) lookup, then fall back to `understand` if not found.
+
+```typescript
+async function resolveSlug(slug: string): Promise<NodeWithContext | null> {
+  const exact = await megamemory.get_concept({ id: slug });
+  if (exact) return exact;
+
+  const result = await megamemory.understand({ query: slug, top_k: 10 });
+  const match = result.concepts.find(c => c.name === slug);
+  return match || null;
+}
+```
+
+Bulk queries (prefix matching, full scans) remain unchanged — use `understand` with `top_k: 50`.
 
 ## Common Patterns
 

@@ -20,6 +20,11 @@ All project data lives in MegaMemory. Empty results = concept doesn't exist.
 
 **megamemory:link** creates relationship between existing concepts
 
+**megamemory:get_concept** returns `NodeWithContext` or null/empty
+- Parameter: `id` (string) — exact concept ID to look up
+- Exact ID lookup vs semantic search. O(1) deterministic.
+- Use when concept name is known (user-provided slug). Do NOT use for bulk listing.
+
 ### Error Handling
 
 - `MEGAMEMORY_ERROR:` → MCP server issue. Stop and inform user.

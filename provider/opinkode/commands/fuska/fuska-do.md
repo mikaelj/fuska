@@ -14,6 +14,7 @@ tools:
   - question
   - task
   - megamemory:understand
+  - megamemory:get_concept
   - megamemory:create_concept
   - megamemory:update_concept
   - megamemory:remove_concept
@@ -143,12 +144,12 @@ const allDecisions = {
 
 **Algorithm (6 steps):**
 
-1. Query all task concepts: `const taskResult = await megamemory:understand({ query: "task-", top_k: 10000 })`
+1. Query all adhoc-plan concepts: `const adhocPlanResult = await megamemory:understand({ query: "adhoc-plan-", top_k: 10000 })`
 2. Check initiative scope: `const hasInitiative = stateData.current_initiative !== null && stateData.current_initiative !== undefined`
 3. Filter by scope:
-   - IF hasInitiative: `const taskConcepts = taskResult.concepts.filter(c => c.parent_id === stateData.current_initiative)`
-   - ELSE: `const taskConcepts = taskResult.concepts` (use all task concepts, global scope)
-4. Extract numbers with regex: `const numbers = taskConcepts.map(c => { const match = c.name.match(/^task-(\d{3})/); return match ? parseInt(match[1], 10) : null; }).filter(n => n !== null)`
+   - IF hasInitiative: `const taskConcepts = adhocPlanResult.concepts.filter(c => c.parent_id === stateData.current_initiative)`
+   - ELSE: `const taskConcepts = adhocPlanResult.concepts` (use all task concepts, global scope)
+4. Extract numbers with regex: `const numbers = taskConcepts.map(c => { const match = c.name.match(/^adhoc-plan-(\d{3})/); return match ? parseInt(match[1], 10) : null; }).filter(n => n !== null)`
 5. Find maximum: `const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0`
 6. Generate next: `nextNum = String(maxNum + 1).padStart(3, '0')`
 
@@ -158,12 +159,12 @@ const allDecisions = {
 // Example 1: Initiative-scoped tasks
 const stateData = { current_initiative: "my-project" }
 const taskConcepts = [
-  { name: "task-023-feature-a", parent_id: "my-project" },
-  { name: "task-016-feature-b", parent_id: "my-project" },
-  { name: "task-028-feature-c", parent_id: "my-project" },
-  { name: "task-015-other-init", parent_id: "other-initiative" }  // Different initiative
+  { name: "adhoc-plan-023-feature-a", parent_id: "my-project" },
+  { name: "adhoc-plan-016-feature-b", parent_id: "my-project" },
+  { name: "adhoc-plan-028-feature-c", parent_id: "my-project" },
+  { name: "adhoc-plan-015-other-init", parent_id: "other-initiative" }  // Different initiative
 ]
-// Filtered to initiative: [task-023, task-016, task-028]
+// Filtered to initiative: [adhoc-plan-023, adhoc-plan-016, adhoc-plan-028]
 // Numbers: [23, 16, 28]
 // Max: 28
 // Next: "029"
@@ -171,10 +172,10 @@ const taskConcepts = [
 // Example 2: Global tasks (no initiative)
 const stateData = { current_initiative: null }
 const taskConcepts = [
-  { name: "task-005-standalone", parent_id: null },
-  { name: "task-012-standalone", parent_id: null }
+  { name: "adhoc-plan-005-standalone", parent_id: null },
+  { name: "adhoc-plan-012-standalone", parent_id: null }
 ]
-// All concepts used: [task-005, task-012]
+// All concepts used: [adhoc-plan-005, adhoc-plan-012]
 // Numbers: [5, 12]
 // Max: 12
 // Next: "013"
@@ -191,24 +192,24 @@ const taskConcepts = []
 | Case | Scenario | Behavior |
 |------|----------|----------|
 | No existing tasks | `taskConcepts` is empty array | `maxNum = 0`, `nextNum = "001"` |
-| Gaps in numbering | Tasks: task-023, task-016, task-028 | Use `Math.max()` → finds 28, ignores gaps → `nextNum = "029"` |
-| Deleted tasks | MegaMemory soft-deletion preserves task-027 | `task-027` included in max calculation → prevents reuse → `nextNum = "028"` |
-| Multiple matches | Regex finds task-005, task-012, task-023 | All numbers [5, 12, 23] considered → `maxNum = 23` |
-| Non-standard formats | Task named "task-urgent-fix" (no 3-digit number) | Regex `/^task-(\d{3})/` fails to match → filtered out → ignored |
+| Gaps in numbering | Tasks: adhoc-plan-023, adhoc-plan-016, adhoc-plan-028 | Use `Math.max()` → finds 28, ignores gaps → `nextNum = "029"` |
+| Deleted tasks | MegaMemory soft-deletion preserves adhoc-plan-027 | `adhoc-plan-027` included in max calculation → prevents reuse → `nextNum = "028"` |
+| Multiple matches | Regex finds adhoc-plan-005, adhoc-plan-012, adhoc-plan-023 | All numbers [5, 12, 23] considered → `maxNum = 23` |
+| Non-standard formats | Task named "adhoc-plan-urgent-fix" (no 3-digit number) | Regex `/^adhoc-plan-(\d{3})/` fails to match → filtered out → ignored |
 
 **Verification Example:**
 
 ```
 Input concepts: [
-  task-023-foo,
-  task-016-bar,
-  task-028-baz,
-  task-027-qux,
-  task-021-quux,
-  task-029-corge,
-  task-019-grault,
-  task-024-garply,
-  task-025-waldo
+  adhoc-plan-023-foo,
+  adhoc-plan-016-bar,
+  adhoc-plan-028-baz,
+  adhoc-plan-027-qux,
+  adhoc-plan-021-quux,
+  adhoc-plan-029-corge,
+  adhoc-plan-019-grault,
+  adhoc-plan-024-garply,
+  adhoc-plan-025-waldo
 ]
 
 Extraction:
@@ -228,10 +229,10 @@ Next number:
 
 **Step 2.0a: Check for exact task name match**
 
-Check if input starts with "task-" and looks like a complete task concept name.
+Check if input starts with "adhoc-plan-" and looks like a complete task concept name.
 
 ```
-const exactNameMatch = input.match(/^(task-[a-z0-9-]+)(?:\s|$)/)
+const exactNameMatch = input.match(/^(adhoc-plan-[a-z0-9-]+)(?:\s|$)/)
 let resumeTask = null
 let resumeTaskId = null
 
@@ -239,45 +240,52 @@ if (exactNameMatch) {
   const exactName = exactNameMatch[1]
   
   try {
-    // Try exact name lookup first
-    const exactQuery = await megamemory_understand({
-      query: exactName,
-      top_k: 10
-    })
+    // Try get_concept for O(1) deterministic lookup first
+    const exactLookup = await megamemory_get_concept({ id: exactName })
     
-    // Look for exact name matches (may be multiple across initiatives)
-    const exactMatches = exactQuery.concepts.filter(c => c.name === exactName)
-    
-    if (exactMatches.length === 1) {
-      // Single match - use it
-      resumeTask = exactMatches[0]
-      resumeTaskId = exactMatches[0].id
+    if (exactLookup) {
+      // get_concept found it — use directly
+      resumeTask = exactLookup
+      resumeTaskId = exactLookup.id
       input = input.replace(exactNameMatch[0], '').trim()
-    } else if (exactMatches.length > 1) {
-      // Multiple matches - disambiguate by parent initiative
-      // Use question tool - same pattern as Step 2.0 lines 253-259
-      const options = exactMatches.map(m => ({
-        label: `${m.name} (parent: ${m.parent?.name || 'none'})`,
-        value: m.id
-      }))
-      
-      const selected = await question({
-        questions: [{
-          question: `Found multiple tasks named '${exactName}'. Which one?`,
-          header: "Select task",
-          options: options
-        }]
+    } else {
+      // Fallback: use understand for semantic search
+      const exactQuery = await megamemory_understand({
+        query: exactName,
+        top_k: 10
       })
       
-      const selectedLabel = selected[0]
-      resumeTask = exactMatches.find(m => `${m.name} (parent: ${m.parent?.name || 'none'})` === selectedLabel)
-      if (!resumeTask) {
-        throw new Error(`Failed to find task matching selected label: ${selectedLabel}`)
+      const exactMatches = exactQuery.concepts.filter(c => c.name === exactName)
+      
+      if (exactMatches.length === 1) {
+        resumeTask = exactMatches[0]
+        resumeTaskId = exactMatches[0].id
+        input = input.replace(exactNameMatch[0], '').trim()
+      } else if (exactMatches.length > 1) {
+        // Multiple matches - disambiguate by parent initiative
+        // Use question tool - same pattern as Step 2.0 lines 253-259
+        const options = exactMatches.map(m => ({
+          label: `${m.name} (parent: ${m.parent?.name || 'none'})`,
+          value: m.id
+        }))
+        
+        const selected = await question({
+          questions: [{
+            question: `Found multiple tasks named '${exactName}'. Which one?`,
+            header: "Select task",
+            options: options
+          }]
+        })
+        
+        const selectedLabel = selected[0]
+        resumeTask = exactMatches.find(m => `${m.name} (parent: ${m.parent?.name || 'none'})` === selectedLabel)
+        if (!resumeTask) {
+          throw new Error(`Failed to find task matching selected label: ${selectedLabel}`)
+        }
+        resumeTaskId = resumeTask.id
+        input = input.replace(exactNameMatch[0], '').trim()
       }
-      resumeTaskId = resumeTask.id
-      input = input.replace(exactNameMatch[0], '').trim()
     }
-    // If exactMatches.length === 0, continue to Step 2.0
   } catch (error) {
     // Query failed - log and continue to pattern matching
     console.warn(`Exact name query failed: ${error.message}`)
@@ -300,54 +308,57 @@ if (exactNameMatch) {
 Only run this step if Step 2.0a did not find an exact match (`resumeTask` is null).
 
 Check if first argument is a task reference. Supports two formats:
-1. Numeric reference: "22" or "task-22"
+1. Numeric reference: "22" or "adhoc-plan-22"
 2. Slug reference: "ignore-gitignore-patterns" (lowercase with dashes)
 
 ```
 if (!resumeTask) {
-  const taskRefMatch = input.match(/^(?:task-)?(\d+)(?:\s|$)/)
+  const taskRefMatch = input.match(/^(?:adhoc-plan-)?(\d+)(?:\s|$)/)
   const slugRefMatch = !taskRefMatch && input.match(/^([a-z]+-[a-z0-9-]*[a-z0-9])(?:\s|$)/)
 ```
 
 **If taskRefMatch (numeric):**
 1. Extract task number: `taskNum = taskRefMatch[1]`
-2. Query MegaMemory with exhaustive search:
+2. Try get_concept for O(1) exact lookup:
    ```
-   const query1 = await megamemory_understand(query="task-${taskNum}", top_k=10000)
-   const query2 = await megamemory_understand(query="task-${taskNum}-", top_k=10000)
-   const allResults = [...query1.concepts, ...query2.concepts]
-   const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
+   const candidate = `adhoc-plan-${String(taskNum).padStart(3, '0')}`
+   let matchedConcept = null
+   
+   const directLookup = await megamemory_get_concept({ id: candidate })
+   if (directLookup) {
+     matchedConcept = directLookup
+   } else {
+     // Fallback: exhaustive search via understand
+     const query1 = await megamemory_understand(query="adhoc-plan-${taskNum}", top_k=50)
+     const query2 = await megamemory_understand(query="adhoc-plan-${taskNum}-", top_k=50)
+     const allResults = [...query1.concepts, ...query2.concepts]
+     const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
+     matchedConcept = uniqueResults.find(c => c.name.match(new RegExp(`^adhoc-plan-${taskNum}-`))) || null
+   }
    ```
-3. Filter uniqueResults to concepts matching pattern `task-${taskNum}-` (with trailing hyphen to avoid task-22 matching task-221)
-4. **If exactly one match:** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip task ref from input
-5. **If multiple matches:** Use question tool to disambiguate:
-   ```
-   Question: "Found multiple task-${taskNum} concepts. Which one?"
-   Options: each match with label showing:
-     - "{name} (parent: {parent_name || 'none'})"
-   After selection: Set resumeTask and resumeTaskId, strip task ref from input
-   ```
-6. **If no matches:** Display "No task-${taskNum} found. Creating new task." → continue to Step 2.1
+3. **If exactly one match (from either path):** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip task ref from input
+4. **If no matches:** Display "No adhoc-plan-${taskNum} found. Creating new task." → continue to Step 2.1
 
 **If slugRefMatch (slug):**
 1. Extract slug: `slugRef = slugRefMatch[1]`
-2. Query MegaMemory:
+2. Try get_concept for O(1) exact lookup:
    ```
-   const query1 = await megamemory_understand(query="task-", top_k=10000)
-   const query2 = await megamemory_understand(query=slugRef, top_k=10000)
-   const allResults = [...query1.concepts, ...query2.concepts]
-   const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
+   let matchedConcept = null
+   
+   const directLookup = await megamemory_get_concept({ id: slugRef })
+   if (directLookup) {
+     matchedConcept = directLookup
+   } else {
+     // Fallback: search via understand
+     const query1 = await megamemory_understand(query="adhoc-plan-", top_k=50)
+     const query2 = await megamemory_understand(query=slugRef, top_k=50)
+     const allResults = [...query1.concepts, ...query2.concepts]
+     const uniqueResults = [...new Map(allResults.map(c => [c.id, c])).values()]
+     matchedConcept = uniqueResults.find(c => c.name.includes(slugRef) || c.name.endsWith("-" + slugRef)) || null
+   }
    ```
-3. Filter uniqueResults to concepts where `name.includes(slugRef)` or `name.endsWith("-" + slugRef)`
-4. **If exactly one match:** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip slug ref from input
-5. **If multiple matches:** Use question tool to disambiguate:
-   ```
-   Question: "Found multiple tasks matching '${slugRef}'. Which one?"
-   Options: each match with label showing:
-     - "{name} (parent: {parent_name || 'none'})"
-   After selection: Set resumeTask and resumeTaskId, strip slug ref from input
-   ```
-6. **If no matches:** Display "No task matching '${slugRef}' found. Creating new task." → continue to Step 2.1
+3. **If exactly one match (from either path):** Set `resumeTask = matchedConcept`, `resumeTaskId = matchedConcept.id`, strip slug ref from input
+4. **If no matches:** Display "No task matching '${slugRef}' found. Creating new task." → continue to Step 2.1
 }
 
 **If resumeTask (from either path):**
@@ -355,7 +366,7 @@ if (!resumeTask) {
 - Set DESCRIPTION = taskData.description
 - Set MODE = taskData.mode || "planned"
 - Set planData = taskData (for use in subsequent steps)
-- Set planConceptId = resumeTask.name (the full concept name like 'task-022-rename-command-to-commands')
+- Set planConceptId = resumeTask.name (the full concept name like 'adhoc-plan-022-rename-command-to-commands')
 - Set taskConceptId = resumeTask.id (the UUID for megamemory updates)
 - Set slug = taskData.slug
 - Set nextNum = taskData.task_number
@@ -440,7 +451,7 @@ Display: `Mode: ${MODE} | Profile: ${modelProfile}`
 
 Generate slug: DESCRIPTION lowercase, replace non-alphanumeric with hyphens, collapse doubles, trim, max 40 chars.
 
-Calculate next number from existing `task-NNN-*` concepts. If none: `nextNum = "001"`.
+Calculate next number from existing `adhoc-plan-NNN-*` concepts. If none: `nextNum = "001"`.
 
 ---
 
@@ -448,9 +459,9 @@ Calculate next number from existing `task-NNN-*` concepts. If none: `nextNum = "
 
 **Step 4.1:** Create plan data with: task_number, slug, description, mode, status="planning", created_at, project_context (current_chapter from stateData), empty tasks/files_modified/depends_on arrays, autonomous=false. If debug context present, include debug_context (session_id, root_cause, complexity).
 
-**Step 4.2:** Create concept: `name=task-${nextNum}-${slug}`, kind="feature", summary=JSON.stringify(planData).
+**Step 4.2:** Create concept: `name=adhoc-plan-${nextNum}-${slug}`, kind="feature", summary=JSON.stringify(planData).
 
-**Step 4.2a:** Set `planConceptId = task-${nextNum}-${slug}` and `taskConceptId = <returned_concept_id>` for subsequent steps.
+**Step 4.2a:** Set `planConceptId = adhoc-plan-${nextNum}-${slug}` and `taskConceptId = <returned_concept_id>` for subsequent steps.
 
 **Step 4.3: Display**
 
@@ -458,7 +469,7 @@ Calculate next number from existing `task-NNN-*` concepts. If none: `nextNum = "
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  Fuska > TASK ${nextNum}: ${DESCRIPTION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Mode: ${MODE} | Plan: task-${nextNum}-${slug}
+ Mode: ${MODE} | Plan: adhoc-plan-${nextNum}-${slug}
 ```
 
 ---
@@ -811,7 +822,7 @@ Use question tool with these options:
 5. If checker passes → Step 8.1 (re-display updated plan + options)
 
 **Save and exit** →
-1. Display: `Plan saved as task-${nextNum}-${slug}`
+1. Display: `Plan saved as adhoc-plan-${nextNum}-${slug}`
 2. Display: `Run /fuska-do ${nextNum} to execute later`
 3. Stop
 
@@ -892,18 +903,31 @@ If `preExistingDirtyFiles` is non-empty:
   | Skip code review | Jump to Step 9.6, skip code review entirely |
   | Proceed anyway | Continue — code review will see everything (old behavior) |
 
-**Step 9.7.1:** Run `git diff HEAD`. If empty → skip to Step 9.6 (nothing to review).
+**Step 9.7.1:** Get modified files list: `git diff HEAD --name-only`. If empty → skip to Step 9.6 (nothing to review).
 
-**Step 9.7.2:** Get modified files list: `git diff HEAD --name-only`.
+**Step 9.7.2:** Get individual diff per file (avoids truncation):
 
-**Step 9.7.3: Build code reviewer prompt**
+For each file in modifiedFiles:
+```
+git diff HEAD -- "$file"
+```
+
+Store as `fileDiffs` object: `{ "path/to/file": "diff content", ... }`.
+
+**Step 9.7.3: Build code reviewer prompt with per-file diffs**
 
 ```
+// Build per-file context sections
+const fileContexts = modifiedFiles.map(file => {
+  const fileDiff = fileDiffs[file];
+  return `### File: ${file}\n\n\`\`\`diff\n${fileDiff}\n\`\`\``;
+}).join('\n\n');
+
 const codeReviewerPrompt = `<critical_constraints>
 Return one of:
 - ## REVIEW PASSED -- code is ready
 - ## ISSUES FOUND -- structured issue list with fix hints
-Review ONLY the diff and modified files. Do NOT create MegaMemory concepts.
+Review each file individually. Do NOT create MegaMemory concepts.
 </critical_constraints>
 
 <review_context>
@@ -916,8 +940,8 @@ ${researchData ? `**Research Findings:**\n${JSON.stringify(researchData, null, 2
 **Modified Files:**
 ${modifiedFiles.join('\n')}
 
-**Git Diff:**
-${diffOutput}
+**Individual File Diffs:**
+${fileContexts}
 
 </review_context>`
 ```
@@ -954,7 +978,7 @@ Project state: ${JSON.stringify(stateData, null, 2)}`
 ```
 
 - Spawn Task(subagent_type="fuska-executor", model=models.executor, variant="execute")
-- Re-run code reviewer with updated diff
+- Re-run code reviewer with updated per-file diffs (repeat Steps 9.7.1-9.7.4)
 - Increment buildIterationCount
 
 If buildIterationCount >= 3 and still issues:
@@ -1135,7 +1159,7 @@ if (currentChapter) {
 
 ```
 const gitMessagePrompt = `<task_context>
-**Task Number:** task-${nextNum}
+**Task Number:** adhoc-plan-${nextNum}
 **Description:** ${DESCRIPTION}
 **Mode:** ${MODE}
 **Plan:** ${JSON.stringify(planData, null, 2)}
@@ -1146,13 +1170,13 @@ ${diffOutput}
 </diff>
 
 <trailer_format>
-Trailer: task-${nextNum}
+Trailer: adhoc-plan-${nextNum}
 </trailer_format>
 
 Generate a commit message following Fuska format:
 - type(scope): description
 - 2-4 bullet points
-- Trailer line: task-${nextNum}
+- Trailer line: adhoc-plan-${nextNum}
 
 Return ONLY the commit message, nothing else.`
 
@@ -1269,7 +1293,7 @@ if (taskConceptId) {
 }
 ```
 
-This ensures the specific disambiguated task concept (e.g., `task-022-rename-command-to-commands`) gets its status updated, not a wrongly reconstructed one.
+This ensures the specific disambiguated task concept (e.g., `adhoc-plan-022-rename-command-to-commands`) gets its status updated, not a wrongly reconstructed one.
 
 ---
 
@@ -1282,7 +1306,7 @@ This ensures the specific disambiguated task concept (e.g., `task-022-rename-com
 
  Task ${nextNum}: ${DESCRIPTION}
  Mode: ${MODE}
- Plan: task-${nextNum}-${slug}
+ Plan: adhoc-plan-${nextNum}-${slug}
  Commit: ${finalCommitHash || "(uncommitted)"}
  ${verification ? `Verification: ${verificationStatus}` : ''}
  ${!finalCommitHash ? '\n Note: Changes staged but not committed. Run: git commit' : ''}

@@ -10,6 +10,7 @@ tools:
   - todowrite
   - question
   - megamemory:understand
+  - megamemory:get_concept
   - megamemory:create_concept
   - megamemory:update_concept
 ---
@@ -101,7 +102,7 @@ const stateNode = allConcepts.matches?.find(n =>
   n.parent_id === initiativeId
 )
 
-const chapterNode = allConcepts.matches?.find(n =>
+let chapterNode = allConcepts.matches?.find(n =>
   n.name === chapterSlug &&
   n.kind === 'feature' &&
   n.parent_id === initiativeId
@@ -118,7 +119,14 @@ const planConcepts = allConcepts.matches?.filter(n =>
 ```
 const configData = JSON.parse(configNode.summary)
 const stateData = stateNode ? JSON.parse(stateNode.summary) : null
-const chapterData = chapterNode ? JSON.parse(chapterNode.summary) : null
+let chapterData = chapterNode ? JSON.parse(chapterNode.summary) : null
+
+// Validation: get_concept for known slugs as reliability check
+const chapterValidation = await megamemory_get_concept({ id: chapterSlug })
+if (chapterValidation && chapterValidation.id !== chapterNode?.id) {
+  chapterNode = chapterValidation
+  chapterData = JSON.parse(chapterValidation.summary)
+}
 
 const modelProfile = configData?.model_profile || "balanced"
 const parallelization = configData?.parallelization === true
