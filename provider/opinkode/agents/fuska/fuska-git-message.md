@@ -1,6 +1,7 @@
 ---
 name: fuska-git-message
 description: Generate commit messages using Fuska rules
+temperature: 0.1
 tools:
   read: true
   bash: true
@@ -17,19 +18,29 @@ You generate commit messages following Fuska conventions. You ONLY output the co
 
 <process>
 
-1. **Get diff from working tree:**
+1. **Get per-file diffs from working tree:**
    ```bash
-   git diff
-   git diff --cached
+   CHANGED_FILES=$(git diff --name-only && git diff --cached --name-only | sort -u)
    ```
-   Combine both outputs as `diffContent`.
+   If `CHANGED_FILES` is empty, proceed to step 2.
+   For each file in `CHANGED_FILES`, collect diff:
+   ```bash
+   git diff -- <file>
+   git diff --cached -- <file>
+   ```
+   Combine all per-file outputs as `diffContent`.
 
-2. **If both diffs are empty, fall back to HEAD commit:**
+2. **If no changed files found, fall back to HEAD commit:**
    ```bash
    git log -1 --format="%B" HEAD
-   git diff HEAD^ HEAD
+   CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
    ```
-   Store original message as `originalMessage` and diff as `diffContent`.
+   Store original message as `originalMessage`.
+   For each file in `CHANGED_FILES`, collect diff:
+   ```bash
+   git diff HEAD^ HEAD -- <file>
+   ```
+   Combine all per-file outputs as `diffContent`.
 
 3. **Determine commit type** from diff content:
    - New files/features → `feat`

@@ -1,7 +1,7 @@
 ---
 name: fuska-git-message
 description: Generate a commit message using Fuska rules without committing, or regenerate for an existing commit or commit range
-argument-hint: "<commit-hash | commit-range | chapter-X-plan-Y>"
+argument-hint: "<commit-hash | commit-range | chapter-X-plan-Y | path>"
 agent: "fuska-git-message"
 tools:
   - read
@@ -42,22 +42,28 @@ const args = input.trim().split(/\s+/)
 let commitRange = null
 let commitHash = null
 let chapterPlan = null
+let pathArg = null
 
 for (const arg of args) {
-  // Check for range first (contains "..")
   if (arg.includes('..')) {
     commitRange = arg
   } else if (arg.match(/^chapter-\d+-plan-\d+$/)) {
     chapterPlan = arg
   } else {
-    // Try to resolve as a single git commit
-    // bash: git rev-parse --verify <arg>^{commit} 2>/dev/null
-    // If exit code 0 → it's a valid commit hash
     commitHash = arg
   }
 }
 
-const isDefaultMode = !commitHash && !commitRange && !chapterPlan
+// Validate: if commitHash is not a valid git ref, check if it's a path
+if (commitHash) {
+  // bash: git rev-parse --verify <commitHash>^{commit} 2>/dev/null
+  // If exit code non-zero:
+  //   bash: test -d "<commitHash>" || test -f "<commitHash>"
+  //   If exit code 0 → pathArg = commitHash, commitHash = null
+  //   If exit code non-zero → leave as commitHash (will fail validation in Step 1a)
+}
+
+const isDefaultMode = !commitHash && !commitRange && !chapterPlan && !pathArg
 
 ## Load Config
 
@@ -182,13 +188,28 @@ if (scopeMatch) {
 }
 ```
 
-**Step 2a.4: Read the diff**
+**Step 2a.4: Read per-file diffs**
 
 ```bash
-git diff ${commitHash}^ ${commitHash}
+CHANGED_FILES=$(git diff --name-only ${commitHash}^ ${commitHash})
 ```
 
-Store as `diffContent`.
+If `pathArg` is set, filter files:
+```javascript
+const pathPrefix = pathArg.endsWith('/') ? pathArg : pathArg + '/'
+CHANGED_FILES = CHANGED_FILES.filter(f => f === pathArg || f.startsWith(pathPrefix))
+```
+
+If `CHANGED_FILES` is empty after filtering:
+→ Display: "No changed files found under ${pathArg}"
+→ Stop
+
+For each file in `CHANGED_FILES`, collect diff:
+```bash
+git diff ${commitHash}^ ${commitHash} -- <file>
+```
+
+Combine all per-file outputs as `diffContent`.
 
 ---
 
@@ -202,13 +223,28 @@ If `commitRange` is provided:
 ORIGINAL_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEAD)
 ```
 
-**Step 2c.2: Get combined diff**
+**Step 2c.2: Get per-file diffs**
 
 ```bash
-git diff ${rangeStart}..${rangeEnd}
+CHANGED_FILES=$(git diff --name-only ${rangeStart}..${rangeEnd})
 ```
 
-Store as `diffContent`.
+If `pathArg` is set, filter files:
+```javascript
+const pathPrefix = pathArg.endsWith('/') ? pathArg : pathArg + '/'
+CHANGED_FILES = CHANGED_FILES.filter(f => f === pathArg || f.startsWith(pathPrefix))
+```
+
+If `CHANGED_FILES` is empty after filtering:
+→ Display: "No changed files found under ${pathArg}"
+→ Stop
+
+For each file in `CHANGED_FILES`, collect diff:
+```bash
+git diff ${rangeStart}..${rangeEnd} -- <file>
+```
+
+Combine all per-file outputs as `diffContent`.
 
 **Step 2c.3: Get all original commit messages**
 
@@ -297,26 +333,40 @@ Store flag `isRangeMode = true`. The working tree is NOT modified (we only read 
 If `commitHash` is NOT provided:
 
 ```bash
-git diff
-git diff --cached
+CHANGED_FILES=$(git diff --name-only && git diff --cached --name-only | sort -u)
 ```
 
-Combine both outputs as `diffContent`.
-
-**If both diffs are empty:**
-
-Check for HEAD fallback:
-```bash
-git rev-parse HEAD 2>/dev/null
+If `pathArg` is set, filter files:
+```javascript
+const pathPrefix = pathArg.endsWith('/') ? pathArg : pathArg + '/'
+CHANGED_FILES = CHANGED_FILES.filter(f => f === pathArg || f.startsWith(pathPrefix))
 ```
 
-- If HEAD exists:
-  - Set `commitHash = "HEAD"`
-  - Set `isDefaultMode = false` (don't show usage header)
-  - Proceed to **Step 2a** to generate message from HEAD commit
-- If no HEAD (empty repo):
-  → Display: "No uncommitted changes and no commits found"
+**If CHANGED_FILES is empty:**
+
+- If `pathArg` is set:
+  → Display: "No changed files found under ${pathArg}"
   → Stop
+- If `pathArg` is not set (no changes at all):
+  Check for HEAD fallback:
+  ```bash
+  git rev-parse HEAD 2>/dev/null
+  ```
+  - If HEAD exists:
+    - Set `commitHash = "HEAD"`
+    - Set `isDefaultMode = false` (don't show usage header)
+    - Proceed to **Step 2a** to generate message from HEAD commit
+  - If no HEAD (empty repo):
+    → Display: "No uncommitted changes and no commits found"
+    → Stop
+
+For each file in `CHANGED_FILES`, collect diff:
+```bash
+git diff -- <file>
+git diff --cached -- <file>
+```
+
+Combine all per-file outputs as `diffContent`.
 
 ---
 
@@ -379,6 +429,7 @@ If `isDefaultMode` is true:
 - No args: Generate commit message for current changes (unstaged + staged)
 - <commit-hash>: Replay existing commit and regenerate message
 - <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)
+- <path>: Scope to changed files under a directory (e.g., src/components/)
 - [chapter-X-plan-Y]: Override auto-detect chapter-plan context
 ```
 
@@ -511,6 +562,7 @@ ${isDefaultMode ? `
 - No args: Generate commit message for current changes (unstaged + staged)
 - <commit-hash>: Replay existing commit and regenerate message
 - <commit-range>: Generate unified message for multiple commits (e.g., HEAD~5..HEAD)
+- <path>: Scope to changed files under a directory (e.g., src/components/)
 - [chapter-X-plan-Y]: Override auto-detect chapter-plan context
 
 ` : ''}
@@ -566,5 +618,11 @@ git add <files> && git commit -m "${generatedMessage}"
 - [ ] Domain scope used when chapterPlan is unknown and domain match found
 - [ ] Scope omitted (not random word) when neither chapterPlan nor domainScope found
 - [ ] Never extracts scope from diff content (variable names, renames, function names)
+- [ ] Path argument validated as existing directory or file
+- [ ] Path filters changed files to only those under the specified path
+- [ ] Empty filtered result displays "No changed files found under <path>" message
+- [ ] Commit hash preferred over path when argument is ambiguous (both valid)
+- [ ] Per-file diff used in all three modes (working tree, commit hash, commit range)
+- [ ] Bare git diff (without -- file) not used in any mode
 
 </success_criteria>
