@@ -2,7 +2,7 @@
 name: fuska-do
 description: Execute unplanned tasks with mode-aware agent chain using MegaMemory
 argument-hint: "[mode] [description]"
-flags: --review, --no-review, --auto-commit, --code-review, --no-code-review
+flags: --review, --no-review, --auto-commit, --code-review, --no-code-review, --no-vision
 tools:
   - read
   - write
@@ -117,6 +117,7 @@ Flags:
   --auto-commit     Auto-commit with generated message (no prompt)
   --no-code-review  Skip code review loop (any mode)
   --code-review     Force code review loop (any mode, already default)
+  --no-vision       Skip vision pre-processing even if image paths detected
 ```
 
 ---
@@ -384,7 +385,8 @@ const hasNoReviewFlag = input.includes("--no-review")
 const hasAutoCommitFlag = input.includes("--auto-commit")
 const hasCodeReviewFlag = input.includes("--code-review") && !input.includes("--no-code-review")
 const hasNoCodeReviewFlag = input.includes("--no-code-review")
-const flagPattern = /--(?:no-review|review|auto-commit|no-code-review|code-review)/gi
+const noVision = input.includes("--no-vision")
+const flagPattern = /--(?:no-review|review|auto-commit|no-code-review|code-review|no-vision)/gi
 
 if (validModes.includes(words[0]?.toLowerCase())) {
   MODE = words[0].toLowerCase()
@@ -441,6 +443,8 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 ```
 const models = modelLookup[modelProfile]  // { researcher, planner, checker, executor, verifier, codeReviewer }
 const gitMessageModel = aliases.explore_model || aliases.budget_model
+const visionModel = aliases.vision_model || aliases.quality_model
+const visionMode = aliases.vision_model ? "native" : "mcp"
 ```
 
 Display: `Mode: ${MODE} | Profile: ${modelProfile}`
@@ -529,6 +533,73 @@ megamemory_create_concept(
 
 ---
 
+## 5.5. Vision Pre-Processing (if images detected)
+
+**Step 5.5.0: Skip conditions**
+
+```
+if (noVision) {
+  continue;
+}
+```
+
+**Step 5.5.1: Detect image paths**
+
+Scan DESCRIPTION and accumulated research context for image file paths:
+
+```
+const imagePattern = /(?:^|\s)(\S+\.(?:png|jpe?g|gif|bmp|webp|svg))(?:\s|$)/gi
+const descMatches = [...(DESCRIPTION || '').matchAll(imagePattern)]
+const researchMatches = [...(researchData ? JSON.stringify(researchData) : '').matchAll(imagePattern)]
+const imageMatches = [...descMatches, ...researchMatches]
+const uniqueImages = [...new Map(imageMatches.map(m => [m[1].trim(), m[1].trim()])).values()]
+```
+
+If no images found: skip to Step 6.
+
+**Step 5.5.2: Process each image**
+
+Display: `Vision: Analyzing ${uniqueImages.length} image(s)...`
+
+For each image, spawn fuska-vision-reader:
+
+```
+Task(
+  subagent_type="fuska-vision-reader",
+  model=visionModel,
+  description=`Analyze image: ${imagePath}`,
+  prompt=`<vision_mode>${visionMode}</vision_mode>
+${visionMode === "native" ? "<critical>Do NOT call any MCP vision tools (vision_analyze_image, etc.). You MUST analyze the image using your native model vision only. MCP tools are for fallback mode only.</critical>" : ""}
+
+<objective>Analyze the image at ${imagePath} and produce a Visual Facts + Suggested Fix Plan analysis.</objective>
+
+<image_context>
+Path: ${imagePath}
+Task: ${DESCRIPTION}
+</image_context>
+
+<output>
+Return: ## VISION COMPLETE with Visual Facts and Suggested Fix Plan sections
+</output>`
+)
+```
+
+**Step 5.5.3: Collect and inject**
+
+Collect all `## VISION COMPLETE` outputs into a single string:
+
+```
+const visionContext = visionResults.filter(r => !r.text.includes('VISION FAILED')).map(r => r.text).join('\n---\n')
+```
+
+Inject into planner prompt (Step 6.1) by appending to planning_context:
+
+```
+${visionContext ? `<vision_context>\n${visionContext}\n</vision_context>` : ''}
+```
+
+---
+
 ## 6. Spawn Planner
 
 Display: `Planning...`
@@ -556,6 +627,8 @@ Return: ## PLANNING COMPLETE with task list
 ${JSON.stringify(stateData, null, 2)}
 
 ${researchData ? `**Research Findings:**\n${JSON.stringify(researchData, null, 2)}` : ''}
+
+${visionContext ? `<vision_context>\n${visionContext}\n</vision_context>` : ''}
 
 ${hasDebugContext ? `<debug_findings>
 **Root Cause:** ${root_cause}

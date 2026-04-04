@@ -16,6 +16,14 @@ tools:
 
 ---
 
+<output_requirements>
+OUTPUT FORMAT REQUIREMENTS:
+- MUST output plan summary before asking questions
+- MUST NOT skip text output and jump directly to question tool
+- MUST display all context (plan objective, tasks) visibly to user
+- MUST format output as markdown, not as code blocks
+</output_requirements>
+
 <objective>
 
 Create executable chapter concepts (plan concepts) for a roadmap chapter with integrated research and verification using MegaMemory.
@@ -103,6 +111,8 @@ const modelLookup = {
   budget: { researcher: aliases.budget_model, planner: aliases.balanced_model, checker: aliases.budget_model }
 }
 const models = modelLookup[modelProfile]
+const visionModel = aliases.vision_model || aliases.quality_model
+const visionMode = aliases.vision_model ? "native" : "mcp"
 ```
 
 **Step 1.4: Validate against OpenCode config**
@@ -256,6 +266,63 @@ Query in sequence, cache results — NO re-querying in later steps:
 
 ---
 
+## 6.5. Vision Pre-Processing (if images detected)
+
+Scan chapter goal, research data, and requirements for image file paths:
+
+```
+const imagePattern = /(?:^|\s)(\S+\.(?:png|jpe?g|gif|bmp|webp|svg))(?:\s|$)/gi
+const goalText = chapterData?.goal || ""
+const researchText = researchData ? JSON.stringify(researchData) : ""
+const reqText = requirements ? JSON.stringify(requirements) : ""
+const allText = `${goalText} ${researchText} ${reqText}`
+const imageMatches = [...allText.matchAll(imagePattern)]
+const uniqueImages = [...new Map(imageMatches.map(m => [m[1].trim(), m[1].trim()])).values()]
+```
+
+If no images found: skip to Step 7.
+
+Display: `Vision: Analyzing ${uniqueImages.length} image(s)...`
+
+For each image, spawn fuska-vision-reader:
+
+```
+Task(
+  subagent_type="fuska-vision-reader",
+  model=visionModel,
+  description=`Analyze image: ${imagePath}`,
+  prompt=`<vision_mode>${visionMode}</vision_mode>
+${visionMode === "native" ? "<critical>Do NOT call any MCP vision tools (vision_analyze_image, etc.). You MUST analyze the image using your native model vision only. MCP tools are for fallback mode only.</critical>" : ""}
+
+<objective>Analyze the image at ${imagePath} for chapter planning context.</objective>
+
+<image_context>
+Path: ${imagePath}
+Task: Plan chapter ${chapterNumber} — ${chapterData?.goal || ""}
+</image_context>
+
+<output>
+Return: ## VISION COMPLETE with Visual Facts and Suggested Fix Plan
+</output>`
+)
+```
+
+Error handling: If vision-reader returns `## VISION FAILED`, log warning and continue. If ALL images fail, proceed without vision context.
+
+Collect results:
+
+```
+const visionContext = visionResults.filter(r => !r.text.includes('VISION FAILED')).map(r => r.text).join('\n---\n')
+```
+
+Inject into planner prompt in Step 7.
+
+```
+const plannerPrompt = filled_prompt + (visionContext ? `\n\n<vision_context>\n${visionContext}\n</vision_context>` : '')
+```
+
+---
+
 ## 7. Spawn fuska-planner Agent
 
 Display banner:
@@ -265,7 +332,7 @@ Display banner:
 -----------------------------------------------------
 ```
 
-Build prompt using **plan-prompts.md Planner Prompt Template**. Fill placeholders with cached data from step 6. Inline the actual JSON summaries for stateData, roadmapData, requirements, contextData, researchData, verificationData, and import graph context.
+Build prompt using **plan-prompts.md Planner Prompt Template**. Fill placeholders with cached data from step 6. Inline the actual JSON summaries for stateData, roadmapData, requirements, contextData, researchData, verificationData, import graph context, and visionContext (if available from Step 6.5).
 
 ```
 Task(
@@ -398,6 +465,8 @@ Route to `<offer_next>`.
 
 <offer_next>
 
+**CRITICAL: Output this text directly to the user as markdown. Do NOT use tool calls for this output:**
+
 Output this markdown directly (not as a code block):
 
 ```
@@ -431,6 +500,16 @@ Verification: {Passed | Passed with override | Skipped}
 - /fuska-plan {X} --research — re-research first
 ──────────────────────────────────────────────────────────────
 ```
+
+**❌ WRONG - DO NOT DO THIS:**
+- Skip plan summary output
+- Jump directly to execution suggestion
+- Output summary as code block
+
+**✅ CORRECT - ALWAYS DO THIS:**
+- Display plan summary with batch table FIRST
+- THEN suggest next step
+- Format as markdown with proper headers
 
 </offer_next>
 

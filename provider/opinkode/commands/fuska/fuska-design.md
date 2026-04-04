@@ -5,12 +5,23 @@ argument-hint: "<chapter>"
 tools:
   - read
   - bash
-
+  - task
   - question
   - megamemory:understand
   - megamemory:create_concept
   - megamemory:update_concept
 ---
+
+<output_requirements>
+OUTPUT FORMAT REQUIREMENTS:
+- MUST output chapter overview banner before asking questions
+- MUST output assumptions template before asking for feedback
+- MUST output completion summary when done
+- MUST NOT skip text output and jump directly to question tool
+- MUST display all context (name, goal, status) visibly to user
+- MUST substitute variables with actual values from MegaMemory
+- MUST format output as markdown, not as code blocks
+</output_requirements>
 
 <objective>
 
@@ -199,7 +210,7 @@ const chapterStatus = chapterData.status
 
 **Step 1.7.3: Display design session overview**
 
-Output this markdown directly (not as a code block):
+**CRITICAL: Output this text directly to the user as markdown. Do NOT use tool calls for this output:**
 
 ```
 -----------------------------------------------------
@@ -214,8 +225,98 @@ Status: {chapterStatus}
 This session gathers context and decisions to guide planning.
 You'll discuss implementation choices for this chapter.
 
+────────────────────────────────────────────────────────
+```
+
+**❌ WRONG - DO NOT DO THIS:**
+- Load chapter data from MegaMemory silently
+- Jump directly to question tool without context
+- Skip displaying the chapter overview banner
+- Output banner as code block instead of markdown
+
+**✅ CORRECT - ALWAYS DO THIS:**
+- Output the banner and chapter overview text FIRST
+- THEN use question tool to gather user feedback
+- Show all context (name, goal, status) before asking questions
+- Format output as markdown text, not code blocks
+-----------------------------------------------------
+  Fuska: Chapter {chapterNumber} Design Session
+-----------------------------------------------------
+
+**Chapter {chapterNumber}: {chapterName}**
+
+Goal: {chapterGoal}
+Status: {chapterStatus}
+
+This session gathers context and decisions to guide planning.
+You'll discuss implementation choices for this chapter.
+
 ────────────────────────────────────────────────────
 ```
+
+---
+
+## 1.7.5. Vision Pre-Processing (if images detected)
+
+Extract model aliases from config:
+```
+const designConfigData = JSON.parse(configNode.summary)
+const aliases = designConfigData.model_aliases || {}
+const visionModel = aliases.vision_model || aliases.quality_model
+const visionMode = aliases.vision_model ? "native" : "mcp"
+```
+
+Look up research node for image scanning:
+```
+const researchNode = allConcepts.concepts?.find(n =>
+  n.name === `${chapterSlug}-research` && n.parent_id === initiativeId
+)
+```
+
+Scan chapter goal and research data for image file paths:
+```
+const imagePattern = /(?:^|\s)(\S+\.(?:png|jpe?g|gif|bmp|webp|svg))(?:\s|$)/gi
+const goalText = chapterData?.goal || ""
+const researchText = researchNode ? JSON.stringify(JSON.parse(researchNode.summary)) : ""
+const allText = `${goalText} ${researchText}`
+const imageMatches = [...allText.matchAll(imagePattern)]
+const uniqueImages = [...new Map(imageMatches.map(m => [m[1].trim(), m[1].trim()])).values()]
+```
+
+If no images found: skip to Step 1.8.
+
+Display: `Vision: Analyzing ${uniqueImages.length} image(s)...`
+
+For each image, spawn fuska-vision-reader:
+```
+Task(
+  subagent_type="fuska-vision-reader",
+  model=visionModel,
+  description=`Analyze image: ${imagePath}`,
+  prompt=`<vision_mode>${visionMode}</vision_mode>
+${visionMode === "native" ? "<critical>Do NOT call any MCP vision tools (vision_analyze_image, etc.). You MUST analyze the image using your native model vision only. MCP tools are for fallback mode only.</critical>" : ""}
+
+<objective>Analyze the image at ${imagePath} for chapter design context.</objective>
+
+<image_context>
+Path: ${imagePath}
+Task: Design chapter ${chapterNumber} — ${chapterData?.goal || ""}
+</image_context>
+
+<output>
+Return: ## VISION COMPLETE with Visual Facts and Suggested Fix Plan
+</output>`
+)
+```
+
+Error handling: If vision-reader returns `## VISION FAILED`, log warning and continue. If ALL images fail, proceed without vision context.
+
+Collect results:
+```
+const visionContext = visionResults.filter(r => !r.text.includes('VISION FAILED')).map(r => r.text).join('\n---\n')
+```
+
+Include visionContext in Step 1.8 (Surface Assumptions) — visual observations inform assumption validation.
 
 ---
 
@@ -272,6 +373,8 @@ Based on chapter goal and gathered data, surface assumptions:
 - What needs to be in place first?
 
 Display assumptions:
+**CRITICAL: Output this text directly to the user as markdown. Do NOT use tool calls for this output:**
+
 ```
 ────────────────────────────────────────────────────────────
 
@@ -302,6 +405,18 @@ Display assumptions:
 
 ────────────────────────────────────────────────────────────
 ```
+
+**❌ WRONG - DO NOT DO THIS:**
+- Skip displaying assumptions before asking questions
+- Ask "How do these assumptions look?" without showing them
+- Output assumptions as code block instead of formatted markdown
+- Skip any of the 5 assumption areas
+
+**✅ CORRECT - ALWAYS DO THIS:**
+- Display all 5 assumption areas FIRST
+- THEN ask for user feedback on assumptions
+- Format as markdown headers and lists
+- Include all areas: Technical Approach, Implementation Order, Scope Boundaries, Risk Areas, Dependencies
 
 **Step 1.8.4: Prompt for feedback**
 
@@ -655,7 +770,7 @@ If researchEnabled === false:
 
 <offer_next>
 
-Output this markdown directly (not as a code block):
+**CRITICAL: Output this text directly to the user as markdown. Do NOT use tool calls for this output:**
 
 ```
 ---------------------------------------------------------
@@ -686,6 +801,16 @@ ${allDeferred.map(deferred => `- ${deferred}`).join('\n') || 'No deferred ideas'
 
 ──────────────────────────────────────────────────────────────
 ```
+
+**❌ WRONG - DO NOT DO THIS:**
+- Skip completion summary output
+- Jump directly to next step suggestion
+- Output summary as code block
+
+**✅ CORRECT - ALWAYS DO THIS:**
+- Display completion summary after design session
+- Format as markdown with proper headers
+- Show all sections: Decisions Made, Constraints, etc.
 
 </offer_next>
 

@@ -1,6 +1,7 @@
 ---
 name: fuska-executor
 description: Executes Fuska plans with atomic commits, deviation handling, checkpoint protocols, and state management. Uses MegaMemory for context. Spawned by execute-chapter coordinator or execute-plan command.
+temperature: 0.1
 tools:
   read: true
   write: true
@@ -158,6 +159,58 @@ if (file) {
   // Use file.data.exports to know what symbols to preserve
 }
 ```
+</step>
+
+<step name="optional_vision_analysis">
+Detect image paths in the execution prompt and analyze them using vision-reader:
+
+```typescript
+const imagePattern = /(?:^|\s)(\S+\.(?:png|jpe?g|gif|bmp|webp|svg))(?:\s|$)/gi
+const promptText = EXECUTION_PROMPT || ""
+const imageMatches = [...promptText.matchAll(imagePattern)]
+const uniqueImages = [...new Map(imageMatches.map(m => [m[1].trim(), m[1].trim()])).values()]
+
+if (uniqueImages.length > 0) {
+  const configResult = await megamemory:understand({ query: "config", top_k: 1 })
+  const configData = JSON.parse(configResult.concepts[0].summary)
+  const aliases = configData.model_aliases || {}
+  const visionModel = aliases.vision_model || aliases.quality_model
+  const visionMode = aliases.vision_model ? "native" : "mcp"
+
+  const visionResults = []
+  for (const imagePath of uniqueImages) {
+    try {
+      const result = await Task(
+        subagent_type="fuska-vision-reader",
+        model=visionModel,
+        description=`Analyze image: ${imagePath}`,
+        prompt=`<vision_mode>${visionMode}</vision_mode>
+${visionMode === "native" ? "<critical>Do NOT call any MCP vision tools (vision_analyze_image, etc.). You MUST analyze the image using your native model vision only. MCP tools are for fallback mode only.</critical>" : ""}
+
+<objective>Analyze the image at ${imagePath} and produce analysis for plan execution.</objective>
+
+<image_context>
+Path: ${imagePath}
+Task: ${planData?.objective || "Execute plan"}
+</image_context>
+
+<output>
+Return: ## VISION COMPLETE with Visual Facts and Suggested Fix Plan
+</output>`
+      )
+      if (!result.text.includes('VISION FAILED')) {
+        visionResults.push(result.text)
+      }
+    } catch (e) {
+      console.warn(`Vision analysis failed for ${imagePath}:`, e.message || e)
+    }
+  }
+
+  const visionContext = visionResults.join('\n---\n')
+}
+```
+
+Note: planData is not yet loaded at this step — only the execution prompt is scanned for image paths.
 </step>
 
 <step name="load_plan_from_megamemory">

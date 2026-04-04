@@ -170,6 +170,8 @@ Follow model-resolution.md. Extract aliases from config, then apply this lookup 
 ```
 const models = modelLookup[modelProfile]  // { executor, verifier, codeReviewer }
 const gitMessageModel = aliases.explore_model || aliases.budget_model
+const visionModel = aliases.vision_model || aliases.quality_model
+const visionMode = aliases.vision_model ? "native" : "mcp"
 ```
 
 ---
@@ -220,6 +222,62 @@ If "View details" → show full plan details, re-offer. If "Cancel" → Stop.
 
 ---
 
+## 4.5. Vision Pre-Processing (if images detected)
+
+Scan plan descriptions and chapter context for image file paths:
+
+```
+const imagePattern = /(?:^|\s)(\S+\.(?:png|jpe?g|gif|bmp|webp|svg))(?:\s|$)/gi
+const planTexts = plansToExecute.map(p => `${p.objective} ${(p.tasks || []).map(t => t.action || '').join(' ')}`).join(' ')
+const chapterText = `${chapterGoal} ${JSON.stringify(contextData || {})}`
+const allText = `${planTexts} ${chapterText}`
+const imageMatches = [...allText.matchAll(imagePattern)]
+const uniqueImages = [...new Map(imageMatches.map(m => [m[1].trim(), m[1].trim()])).values()]
+```
+
+If no images found: skip to Step 5.
+
+Display: `Vision: Analyzing ${uniqueImages.length} image(s)...`
+
+For each image, spawn fuska-vision-reader:
+
+```
+Task(
+  subagent_type="fuska-vision-reader",
+  model=visionModel,
+  description=`Analyze image: ${imagePath}`,
+  prompt=`<vision_mode>${visionMode}</vision_mode>
+${visionMode === "native" ? "<critical>Do NOT call any MCP vision tools (vision_analyze_image, etc.). You MUST analyze the image using your native model vision only. MCP tools are for fallback mode only.</critical>" : ""}
+
+<objective>Analyze the image at ${imagePath} and produce a Visual Facts + Suggested Fix Plan analysis.</objective>
+
+<image_context>
+Path: ${imagePath}
+Task: Chapter ${chapterNumber} execution
+</image_context>
+
+<output>
+Return: ## VISION COMPLETE with Visual Facts and Suggested Fix Plan sections
+</output>`
+)
+```
+
+Error handling: If vision-reader returns `## VISION FAILED`, log warning and continue without vision context for that image. If ALL images fail, proceed without vision context (do not block execution).
+
+Collect results:
+
+```
+const visionContext = visionResults.filter(r => !r.text.includes('VISION FAILED')).map(r => r.text).join('\n---\n')
+```
+
+Inject into executor prompt in Step 5.2 by appending after the git commit strategy line:
+
+```
+${visionContext ? `\n<vision_context>\n${visionContext}\n</vision_context>` : ''}
+```
+
+---
+
 ## 5. Execute Batches
 
 **Pre-execution:** Capture base commit and pre-existing dirty state:
@@ -256,8 +314,9 @@ ${JSON.stringify(stateData, null, 2)}
 
 Use plan's objective, tasks, and requirements to guide implementation.
 Git commit strategy is "${commitStrategy}". If "per-chapter", stage files but do NOT commit — the coordinator commits when the chapter completes. If "per-plan", stage files and commit once after all tasks complete. If "per-task", commit after each task.
-When complete, create a summary concept named "${plan.name}-summary" using megamemory:create_concept with execution results.`
-)
+When complete, create a summary concept named "${plan.name}-summary" using megamemory:create_concept with execution results.
+${visionContext ? `\n<vision_context>\n${visionContext}\n</vision_context>` : ''}
+`
 ```
 
 If `parallelization === false`, spawn sequentially (wait for each before next).
