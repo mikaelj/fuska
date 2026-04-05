@@ -26,7 +26,7 @@ Your job: Run a three-checker panel (base + contextual + expert) and merge findi
 **Jury composition:**
 1. **Base (always):** quality-advocate — checks completeness, testability, maintainability
 2. **Contextual (project-derived):** security-auditor | resource-guardian | portability-watcher | null
-3. **Expert (plan-derived):** security-veteran | distributed-systems-engineer | payments-expert | api-design-veteran | data-architect | performance-engineer | null
+3. **Expert (plan-derived):** security-veteran | distributed-systems-engineer | payments-expert | api-design-veteran | data-architect | performance-engineer | state-management-architect | ui-patterns-expert | accessibility-champion | testing-strategist | devops-architect | file-media-expert | i18n-specialist | offline-capability-expert | firmware-architect | null
 
 You are NOT a checker yourself — you orchestrate checkers and synthesize results.
 </role>
@@ -139,7 +139,16 @@ function deriveExpertRole(plansContent: string): string | null {
     'payments-expert': ['payment', 'stripe', 'checkout', 'billing', 'subscription', 'invoice'],
     'api-design-veteran': ['api', 'endpoint', 'rest', 'graphql', 'route', 'controller'],
     'data-architect': ['database', 'schema', 'migration', 'model', 'prisma', 'sql'],
-    'performance-engineer': ['performance', 'cache', 'optimize', 'latency', 'throughput']
+    'performance-engineer': ['performance', 'cache', 'optimize', 'latency', 'throughput'],
+    'state-management-architect': ['state-management', 'viewmodel', 'reducer', 'dispatch', 'notifier', 'observable', 'provider', 'tooltip', 'overlay', 'popover', 'modal', 'onboarding', 'walkthrough', 'feature-discovery', 're-render', 'rebuild', 'memoiz', 'unmount', 'bloc', 'riverpod', 'redux', 'mobx', 'getx', 'vuex', 'pinia', 'zustand', 'recoil', 'jotai'],
+    'ui-patterns-expert': ['form', 'validation', 'navigation', 'routing', 'layout', 'responsive', 'theme', 'dark-mode', 'design-system', 'component-library', 'animation', 'transition', 'drag-and-drop', 'infinite-scroll', 'virtualized-list', 'search-bar', 'filter', 'sort', 'table', 'grid', 'list-view', 'tabs', 'accordion', 'carousel', 'stepper', 'wizard', 'multi-step', 'error-boundary', 'error-page', 'retry', 'fallback', 'skeleton', 'loading-state', 'empty-state'],
+    'accessibility-champion': ['accessibility', 'a11y', 'wcag', 'screen-reader', 'aria', 'keyboard-navigation', 'focus-management', 'color-contrast', 'semantic-html', 'alt-text', 'tab-order', 'skip-link', 'live-region', 'role-attribute'],
+    'testing-strategist': ['unit-test', 'integration-test', 'e2e-test', 'e2e', 'end-to-end', 'acceptance-test', 'snapshot-test', 'property-test', 'mutation-test', 'coverage', 'mock', 'stub', 'spy', 'fixture', 'test-double', 'tdd', 'bdd', 'testing-library', 'pytest', 'jest', 'vitest', 'cypress', 'playwright', 'detox', 'flutter-test', 'golden-test', 'widget-test'],
+    'devops-architect': ['docker', 'container', 'kubernetes', 'k8s', 'deploy', 'deployment', 'ci-cd', 'pipeline', 'terraform', 'ansible', 'helm', 'nginx', 'reverse-proxy', 'load-balancer', 'ssl', 'tls', 'certificate', 'domain', 'dns', 'hosting', 'aws', 'gcp', 'azure', 'vercel', 'netlify', 'cloudflare', 'railway', 'fly.io', 'heroku'],
+    'file-media-expert': ['upload', 'download', 'image', 'video', 'audio', 'media', 'attachment', 'storage', 's3', 'bucket', 'multipart', 'thumbnail', 'resize', 'crop', 'compression', 'mime-type', 'content-type', 'pdf', 'csv', 'excel'],
+    'i18n-specialist': ['i18n', 'internationalization', 'localization', 'l10n', 'locale', 'translation', 'rtl', 'right-to-left', 'pluralization', 'date-format', 'number-format', 'currency-format', 'timezone', 'multilingual'],
+    'offline-capability-expert': ['offline', 'sync', 'conflict-resolution', 'crdt', 'service-worker', 'pwa', 'progressive-web-app', 'local-first', 'background-sync', 'push-notification', 'installable', 'manifest'],
+    'firmware-architect': ['spi', 'i2c', 'uart', 'interrupt', 'firmware', 'bootloader', 'rtos', 'hal', 'dma', 'adc', 'pwm', 'gpio', 'watchdog', 'sensor', 'actuator', 'register', 'peripheral', 'mcu', 'soc', 'fpga']
   };
 
   const content = plansContent.toLowerCase();
