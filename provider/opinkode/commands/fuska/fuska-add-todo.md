@@ -1,7 +1,7 @@
 ---
 name: fuska-add-todo
 description: Capture idea or task as todo from current conversation context using MegaMemory
-argument-hint: [optional description]
+argument-hint: "[optional description]"
 tools:
   - read
   - bash
