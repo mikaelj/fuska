@@ -1,7 +1,7 @@
 ---
 name: fuska-debug
 description: Systematic debugging with persistent state across context resets using MegaMemory
-argument-hint: [issue description]
+argument-hint: "[issue description]"
 tools:
   - read
   - bash
